@@ -1,0 +1,65 @@
+# ---- Dependencies ----
+node_modules/
+
+# ---- Expo / EAS ----
+.expo/
+.eas/
+dist/
+web-build/
+expo-env.d.ts
+
+# ---- Native ----
+.kotlin/
+*.orig.*
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.keystore
+.gradle/
+build/
+Pods/
+DerivedData/
+
+# ---- Metro ----
+.metro-health-check*
+
+# ---- Logs / Debug ----
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+pnpm-debug.log*
+*.log
+
+# ---- macOS ----
+.DS_Store
+*.pem
+
+# ---- Env ----
+.env
+.env.*
+!*.env.example
+apps/*/.env
+packages/*/.env
+infra/**/.env
+
+# ---- Package Managers ----
+package-lock.json
+yarn.lock
+
+# ---- Tooling / Editor ----
+.idea/
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+
+# ---- Tests / Coverage ----
+coverage/
+.nyc_output/
+jest-cache/
+jest-stare/
+*.tsbuildinfo
+
+# ---- Project specific ----
+app-example

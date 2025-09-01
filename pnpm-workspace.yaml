@@ -1,0 +1,8 @@
+nodeLinker: hoisted
+
+onlyBuiltDependencies:
+  - unrs-resolver
+
+packages:
+  - "apps/*"
+  - "packages/*"
