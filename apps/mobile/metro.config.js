@@ -6,6 +6,7 @@ const projectRoot = __dirname;
 const config = getDefaultConfig(projectRoot);
 
 config.resolver.alias = {
+  ...(config.resolver.alias || {}),
   '@': projectRoot,
   '~': path.join(projectRoot, 'app'),
 };
