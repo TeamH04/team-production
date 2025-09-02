@@ -6,6 +6,11 @@
 
 corepack install\
 pnpm install\
+
+apps/mobileのREADMEを見に行くこと
+
+## 実行
+
 pnpm --dir apps/mobile exec expo start -c
 
 Web：ログの localhost:port番号 にアクセスする\
