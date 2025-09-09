@@ -1,15 +1,15 @@
-module.exports = {
-  presets: ['babel-preset-expo'],
-  plugins: [
-    require.resolve('expo-router/babel'),
-    [
-      'module-resolver',
-      {
+module.exports = function (api) {
+  api.cache(true);
+  return {
+    presets: ['babel-preset-expo'],
+    // まず plugins を空にして通るか検証
+    plugins: [
+      'expo-router/babel',
+      ['module-resolver', {
         root: ['.'],
-        alias: {
-          '@': '.',
-        },
-      },
+        extensions: ['.ts', '.tsx', '.js', '.jsx', '.json'],
+        alias: { '@': './' },
+      }],
     ],
-  ],
+  };
 };
