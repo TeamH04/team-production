@@ -4,7 +4,7 @@
 
 ## 環境構築
 
-```
+```bash
 corepack install
 pnpm install
 ```
@@ -13,7 +13,7 @@ apps/mobileのREADMEを見に行くこと
 
 ## 実行
 
-```
+```bash
 pnpm --dir apps/mobile exec expo start
 ```
 

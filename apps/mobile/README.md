@@ -2,13 +2,13 @@
 
 ## 環境構築
 
-```
+```bash
 pnpm dlx expo install
 ```
 
 ## 実行
 
-```
+```bash
 pnpm exec expo start
 ```
 
