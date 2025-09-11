@@ -10,5 +10,9 @@
   ],
   "eslint.workingDirectories": [
     { "directory": "apps/mobile", "changeProcessCWD": true }
-  ]
+  ],
+  "tailwindCSS.experimental.configFile": "apps/mobile/tailwind.config.js",
+  "files.associations": {
+    "**/apps/mobile/**/*.css": "tailwindcss"
+  }
 }

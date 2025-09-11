@@ -1,14 +1,12 @@
-// apps/mobile/metro.config.js
-const { getDefaultConfig } = require('expo/metro-config');
-const path = require('path');
+const { getDefaultConfig } = require("expo/metro-config");
+const { withNativeWind } = require("nativewind/metro");
 
-const projectRoot = __dirname;
-const config = getDefaultConfig(projectRoot);
+const config = getDefaultConfig(__dirname);
 
-config.resolver.alias = {
-  ...(config.resolver.alias || {}),
-  '@': projectRoot,
-  '~': path.join(projectRoot, 'app'),
-};
+config.resolver.unstable_enableSymlinks = true;
+config.resolver.nodeModulesPaths = [
+  __dirname + "/node_modules",
+  __dirname + "/../../node_modules",
+];
 
-module.exports = config;
+module.exports = withNativeWind(config, { input: "./global.css" });
