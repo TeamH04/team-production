@@ -9,7 +9,7 @@ pnpm dlx expo install
 ## 実行
 
 ```bash
-pnpm exec expo start
+pnpm start
 ```
 
 Web：ログの localhost:port番号 にアクセスする\
