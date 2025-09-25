@@ -2,44 +2,41 @@ package server
 
 import (
 	"net/http"
-	"slices"
 
 	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
+	"gorm.io/gorm"
 
 	"github.com/TeamH04/team-production/apps/backend/internal/config"
-	"github.com/TeamH04/team-production/apps/backend/internal/handlers"
 )
 
-func NewRouter(cfg *config.Config) *echo.Echo {
+func NewRouter(cfg *config.Config, db *gorm.DB) *echo.Echo {
 	e := echo.New()
 
-	// 簡易CORS（必要なら echo/middleware.CORS に差し替え）
-	e.Pre(func(next echo.HandlerFunc) echo.HandlerFunc {
+	e.Use(middleware.Logger())
+	e.Use(middleware.Recover())
+
+	e.Use(func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
-			origin := c.Request().Header.Get("Origin")
-			allow := "*"
-			if len(cfg.AllowOrigins) > 0 && cfg.AllowOrigins[0] != "*" && origin != "" {
-				if slices.Contains(cfg.AllowOrigins, origin) {
-					allow = origin
-				} else {
-					allow = ""
-				}
-			}
-			if allow != "" {
-				h := c.Response().Header()
-				h.Set("Access-Control-Allow-Origin", allow)
-				h.Set("Vary", "Origin")
-				h.Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
-				h.Set("Access-Control-Allow-Methods", "GET,POST,PUT,PATCH,DELETE,OPTIONS")
-			}
-			if c.Request().Method == http.MethodOptions {
-				return c.NoContent(http.StatusNoContent)
-			}
+			c.Set("db", db)
 			return next(c)
 		}
 	})
 
-	e.GET("/healthz", handlers.Health)
+	e.GET("/health", func(c echo.Context) error {
+		return c.String(http.StatusOK, "ok")
+	})
+
+	e.GET("/health/db", func(c echo.Context) error {
+		sqlDB, err := db.DB()
+		if err != nil {
+			return c.String(http.StatusInternalServerError, "db: NG (wrap)")
+		}
+		if err := sqlDB.Ping(); err != nil {
+			return c.String(http.StatusInternalServerError, "db: NG")
+		}
+		return c.String(http.StatusOK, "db: OK")
+	})
 
 	// Google Maps の薄いプロキシ（キーがあれば有効に）
 	// if cfg.GoogleMapsKey != "" {
