@@ -16,7 +16,10 @@ func main() {
 		log.Fatalf("failed to connect database: %v", err)
 	}
 
-	sqlDB, _ := db.DB()
+	sqlDB, err := db.DB()
+	if err != nil {
+		log.Fatalf("failed to obtain SQL DB instance: %v", err)
+	}
 	defer sqlDB.Close()
 
 	// もし repository 層に渡すならここで依存注入
