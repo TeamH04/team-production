@@ -14,9 +14,8 @@ type Config struct {
 
 func Load() *Config {
 	c := &Config{
-		Port:          getenv("PORT", "8080"),
-		GoogleMapsKey: os.Getenv("GOOGLE_MAPS_API_KEY"),
-		DBURL:         os.Getenv("SUPABASE_DB_URL"),
+		Port:  getenv("PORT", "8080"),
+		DBURL: os.Getenv("DATABASE_URL"),
 	}
 	if v := os.Getenv("CORS_ALLOW_ORIGIN"); v != "" {
 		parts := strings.Split(v, ",")
