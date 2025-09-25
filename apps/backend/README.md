@@ -6,6 +6,11 @@
 go mod tidy
 ```
 
+```bash
+cp ./.env.example ./.env
+```
+.envの環境変数を埋める
+
 ## 実行
 
 ```bash
