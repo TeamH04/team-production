@@ -10,7 +10,14 @@ import (
 
 func main() {
 	cfg := config.Load()
-	db := config.OpenDB()
+
+	db, err := config.OpenDB(cfg.DBURL)
+	if err != nil {
+		log.Fatalf("failed to connect database: %v", err)
+	}
+
+	sqlDB, _ := db.DB()
+	defer sqlDB.Close()
 
 	// もし repository 層に渡すならここで依存注入
 	// repo := repository.NewUserRepository(db)
