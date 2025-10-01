@@ -9,7 +9,10 @@ import (
 )
 
 func main() {
-	cfg := config.Load()
+	cfg, err := config.Load()
+	if err != nil {
+		log.Fatalf("failed to load config: %v", err)
+	}
 
 	db, err := config.OpenDB(cfg.DBURL)
 	if err != nil {
@@ -22,7 +25,7 @@ func main() {
 	}
 	defer sqlDB.Close()
 
-	// もし repository 層に渡すならここで依存注入
+	// ここで repository を挿入する場合は適宜初期化する
 	// repo := repository.NewUserRepository(db)
 
 	e := server.NewRouter(cfg, db)
