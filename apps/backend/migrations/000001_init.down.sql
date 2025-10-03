@@ -11,4 +11,5 @@ DROP TABLE IF EXISTS public.users CASCADE;
 -- Example: leave extensions enabled (drop only if created specifically for this service)
 -- DROP EXTENSION IF EXISTS "pgcrypto";
 
+
 COMMIT;

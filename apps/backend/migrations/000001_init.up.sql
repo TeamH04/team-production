@@ -77,4 +77,5 @@ CREATE TABLE IF NOT EXISTS public.menus (
 );
 
 
+
 COMMIT;
