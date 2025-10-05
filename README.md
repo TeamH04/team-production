@@ -11,7 +11,7 @@
 | --- | --- |
 | `apps/mobile` | Expo + React Native クライアント。`README.md` で詳細を管理。 |
 | `apps/backend` | Go 製 API。`README.md` でセットアップやコマンドを記載。 |
-| `infra/supabase` | ローカル DB 用の Docker Compose 定義。 |
+| `supabase` | ローカル DB 用の Docker Compose 定義。 |
 | `docs/` | アーキテクチャ資料などのドキュメント。 |
 
 ## セットアップ
@@ -33,6 +33,7 @@
 | `make install` | pnpm ワークスペース全体の依存をインストール |
 | `make backend` | DB 起動 + Go サーバー起動 (`apps/backend`) |
 | `make backend-db-up` / `make backend-db-down` | DB スタックの起動 / 停止 |
+| `make backend-db-init` | ローカル Docker データベースにマイグレーション適用 (`apps/backend`) |
 | `make backend-test` | Go のユニットテスト実行 |
 | `make frontend` | Expo Dev Server を起動 (`apps/mobile`) |
 | `make dev` | バックエンド + Expo を同時起動 (ポート競合時はログを確認して中断してください) |
@@ -41,9 +42,3 @@
 
 - バックエンドの詳細は `apps/backend/README.md`
 - モバイルの詳細は `apps/mobile/README.md`
-- 全体設計は `docs/` 配下を参照してください。
-
-## 運用メモ
-
-- `make dev` など常駐コマンドは長時間ブロックする場合があります。数分反応が無い場合は停止し、ログ・ポートを確認してください。
-- Windows 環境では Go 実行ファイルや Expo のポートを自動検出するようにしていますが、問題がある場合は README の手順に従い上書き設定してください。

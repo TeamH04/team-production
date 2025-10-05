@@ -2,8 +2,10 @@
 
 .DEFAULT_GOAL := help
 
-MIGRATIONS_DIR := ./migrations
-DB_COMPOSE     := ../../infra/supabase/docker-compose.yml
+MIGRATIONS_DIR         := ./migrations
+DB_COMPOSE             := ../../supabase/docker-compose.yml
+LOCAL_DATABASE_URL    ?= postgres://postgres:postgres@localhost:5432/app?sslmode=disable
+MIGRATE_DATABASE_URL  ?= $(LOCAL_DATABASE_URL)
 
 # Detect Go executable in a cross-platform manner.
 ifeq ($(OS),Windows_NT)
@@ -41,7 +43,7 @@ include .env
 export
 endif
 
-.PHONY: help run-dev serve db-up db-down destroy tools migrate migrate-new test check
+.PHONY: help run-dev serve db-up db-down destroy db-init tools migrate migrate-new test check
 
 help:
 	@echo "Available targets:"
@@ -49,6 +51,7 @@ help:
 	@echo "  make db-up          # start only the database stack"
 	@echo "  make db-down        # stop the database containers"
 	@echo "  make destroy        # stop database and remove volumes"
+	@echo "  make db-init        # run migrations against the local Docker database"
 	@echo "  make serve          # run the Go server (requires a running database)"
 	@echo "  make migrate        # apply SQL migrations"
 	@echo "  make migrate-new name=<name>  # create a new timestamped migration"
@@ -70,13 +73,16 @@ db-down:
 destroy:
 	$(DOCKER_COMPOSE) -f $(DB_COMPOSE) down -v
 
+db-init: db-up
+	migrate -path $(MIGRATIONS_DIR) -database "$(LOCAL_DATABASE_URL)" up
+
 tools:
 	$(call GO_EXEC,install github.com/swaggo/swag/cmd/swag@v1.16.3)
-	$(call GO_EXEC,install github.com/golang-migrate/migrate/v4/cmd/migrate@v4.17.0)
+	$(call GO_EXEC,install -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@v4.17.0)
 
 migrate:
-	$(if $(strip $(DATABASE_URL)),,$(error DATABASE_URL is not set; configure it in .env))
-	migrate -path $(MIGRATIONS_DIR) -database "$(DATABASE_URL)" up
+	$(if $(strip $(MIGRATE_DATABASE_URL)),,$(error MIGRATE_DATABASE_URL is not set; set it or rely on LOCAL_DATABASE_URL))
+	migrate -path $(MIGRATIONS_DIR) -database "$(MIGRATE_DATABASE_URL)" up
 
 migrate-new:
 	$(if $(name),,$(error name is required: use `make migrate-new name=...`))
