@@ -50,6 +50,18 @@ CREATE TABLE IF NOT EXISTS public.favorites (
 );
 
 -- =========================
+-- Menus
+-- =========================
+CREATE TABLE IF NOT EXISTS public.menus (
+    menu_id BIGSERIAL PRIMARY KEY,
+    store_id BIGINT NOT NULL REFERENCES public.stores(store_id) ON DELETE CASCADE,
+    name TEXT NOT NULL,
+    image_url TEXT,
+    description TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- =========================
 -- Reviews
 -- =========================
 CREATE TABLE IF NOT EXISTS public.reviews (
@@ -61,18 +73,6 @@ CREATE TABLE IF NOT EXISTS public.reviews (
     content TEXT,
     image_urls TEXT[],
     posted_at TIMESTAMPTZ DEFAULT NOW(),
-    created_at TIMESTAMPTZ DEFAULT NOW()
-);
-
--- =========================
--- Menus
--- =========================
-CREATE TABLE IF NOT EXISTS public.menus (
-    menu_id BIGSERIAL PRIMARY KEY,
-    store_id BIGINT NOT NULL REFERENCES public.stores(store_id) ON DELETE CASCADE,
-    name TEXT NOT NULL,
-    image_url TEXT,
-    description TEXT,
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
