@@ -45,7 +45,7 @@ async function findFree(start, attempts, host) {
     const child = spawn(PNPM_BIN, args, {
       cwd: REPO_ROOT,
       stdio: 'inherit',
-      shell: false,
+      shell: process.platform === 'win32',
       env: {
         ...process.env,
         EXPO_NO_INTERACTIVE: '1',
