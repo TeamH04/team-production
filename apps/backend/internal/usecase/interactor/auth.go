@@ -23,13 +23,15 @@ func (i *authInteractor) SignUp(in port.SignUpInput) (domain.User, error) {
 		role = "user"
 	}
 
-	if u, ok, err := i.users.FindByID(in.UserID); err != nil {
+	u, ok, err := i.users.FindByID(in.UserID)
+	if err != nil {
 		return domain.User{}, err
-	} else if ok {
+	}
+	if ok {
 		return u, nil
 	}
 
-	u := domain.User{
+	u = domain.User{
 		UserID:    in.UserID,
 		Name:      in.Name,
 		Email:     in.Email,

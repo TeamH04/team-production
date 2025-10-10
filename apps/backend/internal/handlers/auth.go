@@ -22,7 +22,6 @@ func (h *AuthHandler) SignUp(c echo.Context) error {
 	}
 	token := strings.TrimPrefix(authHeader, "Bearer ")
 
-	parsed := &jwt.Token{}
 	claims := jwt.MapClaims{}
 	parsed, err := jwt.ParseWithClaims(token, claims, func(t *jwt.Token) (interface{}, error) {
 		// Validate the signing method
