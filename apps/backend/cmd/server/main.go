@@ -1,11 +1,14 @@
+// apps/backend/cmd/server/main.go
 package main
 
 import (
 	"log"
-	"os"
 
 	"github.com/TeamH04/team-production/apps/backend/internal/config"
+	"github.com/TeamH04/team-production/apps/backend/internal/handlers"
+	"github.com/TeamH04/team-production/apps/backend/internal/repository"
 	"github.com/TeamH04/team-production/apps/backend/internal/server"
+	"github.com/TeamH04/team-production/apps/backend/internal/usecase/interactor"
 )
 
 func main() {
@@ -16,24 +19,29 @@ func main() {
 
 	db, err := config.OpenDB(cfg.DBURL)
 	if err != nil {
-		log.Fatalf("failed to connect database: %v", err)
+		log.Fatalf("db open failed: %v", err)
 	}
 
-	sqlDB, err := db.DB()
-	if err != nil {
-		log.Fatalf("failed to obtain SQL DB instance: %v", err)
-	}
-	defer sqlDB.Close()
+	// Repositories (output ports)
+	userRepo := repository.NewUserRepository(db)
+	storeRepo := repository.NewStoreRepository(db)
+	reviewRepo := repository.NewReviewRepository(db)
 
-	// ここで repository を挿入する場合は適宜初期化する
-	// repo := repository.NewUserRepository(db)
+	// Interactors (use cases / input ports)
+	authUC := interactor.NewAuthInteractor(userRepo)
+	storeQueryUC := interactor.NewStoreQueryInteractor(storeRepo)
+	storeCmdUC := interactor.NewStoreCommandInteractor(storeRepo)
+	reviewCmdUC := interactor.NewReviewCommandInteractor(reviewRepo, storeRepo, userRepo)
 
+	// Handlers (interface adapters)
+	authHandler := handlers.NewAuthHandler(authUC)
+	storeHandler := handlers.NewStoreHandler(storeQueryUC, storeCmdUC)
+	reviewHandler := handlers.NewReviewHandler(reviewCmdUC)
+
+	// Router and routes
 	e := server.NewRouter(cfg, db)
-	addr := ":" + cfg.Port
-	log.Printf("listening on %s", addr)
+	server.RegisterAPIRoutes(e, authHandler, storeHandler, reviewHandler)
 
-	if err := e.Start(addr); err != nil {
-		log.Println("server stopped:", err)
-		os.Exit(1)
-	}
+	log.Printf("listening on :%s", cfg.Port)
+	e.Logger.Fatal(e.Start(":" + cfg.Port))
 }
