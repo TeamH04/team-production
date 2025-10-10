@@ -93,21 +93,17 @@ func initDB() error {
 }
 
 // --- Handlers ---
-// POST /api/auth/signup
-// Supabase OAuth 認証済みユーザーを自前DB(users)に登録するAPI
-type signUpRequest struct {
-	Role string `json:"role"` // "user" or "owner"
-}
-
-func signUpUser(c echo.Context) error {
-	// JWTを取得
+// POST /api/auth/login
+// SupabaseのJWTを検証し、既存ユーザーを返す
+func loginUser(c echo.Context) error {
 	authHeader := c.Request().Header.Get("Authorization")
 	if authHeader == "" {
 		return c.JSON(http.StatusUnauthorized, echo.Map{"error": "missing authorization header"})
 	}
+
 	token := strings.TrimPrefix(authHeader, "Bearer ")
 
-	// Supabase JWT 検証
+	// Supabase JWTを検証
 	parsedToken, err := jwt.Parse(token, func(t *jwt.Token) (interface{}, error) {
 		return []byte(os.Getenv("SUPABASE_JWT_SECRET")), nil
 	})
@@ -129,44 +125,28 @@ func signUpUser(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, echo.Map{"error": "missing user info in token"})
 	}
 
-	// フロントからロールを取得（user / owner）
-	var req signUpRequest
-	if err := c.Bind(&req); err != nil {
-		return c.JSON(http.StatusBadRequest, echo.Map{"error": "invalid JSON format"})
-	}
-
-	// role バリデーション
-	role := strings.ToLower(req.Role)
-	if role != "user" && role != "owner" {
-		role = "user" // デフォルトは一般ユーザー
-	}
-
-	// 既存ユーザー確認
-	var existing User
-	if err := db.Where("user_id = ?", userID).First(&existing).Error; err == nil {
-		// 既に登録済みなら返す
-		return c.JSON(http.StatusOK, existing)
-	}
-
-	// 新規登録
-	newUser := User{
-		UserID:    userID,
-		Name:      name,
-		Email:     email,
-		IconURL:   picture,
-		UserRole:  role, // フロント指定（user or owner）
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
-	}
-
-	if err := db.Create(&newUser).Error; err != nil {
-		return c.JSON(http.StatusInternalServerError, echo.Map{
-			"error":  "failed to create user",
-			"detail": err.Error(),
+	// DBからユーザー検索
+	var user User
+	if err := db.Where("user_id = ?", userID).First(&user).Error; err != nil {
+		// Supabaseには存在するが、自前DBに登録されていない場合
+		// （OAuth経由で新規ユーザーとして登録していないケース）
+		return c.JSON(http.StatusNotFound, echo.Map{
+			"error": "user not found in local database",
+			"hint":  "please sign up first",
 		})
 	}
 
-	return c.JSON(http.StatusCreated, newUser)
+	// ユーザー情報を更新（最新のSupabase情報を反映）
+	user.Name = name
+	user.Email = email
+	user.IconURL = picture
+	user.UpdatedAt = time.Now()
+	db.Save(&user)
+
+	return c.JSON(http.StatusOK, echo.Map{
+		"message": "login successful",
+		"user":    user,
+	})
 }
 
 
