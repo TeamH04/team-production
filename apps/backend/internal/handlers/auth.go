@@ -22,7 +22,15 @@ func (h *AuthHandler) SignUp(c echo.Context) error {
 	}
 	token := strings.TrimPrefix(authHeader, "Bearer ")
 
-	parsed, err := jwt.Parse(token, func(t *jwt.Token) (interface{}, error) { return []byte(os.Getenv("SUPABASE_JWT_SECRET")), nil })
+	parsed := &jwt.Token{}
+	claims := jwt.MapClaims{}
+	parsed, err := jwt.ParseWithClaims(token, claims, func(t *jwt.Token) (interface{}, error) {
+		// Validate the signing method
+		if t.Method.Alg() != jwt.SigningMethodHS256.Alg() {
+			return nil, echo.NewHTTPError(http.StatusUnauthorized, "unexpected signing method")
+		}
+		return []byte(os.Getenv("SUPABASE_JWT_SECRET")), nil
+	})
 	if err != nil || !parsed.Valid {
 		return c.JSON(http.StatusUnauthorized, echo.Map{"error": "invalid token"})
 	}
@@ -31,13 +39,16 @@ func (h *AuthHandler) SignUp(c echo.Context) error {
 		return c.JSON(http.StatusUnauthorized, echo.Map{"error": "invalid claims"})
 	}
 
-	userID, _ := claims["sub"].(string)
-	email, _ := claims["email"].(string)
-	name, _ := claims["name"].(string)
-	picture, _ := claims["picture"].(string)
-	if userID == "" || email == "" {
-		return c.JSON(http.StatusBadRequest, echo.Map{"error": "missing user info in token"})
+	userID, ok := getStringClaim(claims, "sub")
+	if !ok {
+		return c.JSON(http.StatusBadRequest, echo.Map{"error": "missing sub in token"})
 	}
+	email, ok := getStringClaim(claims, "email")
+	if !ok {
+		return c.JSON(http.StatusBadRequest, echo.Map{"error": "missing email in token"})
+	}
+	name, _ := getStringClaim(claims, "name")       // optional
+	picture, _ := getStringClaim(claims, "picture") // optional
 
 	var body struct {
 		Role string `json:"role"`
@@ -51,4 +62,13 @@ func (h *AuthHandler) SignUp(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, echo.Map{"error": err.Error()})
 	}
 	return c.JSON(http.StatusCreated, out)
+}
+
+func getStringClaim(m jwt.MapClaims, key string) (string, bool) {
+	v, ok := m[key]
+	if !ok || v == nil {
+		return "", false
+	}
+	s, ok := v.(string)
+	return s, ok && s != ""
 }
