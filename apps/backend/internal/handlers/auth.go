@@ -256,9 +256,9 @@ func getString(claims jwt.MapClaims, key string) string {
 }
 
 // omitempty対応のためのtimeポインタ変換
-func derefTime(t *time.Time) time.Time {
+func derefTime(t *time.Time) *time.Time {
 	if t != nil {
-		return *t
+		return t
 	}
-	return time.Time{}
+	return nil
 }
