@@ -34,14 +34,25 @@ func NewRouter(cfg *config.Config, db *gorm.DB) *echo.Echo {
 	return e
 }
 
-func RegisterAPIRoutes(e *echo.Echo, auth *handlers.AuthHandler, store *handlers.StoreHandler, review *handlers.ReviewHandler) {
+func RegisterAPIRoutes(e *echo.Echo, auth *handlers.AuthHandler, store *handlers.StoreHandler, review *handlers.ReviewHandler, db *gorm.DB) {
 	api := e.Group("/api")
 	// Auth
 	api.POST("/auth/signup", auth.SignUp)
+	api.POST("/auth/login", auth.Login)
+	api.GET("/auth/me", auth.GetMe)
 	// Stores
 	api.GET("/stores", store.List)
 	api.GET("/stores/:id", store.GetByID)
 	api.POST("/stores", store.Create)
+
+	// admin
+	adminHandler := handlers.NewAdminHandler(db)
+	adminGroup := api.Group("/admin")
+
+	adminGroup.GET("/stores/pending", adminHandler.GetPendingStores)
+	adminGroup.POST("/stores/:id/approve", adminHandler.ApproveStore)
+	adminGroup.POST("/stores/:id/reject", adminHandler.RejectStore)
+
 	// Reviews
 	api.POST("/stores/:id/reviews", review.Post)
 }
