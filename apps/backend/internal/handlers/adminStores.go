@@ -108,7 +108,7 @@ func (h *AdminHandler) GetPendingStores(c echo.Context) error {
 //
 // --- POST /api/admin/stores/:id/approve ---
 //
-func (h *AdminHandler) ApproveStore(c echo.Context) error {
+func (h *AdminHandler) Approve(c echo.Context) error {
 	if _, err := h.requireAdmin(c); err != nil {
 		return err
 	}
