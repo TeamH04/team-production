@@ -38,6 +38,8 @@ func RegisterAPIRoutes(e *echo.Echo, auth *handlers.AuthHandler, store *handlers
 	api := e.Group("/api")
 	// Auth
 	api.POST("/auth/signup", auth.SignUp)
+	api.PUT("/auth/role", auth.UpdateRole)
+
 	// Stores
 	api.GET("/stores", store.List)
 	api.GET("/stores/:id", store.GetByID)

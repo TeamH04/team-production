@@ -262,3 +262,44 @@ func derefTime(t *time.Time) *time.Time {
 	}
 	return nil
 }
+
+// PUT /api/auth/role
+func (h *AuthHandler) UpdateRole(c echo.Context) error {
+	token := extractToken(c)
+	if token == "" {
+		return echo.NewHTTPError(http.StatusUnauthorized, "missing token")
+	}
+
+	claims, err := VerifySupabaseJWT(token, h.JWTSecret)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusUnauthorized, "invalid token")
+	}
+
+	userID, ok := claims["sub"].(string)
+	if !ok {
+		return echo.NewHTTPError(http.StatusUnauthorized, "invalid token payload")
+	}
+
+	var body struct {
+		Role string `json:"role"`
+	}
+	if err := c.Bind(&body); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "invalid JSON body")
+	}
+
+	if body.Role != "user" && body.Role != "owner" {
+		return echo.NewHTTPError(http.StatusBadRequest, "invalid role")
+	}
+
+	// DB更新
+	if err := h.DB.Table("users").
+		Where("user_id = ?", userID).
+		Update("user_role", body.Role).Error; err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to update role")
+	}
+
+	return c.JSON(http.StatusOK, echo.Map{
+		"message": "role updated successfully",
+		"role":    body.Role,
+	})
+}
