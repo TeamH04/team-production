@@ -20,6 +20,7 @@ export interface Shop {
   description: string;
   imageUrl: string;
   tags: string[];
+  menu?: { id: string; name: string }[];
 }
 
 export const SHOPS: Shop[] = [
@@ -33,6 +34,11 @@ export const SHOPS: Shop[] = [
     description: '一杯ずつハンドドリップで淹れるコーヒーと、静かな時間を楽しめる朝カフェ。',
     imageUrl: 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?auto=format&fit=crop&w=600&q=80',
     tags: ['コーヒー', '静かな空間', 'Wi-Fi'],
+    menu: [
+      { id: 'm-1-1', name: 'ハンドドリップ コーヒー' },
+      { id: 'm-1-2', name: 'カフェラテ' },
+      { id: 'm-1-3', name: 'シナモンロール' },
+    ],
   },
   {
     id: 'shop-2',
@@ -44,6 +50,11 @@ export const SHOPS: Shop[] = [
     description: '旬の魚を使ったおまかせコースが人気のカウンター寿司。',
     imageUrl: 'https://images.unsplash.com/photo-1553621042-f6e147245754?auto=format&fit=crop&w=600&q=80',
     tags: ['寿司', 'カウンター', '記念日'],
+    menu: [
+      { id: 'm-2-1', name: 'おまかせコース' },
+      { id: 'm-2-2', name: '白身三昧' },
+      { id: 'm-2-3', name: '穴子一本握り' },
+    ],
   },
   {
     id: 'shop-3',
@@ -88,6 +99,11 @@ export const SHOPS: Shop[] = [
     description: '焼きたてのクロワッサンとサワードウが並ぶ人気ベーカリー。',
     imageUrl: 'https://images.unsplash.com/photo-1544984243-ec57ea16fe25?auto=format&fit=crop&w=600&q=80',
     tags: ['パン', 'モーニング', 'テラス席'],
+    menu: [
+      { id: 'm-6-1', name: 'クロワッサン' },
+      { id: 'm-6-2', name: 'サワードウ' },
+      { id: 'm-6-3', name: 'チョコレートブレッド' },
+    ],
   },
   {
     id: 'shop-7',

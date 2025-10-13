@@ -1,11 +1,14 @@
 import '@/global.css';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
-import { Stack } from 'expo-router';
+import { Stack, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import 'react-native-reanimated';
-import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { FavoritesProvider } from '@/features/favorites/FavoritesContext';
+import { ReviewsProvider } from '@/features/reviews/ReviewsContext';
+import { UserProvider } from '@/features/user/UserContext';
 
 import { useColorScheme } from '@/hooks/useColorScheme';
 
@@ -21,14 +24,25 @@ const styles = StyleSheet.create({
 });
 
 function RootStack() {
+  const insets = useSafeAreaInsets();
+  const segments = useSegments();
+  const first = segments[0] ?? '';
+  const padTop = first !== 'shop' && first !== 'profile' ? insets.top : 0;
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'right', 'left']}>
-      <StatusBar hidden={false} style="dark" />
+    <View
+      style={[
+        styles.container,
+        {
+          paddingTop: padTop,
+        },
+      ]}
+    >
+      <StatusBar hidden={false} style="dark" backgroundColor="transparent" />
       <Stack>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="+not-found" />
       </Stack>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -46,7 +60,13 @@ export default function RootLayout() {
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <SafeAreaProvider>
-        <RootStack />
+        <UserProvider>
+          <FavoritesProvider>
+            <ReviewsProvider>
+              <RootStack />
+            </ReviewsProvider>
+          </FavoritesProvider>
+        </UserProvider>
       </SafeAreaProvider>
     </ThemeProvider>
   );
