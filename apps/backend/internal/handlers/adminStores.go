@@ -26,7 +26,7 @@ const (
 )
 
 // --- 管理者ハンドラー ---
-type AdminHandler struct {
+type AdminStoreHandler struct {
 	DB *gorm.DB
 }
 
