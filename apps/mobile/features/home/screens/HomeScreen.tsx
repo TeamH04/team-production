@@ -1,4 +1,5 @@
 ﻿import { Image } from 'expo-image';
+import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
@@ -46,6 +47,7 @@ const palette = {
 const KEY_EXTRACTOR = (item: Shop) => item.id;
 
 export default function HomeScreen() {
+  const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<CategoryFilter>(CATEGORY_ALL);
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
@@ -118,7 +120,11 @@ export default function HomeScreen() {
   const renderShop = useCallback(({ item }: { item: Shop }) => {
     return (
       <View style={styles.cardShadow}>
-        <View style={styles.cardContainer}>
+        <Pressable
+          accessibilityLabel={`${item.name} の詳細へ`}
+          onPress={() => router.push({ pathname: '/shop/[id]', params: { id: item.id } })}
+          style={styles.cardContainer}
+        >
           <Image source={{ uri: item.imageUrl }} style={styles.cardImage} contentFit="cover" />
           <View style={styles.cardBody}>
             <View style={styles.cardHeader}>
@@ -143,7 +149,7 @@ export default function HomeScreen() {
               ))}
             </View>
           </View>
-        </View>
+        </Pressable>
       </View>
     );
   }, []);
