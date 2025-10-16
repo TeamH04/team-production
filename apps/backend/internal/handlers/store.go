@@ -92,10 +92,14 @@ func CreateStore(c echo.Context) error {
 // PUT /api/stores/:id
 func UpdateStore(c echo.Context) error {
 	db := c.Get("db").(*gorm.DB)
-	id := c.Param("id")
+	idStr := c.Param("id")
+	storeID, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, echo.Map{"error": "invalid store id"})
+	}
 
 	var store domain.Store
-	if err := db.First(&store, id).Error; err != nil {
+	if err := db.First(&store, storeID).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return c.JSON(http.StatusNotFound, echo.Map{"error": "store not found"})
 		}
