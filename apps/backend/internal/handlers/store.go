@@ -70,6 +70,9 @@ func CreateStore(c echo.Context) error {
 	if req.Name == "" || req.Address == "" || req.ThumbnailURL == "" {
 		return c.JSON(http.StatusBadRequest, echo.Map{"error": "missing required fields"})
 	}
+	if req.Latitude == 0.0 || req.Longitude == 0.0 {
+		return c.JSON(http.StatusBadRequest, echo.Map{"error": "invalid latitude or longitude"})
+	}
 
 	store := domain.Store{
 		Name:           req.Name,
