@@ -14,9 +14,9 @@ import (
 )
 
 func main() {
-	dsn := os.Getenv("DATABASE_URL")
-	if dsn == "" {
-		dsn = "postgres://postgres:postgres@127.0.0.1:5432/app?sslmode=disable"
+	cfg, err := config.Load()
+	if err != nil {
+		log.Fatalf("failed to load config: %v", err)
 	}
 
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
