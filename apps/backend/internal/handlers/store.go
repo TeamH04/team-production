@@ -48,15 +48,15 @@ func GetStoreByID(c echo.Context) error {
 
 // POST /api/stores
 type CreateStoreReq struct {
-	Name            string   `json:"name"`
-	Address         string   `json:"address"`
-	ThumbnailURL    string   `json:"thumbnail_url"`
+	Name            string     `json:"name"`
+	Address         string     `json:"address"`
+	ThumbnailURL    string     `json:"thumbnail_url"`
 	OpenedAt        *time.Time `json:"opened_at,omitempty"`
-	Description     *string  `json:"description,omitempty"`
-	OpeningHours    *string  `json:"opening_hours,omitempty"`
-	LandscapePhotos []string `json:"landscape_photos,omitempty"`
-	Latitude        float64  `json:"latitude"`
-	Longitude       float64  `json:"longitude"`
+	Description     *string    `json:"description,omitempty"`
+	OpeningHours    *string    `json:"opening_hours,omitempty"`
+	LandscapePhotos []string   `json:"landscape_photos,omitempty"`
+	Latitude        float64    `json:"latitude"`
+	Longitude       float64    `json:"longitude"`
 }
 
 func CreateStore(c echo.Context) error {
@@ -75,15 +75,15 @@ func CreateStore(c echo.Context) error {
 	}
 
 	store := domain.Store{
-		Name:           req.Name,
-		Address:        req.Address,
-		ThumbnailURL:   req.ThumbnailURL,
-		OpenedAt:       req.OpenedAt,
-		Description:    req.Description,
+		Name:            req.Name,
+		Address:         req.Address,
+		ThumbnailURL:    req.ThumbnailURL,
+		OpenedAt:        req.OpenedAt,
+		Description:     req.Description,
 		LandscapePhotos: pq.StringArray(req.LandscapePhotos),
-		OpeningHours:   req.OpeningHours,
-		Latitude:       req.Latitude,
-		Longitude:      req.Longitude,
+		OpeningHours:    req.OpeningHours,
+		Latitude:        req.Latitude,
+		Longitude:       req.Longitude,
 	}
 
 	if err := db.Create(&store).Error; err != nil {
@@ -118,6 +118,11 @@ func UpdateStore(c echo.Context) error {
 	if err := db.Model(&store).Updates(updateData).Error; err != nil {
 		return c.JSON(http.StatusInternalServerError, echo.Map{"error": err.Error()})
 	}
+
+	if err := db.Preload("Menus").Preload("Reviews").First(&store, storeID).Error; err != nil {
+		return c.JSON(http.StatusInternalServerError, echo.Map{"error": "failed to fetch updated store"})
+	}
+
 	return c.JSON(http.StatusOK, store)
 }
 
