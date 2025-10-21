@@ -23,10 +23,10 @@ const styles = StyleSheet.create({
 function RootStack() {
   return (
     <SafeAreaView style={styles.container} edges={['top', 'right', 'left']}>
-      <StatusBar hidden={false} style="dark" />
+      <StatusBar hidden={false} style='dark' />
       <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="+not-found" />
+        <Stack.Screen name='(tabs)' options={{ headerShown: false }} />
+        <Stack.Screen name='+not-found' />
       </Stack>
     </SafeAreaView>
   );
