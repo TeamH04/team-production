@@ -13,7 +13,7 @@ const METRO_START = parseInt(process.env.METRO_PORT || '8081', 10);
 const METRO_ATTEMPTS = parseInt(process.env.METRO_PORT_ATTEMPTS || '10', 10);
 
 function isFree(port, host = '0.0.0.0') {
-  return new Promise((resolve) => {
+  return new Promise(resolve => {
     const server = net.createServer();
     server.once('error', () => resolve(false));
     server.once('listening', () => server.close(() => resolve(true)));
@@ -35,11 +35,16 @@ async function findFree(start, attempts, host) {
     console.log(`[start-dev] expoPort=${expoPort} metroPort=${metroPort}`);
 
     const args = [
-      '--dir', MOBILE_DIR,
-      'exec', 'expo', 'start',
+      '--dir',
+      MOBILE_DIR,
+      'exec',
+      'expo',
+      'start',
       '--non-interactive',
-      '--port', String(expoPort),
-      '--metro-port', String(metroPort),
+      '--port',
+      String(expoPort),
+      '--metro-port',
+      String(metroPort),
     ];
 
     const child = spawn(PNPM_BIN, args, {
@@ -54,7 +59,7 @@ async function findFree(start, attempts, host) {
       },
     });
 
-    child.on('error', (err) => {
+    child.on('error', err => {
       console.error('[start-dev] spawn error:', err);
       process.exit(err.errno ?? 1);
     });

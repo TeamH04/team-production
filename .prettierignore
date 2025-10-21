@@ -1,0 +1,57 @@
+# Dependencies
+node_modules
+**/node_modules
+
+# Build outputs
+dist
+build
+**/dist
+**/build
+**/.expo
+**/.next
+**/out
+
+# Environment files
+.env
+.env.local
+.env.production
+.env.development
+
+# Logs
+*.log
+logs
+**/*.log
+
+# Cache directories
+.cache
+**/.cache
+.parcel-cache
+**/.parcel-cache
+
+# Generated files
+coverage
+**coverage
+.nyc_output
+
+# Lock files
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Database
+*.db
+*.sqlite
+
+# Go specific
+go.sum
+apps/backend/go.sum
+
+# Mobile specific
+apps/mobile/ios
+apps/mobile/android
+apps/mobile/.expo
+apps/mobile/web-build
+
+# Documentation
+CHANGELOG.md
+LICENSE

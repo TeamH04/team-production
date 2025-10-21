@@ -7,12 +7,12 @@
 
 ## ディレクトリ
 
-| パス | 説明 |
-| --- | --- |
-| `apps/mobile` | Expo + React Native クライアント。`README.md` で詳細を管理。 |
-| `apps/backend` | Go 製 API。`README.md` でセットアップやコマンドを記載。 |
-| `supabase` | ローカル DB 用の Docker Compose 定義。 |
-| `docs/` | アーキテクチャ資料などのドキュメント。 |
+| パス           | 説明                                                         |
+| -------------- | ------------------------------------------------------------ |
+| `apps/mobile`  | Expo + React Native クライアント。`README.md` で詳細を管理。 |
+| `apps/backend` | Go 製 API。`README.md` でセットアップやコマンドを記載。      |
+| `supabase`     | ローカル DB 用の Docker Compose 定義。                       |
+| `docs/`        | アーキテクチャ資料などのドキュメント。                       |
 
 ## セットアップ
 
@@ -28,15 +28,15 @@
 
 ## コマンド
 
-| コマンド | 説明 |
-| --- | --- |
-| `make install` | pnpm ワークスペース全体の依存をインストール |
-| `make backend` | DB 起動 + Go サーバー起動 (`apps/backend`) |
-| `make backend-db-up` / `make backend-db-down` | DB スタックの起動 / 停止 |
-| `make backend-db-init` | ローカル Docker データベースにマイグレーション適用 (`apps/backend`) |
-| `make backend-test` | Go のユニットテスト実行 |
-| `make frontend` | Expo Dev Server を起動 (`apps/mobile`) |
-| `make dev` | バックエンド + Expo を同時起動 (ポート競合時はログを確認して中断してください) |
+| コマンド                                      | 説明                                                                          |
+| --------------------------------------------- | ----------------------------------------------------------------------------- |
+| `make install`                                | pnpm ワークスペース全体の依存をインストール                                   |
+| `make backend`                                | DB 起動 + Go サーバー起動 (`apps/backend`)                                    |
+| `make backend-db-up` / `make backend-db-down` | DB スタックの起動 / 停止                                                      |
+| `make backend-db-init`                        | ローカル Docker データベースにマイグレーション適用 (`apps/backend`)           |
+| `make backend-test`                           | Go のユニットテスト実行                                                       |
+| `make frontend`                               | Expo Dev Server を起動 (`apps/mobile`)                                        |
+| `make dev`                                    | バックエンド + Expo を同時起動 (ポート競合時はログを確認して中断してください) |
 
 ## ドキュメント
 
