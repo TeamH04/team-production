@@ -10,7 +10,6 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/TeamH04/team-production/apps/backend/internal/config"
-	"github.com/TeamH04/team-production/apps/backend/internal/handlers"
 )
 
 func main() {
@@ -21,7 +20,7 @@ func main() {
 
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
-		log.Fatalf("failed to connect db: %v", err)
+		log.Fatalf("failed to connect database: %v", err)
 	}
 
 	e := echo.New()

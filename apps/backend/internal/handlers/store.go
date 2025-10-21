@@ -115,11 +115,16 @@ func UpdateStore(c echo.Context) error {
 	}
 
 	updateData.UpdatedAt = time.Now()
-	if err := db.Model(&store).Updates(updateData).Error; err != nil {
+	if err := db.Model(&store).
+		Updates(updateData).
+		Error; err != nil {
 		return c.JSON(http.StatusInternalServerError, echo.Map{"error": err.Error()})
 	}
 
-	if err := db.Preload("Menus").Preload("Reviews").First(&store, storeID).Error; err != nil {
+	if err := db.Preload("Menus").
+		Preload("Reviews").
+		First(&store, storeID).
+		Error; err != nil {
 		return c.JSON(http.StatusInternalServerError, echo.Map{"error": "failed to fetch updated store"})
 	}
 
