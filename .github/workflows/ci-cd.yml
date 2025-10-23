@@ -229,7 +229,8 @@ jobs:
         run: |
           go install github.com/securego/gosec/v2/cmd/gosec@latest
           # Run gosec and output SARIF
-          $GOPATH/bin/gosec -no-fail -fmt sarif -out results.sarif ./apps/backend/...
+          cd apps/backend
+          $HOME/go/bin/gosec -no-fail -fmt sarif -out ../../results.sarif ./...
 
       - name: Upload SARIF file
         if: always()
