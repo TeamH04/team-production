@@ -15,21 +15,21 @@ permissions:
 
 jobs:
   auto-merge:
-    name: 🤖 Auto-merge Dependabot PRs
+    name: Auto-merge Dependabot PRs
     runs-on: ubuntu-latest
     if: github.actor == 'dependabot[bot]'
     
     steps:
-      - name: 📥 Checkout
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: 🔍 Get Dependabot metadata
+      - name: Get Dependabot metadata
         id: metadata
         uses: dependabot/fetch-metadata@v2
         with:
           github-token: "${{ secrets.GITHUB_TOKEN }}"
 
-      - name: 🧪 Check if CI is passing
+      - name: Check if CI is passing
         id: ci-status
         uses: actions/github-script@v7
         with:
@@ -58,7 +58,7 @@ jobs:
             core.setOutput('ci-passing', allPassed);
             return allPassed;
 
-      - name: 🚦 Auto-approve and merge minor/patch updates
+  - name: Auto-approve and merge minor/patch updates
         if: |
           steps.ci-status.outputs.ci-passing == 'true' && (
             steps.metadata.outputs.update-type == 'version-update:semver-minor' ||
@@ -71,12 +71,12 @@ jobs:
           # Enable auto-merge with squash
           gh pr merge --auto --squash "$PR_URL"
           
-          echo "✅ Auto-approved and enabled auto-merge for ${{ steps.metadata.outputs.update-type }} update"
+          echo "Auto-approved and enabled auto-merge for ${{ steps.metadata.outputs.update-type }} update"
         env:
           PR_URL: ${{ github.event.pull_request.html_url }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: ⚠️ Comment on major updates
+  - name: Comment on major updates
         if: |
           steps.metadata.outputs.update-type == 'version-update:semver-major'
         uses: actions/github-script@v7
@@ -86,7 +86,7 @@ jobs:
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: `## ⚠️ Major Version Update Detected
+              body: `## Major Version Update Detected
               
               This PR contains a **major version update** that may include breaking changes:
               
@@ -94,7 +94,7 @@ jobs:
               **Update Type:** \`${{ steps.metadata.outputs.update-type }}\`
               **Compatibility Score:** ${{ steps.metadata.outputs.compatibility-score }}%
               
-              ### 🔍 Manual Review Required
+              ### Manual Review Required
               - [ ] Review changelog for breaking changes
               - [ ] Test thoroughly in development environment
               - [ ] Update code if necessary
@@ -103,7 +103,7 @@ jobs:
               **Auto-merge is disabled for this PR.** Please review and merge manually after testing.`
             });
 
-      - name: 🔒 Comment on security updates
+  - name: Comment on security updates
         if: steps.metadata.outputs.alert-state == 'OPEN'
         uses: actions/github-script@v7
         with:
@@ -112,7 +112,7 @@ jobs:
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: `## 🔒 Security Update Available
+              body: `## Security Update Available
               
               This PR addresses a security vulnerability:
               
@@ -121,7 +121,7 @@ jobs:
               **CVSS Score:** ${{ steps.metadata.outputs.cvss }}
               **GHSA ID:** ${{ steps.metadata.outputs.ghsa-id }}
               
-              ### 🚨 Recommended Action
+              ### Recommended Action
               - Review the security advisory
               - Consider prioritizing this update
               - Test in development environment
@@ -130,21 +130,21 @@ jobs:
             });
 
   dependency-update-notification:
-    name: 📢 Dependency Update Summary
+  name: Dependency Update Summary
     runs-on: ubuntu-latest
     if: github.actor == 'dependabot[bot]' && github.event.action == 'opened'
     
     steps:
-      - name: 📥 Checkout
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: 🔍 Get Dependabot metadata
+      - name: Get Dependabot metadata
         id: metadata
         uses: dependabot/fetch-metadata@v2
         with:
           github-token: "${{ secrets.GITHUB_TOKEN }}"
 
-      - name: 📊 Generate update summary
+      - name: Generate update summary
         uses: actions/github-script@v7
         with:
           script: |
@@ -152,31 +152,31 @@ jobs:
             const packageNames = '${{ steps.metadata.outputs.dependency-names }}'.split(',');
             const packageType = '${{ steps.metadata.outputs.package-ecosystem }}';
             
-            let emoji = '📦';
+            let emoji = '';
             let urgency = 'Normal';
             let autoMerge = 'Yes (if CI passes)';
             
             switch(updateType) {
               case 'version-update:semver-major':
-                emoji = '🔴';
+                emoji = '';
                 urgency = 'Manual Review Required';
                 autoMerge = 'No';
                 break;
               case 'version-update:semver-minor':
-                emoji = '🟡';
+                emoji = '';
                 break;
               case 'version-update:semver-patch':
-                emoji = '🟢';
+                emoji = '';
                 break;
             }
             
             if ('${{ steps.metadata.outputs.alert-state }}' === 'OPEN') {
-              emoji = '🔒';
+              emoji = '';
               urgency = 'Security Update';
               autoMerge = 'Yes (prioritized)';
             }
             
-            const summary = `${emoji} **Dependency Update Summary**
+            const summary = `Dependency Update Summary
             
             | Field | Value |
             |-------|-------|
@@ -184,10 +184,10 @@ jobs:
             | Ecosystem | \`${packageType}\` |
             | Update Type | \`${updateType}\` |
             | Urgency | ${urgency} |
-            | Auto-merge | ${autoMerge} |
+            | Auto-erge | ${autoMerge} |
             | Compatibility Score | ${{ steps.metadata.outputs.compatibility-score }}% |
             
-            ### 🔄 Next Steps
+            ### Next Steps
             ${autoMerge === 'No' ? 
               '- Manual review and testing required\n- Check for breaking changes\n- Update code if necessary' : 
               '- CI checks will run automatically\n- PR will auto-merge if all checks pass\n- Monitor for any issues after merge'
@@ -202,15 +202,15 @@ jobs:
 
   # 週次レポート生成
   weekly-dependency-report:
-    name: 📊 Weekly Dependency Report
+  name: Weekly Dependency Report
     runs-on: ubuntu-latest
     if: github.event_name == 'schedule' # 別途スケジュールトリガーを追加する場合
     
     steps:
-      - name: 📥 Checkout
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: 📊 Generate dependency report
+      - name: Generate dependency report
         uses: actions/github-script@v7
         with:
           script: |
@@ -231,22 +231,22 @@ jobs:
             const open = recentPRs.filter(pr => pr.state === 'open');
             const closed = recentPRs.filter(pr => pr.state === 'closed' && !pr.merged_at);
             
-            const report = `## 📊 Weekly Dependency Update Report
+            const report = `## Weekly Dependency Update Report
             
             **Report Period:** ${lastWeek.toISOString().split('T')[0]} - ${new Date().toISOString().split('T')[0]}
             
-            ### 📈 Summary
+            ### Summary
             - **Merged:** ${merged.length} PRs
             - **Open:** ${open.length} PRs
             - **Closed (not merged):** ${closed.length} PRs
             
-            ### 🔀 Recent Merges
+            ### Recent Merges
             ${merged.slice(0, 10).map(pr => `- [${pr.title}](${pr.html_url})`).join('\n')}
             
-            ### 🔄 Currently Open
+            ### Currently Open
             ${open.slice(0, 5).map(pr => `- [${pr.title}](${pr.html_url})`).join('\n')}
             
-            ### 💡 Recommendations
+            ### Recommendations
             - Review open security updates immediately
             - Consider updating local development environments
             - Check for any breaking changes in recent updates

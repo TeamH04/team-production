@@ -35,7 +35,7 @@ env:
 jobs:
   # ----- Tests with different Go versions -----
   test-matrix:
-    name: 🧪 Test (Go ${{ matrix.go-version }})
+    name: Test (Go ${{ matrix.go-version }})
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -61,34 +61,34 @@ jobs:
           - 5432:5432
 
     steps:
-      - name: 📥 Checkout
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: 🏗 Setup Go ${{ matrix.go-version }}
+      - name: Setup Go ${{ matrix.go-version }}
         uses: actions/setup-go@v5
         with:
           go-version: ${{ matrix.go-version }}
           cache-dependency-path: apps/backend/go.sum
 
-      - name: 📦 Install dependencies
+      - name: Install dependencies
         run: go mod download
 
-      - name: 🔍 Run go vet
+      - name: Run go vet
         run: go vet ./...
 
-      - name: 🏃 Run tests with race detector
+      - name: Run tests with race detector
         env:
           DATABASE_URL: postgres://postgres:postgres@localhost:5432/test_app?sslmode=disable
         run: |
           go test -v -race -coverprofile=coverage.out -covermode=atomic ./...
 
-      - name: 📊 Generate coverage report
+      - name: Generate coverage report
         if: matrix.go-version == env.GO_VERSION
         run: |
           go tool cover -html=coverage.out -o coverage.html
           go tool cover -func=coverage.out
 
-      - name: 📦 Upload coverage to Codecov
+      - name: Upload coverage to Codecov
         if: matrix.go-version == env.GO_VERSION
         uses: codecov/codecov-action@v4
         with:
@@ -96,7 +96,7 @@ jobs:
           flags: backend
           token: ${{ secrets.CODECOV_TOKEN }}
 
-      - name: 📦 Upload coverage artifact
+      - name: Upload coverage artifact
         if: matrix.go-version == env.GO_VERSION
         uses: actions/upload-artifact@v4
         with:
@@ -106,7 +106,7 @@ jobs:
 
   # ----- Benchmark & Performance tests -----
   benchmark:
-    name: 🏃‍♂️ Benchmark
+    name: Benchmark
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
     defaults:
@@ -129,19 +129,19 @@ jobs:
           - 5432:5432
 
     steps:
-      - name: 📥 Checkout
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: 🏗 Setup Go
+      - name: Setup Go
         uses: actions/setup-go@v5
         with:
           go-version: ${{ env.GO_VERSION }}
           cache-dependency-path: apps/backend/go.sum
 
-      - name: 📦 Install dependencies
+      - name: Install dependencies
         run: go mod download
 
-      - name: 🏃‍♂️ Run benchmarks
+      - name: Run benchmarks
         env:
           DATABASE_URL: postgres://postgres:postgres@localhost:5432/test_app?sslmode=disable
         run: |
@@ -152,7 +152,7 @@ jobs:
             echo "No benchmarks found, skipping..."
           fi
 
-      - name: 💬 Comment benchmark results
+      - name: Comment benchmark results
         if: github.event_name == 'pull_request'
         uses: actions/github-script@v7
         with:
@@ -163,7 +163,7 @@ jobs:
             if (fs.existsSync(path)) {
               const benchmark = fs.readFileSync(path, 'utf8');
               
-              const comment = `## 🏃‍♂️ Benchmark Results
+               const comment = `## Benchmark Results
               
               \`\`\`
               ${benchmark}
@@ -181,44 +181,44 @@ jobs:
 
   # ----- Security scanning -----
   security:
-    name: 🔒 Security Scan
+    name: Security Scan
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: apps/backend
     
     steps:
-      - name: 📥 Checkout
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: 🏗 Setup Go
+      - name: Setup Go
         uses: actions/setup-go@v5
         with:
           go-version: ${{ env.GO_VERSION }}
           cache-dependency-path: apps/backend/go.sum
 
-      - name: 📦 Install dependencies
+      - name: Install dependencies
         run: go mod download
 
-      - name: 🔒 Run Gosec Security Scanner
-        uses: securecodewarrior/github-action-gosec@master
-        with:
-          args: '-fmt sarif -out results.sarif ./apps/backend/...'
+      - name: Run Gosec Security Scanner (gosec)
+        run: |
+          go install github.com/securego/gosec/v2/cmd/gosec@latest
+          $GOPATH/bin/gosec -fmt sarif -out results.sarif ./...
 
-      - name: 📊 Upload SARIF file
+      - name: Upload SARIF file
         if: always()
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: results.sarif
 
-      - name: 🔍 Run govulncheck
+      - name: Run govulncheck
         run: |
           go install golang.org/x/vuln/cmd/govulncheck@latest
           govulncheck ./...
 
   # ----- Build multi-platform binaries -----
   build:
-    name: 🏗 Build (${{ matrix.os }}/${{ matrix.arch }})
+    name: Build (${{ matrix.os }}/${{ matrix.arch }})
     runs-on: ubuntu-latest
     needs: [test-matrix, security]
     defaults:
@@ -240,19 +240,19 @@ jobs:
             arch: amd64
     
     steps:
-      - name: 📥 Checkout
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: 🏗 Setup Go
+      - name: Setup Go
         uses: actions/setup-go@v5
         with:
           go-version: ${{ env.GO_VERSION }}
           cache-dependency-path: apps/backend/go.sum
 
-      - name: 📦 Install dependencies
+      - name: Install dependencies
         run: go mod download
 
-      - name: 🏗 Build binary
+      - name: Build binary
         env:
           GOOS: ${{ matrix.os }}
           GOARCH: ${{ matrix.arch }}
@@ -267,7 +267,7 @@ jobs:
             -o "bin/${BINARY_NAME}" \
             ./cmd/server
 
-      - name: 📦 Upload binary artifact
+      - name: Upload binary artifact
         uses: actions/upload-artifact@v4
         with:
           name: backend-${{ matrix.os }}-${{ matrix.arch }}
@@ -276,7 +276,7 @@ jobs:
 
   # ----- Docker build & push -----
   docker:
-    name: 🐳 Docker Build & Push
+    name: Docker Build & Push
     runs-on: ubuntu-latest
     needs: [build]
     if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
@@ -285,10 +285,10 @@ jobs:
         working-directory: apps/backend
     
     steps:
-      - name: 📥 Checkout
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: 🏗 Set up Docker Buildx
+      - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
       - name: 🔑 Log in to Container Registry
@@ -298,7 +298,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: 📦 Extract metadata
+      - name: Extract metadata
         id: meta
         uses: docker/metadata-action@v5
         with:
@@ -309,7 +309,7 @@ jobs:
             type=sha,prefix={{branch}}-
             type=raw,value=latest,enable={{is_default_branch}}
 
-      - name: 🐳 Create Dockerfile
+      - name: Create Dockerfile
         run: |
           cat > Dockerfile << 'EOF'
           # Multi-stage build for minimal production image
@@ -350,7 +350,7 @@ jobs:
           CMD ["./server"]
           EOF
 
-      - name: 🐳 Build and push Docker image
+      - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
           context: apps/backend
@@ -363,14 +363,14 @@ jobs:
 
   # ----- Deploy to staging -----
   deploy-staging:
-    name: 🚀 Deploy to Staging
+    name: Deploy to Staging
     if: github.ref == 'refs/heads/develop' || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'staging')
     runs-on: ubuntu-latest
     needs: [docker]
     environment: staging
     
     steps:
-      - name: 🚀 Deploy to staging environment
+      - name: Deploy to staging environment
         run: |
           echo "Deploying to staging..."
           # ここに実際のデプロイロジックを追加
@@ -389,14 +389,14 @@ jobs:
 
   # ----- Deploy to production -----
   deploy-production:
-    name: 🚀 Deploy to Production
+    name: Deploy to Production
     if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'production'))
     runs-on: ubuntu-latest
     needs: [docker]
     environment: production
     
     steps:
-      - name: 🚀 Deploy to production environment
+      - name: Deploy to production environment
         run: |
           echo "Deploying to production..."
           # ここに実際のデプロイロジックを追加
@@ -404,21 +404,21 @@ jobs:
           # プロダクション環境へのデプロイ設定
           # Blue-Green deploymentやRolling deploymentの実装も検討
 
-      - name: 🔍 Health check
+      - name: Health check
         run: |
           echo "Performing health check..."
           # デプロイ後のヘルスチェック
           # curl -f https://your-api.com/health || exit 1
 
-      - name: 📢 Notify deployment success
+      - name: Notify deployment success
         if: success()
         run: |
-          echo "✅ Production deployment successful!"
+          echo "Production deployment successful!"
           # Slack, Discord, メール通知など
 
   # ----- Database migrations -----
   migrate:
-    name: 🗄️ Run Database Migrations
+    name: Run Database Migrations
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     runs-on: ubuntu-latest
     needs: [deploy-production]
@@ -428,19 +428,19 @@ jobs:
         working-directory: apps/backend
     
     steps:
-      - name: 📥 Checkout
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: 🏗 Setup Go
+      - name: Setup Go
         uses: actions/setup-go@v5
         with:
           go-version: ${{ env.GO_VERSION }}
 
-      - name: 📦 Install migrate tool
+      - name: Install migrate tool
         run: |
           go install -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@latest
 
-      - name: 🗄️ Run migrations
+      - name: Run migrations
         env:
           DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}
         run: |

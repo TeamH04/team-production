@@ -12,41 +12,38 @@ concurrency:
 
 env:
   NODE_VERSION: '20.x'
-  PNPM_VERSION: '10.17.1'
   GO_VERSION: '1.24.0'
 
 jobs:
   # ----- Quality Checks -----
   lint:
-    name: 🔍 Lint & Format Check
+    name: Lint & Format Check
     runs-on: ubuntu-latest
     steps:
-      - name: 📥 Checkout
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: 📦 Setup pnpm
+      - name: Setup pnpm
         uses: pnpm/action-setup@v4
-        with:
-          version: ${{ env.PNPM_VERSION }}
 
-      - name: 🏗 Setup Node.js
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'pnpm'
 
-      - name: 📦 Install dependencies
+      - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: 🧹 Lint
+      - name: Lint
         run: pnpm run lint
 
-      - name: 🎨 Format check
+      - name: Format check
         run: pnpm run format:check
 
   # ----- Backend Tests & Build -----
   backend-test:
-    name: 🧪 Backend Tests
+    name: Backend Tests
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -68,32 +65,32 @@ jobs:
           - 5432:5432
 
     steps:
-      - name: 📥 Checkout
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: 🏗 Setup Go
+      - name: Setup Go
         uses: actions/setup-go@v5
         with:
           go-version: ${{ env.GO_VERSION }}
           cache-dependency-path: apps/backend/go.sum
 
-      - name: 📦 Install dependencies
+      - name: Install dependencies
         run: go mod download
 
-      - name: 🔧 Wait for PostgreSQL
+      - name: Wait for PostgreSQL
         run: |
           until pg_isready -h localhost -p 5432 -U postgres; do
             echo "Waiting for postgres..."
             sleep 2
           done
 
-      - name: 🧪 Run tests
+      - name: Run tests
         env:
           DATABASE_URL: postgres://postgres:postgres@localhost:5432/test_app?sslmode=disable
         run: |
           go test -v -race -coverprofile=coverage.out ./...
 
-      - name: 📊 Upload coverage to Codecov
+      - name: Upload coverage to Codecov
         if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
         uses: codecov/codecov-action@v4
         with:
@@ -102,7 +99,7 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
 
   backend-build:
-    name: 🏗 Backend Build
+    name: Backend Build
     runs-on: ubuntu-latest
     needs: [lint, backend-test]
     defaults:
@@ -110,23 +107,23 @@ jobs:
         working-directory: apps/backend
     
     steps:
-      - name: 📥 Checkout
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: 🏗 Setup Go
+      - name: Setup Go
         uses: actions/setup-go@v5
         with:
           go-version: ${{ env.GO_VERSION }}
           cache-dependency-path: apps/backend/go.sum
 
-      - name: 📦 Install dependencies
+      - name: Install dependencies
         run: go mod download
 
-      - name: 🏗 Build binary
+      - name: Build binary
         run: |
           CGO_ENABLED=0 GOOS=linux go build -ldflags="-w -s" -o bin/server ./cmd/server
 
-      - name: 📦 Upload build artifact
+      - name: Upload build artifact
         if: github.ref == 'refs/heads/main'
         uses: actions/upload-artifact@v4
         with:
@@ -136,38 +133,36 @@ jobs:
 
   # ----- Mobile Tests & Build -----
   mobile-test:
-    name: 🧪 Mobile Tests
+    name: Mobile Tests
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: apps/mobile
     
     steps:
-      - name: 📥 Checkout
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: 📦 Setup pnpm
+      - name: Setup pnpm
         uses: pnpm/action-setup@v4
-        with:
-          version: ${{ env.PNPM_VERSION }}
 
-      - name: 🏗 Setup Node.js
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'pnpm'
 
-      - name: 📦 Install dependencies
+      - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: 🧹 Lint mobile
+      - name: Lint mobile
         run: pnpm run lint
 
       # テストがある場合はここで実行
-      # - name: 🧪 Run tests
+      # - name: Run tests
       #   run: pnpm test
 
-      - name: 🎨 Format check mobile
+      - name: Format check mobile
         run: |
           cd ../..
           pnpm run format:mobile
@@ -175,7 +170,7 @@ jobs:
           git diff --exit-code || (echo "Code is not formatted. Please run 'pnpm run format:mobile'" && exit 1)
 
   mobile-build:
-    name: 🏗 Mobile Build Check
+    name: Mobile Build Check
     runs-on: ubuntu-latest
     needs: [lint, mobile-test]
     defaults:
@@ -183,63 +178,60 @@ jobs:
         working-directory: apps/mobile
     
     steps:
-      - name: 📥 Checkout
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: 📦 Setup pnpm
+      - name: Setup pnpm
         uses: pnpm/action-setup@v4
-        with:
-          version: ${{ env.PNPM_VERSION }}
 
-      - name: 🏗 Setup Node.js
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'pnpm'
 
-      - name: 📦 Install dependencies
+      - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: 🏗 Check Expo build configuration
+      - name: Check Expo build configuration
         run: |
           npx expo export --platform web --output-dir dist
           echo "Build configuration is valid"
 
   # ----- Security & Dependency Audit -----
   security-audit:
-    name: 🔒 Security Audit
+    name: Security Audit
     runs-on: ubuntu-latest
     steps:
-      - name: 📥 Checkout
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: 📦 Setup pnpm
+      - name: Setup pnpm
         uses: pnpm/action-setup@v4
-        with:
-          version: ${{ env.PNPM_VERSION }}
 
-      - name: 🏗 Setup Node.js
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'pnpm'
 
-      - name: 🔒 Run security audit
+      - name: Run security audit
         run: |
           pnpm audit --audit-level moderate
-          
-      - name: 🏗 Setup Go
+
+      - name: Setup Go
         uses: actions/setup-go@v5
         with:
           go-version: ${{ env.GO_VERSION }}
           cache-dependency-path: apps/backend/go.sum
 
-      - name: 🔒 Run Go security check
-        uses: securecodewarrior/github-action-gosec@master
-        with:
-          args: '-no-fail -fmt sarif -out results.sarif ./apps/backend/...'
+      - name: Run Go security check (gosec)
+        run: |
+          go install github.com/securego/gosec/v2/cmd/gosec@latest
+          # Run gosec and output SARIF
+          $GOPATH/bin/gosec -no-fail -fmt sarif -out results.sarif ./apps/backend/...
 
-      - name: 📊 Upload SARIF file
+      - name: Upload SARIF file
         if: always()
         uses: github/codeql-action/upload-sarif@v3
         with:
@@ -247,17 +239,17 @@ jobs:
 
   # ----- Deployment (Production only) -----
   deploy-backend:
-    name: 🚀 Deploy Backend
+    name: Deploy Backend
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     runs-on: ubuntu-latest
     needs: [backend-build, security-audit]
     environment: production
     
     steps:
-      - name: 📥 Checkout
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: 📦 Download build artifact
+      - name: Download build artifact
         uses: actions/download-artifact@v4
         with:
           name: backend-binary
@@ -265,7 +257,7 @@ jobs:
 
       # デプロイ先に応じてこのセクションをカスタマイズ
       # 例：Docker build & push, Railway, Render など
-      - name: 🐳 Build Docker image
+      - name: Build Docker image
         run: |
           # Dockerfileが存在する場合
           if [ -f "apps/backend/Dockerfile" ]; then
@@ -278,37 +270,35 @@ jobs:
           fi
 
   deploy-mobile:
-    name: 🚀 Deploy Mobile Preview
+    name: Deploy Mobile Preview
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     needs: [mobile-build]
     
     steps:
-      - name: 📥 Checkout
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: 📦 Setup pnpm
+      - name: Setup pnpm
         uses: pnpm/action-setup@v4
-        with:
-          version: ${{ env.PNPM_VERSION }}
 
-      - name: 🏗 Setup Node.js
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'pnpm'
 
-      - name: 📦 Install dependencies
+      - name: Install dependencies
         working-directory: apps/mobile
         run: pnpm install --frozen-lockfile
 
-      - name: 🏗 Setup Expo
+      - name: Setup Expo
         uses: expo/expo-github-action@v8
         with:
           expo-version: latest
           token: ${{ secrets.EXPO_TOKEN }}
 
-      - name: 📱 Create Expo Preview
+      - name: Create Expo Preview
         if: env.EXPO_TOKEN != ''
         working-directory: apps/mobile
         run: |
