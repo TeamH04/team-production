@@ -1,0 +1,140 @@
+version: 2
+updates:
+  # ----- Frontend/Mobile (pnpm) -----
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Asia/Tokyo"
+    open-pull-requests-limit: 10
+    reviewers:
+      - "TeamH04/core-team"
+    assignees:
+      - "TeamH04/core-team"
+    commit-message:
+      prefix: "deps"
+      prefix-development: "deps-dev"
+      include: "scope"
+    groups:
+      react-ecosystem:
+        patterns:
+          - "react*"
+          - "@react*"
+          - "@types/react*"
+      expo-ecosystem:
+        patterns:
+          - "expo*"
+          - "@expo/*"
+      testing-tools:
+        patterns:
+          - "*jest*"
+          - "@testing-library/*"
+          - "vitest*"
+      build-tools:
+        patterns:
+          - "vite*"
+          - "webpack*"
+          - "babel*"
+          - "@babel/*"
+      linting-formatting:
+        patterns:
+          - "eslint*"
+          - "@eslint/*"
+          - "prettier*"
+          - "@typescript-eslint/*"
+
+  # ----- Mobile App -----
+  - package-ecosystem: "npm"
+    directory: "/apps/mobile"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:30"
+      timezone: "Asia/Tokyo"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "TeamH04/mobile-team"
+    assignees:
+      - "TeamH04/mobile-team"
+    commit-message:
+      prefix: "deps(mobile)"
+      prefix-development: "deps-dev(mobile)"
+      include: "scope"
+
+  # ----- Backend (Go) -----
+  - package-ecosystem: "gomod"
+    directory: "/apps/backend"
+    schedule:
+      interval: "weekly"
+      day: "tuesday"
+      time: "09:00"
+      timezone: "Asia/Tokyo"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "TeamH04/backend-team"
+    assignees:
+      - "TeamH04/backend-team"
+    commit-message:
+      prefix: "deps(backend)"
+      include: "scope"
+    groups:
+      echo-framework:
+        patterns:
+          - "github.com/labstack/echo*"
+      database-drivers:
+        patterns:
+          - "gorm.io/*"
+          - "github.com/jackc/pgx*"
+          - "github.com/lib/pq"
+
+  # ----- Shared Types Package -----
+  - package-ecosystem: "npm"
+    directory: "/packages/types"
+    schedule:
+      interval: "weekly"
+      day: "wednesday"
+      time: "09:00"
+      timezone: "Asia/Tokyo"
+    open-pull-requests-limit: 3
+    reviewers:
+      - "TeamH04/core-team"
+    assignees:
+      - "TeamH04/core-team"
+    commit-message:
+      prefix: "deps(types)"
+      include: "scope"
+
+  # ----- GitHub Actions -----
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+      day: 1
+      time: "10:00"
+      timezone: "Asia/Tokyo"
+    open-pull-requests-limit: 3
+    reviewers:
+      - "TeamH04/core-team"
+    assignees:
+      - "TeamH04/core-team"
+    commit-message:
+      prefix: "ci"
+      include: "scope"
+
+  # ----- Docker -----
+  - package-ecosystem: "docker"
+    directory: "/apps/backend"
+    schedule:
+      interval: "monthly"
+      time: "10:30"
+      timezone: "Asia/Tokyo"
+    open-pull-requests-limit: 2
+    reviewers:
+      - "TeamH04/backend-team"
+    assignees:
+      - "TeamH04/backend-team"
+    commit-message:
+      prefix: "deps(docker)"
+      include: "scope"
