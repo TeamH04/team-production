@@ -9,6 +9,7 @@
 ### 1. 新規追加されたディレクトリとファイル
 
 #### Repository層 (`internal/repository/`)
+
 - **store_repository.go** - ストアのデータアクセス層
 - **menu_repository.go** - メニューのデータアクセス層
 - **review_repository.go** - レビューのデータアクセス層
@@ -16,6 +17,7 @@
 各リポジトリはインターフェースとして定義され、実装をGORMに依存させながらも、上位層からは抽象化されています。
 
 #### UseCase層 (`internal/usecase/`)
+
 - **store_usecase.go** - ストアのビジネスロジック
 - **menu_usecase.go** - メニューのビジネスロジック
 - **review_usecase.go** - レビューのビジネスロジック
@@ -24,6 +26,7 @@
 ビジネスロジックをハンドラーから分離し、バリデーションやドメインルールを実装しています。
 
 #### Handler層 (`internal/handlers/`)
+
 - **store_handler.go** - ストアのHTTPハンドラー（新規）
 - **menu_handler.go** - メニューのHTTPハンドラー（新規）
 - **review_handler.go** - レビューのHTTPハンドラー（新規）
@@ -33,6 +36,7 @@
 ### 2. 更新されたファイル
 
 #### `cmd/server/main.go`
+
 - 依存性注入を実装
 - Repository → UseCase → Handler の順でインスタンスを生成
 - 各層を疎結合に保つための初期化コードを追加
@@ -45,6 +49,7 @@
 ### 4. ドキュメント
 
 #### 新規作成
+
 - **ARCHITECTURE.md** - クリーンアーキテクチャの詳細な説明
   - アーキテクチャ概要図
   - 各層の責務と役割
@@ -53,6 +58,7 @@
   - テスタビリティの説明
 
 #### 更新
+
 - **README.md** - アーキテクチャセクションの追加
 
 ### 5. テストコード
@@ -82,12 +88,12 @@ Domain (domain/) ← Infrastructure (repository/)
 
 ### 責務の分離
 
-| 層 | 責務 |
-|---|---|
-| **Handler** | HTTPリクエスト/レスポンスの処理 |
-| **UseCase** | ビジネスロジック、バリデーション |
-| **Repository** | データベースアクセス |
-| **Domain** | エンティティ定義 |
+| 層             | 責務                             |
+| -------------- | -------------------------------- |
+| **Handler**    | HTTPリクエスト/レスポンスの処理  |
+| **UseCase**    | ビジネスロジック、バリデーション |
+| **Repository** | データベースアクセス             |
+| **Domain**     | エンティティ定義                 |
 
 ## メリット
 
