@@ -4,6 +4,24 @@
 
 - スマホアプリ向けの API サーバーを Go で提供します。
 - Supabase/PostgreSQL を Docker Compose で起動し、マイグレーションや Swagger 生成を Makefile で管理します。
+- **クリーンアーキテクチャ**を採用し、保守性・テスタビリティの高い設計を実現しています。
+
+## アーキテクチャ
+
+このプロジェクトは**クリーンアーキテクチャ**に基づいて実装されています。詳細は [ARCHITECTURE.md](./ARCHITECTURE.md) を参照してください。
+
+### レイヤー構成
+
+```
+handlers/ (Presentation) → usecase/ (Application) → repository/ (Infrastructure)
+                                      ↓
+                                  domain/ (Domain)
+```
+
+- **handlers/**: HTTPリクエスト・レスポンスの処理
+- **usecase/**: ビジネスロジックの実装
+- **repository/**: データベースアクセスの抽象化
+- **domain/**: エンティティとドメインモデルの定義
 
 ## 前提条件
 
