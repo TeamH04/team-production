@@ -17,13 +17,14 @@ import (
 
 // GET /api/stores
 func GetStores(c echo.Context) error {
-	db := c.Get("db").(*gorm.DB)
-	var stores []domain.Store
+    db := c.Get("db").(*gorm.DB)
+    var stores []domain.Store
 
-	if err := db.Order("created_at desc").Find(&stores).Error; err != nil {
-		return c.JSON(http.StatusInternalServerError, echo.Map{"error": err.Error()})
-	}
-	return c.JSON(http.StatusOK, stores)
+    if err := db.Order("created_at desc").Find(&stores).Error; err != nil {
+        c.Logger().Errorf("failed to fetch stores: %v", err)
+        return c.JSON(http.StatusInternalServerError, echo.Map{"error": "internal server error"})
+    }
+    return c.JSON(http.StatusOK, stores)
 }
 
 // GET /api/stores/:id
