@@ -63,3 +63,7 @@ jest-stare/
 
 # ---- Project specific ----
 app-example
+
+# ---- Other ----
+reports/
+docs/ESLint_Report.md

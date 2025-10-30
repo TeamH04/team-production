@@ -16,11 +16,11 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
   const [favorites, setFavorites] = useState<FavoritesState>(() => new Set());
 
   const addFavorite = useCallback((shopId: string) => {
-    setFavorites((prev) => new Set(prev).add(shopId));
+    setFavorites(prev => new Set(prev).add(shopId));
   }, []);
 
   const removeFavorite = useCallback((shopId: string) => {
-    setFavorites((prev) => {
+    setFavorites(prev => {
       const next = new Set(prev);
       next.delete(shopId);
       return next;
@@ -28,7 +28,7 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const toggleFavorite = useCallback((shopId: string) => {
-    setFavorites((prev) => {
+    setFavorites(prev => {
       const next = new Set(prev);
       if (next.has(shopId)) next.delete(shopId);
       else next.add(shopId);
@@ -36,13 +36,16 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
-  const value = useMemo<FavoritesContextValue>(() => ({
-    favorites,
-    isFavorite: (id: string) => favorites.has(id),
-    toggleFavorite,
-    addFavorite,
-    removeFavorite,
-  }), [favorites, addFavorite, removeFavorite, toggleFavorite]);
+  const value = useMemo<FavoritesContextValue>(
+    () => ({
+      favorites,
+      isFavorite: (id: string) => favorites.has(id),
+      toggleFavorite,
+      addFavorite,
+      removeFavorite,
+    }),
+    [favorites, addFavorite, removeFavorite, toggleFavorite]
+  );
 
   return <FavoritesContext.Provider value={value}>{children}</FavoritesContext.Provider>;
 }
@@ -52,4 +55,3 @@ export function useFavorites() {
   if (!ctx) throw new Error('useFavorites must be used within FavoritesProvider');
   return ctx;
 }
-

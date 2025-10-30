@@ -36,11 +36,11 @@ export default function TabLayout() {
       />
       {/** 'さがす' タブは削除 */}
       <Tabs.Screen
-        name="mypage"
+        name='mypage'
         options={{
           title: 'マイページ',
           tabBarIcon: ({ color }) => (
-            <IconSymbol size={28} name="person.crop.circle" color={color} />
+            <IconSymbol size={28} name='person.crop.circle' color={color} />
           ),
         }}
       />

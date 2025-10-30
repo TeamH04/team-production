@@ -37,7 +37,7 @@ function RootStack() {
         },
       ]}
     >
-      <StatusBar hidden={false} style="dark" backgroundColor="transparent" />
+      <StatusBar hidden={false} style='dark' backgroundColor='transparent' />
       <Stack>
         <Stack.Screen name='(tabs)' options={{ headerShown: false }} />
         <Stack.Screen name='+not-found' />

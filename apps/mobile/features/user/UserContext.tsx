@@ -21,10 +21,13 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   const [profile, setProfile] = useState<UserProfile>(DEFAULT_PROFILE);
 
   const updateProfile = useCallback((patch: Partial<UserProfile>) => {
-    setProfile((prev) => ({ ...prev, ...patch }));
+    setProfile(prev => ({ ...prev, ...patch }));
   }, []);
 
-  const value = useMemo<UserContextValue>(() => ({ profile, updateProfile }), [profile, updateProfile]);
+  const value = useMemo<UserContextValue>(
+    () => ({ profile, updateProfile }),
+    [profile, updateProfile]
+  );
 
   return <UserContext.Provider value={value}>{children}</UserContext.Provider>;
 }
@@ -34,4 +37,3 @@ export function useUser() {
   if (!ctx) throw new Error('useUser must be used within UserProvider');
   return ctx;
 }
-

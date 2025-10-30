@@ -117,42 +117,45 @@ export default function HomeScreen() {
     setSelectedCategory(current => (current === category ? CATEGORY_ALL : category));
   }, []);
 
-  const renderShop = useCallback(({ item }: { item: Shop }) => {
-    return (
-      <View style={styles.cardShadow}>
-        <Pressable
-          accessibilityLabel={`${item.name} の詳細へ`}
-          onPress={() => router.push({ pathname: '/shop/[id]', params: { id: item.id } })}
-          style={styles.cardContainer}
-        >
-          <Image source={{ uri: item.imageUrl }} style={styles.cardImage} contentFit="cover" />
-          <View style={styles.cardBody}>
-            <View style={styles.cardHeader}>
-              <Text style={styles.cardTitle}>{item.name}</Text>
-              <View style={styles.ratingBadge}>
-                <Text style={styles.ratingText}>{`★ ${item.rating.toFixed(1)}`}</Text>
+  const renderShop = useCallback(
+    ({ item }: { item: Shop }) => {
+      return (
+        <View style={styles.cardShadow}>
+          <Pressable
+            accessibilityLabel={`${item.name} の詳細へ`}
+            onPress={() => router.push({ pathname: '/shop/[id]', params: { id: item.id } })}
+            style={styles.cardContainer}
+          >
+            <Image source={{ uri: item.imageUrl }} style={styles.cardImage} contentFit='cover' />
+            <View style={styles.cardBody}>
+              <View style={styles.cardHeader}>
+                <Text style={styles.cardTitle}>{item.name}</Text>
+                <View style={styles.ratingBadge}>
+                  <Text style={styles.ratingText}>{`★ ${item.rating.toFixed(1)}`}</Text>
+                </View>
+              </View>
+              <View style={styles.metaRow}>
+                <Text style={styles.metaText}>{item.category}</Text>
+                <Text style={styles.metaSeparator}>│</Text>
+                <Text style={styles.metaText}>{`徒歩${item.distanceMinutes}分`}</Text>
+                <Text style={styles.metaSeparator}>│</Text>
+                <Text style={styles.metaText}>{`予算 ${BUDGET_LABEL[item.budget]}`}</Text>
+              </View>
+              <Text style={styles.cardDescription}>{item.description}</Text>
+              <View style={styles.tagRow}>
+                {item.tags.map(tag => (
+                  <View key={tag} style={styles.tagPill}>
+                    <Text style={styles.tagText}>{tag}</Text>
+                  </View>
+                ))}
               </View>
             </View>
-            <View style={styles.metaRow}>
-              <Text style={styles.metaText}>{item.category}</Text>
-              <Text style={styles.metaSeparator}>│</Text>
-              <Text style={styles.metaText}>{`徒歩${item.distanceMinutes}分`}</Text>
-              <Text style={styles.metaSeparator}>│</Text>
-              <Text style={styles.metaText}>{`予算 ${BUDGET_LABEL[item.budget]}`}</Text>
-            </View>
-            <Text style={styles.cardDescription}>{item.description}</Text>
-            <View style={styles.tagRow}>
-              {item.tags.map(tag => (
-                <View key={tag} style={styles.tagPill}>
-                  <Text style={styles.tagText}>{tag}</Text>
-                </View>
-              ))}
-            </View>
-          </View>
-        </Pressable>
-      </View>
-    );
-  }, []);
+          </Pressable>
+        </View>
+      );
+    },
+    [router]
+  );
 
   const renderListHeader = useMemo(
     () => (

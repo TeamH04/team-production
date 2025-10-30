@@ -9,10 +9,17 @@ const palette = {
   accent: '#0EA5E9',
   background: '#F9FAFB',
   border: '#E5E7EB',
+  menuBackground: '#F9FAFB',
+  menuSelectedBackground: '#DBEAFE',
+  menuSelectedBorder: '#93C5FD',
+  menuSelectedText: '#1D4ED8',
   muted: '#6B7280',
   primary: '#111827',
+  primaryOnAccent: '#FFFFFF',
+  secondarySurface: '#F3F4F6',
+  starHighlight: '#F59E0B',
+  starInactive: '#9CA3AF',
   surface: '#FFFFFF',
-  shadow: '#0f172a',
 } as const;
 
 export default function ReviewModalScreen() {
@@ -20,7 +27,7 @@ export default function ReviewModalScreen() {
   const router = useRouter();
   const { addReview } = useReviews();
 
-  const shop = useMemo(() => SHOPS.find((s) => s.id === id), [id]);
+  const shop = useMemo(() => SHOPS.find(s => s.id === id), [id]);
   const menu = shop?.menu ?? [];
 
   const [rating, setRating] = useState(5);
@@ -39,11 +46,11 @@ export default function ReviewModalScreen() {
   }
 
   return (
-    <ScrollView style={styles.screen} contentContainerStyle={{ padding: 16 }}>
+    <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
       <Text style={styles.heading}>{shop.name}</Text>
       <Text style={styles.sectionLabel}>評価</Text>
       <View style={styles.starsRow}>
-        {[1, 2, 3, 4, 5].map((n) => (
+        {[1, 2, 3, 4, 5].map(n => (
           <Pressable key={n} onPress={() => setRating(n)}>
             <Text style={[styles.star, n <= rating ? styles.starActive : undefined]}>★</Text>
           </Pressable>
@@ -51,10 +58,10 @@ export default function ReviewModalScreen() {
       </View>
 
       {menu.length > 0 ? (
-        <View style={{ marginTop: 12 }}>
+        <View style={styles.menuSection}>
           <Text style={styles.sectionLabel}>メニュー</Text>
           <View style={styles.menuList}>
-            {menu.map((m) => {
+            {menu.map(m => {
               const selected = selectedMenuId === m.id;
               return (
                 <Pressable
@@ -77,7 +84,7 @@ export default function ReviewModalScreen() {
       <TextInput
         value={comment}
         onChangeText={setComment}
-        placeholder="雰囲気・味・接客など自由に書いてください"
+        placeholder='雰囲気・味・接客など自由に書いてください'
         placeholderTextColor={palette.muted}
         multiline
         style={styles.input}
@@ -87,7 +94,7 @@ export default function ReviewModalScreen() {
         style={({ pressed }) => [styles.primaryBtn, pressed && styles.btnPressed]}
         onPress={() => {
           if (!comment.trim()) return;
-          const selected = menu.find((m) => m.id === selectedMenuId);
+          const selected = menu.find(m => m.id === selectedMenuId);
           addReview(shop.id, {
             rating,
             comment,
@@ -110,9 +117,10 @@ export default function ReviewModalScreen() {
 const styles = StyleSheet.create({
   btnPressed: { opacity: 0.9 },
   centered: { alignItems: 'center', justifyContent: 'center' },
+  content: { padding: 16 },
   heading: { color: palette.primary, fontSize: 18, fontWeight: '800', marginBottom: 8 },
   input: {
-    backgroundColor: '#F9FAFB',
+    backgroundColor: palette.background,
     borderColor: palette.border,
     borderRadius: 12,
     borderWidth: 1,
@@ -121,6 +129,7 @@ const styles = StyleSheet.create({
     padding: 12,
   },
   menuItem: {
+    backgroundColor: palette.menuBackground,
     borderColor: palette.border,
     borderRadius: 999,
     borderWidth: 1,
@@ -128,30 +137,37 @@ const styles = StyleSheet.create({
     marginTop: 8,
     paddingHorizontal: 12,
     paddingVertical: 8,
-    backgroundColor: '#F9FAFB',
   },
-  menuItemSelected: { backgroundColor: '#DBEAFE', borderColor: '#93C5FD' },
+  menuItemSelected: {
+    backgroundColor: palette.menuSelectedBackground,
+    borderColor: palette.menuSelectedBorder,
+  },
   menuItemText: { color: palette.primary, fontWeight: '600' },
-  menuItemTextSelected: { color: '#1D4ED8' },
+  menuItemTextSelected: { color: palette.menuSelectedText },
   menuList: { flexDirection: 'row', flexWrap: 'wrap' },
+  menuSection: { marginTop: 12 },
   muted: { color: palette.muted, marginTop: 6 },
-  primaryBtn: { backgroundColor: palette.accent, borderRadius: 12, paddingVertical: 12, marginTop: 16 },
-  primaryBtnText: { color: '#fff', fontWeight: '700', textAlign: 'center' },
-  screen: { flex: 1, backgroundColor: palette.surface },
+  primaryBtn: {
+    backgroundColor: palette.accent,
+    borderRadius: 12,
+    marginTop: 16,
+    paddingVertical: 12,
+  },
+  primaryBtnText: { color: palette.primaryOnAccent, fontWeight: '700', textAlign: 'center' },
+  screen: { backgroundColor: palette.surface, flex: 1 },
   secondaryBtn: {
-    backgroundColor: '#F3F4F6',
+    backgroundColor: palette.secondarySurface,
     borderColor: palette.border,
     borderRadius: 10,
     borderWidth: 1,
+    marginTop: 12,
     paddingHorizontal: 14,
     paddingVertical: 10,
-    marginTop: 12,
   },
   secondaryBtnText: { color: palette.primary, fontWeight: '700', textAlign: 'center' },
-  sectionLabel: { color: palette.primary, fontWeight: '700', marginTop: 12, marginBottom: 8 },
-  star: { fontSize: 22, color: '#9CA3AF', marginRight: 4 },
-  starActive: { color: '#F59E0B' },
+  sectionLabel: { color: palette.primary, fontWeight: '700', marginBottom: 8, marginTop: 12 },
+  star: { color: palette.starInactive, fontSize: 22, marginRight: 4 },
+  starActive: { color: palette.starHighlight },
   starsRow: { flexDirection: 'row', marginBottom: 8 },
   title: { color: palette.primary, fontSize: 18, fontWeight: '800' },
 });
-
