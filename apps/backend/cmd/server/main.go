@@ -10,6 +10,7 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/TeamH04/team-production/apps/backend/internal/config"
+	"github.com/TeamH04/team-production/apps/backend/internal/handlers"
 )
 
 func main() {
@@ -17,6 +18,8 @@ func main() {
 	if err != nil {
 		log.Fatalf("failed to load config: %v", err)
 	}
+
+	dsn := cfg.DBURL
 
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
@@ -40,12 +43,12 @@ func main() {
 	api.PUT("/stores/:id", handlers.UpdateStore)
 	api.DELETE("/stores/:id", handlers.DeleteStore)
 	// --- Menus ---
-	api.POST("/stores/:id/menus", handlers.CreateMenu)
-	api.GET("/stores/:id/menus", handlers.GetMenusByStoreID)
+	// api.POST("/stores/:id/menus", handlers.CreateMenu)
+	// api.GET("/stores/:id/menus", handlers.GetMenusByStoreID)
 
 	// --- Reviews ---
-	api.POST("/stores/:id/reviews", handlers.CreateReview)
-	api.GET("/stores/:id/reviews", handlers.GetReviewsByStoreID)
+	// api.POST("/stores/:id/reviews", handlers.CreateReview)
+	// api.GET("/stores/:id/reviews", handlers.GetReviewsByStoreID)
 
 	e.GET("/health", func(c echo.Context) error {
 		return c.JSON(http.StatusOK, echo.Map{"status": "ok"})
