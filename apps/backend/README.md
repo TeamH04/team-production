@@ -31,17 +31,17 @@
 
 ## 主なコマンド
 
-| コマンド | 説明 |
-| --- | --- |
-| `make run-dev` | DB を起動して `go run ./cmd/server` を実行 |
-| `make db-up` / `make db-down` | Docker Compose で DB を起動 / 停止 |
-| `make db-init` | ローカル Docker (Supabase) にマイグレーションを適用 (`db-up` を含む) |
-| `make destroy` | DB コンテナを停止しボリュームも削除 |
-| `make serve` | DB が稼働している前提で API のみを起動 |
-| `make migrate` | `migrations/` 配下の SQL をローカル Docker DSN (`MIGRATE_DATABASE_URL`) に適用 |
-| `make migrate-new name=<name>` | 連番付きの新規マイグレーションを作成 |
-| `make test` | Go のユニットテストを実行 |
-| `make check` | CI 等で使える簡易ヘルスチェック |
+| コマンド                       | 説明                                                                           |
+| ------------------------------ | ------------------------------------------------------------------------------ |
+| `make run-dev`                 | DB を起動して `go run ./cmd/server` を実行                                     |
+| `make db-up` / `make db-down`  | Docker Compose で DB を起動 / 停止                                             |
+| `make db-init`                 | ローカル Docker (Supabase) にマイグレーションを適用 (`db-up` を含む)           |
+| `make destroy`                 | DB コンテナを停止しボリュームも削除                                            |
+| `make serve`                   | DB が稼働している前提で API のみを起動                                         |
+| `make migrate`                 | `migrations/` 配下の SQL をローカル Docker DSN (`MIGRATE_DATABASE_URL`) に適用 |
+| `make migrate-new name=<name>` | 連番付きの新規マイグレーションを作成                                           |
+| `make test`                    | Go のユニットテストを実行                                                      |
+| `make check`                   | CI 等で使える簡易ヘルスチェック                                                |
 
 ## Windows での注意
 

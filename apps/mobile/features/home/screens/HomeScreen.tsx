@@ -1,6 +1,7 @@
 ﻿import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import type { FlatList } from 'react-native';
 import {
   ActivityIndicator,
   Pressable,
@@ -10,7 +11,6 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import type { FlatList } from 'react-native';
 import Animated, { useAnimatedRef } from 'react-native-reanimated';
 
 import { CATEGORIES, SHOPS, type Shop, type ShopCategory } from '@/features/home/data/shops';
@@ -58,13 +58,13 @@ export default function HomeScreen() {
   const normalizedQuery = useMemo(() => searchQuery.trim().toLowerCase(), [searchQuery]);
 
   const filteredShops = useMemo(() => {
-    return SHOPS.filter((shop) => {
+    return SHOPS.filter(shop => {
       const matchesCategory =
         selectedCategory === CATEGORY_ALL || shop.category === selectedCategory;
       const matchesQuery =
         normalizedQuery.length === 0 ||
         shop.name.toLowerCase().includes(normalizedQuery) ||
-        shop.tags.some((tag) => tag.toLowerCase().includes(normalizedQuery)) ||
+        shop.tags.some(tag => tag.toLowerCase().includes(normalizedQuery)) ||
         shop.description.toLowerCase().includes(normalizedQuery);
       return matchesCategory && matchesQuery;
     });
@@ -77,7 +77,7 @@ export default function HomeScreen() {
     }
     setIsLoadingMore(false);
     setVisibleCount(
-      filteredShops.length === 0 ? PAGE_SIZE : Math.min(PAGE_SIZE, filteredShops.length),
+      filteredShops.length === 0 ? PAGE_SIZE : Math.min(PAGE_SIZE, filteredShops.length)
     );
   }, [filteredShops.length, normalizedQuery, selectedCategory]);
 
@@ -107,14 +107,14 @@ export default function HomeScreen() {
     }
     setIsLoadingMore(true);
     loadMoreTimeout.current = setTimeout(() => {
-      setVisibleCount((prev) => Math.min(prev + PAGE_SIZE, filteredShops.length));
+      setVisibleCount(prev => Math.min(prev + PAGE_SIZE, filteredShops.length));
       setIsLoadingMore(false);
       loadMoreTimeout.current = null;
     }, 350);
   }, [filteredShops.length, hasMoreResults, isLoadingMore]);
 
   const handleCategoryPress = useCallback((category: CategoryFilter) => {
-    setSelectedCategory((current) => (current === category ? CATEGORY_ALL : category));
+    setSelectedCategory(current => (current === category ? CATEGORY_ALL : category));
   }, []);
 
   const renderShop = useCallback(({ item }: { item: Shop }) => {
@@ -142,7 +142,7 @@ export default function HomeScreen() {
             </View>
             <Text style={styles.cardDescription}>{item.description}</Text>
             <View style={styles.tagRow}>
-              {item.tags.map((tag) => (
+              {item.tags.map(tag => (
                 <View key={tag} style={styles.tagPill}>
                   <Text style={styles.tagText}>{tag}</Text>
                 </View>
@@ -167,12 +167,12 @@ export default function HomeScreen() {
           <TextInput
             value={searchQuery}
             onChangeText={setSearchQuery}
-            placeholder="お店名・雰囲気・タグで検索"
-            placeholderTextColor="#9CA3AF"
+            placeholder='お店名・雰囲気・タグで検索'
+            placeholderTextColor='#9CA3AF'
             style={styles.searchInput}
             autoCorrect={false}
-            autoCapitalize="none"
-            clearButtonMode="while-editing"
+            autoCapitalize='none'
+            clearButtonMode='while-editing'
           />
         </View>
         <ScrollView
@@ -181,7 +181,7 @@ export default function HomeScreen() {
           contentContainerStyle={styles.categoryScrollContent}
           style={styles.categoryScroll}
         >
-          {CATEGORY_OPTIONS.map((category) => {
+          {CATEGORY_OPTIONS.map(category => {
             const isSelected = selectedCategory === category;
             return (
               <Pressable
@@ -209,7 +209,7 @@ export default function HomeScreen() {
         </ScrollView>
       </View>
     ),
-    [handleCategoryPress, searchQuery, selectedCategory],
+    [handleCategoryPress, searchQuery, selectedCategory]
   );
 
   const renderEmptyState = useMemo(
@@ -221,7 +221,7 @@ export default function HomeScreen() {
         </Text>
       </View>
     ),
-    [],
+    []
   );
 
   return (
@@ -237,14 +237,14 @@ export default function HomeScreen() {
         ListFooterComponent={
           isLoadingMore ? (
             <View style={styles.footerLoader}>
-              <ActivityIndicator color="#0EA5E9" />
+              <ActivityIndicator color='#0EA5E9' />
             </View>
           ) : null
         }
         onEndReached={handleLoadMore}
         onEndReachedThreshold={0.2}
         showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
+        keyboardShouldPersistTaps='handled'
       />
     </View>
   );
@@ -436,11 +436,3 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 });
-
-
-
-
-
-
-
-

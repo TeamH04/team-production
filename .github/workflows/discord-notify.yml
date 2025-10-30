@@ -144,17 +144,13 @@ jobs:
                 const state = (review.state || '').toUpperCase(); // APPROVED / CHANGES_REQUESTED / COMMENTED
                 const reviewer = review.user?.login || '(unknown)';
                 const author = pr.user?.login || '(unknown)';
-
                 // 自分のPRを自分でレビューした場合は通知しない（任意）
                 if (author && reviewer && author === reviewer) return;
-
                 // PR作成者を必ずメンション
                 const authorMention = mentionOf(author);
-
                 // レビュー本文を軽く要約（長すぎるとWebhookが弾くので先頭だけ）
                 const body = (review.body || '').trim();
                 const snippet = body ? (body.length > 200 ? body.slice(0, 200) + '…' : body) : '';
-
                 const msgLines = [
                   `💬 **PR Review (${state})** in \`${owner}/${repo}\``,
                   `**${pr.title}**`,

@@ -1,56 +1,155 @@
 package handlers
 
 import (
+	"errors"
 	"net/http"
 	"strconv"
+	"time"
+
+	"github.com/labstack/echo/v4"
+	"github.com/lib/pq"
+	"gorm.io/gorm"
 
 	"github.com/TeamH04/team-production/apps/backend/internal/domain"
-	"github.com/TeamH04/team-production/apps/backend/internal/usecase/interactor"
-	"github.com/TeamH04/team-production/apps/backend/internal/usecase/port"
-	"github.com/labstack/echo/v4"
 )
 
-type StoreHandler struct {
-	q port.StoreQueryUsecase
-	c port.StoreCommandUsecase
-}
+// --- Store Handlers ---
 
-func NewStoreHandler(q port.StoreQueryUsecase, c port.StoreCommandUsecase) *StoreHandler {
-	return &StoreHandler{q: q, c: c}
-}
+// GET /api/stores
+func GetStores(c echo.Context) error {
+	db := c.Get("db").(*gorm.DB)
+	var stores []domain.Store
 
-func (h *StoreHandler) List(c echo.Context) error {
-	out, err := h.q.ListStores()
-	if err != nil {
+	if err := db.Order("created_at desc").Find(&stores).Error; err != nil {
 		return c.JSON(http.StatusInternalServerError, echo.Map{"error": err.Error()})
 	}
-	return c.JSON(http.StatusOK, out)
+	return c.JSON(http.StatusOK, stores)
 }
 
-func (h *StoreHandler) GetByID(c echo.Context) error {
+// GET /api/stores/:id
+func GetStoreByID(c echo.Context) error {
+	db := c.Get("db").(*gorm.DB)
 	idStr := c.Param("id")
 	id, err := strconv.ParseInt(idStr, 10, 64)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, echo.Map{"error": "invalid id"})
 	}
-	s, err := h.q.GetStoreByID(id)
-	if err == interactor.ErrNotFound {
-		return c.JSON(http.StatusNotFound, echo.Map{"error": "not found"})
-	}
-	if err != nil {
+
+	var store domain.Store
+	if err := db.Preload("Menus").Preload("Reviews").First(&store, "store_id = ?", id).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return c.JSON(http.StatusNotFound, echo.Map{"error": "not found"})
+		}
 		return c.JSON(http.StatusInternalServerError, echo.Map{"error": err.Error()})
 	}
-	return c.JSON(http.StatusOK, s)
+
+	return c.JSON(http.StatusOK, store)
 }
 
-func (h *StoreHandler) Create(c echo.Context) error {
-	var in domain.Store
-	if err := c.Bind(&in); err != nil {
+// POST /api/stores
+type CreateStoreReq struct {
+	Name            string     `json:"name"`
+	Address         string     `json:"address"`
+	ThumbnailURL    string     `json:"thumbnail_url"`
+	OpenedAt        *time.Time `json:"opened_at,omitempty"`
+	Description     *string    `json:"description,omitempty"`
+	OpeningHours    *string    `json:"opening_hours,omitempty"`
+	LandscapePhotos []string   `json:"landscape_photos,omitempty"`
+	Latitude        float64    `json:"latitude"`
+	Longitude       float64    `json:"longitude"`
+}
+
+func CreateStore(c echo.Context) error {
+	db := c.Get("db").(*gorm.DB)
+
+	var req CreateStoreReq
+	if err := c.Bind(&req); err != nil {
 		return c.JSON(http.StatusBadRequest, echo.Map{"error": "invalid JSON"})
 	}
-	s, err := h.c.CreateStore(in)
-	if err != nil {
+
+	if req.Name == "" || req.Address == "" || req.ThumbnailURL == "" {
+		return c.JSON(http.StatusBadRequest, echo.Map{"error": "missing required fields"})
+	}
+	if req.Latitude == 0.0 || req.Longitude == 0.0 {
+		return c.JSON(http.StatusBadRequest, echo.Map{"error": "invalid latitude or longitude"})
+	}
+
+	store := domain.Store{
+		Name:            req.Name,
+		Address:         req.Address,
+		ThumbnailURL:    req.ThumbnailURL,
+		OpenedAt:        req.OpenedAt,
+		Description:     req.Description,
+		LandscapePhotos: pq.StringArray(req.LandscapePhotos),
+		OpeningHours:    req.OpeningHours,
+		Latitude:        req.Latitude,
+		Longitude:       req.Longitude,
+	}
+
+	if err := db.Create(&store).Error; err != nil {
 		return c.JSON(http.StatusInternalServerError, echo.Map{"error": err.Error()})
 	}
-	return c.JSON(http.StatusCreated, s)
+	return c.JSON(http.StatusCreated, store)
+}
+
+// PUT /api/stores/:id
+func UpdateStore(c echo.Context) error {
+	db := c.Get("db").(*gorm.DB)
+	idStr := c.Param("id")
+	storeID, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, echo.Map{"error": "invalid store id"})
+	}
+
+	var store domain.Store
+	if err := db.First(&store, storeID).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return c.JSON(http.StatusNotFound, echo.Map{"error": "store not found"})
+		}
+		return c.JSON(http.StatusInternalServerError, echo.Map{"error": err.Error()})
+	}
+
+	var updateData domain.Store
+	if err := c.Bind(&updateData); err != nil {
+		return c.JSON(http.StatusBadRequest, echo.Map{"error": "invalid body"})
+	}
+
+	updateData.UpdatedAt = time.Now()
+	if err := db.Model(&store).
+		Updates(updateData).
+		Error; err != nil {
+		return c.JSON(http.StatusInternalServerError, echo.Map{"error": err.Error()})
+	}
+
+	if err := db.Preload("Menus").
+		Preload("Reviews").
+		First(&store, storeID).
+		Error; err != nil {
+		return c.JSON(http.StatusInternalServerError, echo.Map{"error": "failed to fetch updated store"})
+	}
+
+	return c.JSON(http.StatusOK, store)
+}
+
+// DELETE /api/stores/:id
+func DeleteStore(c echo.Context) error {
+	db := c.Get("db").(*gorm.DB)
+	idStr := c.Param("id")
+	storeID, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, echo.Map{"error": "invalid store id"})
+	}
+
+	var store domain.Store
+	if err := db.First(&store, storeID).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return c.JSON(http.StatusNotFound, echo.Map{"error": "store not found"})
+		}
+		return c.JSON(http.StatusInternalServerError, echo.Map{"error": err.Error()})
+	}
+
+	if err := db.Delete(&store).Error; err != nil {
+		return c.JSON(http.StatusInternalServerError, echo.Map{"error": "failed to delete"})
+	}
+	return c.NoContent(http.StatusNoContent)
 }

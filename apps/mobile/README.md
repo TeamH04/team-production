@@ -19,11 +19,11 @@
 
 ## よく使うコマンド
 
-| コマンド | 説明 |
-| --- | --- |
-| `pnpm --dir apps/mobile start` | Expo Dev Server を起動 (Metro Bundler) |
-| `pnpm --dir apps/mobile android` / `ios` / `web` | 各プラットフォーム向けに Expo を起動 |
-| `pnpm --dir apps/mobile lint` | ESLint (expo lint) を実行 |
+| コマンド                                         | 説明                                   |
+| ------------------------------------------------ | -------------------------------------- |
+| `pnpm --dir apps/mobile start`                   | Expo Dev Server を起動 (Metro Bundler) |
+| `pnpm --dir apps/mobile android` / `ios` / `web` | 各プラットフォーム向けに Expo を起動   |
+| `pnpm --dir apps/mobile lint`                    | ESLint (expo lint) を実行              |
 
 ## 開発サーバーの一括起動
 

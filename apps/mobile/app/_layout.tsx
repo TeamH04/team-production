@@ -1,3 +1,6 @@
+import { FavoritesProvider } from '@/features/favorites/FavoritesContext';
+import { ReviewsProvider } from '@/features/reviews/ReviewsContext';
+import { UserProvider } from '@/features/user/UserContext';
 import '@/global.css';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
@@ -6,9 +9,6 @@ import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, View } from 'react-native';
 import 'react-native-reanimated';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { FavoritesProvider } from '@/features/favorites/FavoritesContext';
-import { ReviewsProvider } from '@/features/reviews/ReviewsContext';
-import { UserProvider } from '@/features/user/UserContext';
 
 import { useColorScheme } from '@/hooks/useColorScheme';
 
@@ -39,8 +39,8 @@ function RootStack() {
     >
       <StatusBar hidden={false} style="dark" backgroundColor="transparent" />
       <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="+not-found" />
+        <Stack.Screen name='(tabs)' options={{ headerShown: false }} />
+        <Stack.Screen name='+not-found' />
       </Stack>
     </View>
   );

@@ -1,0 +1,36 @@
+# Global owners
+* @TeamH04/core-team
+
+# Backend specific
+apps/backend/ @TeamH04/backend-team
+apps/backend/**/*.go @TeamH04/backend-team
+apps/backend/**/go.mod @TeamH04/backend-team
+apps/backend/**/go.sum @TeamH04/backend-team
+
+# Mobile specific
+apps/mobile/ @TeamH04/mobile-team
+apps/mobile/**/*.tsx @TeamH04/mobile-team
+apps/mobile/**/*.ts @TeamH04/mobile-team
+apps/mobile/**/package.json @TeamH04/mobile-team
+
+# CI/CD workflows
+.github/ @TeamH04/core-team
+.github/workflows/ @TeamH04/core-team
+
+# Dependencies
+package.json @TeamH04/core-team
+pnpm-lock.yaml @TeamH04/core-team
+.github/dependabot.yml @TeamH04/core-team
+
+# Infrastructure
+supabase/ @TeamH04/backend-team
+infra/ @TeamH04/core-team
+
+# Documentation
+*.md @TeamH04/core-team
+README.md @TeamH04/core-team
+
+# Root configuration files
+Makefile @TeamH04/core-team
+eslint.config.js @TeamH04/core-team
+tsconfig.json @TeamH04/core-team

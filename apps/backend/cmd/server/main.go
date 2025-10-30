@@ -1,14 +1,15 @@
-// apps/backend/cmd/server/main.go
 package main
 
 import (
 	"log"
+	"net/http"
+	"os"
+
+	"github.com/labstack/echo/v4"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
 
 	"github.com/TeamH04/team-production/apps/backend/internal/config"
-	"github.com/TeamH04/team-production/apps/backend/internal/handlers"
-	"github.com/TeamH04/team-production/apps/backend/internal/repository"
-	"github.com/TeamH04/team-production/apps/backend/internal/server"
-	"github.com/TeamH04/team-production/apps/backend/internal/usecase/interactor"
 )
 
 func main() {
@@ -17,31 +18,42 @@ func main() {
 		log.Fatalf("failed to load config: %v", err)
 	}
 
-	db, err := config.OpenDB(cfg.DBURL)
+	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
-		log.Fatalf("db open failed: %v", err)
+		log.Fatalf("failed to connect database: %v", err)
 	}
 
-	// Repositories (output ports)
-	userRepo := repository.NewUserRepository(db)
-	storeRepo := repository.NewStoreRepository(db)
-	reviewRepo := repository.NewReviewRepository(db)
+	e := echo.New()
 
-	// Interactors (use cases / input ports)
-	authUC := interactor.NewAuthInteractor(userRepo)
-	storeQueryUC := interactor.NewStoreQueryInteractor(storeRepo)
-	storeCmdUC := interactor.NewStoreCommandInteractor(storeRepo)
-	reviewCmdUC := interactor.NewReviewCommandInteractor(reviewRepo, storeRepo, userRepo)
+	// DBをContextにセット
+	e.Use(func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			c.Set("db", db)
+			return next(c)
+		}
+	})
 
-	// Handlers (interface adapters)
-	authHandler := handlers.NewAuthHandler(authUC)
-	storeHandler := handlers.NewStoreHandler(storeQueryUC, storeCmdUC)
-	reviewHandler := handlers.NewReviewHandler(reviewCmdUC)
+	api := e.Group("/api")
+	api.GET("/stores", handlers.GetStores)
+	api.GET("/stores/:id", handlers.GetStoreByID)
+	api.POST("/stores", handlers.CreateStore)
+	api.PUT("/stores/:id", handlers.UpdateStore)
+	api.DELETE("/stores/:id", handlers.DeleteStore)
+	// --- Menus ---
+	api.POST("/stores/:id/menus", handlers.CreateMenu)
+	api.GET("/stores/:id/menus", handlers.GetMenusByStoreID)
 
-	// Router and routes
-	e := server.NewRouter(cfg, db)
-	server.RegisterAPIRoutes(e, authHandler, storeHandler, reviewHandler)
+	// --- Reviews ---
+	api.POST("/stores/:id/reviews", handlers.CreateReview)
+	api.GET("/stores/:id/reviews", handlers.GetReviewsByStoreID)
 
-	log.Printf("listening on :%s", cfg.Port)
-	e.Logger.Fatal(e.Start(":" + cfg.Port))
+	e.GET("/health", func(c echo.Context) error {
+		return c.JSON(http.StatusOK, echo.Map{"status": "ok"})
+	})
+
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+	e.Logger.Fatal(e.Start(":" + port))
 }
