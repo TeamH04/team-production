@@ -106,6 +106,7 @@ func setupReportRoutes(api *echo.Group, deps *common.Dependencies) {
 // setupAdminRoutes は管理者用のルーティングを設定します
 func setupAdminRoutes(api *echo.Group, deps *common.Dependencies) {
 	admin := api.Group("/admin", mw.JWTAuth(), mw.RequireRole("admin"))
+
 	admin.GET("/stores/pending", deps.AdminHandler.GetPendingStores)
 	admin.POST("/stores/:id/approve", deps.AdminHandler.ApproveStore)
 	admin.POST("/stores/:id/reject", deps.AdminHandler.RejectStore)

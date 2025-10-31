@@ -110,7 +110,9 @@ func OptionalAuth() echo.MiddlewareFunc {
 
 // validateToken はJWTトークンを検証してユーザーIDとロールを返す
 // 実際にはSupabase SDKやJWT検証ライブラリを使用
+
 func validateToken(token string) (userID string, role string) {
+
 	// TODO: 実際のJWT検証処理を実装
 	// Supabase JWTの検証
 	// 仮の実装として、トークンをそのままユーザーIDとして使用
