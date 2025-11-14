@@ -7,6 +7,7 @@ import (
 
 	"github.com/labstack/echo/v4"
 
+	"github.com/TeamH04/team-production/apps/backend/internal/input_port"
 	"github.com/TeamH04/team-production/apps/backend/internal/middleware"
 	"github.com/TeamH04/team-production/apps/backend/internal/usecase"
 )
@@ -51,9 +52,7 @@ func (h *FavoriteHandler) AddFavorite(c echo.Context) error {
 		return c.JSON(http.StatusForbidden, echo.Map{"error": "permission denied"})
 	}
 
-	var req struct {
-		StoreID int64 `json:"store_id"`
-	}
+	var req input_port.AddFavoriteRequest
 	if err := c.Bind(&req); err != nil {
 		return c.JSON(http.StatusBadRequest, echo.Map{"error": "invalid JSON"})
 	}

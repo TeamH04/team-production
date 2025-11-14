@@ -7,6 +7,7 @@ import (
 
 	"github.com/labstack/echo/v4"
 
+	"github.com/TeamH04/team-production/apps/backend/internal/input_port"
 	"github.com/TeamH04/team-production/apps/backend/internal/usecase"
 )
 
@@ -104,9 +105,7 @@ func (h *AdminHandler) HandleReport(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, echo.Map{"error": "invalid report id"})
 	}
 
-	var req struct {
-		Action string `json:"action"` // "resolve" or "reject"
-	}
+	var req input_port.HandleReportRequest
 	if err := c.Bind(&req); err != nil {
 		return c.JSON(http.StatusBadRequest, echo.Map{"error": "invalid JSON"})
 	}

@@ -6,6 +6,7 @@ import (
 	"github.com/labstack/echo/v4"
 
 	"github.com/TeamH04/team-production/apps/backend/internal/domain"
+	"github.com/TeamH04/team-production/apps/backend/internal/input_port"
 	"github.com/TeamH04/team-production/apps/backend/internal/middleware"
 	"github.com/TeamH04/team-production/apps/backend/internal/repository"
 )
@@ -41,9 +42,7 @@ func (h *AuthHandler) UpdateRole(c echo.Context) error {
 	ctx := c.Request().Context()
 	userID := middleware.GetUserID(c)
 
-	var req struct {
-		Role string `json:"role"`
-	}
+	var req input_port.UpdateRoleRequest
 	if err := c.Bind(&req); err != nil {
 		return c.JSON(http.StatusBadRequest, echo.Map{"error": "invalid JSON"})
 	}
@@ -70,11 +69,7 @@ func (h *AuthHandler) UpdateRole(c echo.Context) error {
 func (h *AuthHandler) Signup(c echo.Context) error {
 	ctx := c.Request().Context()
 
-	var req struct {
-		Email    string `json:"email"`
-		Password string `json:"password"`
-		Name     string `json:"name"`
-	}
+	var req input_port.SignupRequest
 	if err := c.Bind(&req); err != nil {
 		return c.JSON(http.StatusBadRequest, echo.Map{"error": "invalid JSON"})
 	}
@@ -101,10 +96,7 @@ func (h *AuthHandler) Signup(c echo.Context) error {
 // Login はログインを行います（Supabase Auth経由）
 // POST /api/auth/login
 func (h *AuthHandler) Login(c echo.Context) error {
-	var req struct {
-		Email    string `json:"email"`
-		Password string `json:"password"`
-	}
+	var req input_port.LoginRequest
 	if err := c.Bind(&req); err != nil {
 		return c.JSON(http.StatusBadRequest, echo.Map{"error": "invalid JSON"})
 	}

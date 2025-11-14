@@ -6,6 +6,7 @@ import (
 
 	"github.com/labstack/echo/v4"
 
+	"github.com/TeamH04/team-production/apps/backend/internal/input_port"
 	"github.com/TeamH04/team-production/apps/backend/internal/middleware"
 	"github.com/TeamH04/team-production/apps/backend/internal/usecase"
 )
@@ -46,9 +47,7 @@ func (h *MediaHandler) UploadMedia(c echo.Context) error {
 	ctx := c.Request().Context()
 	userID := middleware.GetUserID(c)
 
-	var req struct {
-		FileType string `json:"file_type"`
-	}
+	var req input_port.UploadMediaRequest
 	if err := c.Bind(&req); err != nil {
 		return c.JSON(http.StatusBadRequest, echo.Map{"error": "invalid JSON"})
 	}
