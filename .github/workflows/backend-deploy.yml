@@ -221,12 +221,8 @@ jobs:
           fi
         id: gosec
 
-      - name: Upload SARIF file
-        if: steps.gosec.outputs.sarif_exists == 'true'
-        uses: github/codeql-action/upload-sarif@v3
-        with:
-          sarif_file: results.sarif
-          category: gosec
+      - name: Analyze
+      - uses: github/codeql-action/analyze@v4
 
       - name: Run govulncheck
         continue-on-error: true
