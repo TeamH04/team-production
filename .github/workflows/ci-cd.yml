@@ -230,13 +230,13 @@ jobs:
           go install github.com/securego/gosec/v2/cmd/gosec@latest
           # Run gosec and output SARIF
           cd apps/backend
-          $HOME/go/bin/gosec -no-fail -fmt sarif -out ../../results.sarif ./...
+          $HOME/go/bin/gosec -no-fail -fmt sarif -out results/results.sarif ./...
 
       - name: Upload SARIF file
         if: always()
         uses: github/codeql-action/upload-sarif@v4
         with:
-          sarif_file: results.sarif
+          sarif_file: results/results.sarif
 
   # ----- Deployment (Production only) -----
   deploy-backend:
