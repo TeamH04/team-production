@@ -199,45 +199,56 @@ jobs:
           echo "Build configuration is valid"
 
   # ----- Security & Dependency Audit -----
-  security-audit:
-    name: Security Audit
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+security-audit:
+  name: Security Audit
+  runs-on: ubuntu-latest
+  steps:
+    - name: Checkout
+      uses: actions/checkout@v4
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+    - name: Setup pnpm
+      uses: pnpm/action-setup@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'pnpm'
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'pnpm'
 
-      - name: Run security audit
-        run: |
-          pnpm audit --audit-level moderate
+    - name: Run security audit
+      run: pnpm audit --audit-level moderate
 
-      - name: Setup Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: ${{ env.GO_VERSION }}
-          cache-dependency-path: apps/backend/go.sum
+    - name: Setup Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: ${{ env.GO_VERSION }}
+        cache-dependency-path: apps/backend/go.sum
 
-      - name: Run Go security check (gosec)
-        run: |
-          go install github.com/securego/gosec/v2/cmd/gosec@latest
-          # Run gosec and output SARIF
-          mkdir -p results
-          cd apps/backend
-          $HOME/go/bin/gosec -no-fail -fmt sarif -out ../results/results.sarif ./...
+    # ---- Gosec ----
+    - name: Run Go security check (gosec)
+      run: |
+        go install github.com/securego/gosec/v2/cmd/gosec@latest
 
-      - name: Upload SARIF file
-        if: always()
-        uses: github/codeql-action/upload-sarif@v4
-        with:
-          sarif_file: results/results.sarif
+        mkdir -p results
+
+        cd apps/backend
+        echo "[DEBUG] Running gosec..."
+        $HOME/go/bin/gosec -no-fail -fmt sarif -out ../results/results.sarif ./...
+
+        echo "[DEBUG] Checking generated file:"
+        ls -R ../results || echo "results directory not found"
+        if [ ! -f ../results/results.sarif ]; then
+          echo "❌ SARIF file not generated!"
+          exit 1
+        fi
+
+    # ---- Upload SARIF ----
+    - name: Upload SARIF file
+      if: always()
+      uses: github/codeql-action/upload-sarif@v4
+      with:
+        sarif_file: results/results.sarif
+
 
   # ----- Deployment (Production only) -----
   deploy-backend:
