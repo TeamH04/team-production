@@ -77,7 +77,7 @@ func (a *AuthUtils) RequireAdmin(c echo.Context) (*domain.User, error) {
 	if err != nil {
 		return nil, err
 	}
-	if user.UserRole != "admin" {
+	if user.Role != "admin" {
 		return nil, echo.NewHTTPError(http.StatusForbidden, "admin privileges required")
 	}
 	return user, nil
@@ -89,7 +89,7 @@ func (a *AuthUtils) RequireOwner(c echo.Context) (*domain.User, error) {
 	if err != nil {
 		return nil, err
 	}
-	if user.UserRole != "owner" && user.UserRole != "admin" {
+	if user.Role != "owner" && user.Role != "admin" {
 		return nil, echo.NewHTTPError(http.StatusForbidden, "owner privileges required")
 	}
 	return user, nil
