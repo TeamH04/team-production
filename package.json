@@ -1,21 +1,23 @@
 {
   "name": "team-production",
   "private": true,
-  "packageManager": "pnpm@10.17.1+sha512.17c560fca4867ae9473a3899ad84a88334914f379be46d455cbf92e5cf4b39d34985d452d2583baf19967fa76cb5c17bc9e245529d0b98745721aa7200ecaf7a",
+  "packageManager": "pnpm@10.19.0+sha512.c9fc7236e92adf5c8af42fd5bf1612df99c2ceb62f27047032f4720b33f8eacdde311865e91c411f2774f618d82f320808ecb51718bfa82c060c4ba7c76a32b8",
   "engines": {
     "node": "20.x",
     "pnpm": ">=10"
   },
   "scripts": {
-    "dev": "pnpm -C apps/mobile expo start -c --tunnel",
-    "dev:mobile": "pnpm -C apps/mobile expo start",
+    "dev": "pnpm --dir apps/mobile exec expo start -c --tunnel",
+    "dev:mobile": "pnpm --dir apps/mobile start",
     "lint": "eslint \"**/*.{ts,tsx,js,jsx}\"",
     "lint:mobile": "eslint \"apps/mobile/**/*.{ts,tsx,js,jsx}\"",
     "fix": "eslint \"**/*.{ts,tsx,js,jsx}\" --fix",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
     "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md}\"",
     "format:mobile": "prettier --write \"apps/mobile/**/*.{ts,tsx,js,jsx,json}\"",
-    "format:backend": "prettier --write \"apps/backend/**/*.{ts,tsx,js,jsx,json,md}\""
+    "format:backend": "prettier --write \"apps/backend/**/*.{ts,tsx,js,jsx,json,md}\"",
+    "android": "pnpm --dir apps/mobile exec expo run:android",
+    "ios": "pnpm --dir apps/mobile exec expo run:ios"
   },
   "devDependencies": {
     "@babel/core": "^7.28.3",
@@ -34,7 +36,6 @@
     "typescript": "~5.8.3"
   },
   "type": "module",
-  "dependencies": {
-    "tslib": "^2.8.1"
-  }
+  "dependencies": {},
+  "version": "1.0.0"
 }

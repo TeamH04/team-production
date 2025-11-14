@@ -1,6 +1,7 @@
 ﻿import { Tabs } from 'expo-router';
 import React from 'react';
 import { Platform } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { HapticTab } from '@/components/HapticTab';
 import { IconSymbol } from '@/components/ui/IconSymbol';
@@ -12,7 +13,8 @@ export default function TabLayout() {
   const colorScheme = useColorScheme();
 
   return (
-    <Tabs
+    <SafeAreaView style={{ flex: 1 }} edges={['top', 'left', 'right']}>
+      <Tabs
       screenOptions={{
         tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
         headerShown: false,
@@ -26,7 +28,7 @@ export default function TabLayout() {
           default: {},
         }),
       }}
-    >
+      >
       <Tabs.Screen
         name='index'
         options={{
@@ -41,6 +43,7 @@ export default function TabLayout() {
           tabBarIcon: ({ color }) => <IconSymbol size={28} name='paperplane.fill' color={color} />,
         }}
       />
-    </Tabs>
+      </Tabs>
+    </SafeAreaView>
   );
 }
