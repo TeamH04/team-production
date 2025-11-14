@@ -231,7 +231,7 @@ jobs:
           # Run gosec and output SARIF
           mkdir -p results
           cd apps/backend
-          $HOME/go/bin/gosec -no-fail -fmt sarif -out ../../results/results.sarif ./...
+          $HOME/go/bin/gosec -no-fail -fmt sarif -out ../results/results.sarif ./...
 
       - name: Upload SARIF file
         if: always()
