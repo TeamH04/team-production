@@ -49,7 +49,11 @@ func (h *AuthHandler) UpdateRole(c echo.Context) error {
 	}
 
 	// ロールの検証
-	validRoles := map[string]bool{"user": true, "owner": true, "admin": true}
+	validRoles := map[string]bool{
+		"user":  true,
+		"owner": true,
+		"admin": true}
+
 	if !validRoles[req.Role] {
 		return c.JSON(http.StatusBadRequest, echo.Map{"error": "invalid role"})
 	}
