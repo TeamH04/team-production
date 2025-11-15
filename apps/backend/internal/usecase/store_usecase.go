@@ -24,7 +24,7 @@ type StoreCommandPort interface {
 	DeleteStore(ctx context.Context, id int64) error
 }
 
-// StoreUseCase は読み取りと書き込み操作の両方を提供します（互換性維持用）
+// StoreUseCase は読み取りと書き込み操作の両方を提供します
 type StoreUseCase interface {
 	StoreQueryPort
 	StoreCommandPort
