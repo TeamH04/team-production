@@ -11,13 +11,23 @@ import (
 	"gorm.io/gorm"
 )
 
-// StoreUseCase はストアに関するビジネスロジックを提供します
-type StoreUseCase interface {
+// 読み取り操作(Query)を定義
+type StoreQueryPort interface {
 	GetAllStores(ctx context.Context) ([]domain.Store, error)
 	GetStoreByID(ctx context.Context, id int64) (*domain.Store, error)
+}
+
+// 書き込み操作(Command)を定義
+type StoreCommandPort interface {
 	CreateStore(ctx context.Context, input CreateStoreInput) (*domain.Store, error)
 	UpdateStore(ctx context.Context, id int64, input UpdateStoreInput) (*domain.Store, error)
 	DeleteStore(ctx context.Context, id int64) error
+}
+
+// StoreUseCase は読み取りと書き込み操作の両方を提供します（互換性維持用）
+type StoreUseCase interface {
+	StoreQueryPort
+	StoreCommandPort
 }
 
 type CreateStoreInput struct {

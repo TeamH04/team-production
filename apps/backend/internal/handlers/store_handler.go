@@ -11,13 +11,23 @@ import (
 )
 
 type StoreHandler struct {
-	storeUseCase usecase.StoreUseCase
+	queryPort   usecase.StoreQueryPort
+	commandPort usecase.StoreCommandPort
 }
 
-// NewStoreHandler は StoreHandler を生成します
+// NewStoreHandler は StoreHandler を生成します（互換性維持用）
 func NewStoreHandler(storeUseCase usecase.StoreUseCase) *StoreHandler {
 	return &StoreHandler{
-		storeUseCase: storeUseCase,
+		queryPort:   storeUseCase,
+		commandPort: storeUseCase,
+	}
+}
+
+// NewStoreHandlerWithPorts は Query/Command ポートを個別に指定して StoreHandler を生成します
+func NewStoreHandlerWithPorts(queryPort usecase.StoreQueryPort, commandPort usecase.StoreCommandPort) *StoreHandler {
+	return &StoreHandler{
+		queryPort:   queryPort,
+		commandPort: commandPort,
 	}
 }
 
@@ -26,7 +36,7 @@ func NewStoreHandler(storeUseCase usecase.StoreUseCase) *StoreHandler {
 func (h *StoreHandler) GetStores(c echo.Context) error {
 	ctx := c.Request().Context()
 
-	stores, err := h.storeUseCase.GetAllStores(ctx)
+	stores, err := h.queryPort.GetAllStores(ctx)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, echo.Map{"error": err.Error()})
 	}
@@ -45,7 +55,7 @@ func (h *StoreHandler) GetStoreByID(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, echo.Map{"error": "invalid id"})
 	}
 
-	store, err := h.storeUseCase.GetStoreByID(ctx, id)
+	store, err := h.queryPort.GetStoreByID(ctx, id)
 	if err != nil {
 		if errors.Is(err, usecase.ErrStoreNotFound) {
 			return c.JSON(http.StatusNotFound, echo.Map{"error": "store not found"})
@@ -66,7 +76,7 @@ func (h *StoreHandler) CreateStore(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, echo.Map{"error": "invalid JSON"})
 	}
 
-	store, err := h.storeUseCase.CreateStore(ctx, req)
+	store, err := h.commandPort.CreateStore(ctx, req)
 	if err != nil {
 		if errors.Is(err, usecase.ErrInvalidInput) || errors.Is(err, usecase.ErrInvalidCoordinates) {
 			return c.JSON(http.StatusBadRequest, echo.Map{"error": err.Error()})
@@ -93,7 +103,7 @@ func (h *StoreHandler) UpdateStore(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, echo.Map{"error": "invalid body"})
 	}
 
-	store, err := h.storeUseCase.UpdateStore(ctx, id, req)
+	store, err := h.commandPort.UpdateStore(ctx, id, req)
 	if err != nil {
 		if errors.Is(err, usecase.ErrStoreNotFound) {
 			return c.JSON(http.StatusNotFound, echo.Map{"error": "store not found"})
@@ -115,7 +125,7 @@ func (h *StoreHandler) DeleteStore(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, echo.Map{"error": "invalid store id"})
 	}
 
-	err = h.storeUseCase.DeleteStore(ctx, id)
+	err = h.commandPort.DeleteStore(ctx, id)
 	if err != nil {
 		if errors.Is(err, usecase.ErrStoreNotFound) {
 			return c.JSON(http.StatusNotFound, echo.Map{"error": "store not found"})
