@@ -7,6 +7,7 @@ import (
 
 	"github.com/TeamH04/team-production/apps/backend/internal/domain"
 	"github.com/TeamH04/team-production/apps/backend/internal/repository"
+	"github.com/TeamH04/team-production/apps/backend/internal/usecase/output_port"
 	"github.com/lib/pq"
 	"gorm.io/gorm"
 )
@@ -27,11 +28,11 @@ type CreateReviewInput struct {
 
 type reviewUseCase struct {
 	reviewRepo repository.ReviewRepository
-	storeRepo  repository.StoreRepository
+	storeRepo  output_port.StoreRepository
 }
 
 // NewReviewUseCase は ReviewUseCase の実装を生成します
-func NewReviewUseCase(reviewRepo repository.ReviewRepository, storeRepo repository.StoreRepository) ReviewUseCase {
+func NewReviewUseCase(reviewRepo repository.ReviewRepository, storeRepo output_port.StoreRepository) ReviewUseCase {
 	return &reviewUseCase{
 		reviewRepo: reviewRepo,
 		storeRepo:  storeRepo,

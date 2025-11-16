@@ -9,12 +9,13 @@ import (
 	"github.com/TeamH04/team-production/apps/backend/internal/handlers"
 	"github.com/TeamH04/team-production/apps/backend/internal/repository"
 	"github.com/TeamH04/team-production/apps/backend/internal/usecase/interactor"
+	"github.com/TeamH04/team-production/apps/backend/internal/usecase/output_port"
 )
 
 // Dependencies は各層の依存関係を保持する構造体
 type Dependencies struct {
 	// Repositories
-	StoreRepo    repository.StoreRepository
+	StoreRepo    output_port.StoreRepository
 	MenuRepo     repository.MenuRepository
 	ReviewRepo   repository.ReviewRepository
 	UserRepo     repository.UserRepository

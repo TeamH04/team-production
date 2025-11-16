@@ -6,7 +6,8 @@ import (
 	"time"
 
 	"github.com/TeamH04/team-production/apps/backend/internal/domain"
-	"github.com/TeamH04/team-production/apps/backend/internal/repository"
+	"github.com/TeamH04/team-production/apps/backend/internal/usecase/input_port"
+	"github.com/TeamH04/team-production/apps/backend/internal/usecase/output_port"
 	"github.com/lib/pq"
 	"gorm.io/gorm"
 )
@@ -15,41 +16,17 @@ import (
 type StoreUseCase interface {
 	GetAllStores(ctx context.Context) ([]domain.Store, error)
 	GetStoreByID(ctx context.Context, id int64) (*domain.Store, error)
-	CreateStore(ctx context.Context, input CreateStoreInput) (*domain.Store, error)
-	UpdateStore(ctx context.Context, id int64, input UpdateStoreInput) (*domain.Store, error)
+	CreateStore(ctx context.Context, input input_port.CreateStoreInput) (*domain.Store, error)
+	UpdateStore(ctx context.Context, id int64, input input_port.UpdateStoreInput) (*domain.Store, error)
 	DeleteStore(ctx context.Context, id int64) error
 }
 
-type CreateStoreInput struct {
-	Name            string
-	Address         string
-	ThumbnailURL    string
-	OpenedAt        *time.Time
-	Description     *string
-	OpeningHours    *string
-	LandscapePhotos []string
-	Latitude        float64
-	Longitude       float64
-}
-
-type UpdateStoreInput struct {
-	Name            *string
-	Address         *string
-	ThumbnailURL    *string
-	OpenedAt        *time.Time
-	Description     *string
-	OpeningHours    *string
-	LandscapePhotos []string
-	Latitude        *float64
-	Longitude       *float64
-}
-
 type storeUseCase struct {
-	storeRepo repository.StoreRepository
+	storeRepo output_port.StoreRepository
 }
 
 // NewStoreUseCase は StoreUseCase の実装を生成します
-func NewStoreUseCase(storeRepo repository.StoreRepository) StoreUseCase {
+func NewStoreUseCase(storeRepo output_port.StoreRepository) StoreUseCase {
 	return &storeUseCase{
 		storeRepo: storeRepo,
 	}
@@ -70,7 +47,7 @@ func (uc *storeUseCase) GetStoreByID(ctx context.Context, id int64) (*domain.Sto
 	return store, nil
 }
 
-func (uc *storeUseCase) CreateStore(ctx context.Context, input CreateStoreInput) (*domain.Store, error) {
+func (uc *storeUseCase) CreateStore(ctx context.Context, input input_port.CreateStoreInput) (*domain.Store, error) {
 	// バリデーション
 	if input.Name == "" || input.Address == "" || input.ThumbnailURL == "" {
 		return nil, ErrInvalidInput
@@ -99,7 +76,7 @@ func (uc *storeUseCase) CreateStore(ctx context.Context, input CreateStoreInput)
 	return store, nil
 }
 
-func (uc *storeUseCase) UpdateStore(ctx context.Context, id int64, input UpdateStoreInput) (*domain.Store, error) {
+func (uc *storeUseCase) UpdateStore(ctx context.Context, id int64, input input_port.UpdateStoreInput) (*domain.Store, error) {
 	// 既存のストアを取得
 	store, err := uc.storeRepo.FindByID(ctx, id)
 	if err != nil {

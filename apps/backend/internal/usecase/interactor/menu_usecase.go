@@ -6,6 +6,7 @@ import (
 
 	"github.com/TeamH04/team-production/apps/backend/internal/domain"
 	"github.com/TeamH04/team-production/apps/backend/internal/repository"
+	"github.com/TeamH04/team-production/apps/backend/internal/usecase/output_port"
 	"gorm.io/gorm"
 )
 
@@ -24,11 +25,11 @@ type CreateMenuInput struct {
 
 type menuUseCase struct {
 	menuRepo  repository.MenuRepository
-	storeRepo repository.StoreRepository
+	storeRepo output_port.StoreRepository
 }
 
 // NewMenuUseCase は MenuUseCase の実装を生成します
-func NewMenuUseCase(menuRepo repository.MenuRepository, storeRepo repository.StoreRepository) MenuUseCase {
+func NewMenuUseCase(menuRepo repository.MenuRepository, storeRepo output_port.StoreRepository) MenuUseCase {
 	return &menuUseCase{
 		menuRepo:  menuRepo,
 		storeRepo: storeRepo,

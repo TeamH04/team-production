@@ -6,6 +6,7 @@ import (
 
 	"github.com/TeamH04/team-production/apps/backend/internal/domain"
 	"github.com/TeamH04/team-production/apps/backend/internal/repository"
+	"github.com/TeamH04/team-production/apps/backend/internal/usecase/output_port"
 	"gorm.io/gorm"
 )
 
@@ -19,14 +20,14 @@ type FavoriteUseCase interface {
 type favoriteUseCase struct {
 	favoriteRepo repository.FavoriteRepository
 	userRepo     repository.UserRepository
-	storeRepo    repository.StoreRepository
+	storeRepo    output_port.StoreRepository
 }
 
 // NewFavoriteUseCase は FavoriteUseCase の実装を生成します
 func NewFavoriteUseCase(
 	favoriteRepo repository.FavoriteRepository,
 	userRepo repository.UserRepository,
-	storeRepo repository.StoreRepository,
+	storeRepo output_port.StoreRepository,
 ) FavoriteUseCase {
 	return &favoriteUseCase{
 		favoriteRepo: favoriteRepo,

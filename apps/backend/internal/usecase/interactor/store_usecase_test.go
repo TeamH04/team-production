@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/TeamH04/team-production/apps/backend/internal/domain"
+	"github.com/TeamH04/team-production/apps/backend/internal/usecase/input_port"
 	"github.com/TeamH04/team-production/apps/backend/internal/usecase/interactor"
 )
 
@@ -81,7 +82,7 @@ func TestStoreUseCase_CreateStore_Success(t *testing.T) {
 
 	uc := interactor.NewStoreUseCase(mockRepo)
 
-	input := interactor.CreateStoreInput{
+	input := input_port.CreateStoreInput{
 		Name:         "Test Store",
 		Address:      "Test Address",
 		ThumbnailURL: "https://example.com/image.jpg",
@@ -110,12 +111,12 @@ func TestStoreUseCase_CreateStore_InvalidInput(t *testing.T) {
 
 	tests := []struct {
 		name  string
-		input interactor.CreateStoreInput
+		input input_port.CreateStoreInput
 		want  error
 	}{
 		{
 			name: "empty name",
-			input: interactor.CreateStoreInput{
+			input: input_port.CreateStoreInput{
 				Address:      "Test Address",
 				ThumbnailURL: "https://example.com/image.jpg",
 				Latitude:     35.6812,
@@ -125,7 +126,7 @@ func TestStoreUseCase_CreateStore_InvalidInput(t *testing.T) {
 		},
 		{
 			name: "invalid coordinates",
-			input: interactor.CreateStoreInput{
+			input: input_port.CreateStoreInput{
 				Name:         "Test Store",
 				Address:      "Test Address",
 				ThumbnailURL: "https://example.com/image.jpg",

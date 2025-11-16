@@ -7,6 +7,7 @@ import (
 
 	"github.com/labstack/echo/v4"
 
+	"github.com/TeamH04/team-production/apps/backend/internal/usecase/input_port"
 	"github.com/TeamH04/team-production/apps/backend/internal/usecase/interactor"
 )
 
@@ -61,7 +62,7 @@ func (h *StoreHandler) GetStoreByID(c echo.Context) error {
 func (h *StoreHandler) CreateStore(c echo.Context) error {
 	ctx := c.Request().Context()
 
-	var req interactor.CreateStoreInput
+	var req input_port.CreateStoreInput
 	if err := c.Bind(&req); err != nil {
 		return c.JSON(http.StatusBadRequest, echo.Map{"error": "invalid JSON"})
 	}
@@ -88,7 +89,7 @@ func (h *StoreHandler) UpdateStore(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, echo.Map{"error": "invalid store id"})
 	}
 
-	var req interactor.UpdateStoreInput
+	var req input_port.UpdateStoreInput
 	if err := c.Bind(&req); err != nil {
 		return c.JSON(http.StatusBadRequest, echo.Map{"error": "invalid body"})
 	}

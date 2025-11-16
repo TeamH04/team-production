@@ -5,7 +5,7 @@ import (
 	"errors"
 
 	"github.com/TeamH04/team-production/apps/backend/internal/domain"
-	"github.com/TeamH04/team-production/apps/backend/internal/repository"
+	"github.com/TeamH04/team-production/apps/backend/internal/usecase/output_port"
 	"gorm.io/gorm"
 )
 
@@ -17,11 +17,11 @@ type AdminUseCase interface {
 }
 
 type adminUseCase struct {
-	storeRepo repository.StoreRepository
+	storeRepo output_port.StoreRepository
 }
 
 // NewAdminUseCase は AdminUseCase の実装を生成します
-func NewAdminUseCase(storeRepo repository.StoreRepository) AdminUseCase {
+func NewAdminUseCase(storeRepo output_port.StoreRepository) AdminUseCase {
 	return &adminUseCase{
 		storeRepo: storeRepo,
 	}
