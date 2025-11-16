@@ -7,15 +7,15 @@ import (
 
 	"github.com/labstack/echo/v4"
 
-	"github.com/TeamH04/team-production/apps/backend/internal/usecase"
+	"github.com/TeamH04/team-production/apps/backend/internal/usecase/interactor"
 )
 
 type StoreHandler struct {
-	storeUseCase usecase.StoreUseCase
+	storeUseCase interactor.StoreUseCase
 }
 
 // NewStoreHandler は StoreHandler を生成します
-func NewStoreHandler(storeUseCase usecase.StoreUseCase) *StoreHandler {
+func NewStoreHandler(storeUseCase interactor.StoreUseCase) *StoreHandler {
 	return &StoreHandler{
 		storeUseCase: storeUseCase,
 	}
@@ -47,7 +47,7 @@ func (h *StoreHandler) GetStoreByID(c echo.Context) error {
 
 	store, err := h.storeUseCase.GetStoreByID(ctx, id)
 	if err != nil {
-		if errors.Is(err, usecase.ErrStoreNotFound) {
+		if errors.Is(err, interactor.ErrStoreNotFound) {
 			return c.JSON(http.StatusNotFound, echo.Map{"error": "store not found"})
 		}
 		return c.JSON(http.StatusInternalServerError, echo.Map{"error": err.Error()})
@@ -61,14 +61,14 @@ func (h *StoreHandler) GetStoreByID(c echo.Context) error {
 func (h *StoreHandler) CreateStore(c echo.Context) error {
 	ctx := c.Request().Context()
 
-	var req usecase.CreateStoreInput
+	var req interactor.CreateStoreInput
 	if err := c.Bind(&req); err != nil {
 		return c.JSON(http.StatusBadRequest, echo.Map{"error": "invalid JSON"})
 	}
 
 	store, err := h.storeUseCase.CreateStore(ctx, req)
 	if err != nil {
-		if errors.Is(err, usecase.ErrInvalidInput) || errors.Is(err, usecase.ErrInvalidCoordinates) {
+		if errors.Is(err, interactor.ErrInvalidInput) || errors.Is(err, interactor.ErrInvalidCoordinates) {
 			return c.JSON(http.StatusBadRequest, echo.Map{"error": err.Error()})
 		}
 		return c.JSON(http.StatusInternalServerError, echo.Map{"error": err.Error()})
@@ -88,14 +88,14 @@ func (h *StoreHandler) UpdateStore(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, echo.Map{"error": "invalid store id"})
 	}
 
-	var req usecase.UpdateStoreInput
+	var req interactor.UpdateStoreInput
 	if err := c.Bind(&req); err != nil {
 		return c.JSON(http.StatusBadRequest, echo.Map{"error": "invalid body"})
 	}
 
 	store, err := h.storeUseCase.UpdateStore(ctx, id, req)
 	if err != nil {
-		if errors.Is(err, usecase.ErrStoreNotFound) {
+		if errors.Is(err, interactor.ErrStoreNotFound) {
 			return c.JSON(http.StatusNotFound, echo.Map{"error": "store not found"})
 		}
 		return c.JSON(http.StatusInternalServerError, echo.Map{"error": err.Error()})
@@ -117,7 +117,7 @@ func (h *StoreHandler) DeleteStore(c echo.Context) error {
 
 	err = h.storeUseCase.DeleteStore(ctx, id)
 	if err != nil {
-		if errors.Is(err, usecase.ErrStoreNotFound) {
+		if errors.Is(err, interactor.ErrStoreNotFound) {
 			return c.JSON(http.StatusNotFound, echo.Map{"error": "store not found"})
 		}
 		return c.JSON(http.StatusInternalServerError, echo.Map{"error": "failed to delete"})

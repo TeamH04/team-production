@@ -7,16 +7,16 @@ import (
 
 	"github.com/labstack/echo/v4"
 
-	"github.com/TeamH04/team-production/apps/backend/internal/usecase"
+	"github.com/TeamH04/team-production/apps/backend/internal/usecase/interactor"
 )
 
 type AdminHandler struct {
-	adminUseCase  usecase.AdminUseCase
-	reportUseCase usecase.ReportUseCase
+	adminUseCase  interactor.AdminUseCase
+	reportUseCase interactor.ReportUseCase
 }
 
 // NewAdminHandler は AdminHandler を生成します
-func NewAdminHandler(adminUseCase usecase.AdminUseCase, reportUseCase usecase.ReportUseCase) *AdminHandler {
+func NewAdminHandler(adminUseCase interactor.AdminUseCase, reportUseCase interactor.ReportUseCase) *AdminHandler {
 	return &AdminHandler{
 		adminUseCase:  adminUseCase,
 		reportUseCase: reportUseCase,
@@ -49,7 +49,7 @@ func (h *AdminHandler) ApproveStore(c echo.Context) error {
 
 	err = h.adminUseCase.ApproveStore(ctx, storeID)
 	if err != nil {
-		if errors.Is(err, usecase.ErrStoreNotFound) {
+		if errors.Is(err, interactor.ErrStoreNotFound) {
 			return c.JSON(http.StatusNotFound, echo.Map{"error": "store not found"})
 		}
 		return c.JSON(http.StatusInternalServerError, echo.Map{"error": err.Error()})
@@ -71,7 +71,7 @@ func (h *AdminHandler) RejectStore(c echo.Context) error {
 
 	err = h.adminUseCase.RejectStore(ctx, storeID)
 	if err != nil {
-		if errors.Is(err, usecase.ErrStoreNotFound) {
+		if errors.Is(err, interactor.ErrStoreNotFound) {
 			return c.JSON(http.StatusNotFound, echo.Map{"error": "store not found"})
 		}
 		return c.JSON(http.StatusInternalServerError, echo.Map{"error": err.Error()})
@@ -113,10 +113,10 @@ func (h *AdminHandler) HandleReport(c echo.Context) error {
 
 	err = h.reportUseCase.HandleReport(ctx, reportID, req.Action)
 	if err != nil {
-		if errors.Is(err, usecase.ErrReportNotFound) {
+		if errors.Is(err, interactor.ErrReportNotFound) {
 			return c.JSON(http.StatusNotFound, echo.Map{"error": "report not found"})
 		}
-		if errors.Is(err, usecase.ErrInvalidAction) {
+		if errors.Is(err, interactor.ErrInvalidAction) {
 			return c.JSON(http.StatusBadRequest, echo.Map{"error": "invalid action"})
 		}
 		return c.JSON(http.StatusInternalServerError, echo.Map{"error": err.Error()})

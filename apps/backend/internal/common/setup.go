@@ -8,7 +8,7 @@ import (
 
 	"github.com/TeamH04/team-production/apps/backend/internal/handlers"
 	"github.com/TeamH04/team-production/apps/backend/internal/repository"
-	"github.com/TeamH04/team-production/apps/backend/internal/usecase"
+	"github.com/TeamH04/team-production/apps/backend/internal/usecase/interactor"
 )
 
 // Dependencies は各層の依存関係を保持する構造体
@@ -23,14 +23,14 @@ type Dependencies struct {
 	MediaRepo    repository.MediaRepository
 
 	// UseCases
-	StoreUseCase    usecase.StoreUseCase
-	MenuUseCase     usecase.MenuUseCase
-	ReviewUseCase   usecase.ReviewUseCase
-	UserUseCase     usecase.UserUseCase
-	FavoriteUseCase usecase.FavoriteUseCase
-	ReportUseCase   usecase.ReportUseCase
-	AdminUseCase    usecase.AdminUseCase
-	MediaUseCase    usecase.MediaUseCase
+	StoreUseCase    interactor.StoreUseCase
+	MenuUseCase     interactor.MenuUseCase
+	ReviewUseCase   interactor.ReviewUseCase
+	UserUseCase     interactor.UserUseCase
+	FavoriteUseCase interactor.FavoriteUseCase
+	ReportUseCase   interactor.ReportUseCase
+	AdminUseCase    interactor.AdminUseCase
+	MediaUseCase    interactor.MediaUseCase
 
 	// Handlers
 	StoreHandler    *handlers.StoreHandler
@@ -60,14 +60,14 @@ func SetupDependencies(db *gorm.DB) *Dependencies {
 
 	// UseCase層の初期化
 	log.Println("  - Initializing use cases...")
-	storeUseCase := usecase.NewStoreUseCase(storeRepo)
-	menuUseCase := usecase.NewMenuUseCase(menuRepo, storeRepo)
-	reviewUseCase := usecase.NewReviewUseCase(reviewRepo, storeRepo)
-	userUseCase := usecase.NewUserUseCase(userRepo, reviewRepo)
-	favoriteUseCase := usecase.NewFavoriteUseCase(favoriteRepo, userRepo, storeRepo)
-	reportUseCase := usecase.NewReportUseCase(reportRepo, userRepo)
-	adminUseCase := usecase.NewAdminUseCase(storeRepo)
-	mediaUseCase := usecase.NewMediaUseCase(mediaRepo)
+	storeUseCase := interactor.NewStoreUseCase(storeRepo)
+	menuUseCase := interactor.NewMenuUseCase(menuRepo, storeRepo)
+	reviewUseCase := interactor.NewReviewUseCase(reviewRepo, storeRepo)
+	userUseCase := interactor.NewUserUseCase(userRepo, reviewRepo)
+	favoriteUseCase := interactor.NewFavoriteUseCase(favoriteRepo, userRepo, storeRepo)
+	reportUseCase := interactor.NewReportUseCase(reportRepo, userRepo)
+	adminUseCase := interactor.NewAdminUseCase(storeRepo)
+	mediaUseCase := interactor.NewMediaUseCase(mediaRepo)
 
 	// Handler層の初期化
 	log.Println("  - Initializing handlers...")

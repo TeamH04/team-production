@@ -8,15 +8,15 @@ import (
 	"github.com/labstack/echo/v4"
 
 	"github.com/TeamH04/team-production/apps/backend/internal/middleware"
-	"github.com/TeamH04/team-production/apps/backend/internal/usecase"
+	"github.com/TeamH04/team-production/apps/backend/internal/usecase/interactor"
 )
 
 type FavoriteHandler struct {
-	favoriteUseCase usecase.FavoriteUseCase
+	favoriteUseCase interactor.FavoriteUseCase
 }
 
 // NewFavoriteHandler は FavoriteHandler を生成します
-func NewFavoriteHandler(favoriteUseCase usecase.FavoriteUseCase) *FavoriteHandler {
+func NewFavoriteHandler(favoriteUseCase interactor.FavoriteUseCase) *FavoriteHandler {
 	return &FavoriteHandler{
 		favoriteUseCase: favoriteUseCase,
 	}
@@ -30,7 +30,7 @@ func (h *FavoriteHandler) GetUserFavorites(c echo.Context) error {
 
 	favorites, err := h.favoriteUseCase.GetUserFavorites(ctx, userID)
 	if err != nil {
-		if errors.Is(err, usecase.ErrUserNotFound) {
+		if errors.Is(err, interactor.ErrUserNotFound) {
 			return c.JSON(http.StatusNotFound, echo.Map{"error": "user not found"})
 		}
 		return c.JSON(http.StatusInternalServerError, echo.Map{"error": err.Error()})
@@ -60,13 +60,13 @@ func (h *FavoriteHandler) AddFavorite(c echo.Context) error {
 
 	favorite, err := h.favoriteUseCase.AddFavorite(ctx, userID, req.StoreID)
 	if err != nil {
-		if errors.Is(err, usecase.ErrUserNotFound) {
+		if errors.Is(err, interactor.ErrUserNotFound) {
 			return c.JSON(http.StatusNotFound, echo.Map{"error": "user not found"})
 		}
-		if errors.Is(err, usecase.ErrStoreNotFound) {
+		if errors.Is(err, interactor.ErrStoreNotFound) {
 			return c.JSON(http.StatusNotFound, echo.Map{"error": "store not found"})
 		}
-		if errors.Is(err, usecase.ErrAlreadyFavorite) {
+		if errors.Is(err, interactor.ErrAlreadyFavorite) {
 			return c.JSON(http.StatusConflict, echo.Map{"error": "already added to favorites"})
 		}
 		return c.JSON(http.StatusInternalServerError, echo.Map{"error": err.Error()})
@@ -95,7 +95,7 @@ func (h *FavoriteHandler) RemoveFavorite(c echo.Context) error {
 
 	err = h.favoriteUseCase.RemoveFavorite(ctx, userID, storeID)
 	if err != nil {
-		if errors.Is(err, usecase.ErrFavoriteNotFound) {
+		if errors.Is(err, interactor.ErrFavoriteNotFound) {
 			return c.JSON(http.StatusNotFound, echo.Map{"error": "favorite not found"})
 		}
 		return c.JSON(http.StatusInternalServerError, echo.Map{"error": err.Error()})

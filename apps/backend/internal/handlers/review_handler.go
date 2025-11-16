@@ -7,15 +7,15 @@ import (
 
 	"github.com/labstack/echo/v4"
 
-	"github.com/TeamH04/team-production/apps/backend/internal/usecase"
+	"github.com/TeamH04/team-production/apps/backend/internal/usecase/interactor"
 )
 
 type ReviewHandler struct {
-	reviewUseCase usecase.ReviewUseCase
+	reviewUseCase interactor.ReviewUseCase
 }
 
 // NewReviewHandler は ReviewHandler を生成します
-func NewReviewHandler(reviewUseCase usecase.ReviewUseCase) *ReviewHandler {
+func NewReviewHandler(reviewUseCase interactor.ReviewUseCase) *ReviewHandler {
 	return &ReviewHandler{
 		reviewUseCase: reviewUseCase,
 	}
@@ -34,7 +34,7 @@ func (h *ReviewHandler) GetReviewsByStoreID(c echo.Context) error {
 
 	reviews, err := h.reviewUseCase.GetReviewsByStoreID(ctx, storeID)
 	if err != nil {
-		if errors.Is(err, usecase.ErrStoreNotFound) {
+		if errors.Is(err, interactor.ErrStoreNotFound) {
 			return c.JSON(http.StatusNotFound, echo.Map{"error": "store not found"})
 		}
 		return c.JSON(http.StatusInternalServerError, echo.Map{"error": err.Error()})
@@ -54,17 +54,17 @@ func (h *ReviewHandler) CreateReview(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, echo.Map{"error": "invalid store id"})
 	}
 
-	var req usecase.CreateReviewInput
+	var req interactor.CreateReviewInput
 	if err := c.Bind(&req); err != nil {
 		return c.JSON(http.StatusBadRequest, echo.Map{"error": "invalid JSON"})
 	}
 
 	review, err := h.reviewUseCase.CreateReview(ctx, storeID, req)
 	if err != nil {
-		if errors.Is(err, usecase.ErrStoreNotFound) {
+		if errors.Is(err, interactor.ErrStoreNotFound) {
 			return c.JSON(http.StatusNotFound, echo.Map{"error": "store not found"})
 		}
-		if errors.Is(err, usecase.ErrInvalidInput) || errors.Is(err, usecase.ErrInvalidRating) {
+		if errors.Is(err, interactor.ErrInvalidInput) || errors.Is(err, interactor.ErrInvalidRating) {
 			return c.JSON(http.StatusBadRequest, echo.Map{"error": err.Error()})
 		}
 		return c.JSON(http.StatusInternalServerError, echo.Map{"error": err.Error()})
