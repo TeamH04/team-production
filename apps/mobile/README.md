@@ -4,6 +4,8 @@
 
 - Expo Router と React Native を用いたスマートフォン向けクライアントです。
 - Supabase を認証・API 連携に採用し、環境変数で設定可能です。
+- Expo Router と React Native を用いたスマートフォン向けクライアントです。
+- Supabase を認証・API 連携に採用し、環境変数で設定可能です。
 
 ## 前提
 
