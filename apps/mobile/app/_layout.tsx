@@ -24,7 +24,7 @@ const styles = StyleSheet.create({
 
 function RootStack() {
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'right', 'left']}>
+    <SafeAreaView style={styles.container} edges={['right', 'left']}>
       <StatusBar hidden={false} style='dark' />
       <Stack>
         <Stack.Screen name='index' options={{ headerShown: false }} />

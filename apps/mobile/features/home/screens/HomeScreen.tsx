@@ -1,7 +1,10 @@
-﻿import { Image } from 'expo-image';
+import { Image } from 'expo-image';
+import { useRouter, type Href } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import type { FlatList } from 'react-native';
 import {
   ActivityIndicator,
+  Alert,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -9,10 +12,11 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import type { FlatList } from 'react-native';
 import Animated, { useAnimatedRef } from 'react-native-reanimated';
 
+import { palette } from '@/constants/palette';
 import { CATEGORIES, SHOPS, type Shop, type ShopCategory } from '@/features/home/data/shops';
+import { getSupabase } from '@/lib/supabase';
 
 const PAGE_SIZE = 10;
 const CATEGORY_ALL = 'すべて';
@@ -27,25 +31,10 @@ const BUDGET_LABEL: Record<Shop['budget'], string> = {
   $$$: '¥¥¥',
 };
 
-const palette = {
-  accent: '#0EA5E9',
-  background: '#F9FAFB',
-  border: '#E5E7EB',
-  chipTextInactive: '#374151',
-  divider: '#D1D5DB',
-  highlight: '#FEF3C7',
-  primaryText: '#111827',
-  ratingText: '#B45309',
-  secondaryText: '#6B7280',
-  shadow: '#0f172a',
-  surface: '#FFFFFF',
-  tagSurface: '#F3F4F6',
-  tertiaryText: '#4B5563',
-} as const;
-
 const KEY_EXTRACTOR = (item: Shop) => item.id;
 
 export default function HomeScreen() {
+  const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<CategoryFilter>(CATEGORY_ALL);
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
@@ -115,6 +104,16 @@ export default function HomeScreen() {
     setSelectedCategory(current => (current === category ? CATEGORY_ALL : category));
   }, []);
 
+  const handleLogout = useCallback(async () => {
+    try {
+      await getSupabase().auth.signOut();
+      router.replace('/login' as Href);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Unknown error';
+      Alert.alert('ログアウトに失敗しました', message);
+    }
+  }, [router]);
+
   const renderShop = useCallback(({ item }: { item: Shop }) => {
     return (
       <View style={styles.cardShadow}>
@@ -151,6 +150,11 @@ export default function HomeScreen() {
   const renderListHeader = useMemo(
     () => (
       <View style={styles.headerContainer}>
+        <View style={styles.logoutRow}>
+          <Pressable onPress={handleLogout} hitSlop={8}>
+            <Text style={styles.logoutText}>ログアウト</Text>
+          </Pressable>
+        </View>
         <View style={styles.headerTextBlock}>
           <Text style={styles.screenTitle}>次に通いたくなるお店を見つけよう</Text>
           <Text style={styles.screenSubtitle}>
@@ -203,7 +207,7 @@ export default function HomeScreen() {
         </ScrollView>
       </View>
     ),
-    [handleCategoryPress, searchQuery, selectedCategory]
+    [handleCategoryPress, handleLogout, searchQuery, selectedCategory]
   );
 
   const renderEmptyState = useMemo(
@@ -345,6 +349,15 @@ const styles = StyleSheet.create({
   },
   headerTextBlock: {
     marginBottom: 16,
+  },
+  logoutRow: {
+    alignItems: 'flex-end',
+    marginBottom: 8,
+  },
+  logoutText: {
+    color: palette.link,
+    fontSize: 12,
+    fontWeight: '500',
   },
   metaRow: {
     alignItems: 'center',

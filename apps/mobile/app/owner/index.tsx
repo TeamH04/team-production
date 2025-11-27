@@ -2,16 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useRouter, type Href } from 'expo-router';
 
+import { palette } from '@/constants/palette';
 import { checkIsOwner } from '@/lib/auth';
-
-const palette = {
-  background: '#F9FAFB',
-  surface: '#FFFFFF',
-  primaryText: '#111827',
-  secondaryText: '#6B7280',
-  border: '#E5E7EB',
-  action: '#2563EB',
-};
 
 export default function OwnerHomeScreen() {
   const router = useRouter();

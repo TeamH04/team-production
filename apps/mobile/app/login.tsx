@@ -5,23 +5,11 @@ import * as WebBrowser from 'expo-web-browser';
 import React, { useCallback, useState } from 'react';
 import { Alert, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { palette } from '@/constants/palette';
 import { checkIsOwner } from '@/lib/auth';
 import { getSupabase, isSupabaseConfigured } from '@/lib/supabase';
 
 WebBrowser.maybeCompleteAuthSession();
-
-const palette = {
-  surface: '#ffffff',
-  background: '#F9FAFB',
-  primaryText: '#111827',
-  secondaryText: '#6B7280',
-  border: '#E5E7EB',
-  google: '#DB4437',
-  apple: '#000000',
-  shadow: '#000000',
-  link: '#2563EB',
-  outline: '#111827',
-} as const;
 
 function parseParamsFromUrl(url: string) {
   try {
@@ -83,8 +71,7 @@ export default function LoginScreen() {
             if (setErr) throw setErr;
           } else if (code) {
             // Fallback: exchange authorization code for a session
-            // @ts-expect-error The API accepts `{ code }` in recent versions
-            const { error: exErr } = await getSupabase().auth.exchangeCodeForSession({ code });
+            const { error: exErr } = await getSupabase().auth.exchangeCodeForSession(code);
             if (exErr) throw exErr;
           } else {
             throw new Error('No tokens found in redirect URL');
@@ -125,7 +112,6 @@ export default function LoginScreen() {
       <View style={styles.cardShadow}>
         <View style={styles.card}>
           <Text style={styles.title}>サインイン</Text>
-          <Text style={styles.subtitle}>Google または Apple で続行</Text>
 
           <View style={styles.actions}>
             <Pressable
@@ -146,23 +132,25 @@ export default function LoginScreen() {
               </View>
             </Pressable>
 
-            <Pressable
-              disabled={loading !== null || (Platform.OS === 'web' && true)}
-              onPress={() => handleOAuth('apple')}
-              style={({ pressed }) => [
-                styles.button,
-                styles.apple,
-                pressed && { opacity: 0.95 },
-                loading === 'apple' && { opacity: 0.75 },
-              ]}
-            >
-              <View style={styles.buttonContent}>
-                <Ionicons name='logo-apple' size={20} color={palette.surface} />
-                <Text style={styles.buttonText}>
-                  {loading === 'apple' ? 'Appleで処理中…' : 'Apple で続行'}
-                </Text>
-              </View>
-            </Pressable>
+            {Platform.OS === 'ios' && (
+              <Pressable
+                disabled={loading !== null}
+                onPress={() => handleOAuth('apple')}
+                style={({ pressed }) => [
+                  styles.button,
+                  styles.apple,
+                  pressed && { opacity: 0.95 },
+                  loading === 'apple' && { opacity: 0.75 },
+                ]}
+              >
+                <View style={styles.buttonContent}>
+                  <Ionicons name='logo-apple' size={20} color={palette.surface} />
+                  <Text style={styles.buttonText}>
+                    {loading === 'apple' ? 'Appleで処理中…' : 'Apple で続行'}
+                  </Text>
+                </View>
+              </Pressable>
+            )}
           </View>
 
           <View style={styles.ownerBox}>
@@ -218,6 +206,7 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   cardShadow: {
+    alignSelf: 'center',
     maxWidth: 480,
     shadowColor: palette.shadow,
     shadowOffset: { width: 0, height: 8 },
@@ -243,16 +232,13 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   screen: {
-    alignItems: 'center',
+    alignItems: 'stretch',
     backgroundColor: palette.background,
     flex: 1,
     justifyContent: 'center',
-    padding: 24,
-  },
-  subtitle: {
-    color: palette.secondaryText,
-    fontSize: 13,
-    marginTop: 6,
+    paddingBottom: 40,
+    paddingHorizontal: 24,
+    paddingTop: 8,
   },
   title: {
     color: palette.primaryText,
