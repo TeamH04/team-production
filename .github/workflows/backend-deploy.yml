@@ -46,11 +46,11 @@ jobs:
     defaults:
       run:
         working-directory: apps/backend
-    
+
     strategy:
       matrix:
         go-version: ['1.24.0', '1.23.x']
-    
+
     services:
       postgres:
         image: postgres:16
@@ -118,7 +118,7 @@ jobs:
     defaults:
       run:
         working-directory: apps/backend
-    
+
     services:
       postgres:
         image: postgres:16
@@ -165,7 +165,7 @@ jobs:
           script: |
             const fs = require('fs');
             const path = './apps/backend/benchmark_result.txt';
-            
+
             if (fs.existsSync(path)) {
               const benchmark = fs.readFileSync(path, 'utf8');
               
@@ -192,7 +192,7 @@ jobs:
     defaults:
       run:
         working-directory: apps/backend
-    
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -223,7 +223,7 @@ jobs:
 
       - name: Upload SARIF file
         if: steps.gosec.outputs.sarif_exists == 'true'
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: results.sarif
           category: gosec
@@ -242,7 +242,7 @@ jobs:
     defaults:
       run:
         working-directory: apps/backend
-    
+
     strategy:
       matrix:
         include:
@@ -256,7 +256,7 @@ jobs:
             arch: arm64
           - os: windows
             arch: amd64
-    
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -279,7 +279,7 @@ jobs:
           if [ "${{ matrix.os }}" = "windows" ]; then
             BINARY_NAME="server.exe"
           fi
-          
+
           CGO_ENABLED=0 go build \
             -ldflags="-w -s -X main.version=${{ github.sha }} -X main.buildTime=$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
             -o "bin/${BINARY_NAME}" \
@@ -301,7 +301,7 @@ jobs:
     defaults:
       run:
         working-directory: apps/backend
-    
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -332,39 +332,39 @@ jobs:
           cat > Dockerfile << 'EOF'
           # Multi-stage build for minimal production image
           FROM golang:1.24-alpine AS builder
-          
+
           WORKDIR /app
-          
+
           # Install dependencies
           COPY go.mod go.sum ./
           RUN go mod download
-          
+
           # Copy source code
           COPY . .
-          
+
           # Build the binary
           RUN CGO_ENABLED=0 GOOS=linux go build \
               -ldflags="-w -s" \
               -o bin/server ./cmd/server
-          
+
           # Production stage
           FROM alpine:latest
-          
+
           # Install ca-certificates for HTTPS requests
           RUN apk --no-cache add ca-certificates
-          
+
           WORKDIR /root/
-          
+
           # Copy binary from builder stage
           COPY --from=builder /app/bin/server .
-          
+
           # Create non-root user
           RUN addgroup -g 1001 -S appgroup && \
               adduser -u 1001 -S appuser -G appgroup
           USER appuser
-          
+
           EXPOSE 8080
-          
+
           CMD ["./server"]
           EOF
 
@@ -386,22 +386,22 @@ jobs:
     runs-on: ubuntu-latest
     needs: [docker]
     environment: staging
-    
+
     steps:
       - name: Deploy to staging environment
         run: |
           echo "Deploying to staging..."
           # ここに実際のデプロイロジックを追加
-          
+
           # 例: Kubernetes deployment
           # kubectl set image deployment/backend-app container=${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
-          
+
           # 例: Docker Swarm
           # docker service update --image ${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }} backend_app
-          
+
           # 例: Railway
           # railway deploy --service backend --image ${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
-          
+
           # 例: Render
           # render deploy --service backend --image ${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
 
@@ -412,13 +412,13 @@ jobs:
     runs-on: ubuntu-latest
     needs: [docker]
     environment: production
-    
+
     steps:
       - name: Deploy to production environment
         run: |
           echo "Deploying to production..."
           # ここに実際のデプロイロジックを追加
-          
+
           # プロダクション環境へのデプロイ設定
           # Blue-Green deploymentやRolling deploymentの実装も検討
 
@@ -444,7 +444,7 @@ jobs:
     defaults:
       run:
         working-directory: apps/backend
-    
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
