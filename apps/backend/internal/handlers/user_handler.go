@@ -1,12 +1,10 @@
 package handlers
 
 import (
-	"errors"
-	"net/http"
+	"context"
+	"time"
 
-	"github.com/labstack/echo/v4"
-
-	"github.com/TeamH04/team-production/apps/backend/internal/middleware"
+	"github.com/TeamH04/team-production/apps/backend/internal/domain"
 	"github.com/TeamH04/team-production/apps/backend/internal/usecase"
 )
 
@@ -14,92 +12,45 @@ type UserHandler struct {
 	userUseCase usecase.UserUseCase
 }
 
-// NewUserHandler は UserHandler を生成します
+var _ UserController = (*UserHandler)(nil)
+
+type UpdateUserCommand struct {
+	Name     *string
+	IconURL  *string
+	Gender   *string
+	Birthday *time.Time
+}
+
+func (c UpdateUserCommand) toInput() usecase.UpdateUserInput {
+	return usecase.UpdateUserInput{
+		Name:     c.Name,
+		IconURL:  c.IconURL,
+		Gender:   c.Gender,
+		Birthday: c.Birthday,
+	}
+}
+
 func NewUserHandler(userUseCase usecase.UserUseCase) *UserHandler {
 	return &UserHandler{
 		userUseCase: userUseCase,
 	}
 }
 
-// GetUserByID は指定されたIDのユーザー情報を取得します
-// GET /api/users/:id
-func (h *UserHandler) GetUserByID(c echo.Context) error {
-	ctx := c.Request().Context()
-	userID := c.Param("id")
-
-	user, err := h.userUseCase.GetUserByID(ctx, userID)
-	if err != nil {
-		if errors.Is(err, usecase.ErrUserNotFound) {
-			return c.JSON(http.StatusNotFound, echo.Map{"error": "user not found"})
-		}
-		return c.JSON(http.StatusInternalServerError, echo.Map{"error": err.Error()})
-	}
-
-	return c.JSON(http.StatusOK, user)
-}
-
-// GetMe はログイン中のユーザー情報を取得します
-// GET /api/users/me
-func (h *UserHandler) GetMe(c echo.Context) error {
-	ctx := c.Request().Context()
-	userID := middleware.GetUserID(c)
-
+func (h *UserHandler) GetMe(ctx context.Context, userID string) (*domain.User, error) {
 	if userID == "" {
-		return c.JSON(http.StatusBadRequest, echo.Map{"error": "user_id is required"})
+		return nil, usecase.ErrUnauthorized
 	}
-
-	user, err := h.userUseCase.GetUserByID(ctx, userID)
-	if err != nil {
-		if errors.Is(err, usecase.ErrUserNotFound) {
-			return c.JSON(http.StatusNotFound, echo.Map{"error": "user not found"})
-		}
-		return c.JSON(http.StatusInternalServerError, echo.Map{"error": err.Error()})
-	}
-
-	return c.JSON(http.StatusOK, user)
+	return h.userUseCase.GetUserByID(ctx, userID)
 }
 
-// UpdateUser はユーザー情報を更新します
-// PUT /api/users/:id
-func (h *UserHandler) UpdateUser(c echo.Context) error {
-	ctx := c.Request().Context()
-	userID := c.Param("id")
-	currentUserID := middleware.GetUserID(c)
-
-	// 本人確認
-	if userID != currentUserID {
-		return c.JSON(http.StatusForbidden, echo.Map{"error": "permission denied"})
+func (h *UserHandler) UpdateUser(ctx context.Context, userID, requesterID string, cmd UpdateUserCommand) (*domain.User, error) {
+	if userID != requesterID {
+		return nil, usecase.ErrForbidden
 	}
 
-	var req usecase.UpdateUserInput
-	if err := c.Bind(&req); err != nil {
-		return c.JSON(http.StatusBadRequest, echo.Map{"error": "invalid body"})
-	}
-
-	user, err := h.userUseCase.UpdateUser(ctx, userID, req)
-	if err != nil {
-		if errors.Is(err, usecase.ErrUserNotFound) {
-			return c.JSON(http.StatusNotFound, echo.Map{"error": "user not found"})
-		}
-		return c.JSON(http.StatusInternalServerError, echo.Map{"error": err.Error()})
-	}
-
-	return c.JSON(http.StatusOK, user)
+	return h.userUseCase.UpdateUser(ctx, userID, cmd.toInput())
 }
 
-// GetUserReviews はユーザーのレビュー一覧を取得します
-// GET /api/users/:id/reviews
-func (h *UserHandler) GetUserReviews(c echo.Context) error {
-	ctx := c.Request().Context()
-	userID := c.Param("id")
-
-	reviews, err := h.userUseCase.GetUserReviews(ctx, userID)
-	if err != nil {
-		if errors.Is(err, usecase.ErrUserNotFound) {
-			return c.JSON(http.StatusNotFound, echo.Map{"error": "user not found"})
-		}
-		return c.JSON(http.StatusInternalServerError, echo.Map{"error": err.Error()})
-	}
-
-	return c.JSON(http.StatusOK, reviews)
+func (h *UserHandler) GetUserReviews(ctx context.Context, userID string) ([]domain.Review, error) {
+	return h.userUseCase.GetUserReviews(ctx, userID)
 }

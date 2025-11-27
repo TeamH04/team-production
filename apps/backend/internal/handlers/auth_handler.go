@@ -1,114 +1,78 @@
 package handlers
 
 import (
-	"net/http"
-
-	"github.com/labstack/echo/v4"
+	"context"
+	"fmt"
 
 	"github.com/TeamH04/team-production/apps/backend/internal/domain"
-	"github.com/TeamH04/team-production/apps/backend/internal/middleware"
-	"github.com/TeamH04/team-production/apps/backend/internal/repository"
+	"github.com/TeamH04/team-production/apps/backend/internal/usecase"
 )
 
 type AuthHandler struct {
-	userRepo repository.UserRepository
+	authUseCase usecase.AuthUseCase
+	userUseCase usecase.UserUseCase
+}
+
+var _ AuthController = (*AuthHandler)(nil)
+
+type SignupCommand struct {
+	Email    string
+	Password string
+	Name     string
+}
+
+func (c SignupCommand) toInput() usecase.AuthSignupInput {
+	return usecase.AuthSignupInput{
+		Email:    c.Email,
+		Password: c.Password,
+		Name:     c.Name,
+	}
+}
+
+type LoginCommand struct {
+	Email    string
+	Password string
+}
+
+func (c LoginCommand) toInput() usecase.AuthLoginInput {
+	return usecase.AuthLoginInput{
+		Email:    c.Email,
+		Password: c.Password,
+	}
+}
+
+type UpdateRoleCommand struct {
+	Role string
 }
 
 // NewAuthHandler は AuthHandler を生成します
-func NewAuthHandler(userRepo repository.UserRepository) *AuthHandler {
+func NewAuthHandler(authUseCase usecase.AuthUseCase, userUseCase usecase.UserUseCase) *AuthHandler {
 	return &AuthHandler{
-		userRepo: userRepo,
+		authUseCase: authUseCase,
+		userUseCase: userUseCase,
 	}
 }
 
-// GetMe はログイン中のユーザー情報を返します
-// GET /api/auth/me
-func (h *AuthHandler) GetMe(c echo.Context) error {
-	ctx := c.Request().Context()
-	userID := middleware.GetUserID(c)
-
-	user, err := h.userRepo.FindByID(ctx, userID)
-	if err != nil {
-		return c.JSON(http.StatusNotFound, echo.Map{"error": "user not found"})
+func (h *AuthHandler) GetMe(ctx context.Context, userID string) (*domain.User, error) {
+	if userID == "" {
+		return nil, fmt.Errorf("%w: user_id is required", usecase.ErrInvalidInput)
 	}
 
-	return c.JSON(http.StatusOK, user)
+	return h.userUseCase.GetUserByID(ctx, userID)
 }
 
-// UpdateRole はユーザーのロールを変更します
-// PUT /api/auth/role
-func (h *AuthHandler) UpdateRole(c echo.Context) error {
-	ctx := c.Request().Context()
-	userID := middleware.GetUserID(c)
-
-	var req struct {
-		Role string `json:"role"`
-	}
-	if err := c.Bind(&req); err != nil {
-		return c.JSON(http.StatusBadRequest, echo.Map{"error": "invalid JSON"})
+func (h *AuthHandler) UpdateRole(ctx context.Context, userID string, cmd UpdateRoleCommand) error {
+	if userID == "" {
+		return usecase.ErrUnauthorized
 	}
 
-	// ロールの検証
-	validRoles := map[string]bool{"user": true, "owner": true, "admin": true}
-	if !validRoles[req.Role] {
-		return c.JSON(http.StatusBadRequest, echo.Map{"error": "invalid role"})
-	}
-
-	if err := h.userRepo.UpdateRole(ctx, userID, req.Role); err != nil {
-		return c.JSON(http.StatusInternalServerError, echo.Map{"error": err.Error()})
-	}
-
-	return c.JSON(http.StatusOK, echo.Map{"message": "role updated successfully"})
+	return h.userUseCase.UpdateUserRole(ctx, userID, cmd.Role)
 }
 
-// Signup はユーザー登録を行います（Supabase Auth経由）
-// POST /api/auth/signup
-func (h *AuthHandler) Signup(c echo.Context) error {
-	ctx := c.Request().Context()
-
-	var req struct {
-		Email    string `json:"email"`
-		Password string `json:"password"`
-		Name     string `json:"name"`
-	}
-	if err := c.Bind(&req); err != nil {
-		return c.JSON(http.StatusBadRequest, echo.Map{"error": "invalid JSON"})
-	}
-
-	// TODO: Supabase Authでユーザー登録
-	// 仮の実装
-	user := &domain.User{
-		UserID: "dummy-user-id", // 実際はSupabaseから取得
-		Email:  req.Email,
-		Name:   req.Name,
-		Role:   "user",
-	}
-
-	if err := h.userRepo.Create(ctx, user); err != nil {
-		return c.JSON(http.StatusInternalServerError, echo.Map{"error": err.Error()})
-	}
-
-	return c.JSON(http.StatusCreated, echo.Map{
-		"message": "user created successfully",
-		"user":    user,
-	})
+func (h *AuthHandler) Signup(ctx context.Context, cmd SignupCommand) (*domain.User, error) {
+	return h.authUseCase.Signup(ctx, cmd.toInput())
 }
 
-// Login はログインを行います（Supabase Auth経由）
-// POST /api/auth/login
-func (h *AuthHandler) Login(c echo.Context) error {
-	var req struct {
-		Email    string `json:"email"`
-		Password string `json:"password"`
-	}
-	if err := c.Bind(&req); err != nil {
-		return c.JSON(http.StatusBadRequest, echo.Map{"error": "invalid JSON"})
-	}
-
-	// TODO: Supabase Authでログイン処理
-	// 仮の実装
-	return c.JSON(http.StatusOK, echo.Map{
-		"message": "login successful",
-		"token":   "dummy-jwt-token",
-	})
+func (h *AuthHandler) Login(ctx context.Context, cmd LoginCommand) (*usecase.AuthSession, error) {
+	return h.authUseCase.Login(ctx, cmd.toInput())
 }

@@ -2,11 +2,10 @@ package usecase
 
 import (
 	"context"
-	"errors"
 
+	"github.com/TeamH04/team-production/apps/backend/internal/apperr"
 	"github.com/TeamH04/team-production/apps/backend/internal/domain"
-	"github.com/TeamH04/team-production/apps/backend/internal/repository"
-	"gorm.io/gorm"
+	"github.com/TeamH04/team-production/apps/backend/internal/ports"
 )
 
 // FavoriteUseCase はお気に入りに関するビジネスロジックを提供します
@@ -17,16 +16,16 @@ type FavoriteUseCase interface {
 }
 
 type favoriteUseCase struct {
-	favoriteRepo repository.FavoriteRepository
-	userRepo     repository.UserRepository
-	storeRepo    repository.StoreRepository
+	favoriteRepo ports.FavoriteRepository
+	userRepo     ports.UserRepository
+	storeRepo    ports.StoreRepository
 }
 
 // NewFavoriteUseCase は FavoriteUseCase の実装を生成します
 func NewFavoriteUseCase(
-	favoriteRepo repository.FavoriteRepository,
-	userRepo repository.UserRepository,
-	storeRepo repository.StoreRepository,
+	favoriteRepo ports.FavoriteRepository,
+	userRepo ports.UserRepository,
+	storeRepo ports.StoreRepository,
 ) FavoriteUseCase {
 	return &favoriteUseCase{
 		favoriteRepo: favoriteRepo,
@@ -37,9 +36,8 @@ func NewFavoriteUseCase(
 
 func (uc *favoriteUseCase) GetUserFavorites(ctx context.Context, userID string) ([]domain.Favorite, error) {
 	// ユーザーの存在確認
-	_, err := uc.userRepo.FindByID(ctx, userID)
-	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
+	if _, err := uc.userRepo.FindByID(ctx, userID); err != nil {
+		if apperr.IsCode(err, apperr.CodeNotFound) {
 			return nil, ErrUserNotFound
 		}
 		return nil, err
@@ -49,19 +47,20 @@ func (uc *favoriteUseCase) GetUserFavorites(ctx context.Context, userID string) 
 }
 
 func (uc *favoriteUseCase) AddFavorite(ctx context.Context, userID string, storeID int64) (*domain.Favorite, error) {
+	if storeID <= 0 {
+		return nil, ErrInvalidInput
+	}
 	// ユーザーの存在確認
-	_, err := uc.userRepo.FindByID(ctx, userID)
-	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
+	if _, err := uc.userRepo.FindByID(ctx, userID); err != nil {
+		if apperr.IsCode(err, apperr.CodeNotFound) {
 			return nil, ErrUserNotFound
 		}
 		return nil, err
 	}
 
 	// ストアの存在確認
-	_, err = uc.storeRepo.FindByID(ctx, storeID)
-	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
+	if _, err := uc.storeRepo.FindByID(ctx, storeID); err != nil {
+		if apperr.IsCode(err, apperr.CodeNotFound) {
 			return nil, ErrStoreNotFound
 		}
 		return nil, err
@@ -71,6 +70,9 @@ func (uc *favoriteUseCase) AddFavorite(ctx context.Context, userID string, store
 	existing, err := uc.favoriteRepo.FindByUserAndStore(ctx, userID, storeID)
 	if err == nil && existing != nil {
 		return nil, ErrAlreadyFavorite
+	}
+	if err != nil && !apperr.IsCode(err, apperr.CodeNotFound) {
+		return nil, err
 	}
 
 	favorite := &domain.Favorite{
@@ -87,9 +89,8 @@ func (uc *favoriteUseCase) AddFavorite(ctx context.Context, userID string, store
 
 func (uc *favoriteUseCase) RemoveFavorite(ctx context.Context, userID string, storeID int64) error {
 	// お気に入りの存在確認
-	_, err := uc.favoriteRepo.FindByUserAndStore(ctx, userID, storeID)
-	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
+	if _, err := uc.favoriteRepo.FindByUserAndStore(ctx, userID, storeID); err != nil {
+		if apperr.IsCode(err, apperr.CodeNotFound) {
 			return ErrFavoriteNotFound
 		}
 		return err

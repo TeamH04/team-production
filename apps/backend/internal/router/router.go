@@ -6,13 +6,31 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 
-	"github.com/TeamH04/team-production/apps/backend/internal/common"
 	mw "github.com/TeamH04/team-production/apps/backend/internal/middleware"
+	"github.com/TeamH04/team-production/apps/backend/internal/presentation/httpadapter"
+	"github.com/TeamH04/team-production/apps/backend/internal/security"
 )
 
+// Dependencies bundles the HTTP handlers and middleware collaborators required by the router.
+type Dependencies struct {
+	StoreHandler    *httpadapter.StoreHandler
+	MenuHandler     *httpadapter.MenuHandler
+	ReviewHandler   *httpadapter.ReviewHandler
+	UserHandler     *httpadapter.UserHandler
+	FavoriteHandler *httpadapter.FavoriteHandler
+	ReportHandler   *httpadapter.ReportHandler
+	AuthHandler     *httpadapter.AuthHandler
+	AdminHandler    *httpadapter.AdminHandler
+	MediaHandler    *httpadapter.MediaHandler
+
+	TokenVerifier security.TokenVerifier
+}
+
 // NewServer は全てのルーティングとミドルウェアを設定したサーバーを返します
-func NewServer(deps *common.Dependencies) *echo.Echo {
+func NewServer(deps *Dependencies) *echo.Echo {
 	e := echo.New()
+
+	configureErrorHandler(e)
 
 	// グローバルミドルウェア
 	e.Use(middleware.Logger())
@@ -31,7 +49,7 @@ func NewServer(deps *common.Dependencies) *echo.Echo {
 }
 
 // setupAPIRoutes はAPIのルーティングを設定します
-func setupAPIRoutes(e *echo.Echo, deps *common.Dependencies) {
+func setupAPIRoutes(e *echo.Echo, deps *Dependencies) {
 	api := e.Group("/api")
 
 	// 認証エンドポイント
@@ -57,64 +75,64 @@ func setupAPIRoutes(e *echo.Echo, deps *common.Dependencies) {
 }
 
 // setupAuthRoutes は認証関連のルーティングを設定します
-func setupAuthRoutes(api *echo.Group, deps *common.Dependencies) {
+func setupAuthRoutes(api *echo.Group, deps *Dependencies) {
 	auth := api.Group("/auth")
 	auth.POST("/signup", deps.AuthHandler.Signup)
 	auth.POST("/login", deps.AuthHandler.Login)
-	auth.GET("/me", deps.AuthHandler.GetMe, mw.JWTAuth())
-	auth.PUT("/role", deps.AuthHandler.UpdateRole, mw.JWTAuth())
+	auth.GET("/me", deps.AuthHandler.GetMe, mw.JWTAuth(deps.TokenVerifier))
+	auth.PUT("/role", deps.AuthHandler.UpdateRole, mw.JWTAuth(deps.TokenVerifier))
 }
 
 // setupStoreRoutes は店舗関連のルーティングを設定します
-func setupStoreRoutes(api *echo.Group, deps *common.Dependencies) {
+func setupStoreRoutes(api *echo.Group, deps *Dependencies) {
 	// 店舗エンドポイント（一部公開、一部認証必要）
 	api.GET("/stores", deps.StoreHandler.GetStores)
 	api.GET("/stores/:id", deps.StoreHandler.GetStoreByID)
-	api.POST("/stores", deps.StoreHandler.CreateStore, mw.JWTAuth(), mw.RequireRole("owner", "admin"))
-	api.PUT("/stores/:id", deps.StoreHandler.UpdateStore, mw.JWTAuth(), mw.RequireRole("owner", "admin"))
-	api.DELETE("/stores/:id", deps.StoreHandler.DeleteStore, mw.JWTAuth(), mw.RequireRole("admin"))
+	api.POST("/stores", deps.StoreHandler.CreateStore, mw.JWTAuth(deps.TokenVerifier), mw.RequireRole("owner", "admin"))
+	api.PUT("/stores/:id", deps.StoreHandler.UpdateStore, mw.JWTAuth(deps.TokenVerifier), mw.RequireRole("owner", "admin"))
+	api.DELETE("/stores/:id", deps.StoreHandler.DeleteStore, mw.JWTAuth(deps.TokenVerifier), mw.RequireRole("admin"))
 
 	// メニューエンドポイント
 	api.GET("/stores/:id/menus", deps.MenuHandler.GetMenusByStoreID)
-	api.POST("/stores/:id/menus", deps.MenuHandler.CreateMenu, mw.JWTAuth(), mw.RequireRole("owner", "admin"))
+	api.POST("/stores/:id/menus", deps.MenuHandler.CreateMenu, mw.JWTAuth(deps.TokenVerifier), mw.RequireRole("owner", "admin"))
 
 	// レビューエンドポイント
 	api.GET("/stores/:id/reviews", deps.ReviewHandler.GetReviewsByStoreID)
-	api.POST("/stores/:id/reviews", deps.ReviewHandler.CreateReview, mw.JWTAuth())
+	api.POST("/stores/:id/reviews", deps.ReviewHandler.CreateReview, mw.JWTAuth(deps.TokenVerifier))
 }
 
 // setupUserRoutes はユーザー関連のルーティングを設定します
-func setupUserRoutes(api *echo.Group, deps *common.Dependencies) {
-	api.GET("/users/me", deps.UserHandler.GetMe, mw.JWTAuth())
-	api.GET("/users/:id", deps.UserHandler.GetUserByID)
-	api.PUT("/users/:id", deps.UserHandler.UpdateUser, mw.JWTAuth())
+func setupUserRoutes(api *echo.Group, deps *Dependencies) {
+	api.GET("/users/me", deps.UserHandler.GetMe, mw.JWTAuth(deps.TokenVerifier))
+	api.PUT("/users/:id", deps.UserHandler.UpdateUser, mw.JWTAuth(deps.TokenVerifier))
 	api.GET("/users/:id/reviews", deps.UserHandler.GetUserReviews)
 }
 
 // setupFavoriteRoutes はお気に入り関連のルーティングを設定します
-func setupFavoriteRoutes(api *echo.Group, deps *common.Dependencies) {
+func setupFavoriteRoutes(api *echo.Group, deps *Dependencies) {
 	api.GET("/users/:id/favorites", deps.FavoriteHandler.GetUserFavorites)
-	api.POST("/users/:id/favorites", deps.FavoriteHandler.AddFavorite, mw.JWTAuth())
-	api.DELETE("/users/:id/favorites/:store_id", deps.FavoriteHandler.RemoveFavorite, mw.JWTAuth())
+	api.POST("/users/:id/favorites", deps.FavoriteHandler.AddFavorite, mw.JWTAuth(deps.TokenVerifier))
+	api.DELETE("/users/:id/favorites/:store_id", deps.FavoriteHandler.RemoveFavorite, mw.JWTAuth(deps.TokenVerifier))
 }
 
 // setupReportRoutes は通報関連のルーティングを設定します
-func setupReportRoutes(api *echo.Group, deps *common.Dependencies) {
-	api.POST("/reports", deps.ReportHandler.CreateReport, mw.JWTAuth())
+func setupReportRoutes(api *echo.Group, deps *Dependencies) {
+	api.POST("/reports", deps.ReportHandler.CreateReport, mw.JWTAuth(deps.TokenVerifier))
 }
 
 // setupAdminRoutes は管理者用のルーティングを設定します
-func setupAdminRoutes(api *echo.Group, deps *common.Dependencies) {
-	admin := api.Group("/admin", mw.JWTAuth(), mw.RequireRole("admin"))
+func setupAdminRoutes(api *echo.Group, deps *Dependencies) {
+	admin := api.Group("/admin", mw.JWTAuth(deps.TokenVerifier), mw.RequireRole("admin"))
 	admin.GET("/stores/pending", deps.AdminHandler.GetPendingStores)
 	admin.POST("/stores/:id/approve", deps.AdminHandler.ApproveStore)
 	admin.POST("/stores/:id/reject", deps.AdminHandler.RejectStore)
 	admin.GET("/reports", deps.AdminHandler.GetReports)
 	admin.POST("/reports/:id/action", deps.AdminHandler.HandleReport)
+	admin.GET("/users/:id", deps.AdminHandler.GetUserByID)
 }
 
 // setupMediaRoutes はメディア関連のルーティングを設定します
-func setupMediaRoutes(api *echo.Group, deps *common.Dependencies) {
-	api.POST("/media/upload", deps.MediaHandler.UploadMedia, mw.JWTAuth())
+func setupMediaRoutes(api *echo.Group, deps *Dependencies) {
+	api.POST("/media/upload", deps.MediaHandler.UploadMedia, mw.JWTAuth(deps.TokenVerifier))
 	api.GET("/media/:id", deps.MediaHandler.GetMedia)
 }

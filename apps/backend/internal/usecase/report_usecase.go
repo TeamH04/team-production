@@ -2,11 +2,10 @@ package usecase
 
 import (
 	"context"
-	"errors"
 
+	"github.com/TeamH04/team-production/apps/backend/internal/apperr"
 	"github.com/TeamH04/team-production/apps/backend/internal/domain"
-	"github.com/TeamH04/team-production/apps/backend/internal/repository"
-	"gorm.io/gorm"
+	"github.com/TeamH04/team-production/apps/backend/internal/ports"
 )
 
 // ReportUseCase は通報に関するビジネスロジックを提供します
@@ -24,12 +23,12 @@ type CreateReportInput struct {
 }
 
 type reportUseCase struct {
-	reportRepo repository.ReportRepository
-	userRepo   repository.UserRepository
+	reportRepo ports.ReportRepository
+	userRepo   ports.UserRepository
 }
 
 // NewReportUseCase は ReportUseCase の実装を生成します
-func NewReportUseCase(reportRepo repository.ReportRepository, userRepo repository.UserRepository) ReportUseCase {
+func NewReportUseCase(reportRepo ports.ReportRepository, userRepo ports.UserRepository) ReportUseCase {
 	return &reportUseCase{
 		reportRepo: reportRepo,
 		userRepo:   userRepo,
@@ -38,9 +37,8 @@ func NewReportUseCase(reportRepo repository.ReportRepository, userRepo repositor
 
 func (uc *reportUseCase) CreateReport(ctx context.Context, input CreateReportInput) (*domain.Report, error) {
 	// ユーザーの存在確認
-	_, err := uc.userRepo.FindByID(ctx, input.UserID)
-	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
+	if _, err := uc.userRepo.FindByID(ctx, input.UserID); err != nil {
+		if apperr.IsCode(err, apperr.CodeNotFound) {
 			return nil, ErrUserNotFound
 		}
 		return nil, err
@@ -80,9 +78,8 @@ func (uc *reportUseCase) GetAllReports(ctx context.Context) ([]domain.Report, er
 
 func (uc *reportUseCase) HandleReport(ctx context.Context, reportID int64, action string) error {
 	// 通報の存在確認
-	_, err := uc.reportRepo.FindByID(ctx, reportID)
-	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
+	if _, err := uc.reportRepo.FindByID(ctx, reportID); err != nil {
+		if apperr.IsCode(err, apperr.CodeNotFound) {
 			return ErrReportNotFound
 		}
 		return err

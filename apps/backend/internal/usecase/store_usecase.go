@@ -2,13 +2,11 @@ package usecase
 
 import (
 	"context"
-	"errors"
 	"time"
 
+	"github.com/TeamH04/team-production/apps/backend/internal/apperr"
 	"github.com/TeamH04/team-production/apps/backend/internal/domain"
-	"github.com/TeamH04/team-production/apps/backend/internal/repository"
-	"github.com/lib/pq"
-	"gorm.io/gorm"
+	"github.com/TeamH04/team-production/apps/backend/internal/ports"
 )
 
 // StoreUseCase はストアに関するビジネスロジックを提供します
@@ -45,11 +43,11 @@ type UpdateStoreInput struct {
 }
 
 type storeUseCase struct {
-	storeRepo repository.StoreRepository
+	storeRepo ports.StoreRepository
 }
 
 // NewStoreUseCase は StoreUseCase の実装を生成します
-func NewStoreUseCase(storeRepo repository.StoreRepository) StoreUseCase {
+func NewStoreUseCase(storeRepo ports.StoreRepository) StoreUseCase {
 	return &storeUseCase{
 		storeRepo: storeRepo,
 	}
@@ -62,7 +60,7 @@ func (uc *storeUseCase) GetAllStores(ctx context.Context) ([]domain.Store, error
 func (uc *storeUseCase) GetStoreByID(ctx context.Context, id int64) (*domain.Store, error) {
 	store, err := uc.storeRepo.FindByID(ctx, id)
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
+		if apperr.IsCode(err, apperr.CodeNotFound) {
 			return nil, ErrStoreNotFound
 		}
 		return nil, err
@@ -85,7 +83,7 @@ func (uc *storeUseCase) CreateStore(ctx context.Context, input CreateStoreInput)
 		ThumbnailURL:    input.ThumbnailURL,
 		OpenedAt:        input.OpenedAt,
 		Description:     input.Description,
-		LandscapePhotos: pq.StringArray(input.LandscapePhotos),
+		LandscapePhotos: append([]string(nil), input.LandscapePhotos...),
 		OpeningHours:    input.OpeningHours,
 		Latitude:        input.Latitude,
 		Longitude:       input.Longitude,
@@ -103,7 +101,7 @@ func (uc *storeUseCase) UpdateStore(ctx context.Context, id int64, input UpdateS
 	// 既存のストアを取得
 	store, err := uc.storeRepo.FindByID(ctx, id)
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
+		if apperr.IsCode(err, apperr.CodeNotFound) {
 			return nil, ErrStoreNotFound
 		}
 		return nil, err
@@ -129,7 +127,7 @@ func (uc *storeUseCase) UpdateStore(ctx context.Context, id int64, input UpdateS
 		store.OpeningHours = input.OpeningHours
 	}
 	if len(input.LandscapePhotos) > 0 {
-		store.LandscapePhotos = pq.StringArray(input.LandscapePhotos)
+		store.LandscapePhotos = append([]string(nil), input.LandscapePhotos...)
 	}
 	if input.Latitude != nil {
 		store.Latitude = *input.Latitude
@@ -149,9 +147,8 @@ func (uc *storeUseCase) UpdateStore(ctx context.Context, id int64, input UpdateS
 
 func (uc *storeUseCase) DeleteStore(ctx context.Context, id int64) error {
 	// 存在確認
-	_, err := uc.storeRepo.FindByID(ctx, id)
-	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
+	if _, err := uc.storeRepo.FindByID(ctx, id); err != nil {
+		if apperr.IsCode(err, apperr.CodeNotFound) {
 			return ErrStoreNotFound
 		}
 		return err

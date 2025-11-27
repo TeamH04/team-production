@@ -1,126 +1,67 @@
 package handlers
 
 import (
-	"errors"
-	"net/http"
-	"strconv"
+	"context"
+	"fmt"
+	"strings"
 
-	"github.com/labstack/echo/v4"
-
+	"github.com/TeamH04/team-production/apps/backend/internal/domain"
 	"github.com/TeamH04/team-production/apps/backend/internal/usecase"
 )
 
 type AdminHandler struct {
 	adminUseCase  usecase.AdminUseCase
 	reportUseCase usecase.ReportUseCase
+	userUseCase   usecase.UserUseCase
 }
 
-// NewAdminHandler は AdminHandler を生成します
-func NewAdminHandler(adminUseCase usecase.AdminUseCase, reportUseCase usecase.ReportUseCase) *AdminHandler {
+var _ AdminController = (*AdminHandler)(nil)
+
+type HandleReportCommand struct {
+	Action string
+}
+
+func (c HandleReportCommand) Validate() error {
+	if strings.TrimSpace(c.Action) == "" {
+		return fmt.Errorf("%w: action is required", usecase.ErrInvalidInput)
+	}
+	return nil
+}
+
+func NewAdminHandler(adminUseCase usecase.AdminUseCase, reportUseCase usecase.ReportUseCase, userUseCase usecase.UserUseCase) *AdminHandler {
 	return &AdminHandler{
 		adminUseCase:  adminUseCase,
 		reportUseCase: reportUseCase,
+		userUseCase:   userUseCase,
 	}
 }
 
-// GetPendingStores は承認待ちの店舗一覧を取得します
-// GET /api/admin/stores/pending
-func (h *AdminHandler) GetPendingStores(c echo.Context) error {
-	ctx := c.Request().Context()
-
-	stores, err := h.adminUseCase.GetPendingStores(ctx)
-	if err != nil {
-		return c.JSON(http.StatusInternalServerError, echo.Map{"error": err.Error()})
-	}
-
-	return c.JSON(http.StatusOK, stores)
+func (h *AdminHandler) GetPendingStores(ctx context.Context) ([]domain.Store, error) {
+	return h.adminUseCase.GetPendingStores(ctx)
 }
 
-// ApproveStore は店舗を承認します
-// POST /api/admin/stores/:id/approve
-func (h *AdminHandler) ApproveStore(c echo.Context) error {
-	ctx := c.Request().Context()
-
-	idStr := c.Param("id")
-	storeID, err := strconv.ParseInt(idStr, 10, 64)
-	if err != nil {
-		return c.JSON(http.StatusBadRequest, echo.Map{"error": "invalid store id"})
-	}
-
-	err = h.adminUseCase.ApproveStore(ctx, storeID)
-	if err != nil {
-		if errors.Is(err, usecase.ErrStoreNotFound) {
-			return c.JSON(http.StatusNotFound, echo.Map{"error": "store not found"})
-		}
-		return c.JSON(http.StatusInternalServerError, echo.Map{"error": err.Error()})
-	}
-
-	return c.JSON(http.StatusOK, echo.Map{"message": "store approved successfully"})
+func (h *AdminHandler) ApproveStore(ctx context.Context, storeID int64) error {
+	return h.adminUseCase.ApproveStore(ctx, storeID)
 }
 
-// RejectStore は店舗を差し戻します
-// POST /api/admin/stores/:id/reject
-func (h *AdminHandler) RejectStore(c echo.Context) error {
-	ctx := c.Request().Context()
-
-	idStr := c.Param("id")
-	storeID, err := strconv.ParseInt(idStr, 10, 64)
-	if err != nil {
-		return c.JSON(http.StatusBadRequest, echo.Map{"error": "invalid store id"})
-	}
-
-	err = h.adminUseCase.RejectStore(ctx, storeID)
-	if err != nil {
-		if errors.Is(err, usecase.ErrStoreNotFound) {
-			return c.JSON(http.StatusNotFound, echo.Map{"error": "store not found"})
-		}
-		return c.JSON(http.StatusInternalServerError, echo.Map{"error": err.Error()})
-	}
-
-	return c.JSON(http.StatusOK, echo.Map{"message": "store rejected successfully"})
+func (h *AdminHandler) RejectStore(ctx context.Context, storeID int64) error {
+	return h.adminUseCase.RejectStore(ctx, storeID)
 }
 
-// GetReports は通報一覧を取得します
-// GET /api/admin/reports
-func (h *AdminHandler) GetReports(c echo.Context) error {
-	ctx := c.Request().Context()
-
-	reports, err := h.reportUseCase.GetAllReports(ctx)
-	if err != nil {
-		return c.JSON(http.StatusInternalServerError, echo.Map{"error": err.Error()})
-	}
-
-	return c.JSON(http.StatusOK, reports)
+func (h *AdminHandler) GetReports(ctx context.Context) ([]domain.Report, error) {
+	return h.reportUseCase.GetAllReports(ctx)
 }
 
-// HandleReport は通報に対応します
-// POST /api/admin/reports/:id/action
-func (h *AdminHandler) HandleReport(c echo.Context) error {
-	ctx := c.Request().Context()
-
-	idStr := c.Param("id")
-	reportID, err := strconv.ParseInt(idStr, 10, 64)
-	if err != nil {
-		return c.JSON(http.StatusBadRequest, echo.Map{"error": "invalid report id"})
+func (h *AdminHandler) HandleReport(ctx context.Context, reportID int64, cmd HandleReportCommand) error {
+	if err := cmd.Validate(); err != nil {
+		return err
 	}
+	return h.reportUseCase.HandleReport(ctx, reportID, cmd.Action)
+}
 
-	var req struct {
-		Action string `json:"action"` // "resolve" or "reject"
+func (h *AdminHandler) GetUserByID(ctx context.Context, userID string) (*domain.User, error) {
+	if userID == "" {
+		return nil, usecase.ErrInvalidInput
 	}
-	if err := c.Bind(&req); err != nil {
-		return c.JSON(http.StatusBadRequest, echo.Map{"error": "invalid JSON"})
-	}
-
-	err = h.reportUseCase.HandleReport(ctx, reportID, req.Action)
-	if err != nil {
-		if errors.Is(err, usecase.ErrReportNotFound) {
-			return c.JSON(http.StatusNotFound, echo.Map{"error": "report not found"})
-		}
-		if errors.Is(err, usecase.ErrInvalidAction) {
-			return c.JSON(http.StatusBadRequest, echo.Map{"error": "invalid action"})
-		}
-		return c.JSON(http.StatusInternalServerError, echo.Map{"error": err.Error()})
-	}
-
-	return c.JSON(http.StatusOK, echo.Map{"message": "report handled successfully"})
+	return h.userUseCase.GetUserByID(ctx, userID)
 }

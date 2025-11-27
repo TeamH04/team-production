@@ -1,12 +1,9 @@
 package handlers
 
 import (
-	"errors"
-	"net/http"
-	"strconv"
+	"context"
 
-	"github.com/labstack/echo/v4"
-
+	"github.com/TeamH04/team-production/apps/backend/internal/domain"
 	"github.com/TeamH04/team-production/apps/backend/internal/usecase"
 )
 
@@ -14,61 +11,34 @@ type MenuHandler struct {
 	menuUseCase usecase.MenuUseCase
 }
 
-// NewMenuHandler は MenuHandler を生成します
+var _ MenuController = (*MenuHandler)(nil)
+
+type CreateMenuCommand struct {
+	Name        string
+	Price       *int
+	ImageURL    *string
+	Description *string
+}
+
+func (c CreateMenuCommand) toInput() usecase.CreateMenuInput {
+	return usecase.CreateMenuInput{
+		Name:        c.Name,
+		Price:       c.Price,
+		ImageURL:    c.ImageURL,
+		Description: c.Description,
+	}
+}
+
 func NewMenuHandler(menuUseCase usecase.MenuUseCase) *MenuHandler {
 	return &MenuHandler{
 		menuUseCase: menuUseCase,
 	}
 }
 
-// GetMenusByStoreID は指定されたストアのメニューを取得します
-// GET /api/stores/:id/menus
-func (h *MenuHandler) GetMenusByStoreID(c echo.Context) error {
-	ctx := c.Request().Context()
-
-	idStr := c.Param("id")
-	storeID, err := strconv.ParseInt(idStr, 10, 64)
-	if err != nil {
-		return c.JSON(http.StatusBadRequest, echo.Map{"error": "invalid store id"})
-	}
-
-	menus, err := h.menuUseCase.GetMenusByStoreID(ctx, storeID)
-	if err != nil {
-		if errors.Is(err, usecase.ErrStoreNotFound) {
-			return c.JSON(http.StatusNotFound, echo.Map{"error": "store not found"})
-		}
-		return c.JSON(http.StatusInternalServerError, echo.Map{"error": err.Error()})
-	}
-
-	return c.JSON(http.StatusOK, menus)
+func (h *MenuHandler) GetMenusByStoreID(ctx context.Context, storeID int64) ([]domain.Menu, error) {
+	return h.menuUseCase.GetMenusByStoreID(ctx, storeID)
 }
 
-// CreateMenu は新しいメニューを作成します
-// POST /api/stores/:id/menus
-func (h *MenuHandler) CreateMenu(c echo.Context) error {
-	ctx := c.Request().Context()
-
-	idStr := c.Param("id")
-	storeID, err := strconv.ParseInt(idStr, 10, 64)
-	if err != nil {
-		return c.JSON(http.StatusBadRequest, echo.Map{"error": "invalid store id"})
-	}
-
-	var req usecase.CreateMenuInput
-	if err := c.Bind(&req); err != nil {
-		return c.JSON(http.StatusBadRequest, echo.Map{"error": "invalid JSON"})
-	}
-
-	menu, err := h.menuUseCase.CreateMenu(ctx, storeID, req)
-	if err != nil {
-		if errors.Is(err, usecase.ErrStoreNotFound) {
-			return c.JSON(http.StatusNotFound, echo.Map{"error": "store not found"})
-		}
-		if errors.Is(err, usecase.ErrInvalidInput) {
-			return c.JSON(http.StatusBadRequest, echo.Map{"error": err.Error()})
-		}
-		return c.JSON(http.StatusInternalServerError, echo.Map{"error": err.Error()})
-	}
-
-	return c.JSON(http.StatusCreated, menu)
+func (h *MenuHandler) CreateMenu(ctx context.Context, storeID int64, cmd CreateMenuCommand) (*domain.Menu, error) {
+	return h.menuUseCase.CreateMenu(ctx, storeID, cmd.toInput())
 }

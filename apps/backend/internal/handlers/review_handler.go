@@ -1,12 +1,9 @@
 package handlers
 
 import (
-	"errors"
-	"net/http"
-	"strconv"
+	"context"
 
-	"github.com/labstack/echo/v4"
-
+	"github.com/TeamH04/team-production/apps/backend/internal/domain"
 	"github.com/TeamH04/team-production/apps/backend/internal/usecase"
 )
 
@@ -14,61 +11,39 @@ type ReviewHandler struct {
 	reviewUseCase usecase.ReviewUseCase
 }
 
-// NewReviewHandler は ReviewHandler を生成します
+var _ ReviewController = (*ReviewHandler)(nil)
+
+type CreateReviewCommand struct {
+	MenuID    int64
+	Rating    int
+	Content   *string
+	ImageURLs []string
+}
+
+func (c CreateReviewCommand) toInput(userID string) usecase.CreateReviewInput {
+	return usecase.CreateReviewInput{
+		UserID:    userID,
+		MenuID:    c.MenuID,
+		Rating:    c.Rating,
+		Content:   c.Content,
+		ImageURLs: append([]string(nil), c.ImageURLs...),
+	}
+}
+
 func NewReviewHandler(reviewUseCase usecase.ReviewUseCase) *ReviewHandler {
 	return &ReviewHandler{
 		reviewUseCase: reviewUseCase,
 	}
 }
 
-// GetReviewsByStoreID は指定されたストアのレビューを取得します
-// GET /api/stores/:id/reviews
-func (h *ReviewHandler) GetReviewsByStoreID(c echo.Context) error {
-	ctx := c.Request().Context()
-
-	idStr := c.Param("id")
-	storeID, err := strconv.ParseInt(idStr, 10, 64)
-	if err != nil {
-		return c.JSON(http.StatusBadRequest, echo.Map{"error": "invalid store id"})
-	}
-
-	reviews, err := h.reviewUseCase.GetReviewsByStoreID(ctx, storeID)
-	if err != nil {
-		if errors.Is(err, usecase.ErrStoreNotFound) {
-			return c.JSON(http.StatusNotFound, echo.Map{"error": "store not found"})
-		}
-		return c.JSON(http.StatusInternalServerError, echo.Map{"error": err.Error()})
-	}
-
-	return c.JSON(http.StatusOK, reviews)
+func (h *ReviewHandler) GetReviewsByStoreID(ctx context.Context, storeID int64) ([]domain.Review, error) {
+	return h.reviewUseCase.GetReviewsByStoreID(ctx, storeID)
 }
 
-// CreateReview は新しいレビューを作成します
-// POST /api/stores/:id/reviews
-func (h *ReviewHandler) CreateReview(c echo.Context) error {
-	ctx := c.Request().Context()
-
-	idStr := c.Param("id")
-	storeID, err := strconv.ParseInt(idStr, 10, 64)
-	if err != nil {
-		return c.JSON(http.StatusBadRequest, echo.Map{"error": "invalid store id"})
+func (h *ReviewHandler) CreateReview(ctx context.Context, storeID int64, userID string, cmd CreateReviewCommand) (*domain.Review, error) {
+	if userID == "" {
+		return nil, usecase.ErrUnauthorized
 	}
 
-	var req usecase.CreateReviewInput
-	if err := c.Bind(&req); err != nil {
-		return c.JSON(http.StatusBadRequest, echo.Map{"error": "invalid JSON"})
-	}
-
-	review, err := h.reviewUseCase.CreateReview(ctx, storeID, req)
-	if err != nil {
-		if errors.Is(err, usecase.ErrStoreNotFound) {
-			return c.JSON(http.StatusNotFound, echo.Map{"error": "store not found"})
-		}
-		if errors.Is(err, usecase.ErrInvalidInput) || errors.Is(err, usecase.ErrInvalidRating) {
-			return c.JSON(http.StatusBadRequest, echo.Map{"error": err.Error()})
-		}
-		return c.JSON(http.StatusInternalServerError, echo.Map{"error": err.Error()})
-	}
-
-	return c.JSON(http.StatusCreated, review)
+	return h.reviewUseCase.CreateReview(ctx, storeID, cmd.toInput(userID))
 }

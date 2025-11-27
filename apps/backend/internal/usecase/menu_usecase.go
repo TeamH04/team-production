@@ -2,11 +2,10 @@ package usecase
 
 import (
 	"context"
-	"errors"
 
+	"github.com/TeamH04/team-production/apps/backend/internal/apperr"
 	"github.com/TeamH04/team-production/apps/backend/internal/domain"
-	"github.com/TeamH04/team-production/apps/backend/internal/repository"
-	"gorm.io/gorm"
+	"github.com/TeamH04/team-production/apps/backend/internal/ports"
 )
 
 // MenuUseCase はメニューに関するビジネスロジックを提供します
@@ -23,12 +22,12 @@ type CreateMenuInput struct {
 }
 
 type menuUseCase struct {
-	menuRepo  repository.MenuRepository
-	storeRepo repository.StoreRepository
+	menuRepo  ports.MenuRepository
+	storeRepo ports.StoreRepository
 }
 
 // NewMenuUseCase は MenuUseCase の実装を生成します
-func NewMenuUseCase(menuRepo repository.MenuRepository, storeRepo repository.StoreRepository) MenuUseCase {
+func NewMenuUseCase(menuRepo ports.MenuRepository, storeRepo ports.StoreRepository) MenuUseCase {
 	return &menuUseCase{
 		menuRepo:  menuRepo,
 		storeRepo: storeRepo,
@@ -37,9 +36,8 @@ func NewMenuUseCase(menuRepo repository.MenuRepository, storeRepo repository.Sto
 
 func (uc *menuUseCase) GetMenusByStoreID(ctx context.Context, storeID int64) ([]domain.Menu, error) {
 	// ストアの存在確認
-	_, err := uc.storeRepo.FindByID(ctx, storeID)
-	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
+	if _, err := uc.storeRepo.FindByID(ctx, storeID); err != nil {
+		if apperr.IsCode(err, apperr.CodeNotFound) {
 			return nil, ErrStoreNotFound
 		}
 		return nil, err
@@ -50,9 +48,8 @@ func (uc *menuUseCase) GetMenusByStoreID(ctx context.Context, storeID int64) ([]
 
 func (uc *menuUseCase) CreateMenu(ctx context.Context, storeID int64, input CreateMenuInput) (*domain.Menu, error) {
 	// ストアの存在確認
-	_, err := uc.storeRepo.FindByID(ctx, storeID)
-	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
+	if _, err := uc.storeRepo.FindByID(ctx, storeID); err != nil {
+		if apperr.IsCode(err, apperr.CodeNotFound) {
 			return nil, ErrStoreNotFound
 		}
 		return nil, err

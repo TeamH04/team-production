@@ -2,13 +2,11 @@ package usecase
 
 import (
 	"context"
-	"errors"
 	"time"
 
+	"github.com/TeamH04/team-production/apps/backend/internal/apperr"
 	"github.com/TeamH04/team-production/apps/backend/internal/domain"
-	"github.com/TeamH04/team-production/apps/backend/internal/repository"
-	"github.com/lib/pq"
-	"gorm.io/gorm"
+	"github.com/TeamH04/team-production/apps/backend/internal/ports"
 )
 
 // ReviewUseCase はレビューに関するビジネスロジックを提供します
@@ -26,12 +24,12 @@ type CreateReviewInput struct {
 }
 
 type reviewUseCase struct {
-	reviewRepo repository.ReviewRepository
-	storeRepo  repository.StoreRepository
+	reviewRepo ports.ReviewRepository
+	storeRepo  ports.StoreRepository
 }
 
 // NewReviewUseCase は ReviewUseCase の実装を生成します
-func NewReviewUseCase(reviewRepo repository.ReviewRepository, storeRepo repository.StoreRepository) ReviewUseCase {
+func NewReviewUseCase(reviewRepo ports.ReviewRepository, storeRepo ports.StoreRepository) ReviewUseCase {
 	return &reviewUseCase{
 		reviewRepo: reviewRepo,
 		storeRepo:  storeRepo,
@@ -40,9 +38,8 @@ func NewReviewUseCase(reviewRepo repository.ReviewRepository, storeRepo reposito
 
 func (uc *reviewUseCase) GetReviewsByStoreID(ctx context.Context, storeID int64) ([]domain.Review, error) {
 	// ストアの存在確認
-	_, err := uc.storeRepo.FindByID(ctx, storeID)
-	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
+	if _, err := uc.storeRepo.FindByID(ctx, storeID); err != nil {
+		if apperr.IsCode(err, apperr.CodeNotFound) {
 			return nil, ErrStoreNotFound
 		}
 		return nil, err
@@ -52,10 +49,12 @@ func (uc *reviewUseCase) GetReviewsByStoreID(ctx context.Context, storeID int64)
 }
 
 func (uc *reviewUseCase) CreateReview(ctx context.Context, storeID int64, input CreateReviewInput) (*domain.Review, error) {
+	if input.MenuID <= 0 {
+		return nil, ErrInvalidInput
+	}
 	// ストアの存在確認
-	_, err := uc.storeRepo.FindByID(ctx, storeID)
-	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
+	if _, err := uc.storeRepo.FindByID(ctx, storeID); err != nil {
+		if apperr.IsCode(err, apperr.CodeNotFound) {
 			return nil, ErrStoreNotFound
 		}
 		return nil, err
@@ -75,7 +74,7 @@ func (uc *reviewUseCase) CreateReview(ctx context.Context, storeID int64, input 
 		MenuID:    input.MenuID,
 		Rating:    input.Rating,
 		Content:   input.Content,
-		ImageURLs: pq.StringArray(input.ImageURLs),
+		ImageURLs: append([]string(nil), input.ImageURLs...),
 		PostedAt:  time.Now(),
 	}
 
