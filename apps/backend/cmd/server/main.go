@@ -6,7 +6,6 @@ import (
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 
-	"github.com/TeamH04/team-production/apps/backend/internal/common"
 	"github.com/TeamH04/team-production/apps/backend/internal/config"
 	"github.com/TeamH04/team-production/apps/backend/internal/router"
 )
@@ -25,7 +24,7 @@ func main() {
 	}
 
 	// 依存性の構築
-	deps := common.SetupDependencies(db)
+	deps := buildRouterDependencies(cfg, db)
 
 	// サーバーの構築とルーティング設定
 	e := router.NewServer(deps)

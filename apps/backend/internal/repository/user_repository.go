@@ -4,53 +4,55 @@ import (
 	"context"
 
 	"github.com/TeamH04/team-production/apps/backend/internal/domain"
+	"github.com/TeamH04/team-production/apps/backend/internal/ports"
+	"github.com/TeamH04/team-production/apps/backend/internal/repository/model"
 	"gorm.io/gorm"
 )
-
-// UserRepository はユーザーのデータアクセスを抽象化するインターフェース
-type UserRepository interface {
-	FindByID(ctx context.Context, userID string) (*domain.User, error)
-	FindByEmail(ctx context.Context, email string) (*domain.User, error)
-	Create(ctx context.Context, user *domain.User) error
-	Update(ctx context.Context, user *domain.User) error
-	UpdateRole(ctx context.Context, userID string, role string) error
-}
 
 type userRepository struct {
 	db *gorm.DB
 }
 
 // NewUserRepository は UserRepository の実装を生成します
-func NewUserRepository(db *gorm.DB) UserRepository {
+func NewUserRepository(db *gorm.DB) ports.UserRepository {
 	return &userRepository{db: db}
 }
 
 func (r *userRepository) FindByID(ctx context.Context, userID string) (*domain.User, error) {
-	var user domain.User
+	var user model.User
 	if err := r.db.WithContext(ctx).First(&user, "user_id = ?", userID).Error; err != nil {
-		return nil, err
+		return nil, mapDBError(err)
 	}
-	return &user, nil
+	domainUser := model.UserModelToDomain(user)
+	return &domainUser, nil
 }
 
 func (r *userRepository) FindByEmail(ctx context.Context, email string) (*domain.User, error) {
-	var user domain.User
+	var user model.User
 	if err := r.db.WithContext(ctx).First(&user, "email = ?", email).Error; err != nil {
-		return nil, err
+		return nil, mapDBError(err)
 	}
-	return &user, nil
+	domainUser := model.UserModelToDomain(user)
+	return &domainUser, nil
 }
 
 func (r *userRepository) Create(ctx context.Context, user *domain.User) error {
-	return r.db.WithContext(ctx).Create(user).Error
+	record := model.UserModelFromDomain(user)
+	if err := r.db.WithContext(ctx).Create(record).Error; err != nil {
+		return mapDBError(err)
+	}
+	user.CreatedAt = record.CreatedAt
+	user.UpdatedAt = record.UpdatedAt
+	return nil
 }
 
 func (r *userRepository) Update(ctx context.Context, user *domain.User) error {
-	return r.db.WithContext(ctx).Model(user).Updates(user).Error
+	record := model.UserModelFromDomain(user)
+	return mapDBError(r.db.WithContext(ctx).Model(&model.User{UserID: user.UserID}).Updates(record).Error)
 }
 
 func (r *userRepository) UpdateRole(ctx context.Context, userID string, role string) error {
-	return r.db.WithContext(ctx).Model(&domain.User{}).
+	return mapDBError(r.db.WithContext(ctx).Model(&model.User{}).
 		Where("user_id = ?", userID).
-		Update("role", role).Error
+		Update("role", role).Error)
 }

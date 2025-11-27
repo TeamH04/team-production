@@ -1,8 +1,6 @@
 package domain
 
-import (
-	"time"
-)
+import "time"
 
 // User はユーザー情報を表すエンティティ
 type User struct {

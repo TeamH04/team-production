@@ -2,12 +2,11 @@ package usecase
 
 import (
 	"context"
-	"errors"
 	"time"
 
+	"github.com/TeamH04/team-production/apps/backend/internal/apperr"
 	"github.com/TeamH04/team-production/apps/backend/internal/domain"
-	"github.com/TeamH04/team-production/apps/backend/internal/repository"
-	"gorm.io/gorm"
+	"github.com/TeamH04/team-production/apps/backend/internal/ports"
 )
 
 // UserUseCase はユーザーに関するビジネスロジックを提供します
@@ -26,12 +25,12 @@ type UpdateUserInput struct {
 }
 
 type userUseCase struct {
-	userRepo   repository.UserRepository
-	reviewRepo repository.ReviewRepository
+	userRepo   ports.UserRepository
+	reviewRepo ports.ReviewRepository
 }
 
 // NewUserUseCase は UserUseCase の実装を生成します
-func NewUserUseCase(userRepo repository.UserRepository, reviewRepo repository.ReviewRepository) UserUseCase {
+func NewUserUseCase(userRepo ports.UserRepository, reviewRepo ports.ReviewRepository) UserUseCase {
 	return &userUseCase{
 		userRepo:   userRepo,
 		reviewRepo: reviewRepo,
@@ -41,7 +40,7 @@ func NewUserUseCase(userRepo repository.UserRepository, reviewRepo repository.Re
 func (uc *userUseCase) GetUserByID(ctx context.Context, userID string) (*domain.User, error) {
 	user, err := uc.userRepo.FindByID(ctx, userID)
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
+		if apperr.IsCode(err, apperr.CodeNotFound) {
 			return nil, ErrUserNotFound
 		}
 		return nil, err
@@ -52,7 +51,7 @@ func (uc *userUseCase) GetUserByID(ctx context.Context, userID string) (*domain.
 func (uc *userUseCase) UpdateUser(ctx context.Context, userID string, input UpdateUserInput) (*domain.User, error) {
 	user, err := uc.userRepo.FindByID(ctx, userID)
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
+		if apperr.IsCode(err, apperr.CodeNotFound) {
 			return nil, ErrUserNotFound
 		}
 		return nil, err
@@ -92,9 +91,8 @@ func (uc *userUseCase) UpdateUserRole(ctx context.Context, userID string, role s
 	}
 
 	// ユーザーの存在確認
-	_, err := uc.userRepo.FindByID(ctx, userID)
-	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
+	if _, err := uc.userRepo.FindByID(ctx, userID); err != nil {
+		if apperr.IsCode(err, apperr.CodeNotFound) {
 			return ErrUserNotFound
 		}
 		return err
@@ -105,15 +103,12 @@ func (uc *userUseCase) UpdateUserRole(ctx context.Context, userID string, role s
 
 func (uc *userUseCase) GetUserReviews(ctx context.Context, userID string) ([]domain.Review, error) {
 	// ユーザーの存在確認
-	_, err := uc.userRepo.FindByID(ctx, userID)
-	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
+	if _, err := uc.userRepo.FindByID(ctx, userID); err != nil {
+		if apperr.IsCode(err, apperr.CodeNotFound) {
 			return nil, ErrUserNotFound
 		}
 		return nil, err
 	}
 
-	// レビューの取得（ReviewRepositoryに新しいメソッドが必要）
-	// 仮の実装として空の配列を返す
-	return []domain.Review{}, nil
+	return uc.reviewRepo.FindByUserID(ctx, userID)
 }

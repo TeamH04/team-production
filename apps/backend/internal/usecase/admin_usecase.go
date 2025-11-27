@@ -2,11 +2,10 @@ package usecase
 
 import (
 	"context"
-	"errors"
 
+	"github.com/TeamH04/team-production/apps/backend/internal/apperr"
 	"github.com/TeamH04/team-production/apps/backend/internal/domain"
-	"github.com/TeamH04/team-production/apps/backend/internal/repository"
-	"gorm.io/gorm"
+	"github.com/TeamH04/team-production/apps/backend/internal/ports"
 )
 
 // AdminUseCase は管理者機能に関するビジネスロジックを提供します
@@ -17,26 +16,24 @@ type AdminUseCase interface {
 }
 
 type adminUseCase struct {
-	storeRepo repository.StoreRepository
+	storeRepo ports.StoreRepository
 }
 
 // NewAdminUseCase は AdminUseCase の実装を生成します
-func NewAdminUseCase(storeRepo repository.StoreRepository) AdminUseCase {
+func NewAdminUseCase(storeRepo ports.StoreRepository) AdminUseCase {
 	return &adminUseCase{
 		storeRepo: storeRepo,
 	}
 }
 
 func (uc *adminUseCase) GetPendingStores(ctx context.Context) ([]domain.Store, error) {
-	// 承認待ちの店舗を取得（新しいメソッドが必要）
-	// 仮の実装として全店舗を返す
-	return uc.storeRepo.FindAll(ctx)
+	return uc.storeRepo.FindPending(ctx)
 }
 
 func (uc *adminUseCase) ApproveStore(ctx context.Context, storeID int64) error {
 	store, err := uc.storeRepo.FindByID(ctx, storeID)
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
+		if apperr.IsCode(err, apperr.CodeNotFound) {
 			return ErrStoreNotFound
 		}
 		return err
@@ -49,7 +46,7 @@ func (uc *adminUseCase) ApproveStore(ctx context.Context, storeID int64) error {
 func (uc *adminUseCase) RejectStore(ctx context.Context, storeID int64) error {
 	store, err := uc.storeRepo.FindByID(ctx, storeID)
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
+		if apperr.IsCode(err, apperr.CodeNotFound) {
 			return ErrStoreNotFound
 		}
 		return err

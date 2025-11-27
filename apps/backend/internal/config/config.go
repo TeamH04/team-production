@@ -17,10 +17,15 @@ const (
 )
 
 type Config struct {
-	Port          string
-	AllowOrigins  []string
-	GoogleMapsKey string
-	DBURL         string
+	Port                   string
+	AllowOrigins           []string
+	GoogleMapsKey          string
+	DBURL                  string
+	SupabaseURL            string
+	SupabaseAnonKey        string
+	SupabaseServiceRoleKey string
+	SupabaseJWTSecret      string
+	SupabaseStorageBucket  string
 }
 
 func Load() (*Config, error) {
@@ -52,6 +57,12 @@ func Load() (*Config, error) {
 	} else {
 		cfg.AllowOrigins = []string{"*"}
 	}
+
+	cfg.SupabaseURL = os.Getenv("SUPABASE_URL")
+	cfg.SupabaseAnonKey = os.Getenv("SUPABASE_ANON_KEY")
+	cfg.SupabaseServiceRoleKey = os.Getenv("SUPABASE_SERVICE_ROLE_KEY")
+	cfg.SupabaseJWTSecret = os.Getenv("SUPABASE_JWT_SECRET")
+	cfg.SupabaseStorageBucket = getenv("SUPABASE_STORAGE_BUCKET", "media")
 
 	return cfg, nil
 }
