@@ -6,3 +6,5 @@ onlyBuiltDependencies:
 packages:
   - "apps/*"
   - "packages/*"
+
+shamefullyHoist: true

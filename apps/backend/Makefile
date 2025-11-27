@@ -1,4 +1,4 @@
-# apps/backend/Makefile (cross-platform friendly)
+# apps/backend/Makefile (cross-platform friendly, no PowerShell noise)
 
 .DEFAULT_GOAL := help
 
@@ -7,35 +7,23 @@ DB_COMPOSE             := ../../supabase/docker-compose.yml
 LOCAL_DATABASE_URL    ?= postgres://postgres:postgres@localhost:5432/app?sslmode=disable
 MIGRATE_DATABASE_URL  ?= $(LOCAL_DATABASE_URL)
 
-# Detect Go executable in a cross-platform manner.
+# ---- Go binary detection (simple & cross-platform) ----
+# You can override this when calling make:
+#   make serve GO_BIN="/full/path/to/go"
+GO_BIN ?= go
+
 ifeq ($(OS),Windows_NT)
-  GO_BIN ?= $(shell powershell -NoProfile -Command "$$cmd = Get-Command go -ErrorAction SilentlyContinue; if ($$cmd) { $$cmd.Source }")
-else
-  GO_BIN ?= $(shell command -v go 2>/dev/null)
-endif
-ifeq ($(strip $(GO_BIN)),)
-  ifneq ($(OS),Windows_NT)
-    GO_BIN := $(shell which go 2>/dev/null)
-  endif
-endif
-ifeq ($(strip $(GO_BIN)),)
-  ifeq ($(OS),Windows_NT)
+  # On Windows, if GO_BIN is still "go", try common install locations
+  ifeq ($(GO_BIN),go)
     ifneq ($(wildcard C:/Program\ Files/Go/bin/go.exe),)
-      GO_BIN := C:/Program Files/Go/bin/go.exe
+      GO_BIN := "C:/Program Files/Go/bin/go.exe"
     else ifneq ($(wildcard C:/Go/bin/go.exe),)
-      GO_BIN := C:/Go/bin/go.exe
+      GO_BIN := "C:/Go/bin/go.exe"
     endif
   endif
 endif
-GO_BIN := $(strip $(GO_BIN))
-ifeq ($(GO_BIN),)
-  $(error Go executable not found. Install Go 1.23+ and ensure it is on PATH or run `make backend GO_BIN="/full/path/to/go"`.)
-endif
 
-# Helper to execute Go commands with proper quoting on Windows.
-GO_EXEC = $(if $(filter Windows_NT,$(OS)),powershell -NoProfile -Command "& '$(GO_BIN)' $(1)",$(GO_BIN) $(1))
 DOCKER_COMPOSE := docker compose
-
 PORT ?= 8080
 
 ifneq (,$(wildcard .env))
@@ -62,7 +50,7 @@ help:
 run-dev: db-up serve
 
 serve:
-	$(call GO_EXEC,run ./cmd/server)
+	$(GO_BIN) run ./cmd/server
 
 db-up:
 	$(DOCKER_COMPOSE) -f $(DB_COMPOSE) up -d
@@ -77,8 +65,8 @@ db-init: db-up
 	migrate -path $(MIGRATIONS_DIR) -database "$(LOCAL_DATABASE_URL)" up
 
 tools:
-	$(call GO_EXEC,install github.com/swaggo/swag/cmd/swag@v1.16.3)
-	$(call GO_EXEC,install -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@v4.17.0)
+	$(GO_BIN) install github.com/swaggo/swag/cmd/swag@v1.16.3
+	$(GO_BIN) install -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@v4.17.0
 
 migrate:
 	$(if $(strip $(MIGRATE_DATABASE_URL)),,$(error MIGRATE_DATABASE_URL is not set; set it or rely on LOCAL_DATABASE_URL))
@@ -89,7 +77,7 @@ migrate-new:
 	migrate create -ext sql -dir $(MIGRATIONS_DIR) -seq $(name)
 
 test:
-	$(call GO_EXEC,test -v ./...)
+	$(GO_BIN) test -v ./...
 
 check:
 	@echo ok

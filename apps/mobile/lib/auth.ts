@@ -11,7 +11,9 @@ function getString(value: unknown): string | undefined {
 }
 
 function getStringArray(value: unknown): string[] | undefined {
-  return Array.isArray(value) && value.every((v) => typeof v === 'string') ? (value as string[]) : undefined;
+  return Array.isArray(value) && value.every(v => typeof v === 'string')
+    ? (value as string[])
+    : undefined;
 }
 
 export function isOwnerFromUser(user: User | null): boolean {
@@ -32,8 +34,16 @@ export function isOwnerFromUser(user: User | null): boolean {
 }
 
 export async function getCurrentUser(): Promise<User | null> {
-  const { data } = await getSupabase().auth.getUser();
-  return data.user ?? null;
+  try {
+    const { data, error } = await getSupabase().auth.getUser();
+    if (error) {
+      return null;
+    }
+    return data.user ?? null;
+  } catch (err) {
+    console.warn('[auth] failed to fetch current user', err);
+    return null;
+  }
 }
 
 export async function checkIsOwner(): Promise<OwnerCheck> {

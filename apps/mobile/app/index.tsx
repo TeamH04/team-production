@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Redirect, type Href } from 'expo-router';
-import { ActivityIndicator, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
 import { checkIsOwner } from '@/lib/auth';
 
@@ -25,10 +25,18 @@ export default function Entry() {
 
   if (!dest) {
     return (
-      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+      <View style={styles.container}>
         <ActivityIndicator />
       </View>
     );
   }
   return <Redirect href={dest as Href} />;
 }
+
+const styles = StyleSheet.create({
+  container: {
+    alignItems: 'center',
+    flex: 1,
+    justifyContent: 'center',
+  },
+});

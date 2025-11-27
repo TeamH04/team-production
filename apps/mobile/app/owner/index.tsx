@@ -56,10 +56,13 @@ export default function OwnerHomeScreen() {
       <View style={styles.card}>
         <Text style={styles.cardTitle}>クイックアクション</Text>
         <View style={styles.actionsRow}>
-          <Pressable style={styles.actionBtn} onPress={() => router.push('/')}> 
+          <Pressable style={styles.actionBtn} onPress={() => router.push('/')}>
             <Text style={styles.actionText}>ユーザーホームへ</Text>
           </Pressable>
-          <Pressable style={styles.actionBtn} onPress={() => Alert.alert('未実装', '店舗編集は今後実装予定です')}>
+          <Pressable
+            style={styles.actionBtn}
+            onPress={() => Alert.alert('未実装', '店舗編集は今後実装予定です')}
+          >
             <Text style={styles.actionText}>店舗を編集</Text>
           </Pressable>
         </View>
@@ -69,7 +72,12 @@ export default function OwnerHomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  actionBtn: { backgroundColor: palette.action, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 12 },
+  actionBtn: {
+    backgroundColor: palette.action,
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+  },
   actionText: { color: palette.surface, fontWeight: '700' },
   actionsRow: { flexDirection: 'row', gap: 12 },
   card: {
@@ -81,7 +89,12 @@ const styles = StyleSheet.create({
   },
   cardTitle: { color: palette.primaryText, fontSize: 16, fontWeight: '700', marginBottom: 12 },
   center: { alignItems: 'center', flex: 1, justifyContent: 'center' },
-  linkBtn: { backgroundColor: palette.action, borderRadius: 10, paddingHorizontal: 16, paddingVertical: 10 },
+  linkBtn: {
+    backgroundColor: palette.action,
+    borderRadius: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+  },
   linkText: { color: palette.surface, fontWeight: '700' },
   screen: { backgroundColor: palette.background, flex: 1, paddingHorizontal: 24, paddingTop: 24 },
   subtitle: { color: palette.secondaryText, marginBottom: 20, marginTop: 8 },

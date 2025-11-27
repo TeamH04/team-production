@@ -92,7 +92,10 @@ export default function LoginScreen() {
 
           // Decide destination by role
           const { isOwner } = await checkIsOwner();
-          Alert.alert('ログイン完了', isOwner ? 'オーナーとしてログインしました。' : '正常にログインしました。');
+          Alert.alert(
+            'ログイン完了',
+            isOwner ? 'オーナーとしてログインしました。' : '正常にログインしました。'
+          );
           // Jump directly to the app home stacks to avoid extra redirect hops
           router.replace((isOwner ? '/owner' : '/(tabs)') as Href);
         } else if (result.type === 'dismiss') {
@@ -136,7 +139,7 @@ export default function LoginScreen() {
               ]}
             >
               <View style={styles.buttonContent}>
-                <Ionicons name="logo-google" size={20} color={palette.outline} />
+                <Ionicons name='logo-google' size={20} color={palette.outline} />
                 <Text style={styles.buttonOutlineText}>
                   {loading === 'google' ? 'Googleで処理中…' : 'Google で続行'}
                 </Text>
@@ -154,7 +157,7 @@ export default function LoginScreen() {
               ]}
             >
               <View style={styles.buttonContent}>
-                <Ionicons name="logo-apple" size={20} color={palette.surface} />
+                <Ionicons name='logo-apple' size={20} color={palette.surface} />
                 <Text style={styles.buttonText}>
                   {loading === 'apple' ? 'Appleで処理中…' : 'Apple で続行'}
                 </Text>

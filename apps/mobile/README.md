@@ -30,6 +30,7 @@
 ## 開発時の補足
 
 - ルートの `make dev` を実行すると、バックエンドと Expo を一括起動します。
+- `make dev` は `scripts/start-dev.js` 経由で Expo を起動し、`CI=1` / `EXPO_NO_INTERACTIVE=1` と `EXPO_DEV_SERVER_PORT` / `EXPO_METRO_LISTEN_PORT` を自動で指定します（Expo CLI 54 で `--non-interactive` / `--metro-port` が廃止されたため）。
 - Expo のデフォルトポートは 19000 系です。競合する場合はポートを変更してください。
 - Expo 終了後は `Ctrl+C`。必要に応じて `make backend-db-down` で DB を停止してください。
 
@@ -67,6 +68,7 @@
 - 401/invalid_client: Provider のクライアント ID/シークレットを確認してください。
 - セッションが作成されない: `auth/callback` は `?code=` と `#access_token=` のどちらでも返り得るため、双方に対応する実装です。
 - `crypto.subtle.digest is not a function`: `expo-standard-web-crypto` を利用しています（内部で `expo-random` が必要）。
+- サインイン前に Supabase の `getUser()` で `AuthSessionMissingError` が出る場合がありますが、アプリ側で未ログインとして扱うようにしています（例外発生時もログアウト状態として継続します）。
 
 ## Safe Area の方針（2025-10-14 更新）
 

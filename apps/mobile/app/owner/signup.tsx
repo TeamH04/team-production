@@ -28,7 +28,7 @@ export default function OwnerSignupScreen() {
       setSubmitting(true);
       // NOTE: Backend is not yet defined. This is a stub for future API integration.
       // You can POST to your backend here, e.g., `/api/owners`.
-      await new Promise((r) => setTimeout(r, 600));
+      await new Promise(r => setTimeout(r, 600));
       Alert.alert('作成完了', 'オーナー用アカウントの申請を受け付けました');
       router.replace('/');
     } catch (e: unknown) {
@@ -50,7 +50,7 @@ export default function OwnerSignupScreen() {
           style={styles.input}
           value={storeName}
           onChangeText={setStoreName}
-          placeholder="例）喫茶サンプル"
+          placeholder='例）喫茶サンプル'
           placeholderTextColor={palette.secondaryText}
         />
 
@@ -59,7 +59,7 @@ export default function OwnerSignupScreen() {
           style={styles.input}
           value={contactName}
           onChangeText={setContactName}
-          placeholder="例）山田 太郎"
+          placeholder='例）山田 太郎'
           placeholderTextColor={palette.secondaryText}
         />
 
@@ -68,8 +68,8 @@ export default function OwnerSignupScreen() {
           style={styles.input}
           value={email}
           onChangeText={setEmail}
-          inputMode="email"
-          placeholder="owner@example.com"
+          inputMode='email'
+          placeholder='owner@example.com'
           placeholderTextColor={palette.secondaryText}
         />
 
@@ -78,8 +78,8 @@ export default function OwnerSignupScreen() {
           style={styles.input}
           value={phone}
           onChangeText={setPhone}
-          inputMode="tel"
-          placeholder="090-1234-5678"
+          inputMode='tel'
+          placeholder='090-1234-5678'
           placeholderTextColor={palette.secondaryText}
         />
       </View>
@@ -87,7 +87,11 @@ export default function OwnerSignupScreen() {
       <Pressable
         onPress={onSubmit}
         disabled={submitting}
-        style={({ pressed }) => [styles.button, pressed && { opacity: 0.9 }, submitting && { opacity: 0.7 }]}
+        style={({ pressed }) => [
+          styles.button,
+          pressed && { opacity: 0.9 },
+          submitting && { opacity: 0.7 },
+        ]}
       >
         <Text style={styles.buttonText}>{submitting ? '作成中…' : '作成する'}</Text>
       </Pressable>

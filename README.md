@@ -7,12 +7,12 @@
 
 ## ディレクトリ
 
-| パス | 説明 |
-| --- | --- |
-| `apps/mobile` | Expo + React Native クライアント。詳細は各 `README.md` を参照。 |
-| `apps/backend` | Go 製の API。セットアップとコマンドは `README.md` を参照。 |
-| `supabase` | ローカル DB 用の Docker Compose 一式。 |
-| `docs/` | アーキテクチャや運用ノートなどのドキュメント。 |
+| パス           | 説明                                                            |
+| -------------- | --------------------------------------------------------------- |
+| `apps/mobile`  | Expo + React Native クライアント。詳細は各 `README.md` を参照。 |
+| `apps/backend` | Go 製の API。セットアップとコマンドは `README.md` を参照。      |
+| `supabase`     | ローカル DB 用の Docker Compose 一式。                          |
+| `docs/`        | アーキテクチャや運用ノートなどのドキュメント。                  |
 
 ## セットアップ
 
@@ -25,6 +25,7 @@
    ```
 
 3. 各アプリケーションの `.env.example` を `.env` にコピーし、必要値を設定します。
+4. Windows 環境では bash 前提の Makefile を使用するため、Git Bash (MINGW64) から `make` を実行してください（PowerShell / cmd では一部ターゲットが動作しません）。
 
 ## コマンド
 
@@ -90,3 +91,4 @@ CI/CD で使用される環境変数：
 
 - バックエンド: `apps/backend/README.md`
 - モバイル: `apps/mobile/README.md`
+- Expo 開発環境の補足: `apps/mobile/scripts/start-dev.js`（`make dev` で利用する起動スクリプト。Expo CLI の非推奨フラグを排除し、環境変数でポートを制御します）

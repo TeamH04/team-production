@@ -36,6 +36,5 @@
     "typescript": "~5.8.3"
   },
   "type": "module",
-  "dependencies": {},
   "version": "1.0.0"
 }
