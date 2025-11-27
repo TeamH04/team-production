@@ -13,35 +13,42 @@ export default function TabLayout() {
   const colorScheme = useColorScheme();
 
   return (
-    <SafeAreaView style={{ flex: 1 }} edges={['top', 'left', 'right']}>
-      <Tabs
-      screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
-        headerShown: false,
-        tabBarButton: HapticTab,
-        tabBarBackground: TabBarBackground,
-        tabBarStyle: Platform.select({
-          ios: {
-            position: 'absolute',
-          },
-          default: {},
-        }),
+    <SafeAreaView
+      style={{
+        flex: 1,
       }}
+      edges={['top', 'left', 'right']}
+    >
+      <Tabs
+        screenOptions={{
+          tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
+          headerShown: false,
+          tabBarButton: HapticTab,
+          tabBarBackground: TabBarBackground,
+          tabBarStyle: Platform.select({
+            ios: {
+              position: 'absolute',
+            },
+            default: {},
+          }),
+        }}
       >
-      <Tabs.Screen
-        name='index'
-        options={{
-          title: 'ホーム',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name='house.fill' color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name='explore'
-        options={{
-          title: 'さがす',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name='paperplane.fill' color={color} />,
-        }}
-      />
+        <Tabs.Screen
+          name='index'
+          options={{
+            title: 'ホーム',
+            tabBarIcon: ({ color }) => <IconSymbol size={28} name='house.fill' color={color} />,
+          }}
+        />
+        <Tabs.Screen
+          name='explore'
+          options={{
+            title: 'さがす',
+            tabBarIcon: ({ color }) => (
+              <IconSymbol size={28} name='paperplane.fill' color={color} />
+            ),
+          }}
+        />
       </Tabs>
     </SafeAreaView>
   );
