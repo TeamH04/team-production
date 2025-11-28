@@ -11,6 +11,7 @@
           alias: { '@': './' },
         },
       ],
+      'react-native-reanimated/plugin',
     ],
   };
 };

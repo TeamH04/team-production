@@ -63,3 +63,5 @@ jest-stare/
 
 # ---- Project specific ----
 app-example
+
+reports/
