@@ -7,15 +7,15 @@ import (
 	"github.com/labstack/echo/v4"
 
 	"github.com/TeamH04/team-production/apps/backend/internal/middleware"
-	"github.com/TeamH04/team-production/apps/backend/internal/usecase"
+	"github.com/TeamH04/team-production/apps/backend/internal/usecase/interactor"
 )
 
 type MediaHandler struct {
-	mediaUseCase usecase.MediaUseCase
+	mediaUseCase interactor.MediaUseCase
 }
 
 // NewMediaHandler は MediaHandler を生成します
-func NewMediaHandler(mediaUseCase usecase.MediaUseCase) *MediaHandler {
+func NewMediaHandler(mediaUseCase interactor.MediaUseCase) *MediaHandler {
 	return &MediaHandler{
 		mediaUseCase: mediaUseCase,
 	}

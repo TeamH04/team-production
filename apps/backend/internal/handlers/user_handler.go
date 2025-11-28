@@ -7,15 +7,15 @@ import (
 	"github.com/labstack/echo/v4"
 
 	"github.com/TeamH04/team-production/apps/backend/internal/middleware"
-	"github.com/TeamH04/team-production/apps/backend/internal/usecase"
+	"github.com/TeamH04/team-production/apps/backend/internal/usecase/interactor"
 )
 
 type UserHandler struct {
-	userUseCase usecase.UserUseCase
+	userUseCase interactor.UserUseCase
 }
 
 // NewUserHandler は UserHandler を生成します
-func NewUserHandler(userUseCase usecase.UserUseCase) *UserHandler {
+func NewUserHandler(userUseCase interactor.UserUseCase) *UserHandler {
 	return &UserHandler{
 		userUseCase: userUseCase,
 	}
@@ -29,7 +29,7 @@ func (h *UserHandler) GetUserByID(c echo.Context) error {
 
 	user, err := h.userUseCase.GetUserByID(ctx, userID)
 	if err != nil {
-		if errors.Is(err, usecase.ErrUserNotFound) {
+		if errors.Is(err, interactor.ErrUserNotFound) {
 			return c.JSON(http.StatusNotFound, echo.Map{"error": "user not found"})
 		}
 		return c.JSON(http.StatusInternalServerError, echo.Map{"error": err.Error()})
@@ -50,7 +50,7 @@ func (h *UserHandler) GetMe(c echo.Context) error {
 
 	user, err := h.userUseCase.GetUserByID(ctx, userID)
 	if err != nil {
-		if errors.Is(err, usecase.ErrUserNotFound) {
+		if errors.Is(err, interactor.ErrUserNotFound) {
 			return c.JSON(http.StatusNotFound, echo.Map{"error": "user not found"})
 		}
 		return c.JSON(http.StatusInternalServerError, echo.Map{"error": err.Error()})
@@ -71,14 +71,14 @@ func (h *UserHandler) UpdateUser(c echo.Context) error {
 		return c.JSON(http.StatusForbidden, echo.Map{"error": "permission denied"})
 	}
 
-	var req usecase.UpdateUserInput
+	var req interactor.UpdateUserInput
 	if err := c.Bind(&req); err != nil {
 		return c.JSON(http.StatusBadRequest, echo.Map{"error": "invalid body"})
 	}
 
 	user, err := h.userUseCase.UpdateUser(ctx, userID, req)
 	if err != nil {
-		if errors.Is(err, usecase.ErrUserNotFound) {
+		if errors.Is(err, interactor.ErrUserNotFound) {
 			return c.JSON(http.StatusNotFound, echo.Map{"error": "user not found"})
 		}
 		return c.JSON(http.StatusInternalServerError, echo.Map{"error": err.Error()})
@@ -95,7 +95,7 @@ func (h *UserHandler) GetUserReviews(c echo.Context) error {
 
 	reviews, err := h.userUseCase.GetUserReviews(ctx, userID)
 	if err != nil {
-		if errors.Is(err, usecase.ErrUserNotFound) {
+		if errors.Is(err, interactor.ErrUserNotFound) {
 			return c.JSON(http.StatusNotFound, echo.Map{"error": "user not found"})
 		}
 		return c.JSON(http.StatusInternalServerError, echo.Map{"error": err.Error()})
