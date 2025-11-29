@@ -2,61 +2,41 @@ package main
 
 import (
 	"log"
-	"net/http"
-	"os"
 
-	"github.com/labstack/echo/v4"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 
+	"github.com/TeamH04/team-production/apps/backend/internal/common"
 	"github.com/TeamH04/team-production/apps/backend/internal/config"
-	"github.com/TeamH04/team-production/apps/backend/internal/handlers"
+	"github.com/TeamH04/team-production/apps/backend/internal/router"
 )
 
 func main() {
+	// 設定の読み込み
 	cfg, err := config.Load()
 	if err != nil {
 		log.Fatalf("failed to load config: %v", err)
 	}
 
-	dsn := cfg.DBURL
-
-	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	// データベース接続
+	db, err := gorm.Open(postgres.Open(cfg.DBURL), &gorm.Config{})
 	if err != nil {
 		log.Fatalf("failed to connect database: %v", err)
 	}
 
-	e := echo.New()
+	// 依存性の構築
+	deps := common.SetupDependencies(db)
 
-	// DBをContextにセット
-	e.Use(func(next echo.HandlerFunc) echo.HandlerFunc {
-		return func(c echo.Context) error {
-			c.Set("db", db)
-			return next(c)
-		}
-	})
+	// サーバーの構築とルーティング設定
+	e := router.NewServer(deps)
 
-	api := e.Group("/api")
-	api.GET("/stores", handlers.GetStores)
-	api.GET("/stores/:id", handlers.GetStoreByID)
-	api.POST("/stores", handlers.CreateStore)
-	api.PUT("/stores/:id", handlers.UpdateStore)
-	api.DELETE("/stores/:id", handlers.DeleteStore)
-	// --- Menus ---
-	// api.POST("/stores/:id/menus", handlers.CreateMenu)
-	// api.GET("/stores/:id/menus", handlers.GetMenusByStoreID)
-
-	// --- Reviews ---
-	// api.POST("/stores/:id/reviews", handlers.CreateReview)
-	// api.GET("/stores/:id/reviews", handlers.GetReviewsByStoreID)
-
-	e.GET("/health", func(c echo.Context) error {
-		return c.JSON(http.StatusOK, echo.Map{"status": "ok"})
-	})
-
-	port := os.Getenv("PORT")
+	// サーバー起動
+	port := cfg.Port
 	if port == "" {
 		port = "8080"
 	}
-	e.Logger.Fatal(e.Start(":" + port))
+	log.Printf("Server starting on port %s", port)
+	if err := e.Start(":" + port); err != nil {
+		log.Fatalf("failed to start server: %v", err)
+	}
 }

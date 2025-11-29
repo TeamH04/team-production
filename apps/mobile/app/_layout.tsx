@@ -39,7 +39,11 @@ function RootStack() {
     >
       <StatusBar hidden={false} style='dark' backgroundColor='transparent' />
       <Stack>
+        <Stack.Screen name='index' options={{ headerShown: false }} />
         <Stack.Screen name='(tabs)' options={{ headerShown: false }} />
+        <Stack.Screen name='login' options={{ title: 'ログイン', headerShown: true }} />
+        <Stack.Screen name='owner/signup' options={{ title: 'オーナー登録', headerShown: true }} />
+        <Stack.Screen name='auth/callback' options={{ title: '認証', headerShown: true }} />
         <Stack.Screen name='+not-found' />
       </Stack>
     </View>

@@ -1,14 +1,14 @@
 {
   "name": "team-production",
   "private": true,
-  "packageManager": "pnpm@10.18.2+sha512.9fb969fa749b3ade6035e0f109f0b8a60b5d08a1a87fdf72e337da90dcc93336e2280ca4e44f2358a649b83c17959e9993e777c2080879f3801e6f0d999ad3dd",
+  "packageManager": "pnpm@10.23.0+sha512.21c4e5698002ade97e4efe8b8b4a89a8de3c85a37919f957e7a0f30f38fbc5bbdd05980ffe29179b2fb6e6e691242e098d945d1601772cad0fef5fb6411e2a4b",
   "engines": {
     "node": "20.x",
     "pnpm": ">=10"
   },
   "scripts": {
-    "dev": "pnpm -C apps/mobile expo start -c --tunnel",
-    "dev:mobile": "pnpm -C apps/mobile expo start",
+    "dev": "pnpm --dir apps/mobile exec expo start -c --tunnel",
+    "dev:mobile": "pnpm --dir apps/mobile start",
     "lint": "eslint \"**/*.{ts,tsx,js,jsx}\"",
     "lint:mobile": "eslint \"apps/mobile/**/*.{ts,tsx,js,jsx}\"",
     "lint:report:prep": "node scripts/prepare-reports.mjs",
@@ -19,7 +19,9 @@
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
     "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md}\"",
     "format:mobile": "prettier --write \"apps/mobile/**/*.{ts,tsx,js,jsx,json}\"",
-    "format:backend": "prettier --write \"apps/backend/**/*.{ts,tsx,js,jsx,json,md}\""
+    "format:backend": "prettier --write \"apps/backend/**/*.{ts,tsx,js,jsx,json,md}\"",
+    "android": "pnpm --dir apps/mobile exec expo run:android",
+    "ios": "pnpm --dir apps/mobile exec expo run:ios"
   },
   "devDependencies": {
     "@babel/core": "^7.28.4",
@@ -38,7 +40,5 @@
     "typescript": "~5.8.3"
   },
   "type": "module",
-  "dependencies": {
-    "tslib": "^2.8.1"
-  }
+  "version": "1.0.0"
 }
