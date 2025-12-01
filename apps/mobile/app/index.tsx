@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
 import { Redirect, type Href } from 'expo-router';
+import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
 import { checkIsOwner } from '@/lib/auth';
@@ -16,7 +16,8 @@ export default function Entry() {
         } else {
           setDest('/login');
         }
-      } catch {
+      } catch (error) {
+        console.error('[Entry] Failed to check auth status:', error);
         setDest('/login');
       }
     };

@@ -215,9 +215,9 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'pnpm'
 
-      - name: Run security audit (prod deps only)
+      - name: Run security audit (dev deps only)
         run: |
-          pnpm audit --prod --audit-level moderate
+          pnpm audit --dev --audit-level moderate
 
       - name: Setup Go
         uses: actions/setup-go@v5

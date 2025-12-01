@@ -4,7 +4,5 @@ onlyBuiltDependencies:
   - unrs-resolver
 
 packages:
-  - "apps/*"
-  - "packages/*"
-
-shamefullyHoist: true
+  - 'apps/*'
+  - 'packages/*'

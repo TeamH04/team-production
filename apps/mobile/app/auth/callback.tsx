@@ -3,8 +3,8 @@ import { useRouter, type Href } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, StyleSheet, Text, View } from 'react-native';
 
-import { getSupabase } from '@/lib/supabase';
 import { checkIsOwner } from '@/lib/auth';
+import { getSupabase } from '@/lib/supabase';
 
 export default function OAuthCallback() {
   const router = useRouter();
@@ -23,12 +23,10 @@ export default function OAuthCallback() {
         const hash = new URLSearchParams(u.hash.startsWith('#') ? u.hash.slice(1) : u.hash);
         const code = search.get('code') || hash.get('code');
         if (code) {
-          // @ts-expect-error see login.tsx comment about recent supabase-js versions
-          const { error } = await getSupabase().auth.exchangeCodeForSession({ code });
+          const { error } = await getSupabase().auth.exchangeCodeForSession(code);
           if (error) throw error;
         }
         setStatus('done');
-        // Decide destination explicitly to ensure we land on an app screen
         const { isOwner } = await checkIsOwner();
         router.replace((isOwner ? '/owner' : '/(tabs)') as Href);
       } catch (e: unknown) {
