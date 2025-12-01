@@ -7,23 +7,15 @@ DB_COMPOSE             := ../../supabase/docker-compose.yml
 LOCAL_DATABASE_URL    ?= postgres://postgres:postgres@localhost:5432/app?sslmode=disable
 MIGRATE_DATABASE_URL  ?= $(LOCAL_DATABASE_URL)
 
-# ---- Go binary detection (simple & cross-platform) ----
-# You can override this when calling make:
-#   make serve GO_BIN="/full/path/to/go"
+# Go executable: assume it's on PATH (override with GO_BIN=... if必要なら)
 GO_BIN ?= go
 
-ifeq ($(OS),Windows_NT)
-  # On Windows, if GO_BIN is still "go", try common install locations
-  ifeq ($(GO_BIN),go)
-    ifneq ($(wildcard C:/Program\ Files/Go/bin/go.exe),)
-      GO_BIN := "C:/Program Files/Go/bin/go.exe"
-    else ifneq ($(wildcard C:/Go/bin/go.exe),)
-      GO_BIN := "C:/Go/bin/go.exe"
-    endif
-  endif
-endif
+# Helper to execute Go commands (same on all OS)
+GO_EXEC = $(GO_BIN) $(1)
 
-DOCKER_COMPOSE := docker compose
+# Use docker compose v2 style CLI
+DOCKER_COMPOSE ?= docker-compose
+
 PORT ?= 8080
 
 ifneq (,$(wildcard .env))
