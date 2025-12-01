@@ -52,6 +52,10 @@ func (m *mockStoreRepository) Delete(ctx context.Context, id int64) error {
 	return nil
 }
 
+func (m *mockStoreRepository) FindPending(ctx context.Context) ([]domain.Store, error) {
+	return nil, nil
+}
+
 // テストケース
 func TestStoreUseCase_GetAllStores(t *testing.T) {
 	mockRepo := &mockStoreRepository{
