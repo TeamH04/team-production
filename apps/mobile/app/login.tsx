@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { makeRedirectUri } from 'expo-auth-session';
 import { useRouter, type Href } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
@@ -7,6 +8,7 @@ import { Alert, Platform, Pressable, StyleSheet, Text, View } from 'react-native
 
 import { palette } from '@/constants/palette';
 import { checkIsOwner } from '@/lib/auth';
+import { DEV_GUEST_FLAG_KEY, DEV_LOGIN_ENABLED } from '@/lib/devMode';
 import { getSupabase, isSupabaseConfigured } from '@/lib/supabase';
 
 WebBrowser.maybeCompleteAuthSession();
@@ -31,7 +33,7 @@ function parseParamsFromUrl(url: string) {
 
 export default function LoginScreen() {
   const router = useRouter();
-  const [loading, setLoading] = useState<null | 'google' | 'apple'>(null);
+  const [loading, setLoading] = useState<null | 'google' | 'apple' | 'guest'>(null);
 
   const handleOAuth = useCallback(
     async (provider: 'google' | 'apple') => {
@@ -107,6 +109,21 @@ export default function LoginScreen() {
     [router]
   );
 
+  const handleDevGuestLogin = useCallback(async () => {
+    if (!DEV_LOGIN_ENABLED || loading) return;
+    setLoading('guest');
+    try {
+      await AsyncStorage.setItem(DEV_GUEST_FLAG_KEY, 'true');
+      Alert.alert('開発モード', 'ゲストとしてアプリに入ります。');
+      router.replace('/(tabs)' as Href);
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : String(e ?? 'Unknown error');
+      Alert.alert('ゲストログイン失敗', msg);
+    } finally {
+      setLoading(null);
+    }
+  }, [loading, router]);
+
   return (
     <View style={styles.screen}>
       <View style={styles.cardShadow}>
@@ -159,6 +176,28 @@ export default function LoginScreen() {
               <Text style={styles.ownerLink}>オーナー用アカウントを作成</Text>
             </Pressable>
           </View>
+
+          {DEV_LOGIN_ENABLED && (
+            <View style={styles.devBox}>
+              <View style={styles.devHeader}>
+                <Ionicons name='construct' size={16} color={palette.action} />
+                <Text style={styles.devLead}>開発者モード</Text>
+              </View>
+              <Pressable
+                disabled={loading !== null}
+                onPress={handleDevGuestLogin}
+                style={({ pressed }) => [
+                  styles.devButton,
+                  pressed && { opacity: 0.9 },
+                  loading === 'guest' && { opacity: 0.75 },
+                ]}
+              >
+                <Text style={styles.devButtonText}>
+                  {loading === 'guest' ? 'ゲストで入場中…' : 'ゲストとして入る（開発用）'}
+                </Text>
+              </Pressable>
+            </View>
+          )}
         </View>
       </View>
     </View>
@@ -213,6 +252,36 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.08,
     shadowRadius: 16,
     width: '100%',
+  },
+  devBox: {
+    backgroundColor: palette.surface,
+    borderColor: palette.border,
+    borderRadius: 12,
+    borderWidth: 1,
+    marginTop: 20,
+    padding: 14,
+  },
+  devButton: {
+    backgroundColor: palette.outline,
+    borderRadius: 10,
+    marginTop: 12,
+    paddingVertical: 12,
+  },
+  devButtonText: {
+    color: palette.primaryText,
+    fontWeight: '700',
+    textAlign: 'center',
+  },
+  devHeader: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'center',
+  },
+  devLead: {
+    color: palette.primaryText,
+    fontSize: 14,
+    fontWeight: '700',
+    marginLeft: 6,
   },
   ownerBox: {
     alignItems: 'center',
