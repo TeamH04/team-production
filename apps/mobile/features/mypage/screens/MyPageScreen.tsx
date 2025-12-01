@@ -1,9 +1,9 @@
-﻿import { useMemo } from 'react';
+﻿import { useRouter } from 'expo-router';
+import { useMemo } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { useRouter } from 'expo-router';
 
-import { SHOPS, type Shop } from '@/features/home/data/shops';
 import { useFavorites } from '@/features/favorites/FavoritesContext';
+import { SHOPS, type Shop } from '@/features/home/data/shops';
 import { useReviews } from '@/features/reviews/ReviewsContext';
 import { useUser } from '@/features/user/UserContext';
 
@@ -43,7 +43,9 @@ export default function MyPageScreen() {
         <View style={styles.card}>
           <View style={styles.profileRow}>
             <View style={styles.avatar}>
-              <Text style={styles.avatarText}>KY</Text>
+              <Text style={styles.avatarText}>
+                {profile.name ? profile.name.slice(0, 2).toUpperCase() : ''}
+              </Text>
             </View>
             <View style={styles.profileMeta}>
               <Text style={styles.profileName}>{profile.name}</Text>
