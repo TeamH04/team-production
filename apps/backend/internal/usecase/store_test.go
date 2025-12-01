@@ -57,7 +57,7 @@ func (m *mockStoreRepository) FindPending(ctx context.Context) ([]domain.Store, 
 }
 
 // テストケース
-func TestStoreUseCase_GetAllStores(t *testing.T) {
+func TestGetAllStores(t *testing.T) {
 	mockRepo := &mockStoreRepository{
 		stores: []domain.Store{
 			{StoreID: 1, Name: "Store 1"},
@@ -78,7 +78,7 @@ func TestStoreUseCase_GetAllStores(t *testing.T) {
 	}
 }
 
-func TestStoreUseCase_CreateStore_Success(t *testing.T) {
+func TestCreateStore_Success(t *testing.T) {
 	mockRepo := &mockStoreRepository{
 		stores: []domain.Store{},
 	}
@@ -108,7 +108,7 @@ func TestStoreUseCase_CreateStore_Success(t *testing.T) {
 	}
 }
 
-func TestStoreUseCase_CreateStore_InvalidInput(t *testing.T) {
+func TestCreateStore_InvalidInput(t *testing.T) {
 	mockRepo := &mockStoreRepository{}
 	uc := usecase.NewStoreUseCase(mockRepo)
 

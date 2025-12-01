@@ -51,7 +51,7 @@ func (m *mockAdminStoreRepo) Delete(ctx context.Context, id int64) error {
 	return errors.New("not implemented")
 }
 
-func TestAdminUseCase_GetPendingStores(t *testing.T) {
+func TestGetPendingStores(t *testing.T) {
 	repo := &mockAdminStoreRepo{
 		pending: []domain.Store{
 			{StoreID: 1, Name: "A"},
@@ -68,7 +68,7 @@ func TestAdminUseCase_GetPendingStores(t *testing.T) {
 	}
 }
 
-func TestAdminUseCase_ApproveStore_NotFound(t *testing.T) {
+func TestApproveStore_NotFound(t *testing.T) {
 	repo := &mockAdminStoreRepo{findErr: apperr.New(apperr.CodeNotFound, domain.ErrNotFound)}
 	uc := usecase.NewAdminUseCase(repo)
 	if err := uc.ApproveStore(context.Background(), 1); !errors.Is(err, usecase.ErrStoreNotFound) {
@@ -76,7 +76,7 @@ func TestAdminUseCase_ApproveStore_NotFound(t *testing.T) {
 	}
 }
 
-func TestAdminUseCase_ApproveStore_Success(t *testing.T) {
+func TestApproveStore_Success(t *testing.T) {
 	store := &domain.Store{StoreID: 1, IsApproved: false}
 	repo := &mockAdminStoreRepo{store: store}
 	uc := usecase.NewAdminUseCase(repo)
@@ -88,7 +88,7 @@ func TestAdminUseCase_ApproveStore_Success(t *testing.T) {
 	}
 }
 
-func TestAdminUseCase_RejectStore_SetsApprovalFalse(t *testing.T) {
+func TestRejectStore_SetsApprovalFalse(t *testing.T) {
 	store := &domain.Store{StoreID: 2, IsApproved: true}
 	repo := &mockAdminStoreRepo{store: store}
 	uc := usecase.NewAdminUseCase(repo)
