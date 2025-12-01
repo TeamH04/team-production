@@ -18,6 +18,8 @@ export default function Entry() {
             setDest('/(tabs)');
             return;
           }
+        } else {
+          await AsyncStorage.removeItem(DEV_GUEST_FLAG_KEY);
         }
 
         const { isOwner, user } = await checkIsOwner();

@@ -114,7 +114,6 @@ export default function LoginScreen() {
     setLoading('guest');
     try {
       await AsyncStorage.setItem(DEV_GUEST_FLAG_KEY, 'true');
-      Alert.alert('開発モード', 'ゲストとしてアプリに入ります。');
       router.replace('/(tabs)' as Href);
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : String(e ?? 'Unknown error');
