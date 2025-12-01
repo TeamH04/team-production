@@ -97,7 +97,7 @@ export default function ShopDetailScreen() {
         </View>
 
         <Pressable
-          style={({ pressed }) => [styles.primaryBtn, pressed && styles.btnPressed]}
+          style={styles.primaryBtn}
           onPress={() => router.push({ pathname: '/shop/[id]/review', params: { id: shop.id } })}
         >
           <Text style={styles.primaryBtnText}>レビューを書く</Text>
@@ -152,7 +152,8 @@ const styles = StyleSheet.create({
   primaryBtn: {
     backgroundColor: palette.accent,
     borderRadius: 12,
-    marginTop: 12,
+    marginBottom: 16,
+    marginTop: 13,
     paddingVertical: 12,
   },
   primaryBtnText: { color: palette.primaryOnAccent, fontWeight: '700', textAlign: 'center' },
