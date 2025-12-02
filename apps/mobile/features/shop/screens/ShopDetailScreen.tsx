@@ -89,7 +89,9 @@ export default function ShopDetailScreen() {
               key={tag}
               style={styles.tagPill}
               accessibilityLabel={`タグ ${tag} で検索`}
-              onPress={() => router.push({ pathname: '/(tabs)', params: { q: tag } })}
+              onPress={() => {
+                router.navigate({ pathname: '/(tabs)', params: { q: tag } });
+              }}
             >
               <Text style={styles.tagText}>{tag}</Text>
             </Pressable>
