@@ -60,21 +60,21 @@ export default function HomeScreen() {
   }, [normalizedQuery, selectedCategory]);
 
   const prevQueryRef = useRef<string | undefined>(undefined);
-useEffect(() => {
-  const q = params?.q;
-  if (typeof q === 'string' && q.trim().length > 0 && prevQueryRef.current !== q) {
-    prevQueryRef.current = q;
-    setSearchQuery(q);
-    setVisibleCount(PAGE_SIZE);
-    // scroll to top when new query applied
-    try {
-      const listCurrent = (listRef as unknown as { current?: FlatList<Shop> | null }).current;
-      listCurrent?.scrollToOffset?.({ offset: 0, animated: true });
-    } catch {
+  useEffect(() => {
+    const q = params?.q;
+    if (typeof q === 'string' && q.trim().length > 0 && prevQueryRef.current !== q) {
+      prevQueryRef.current = q;
+      setSearchQuery(q);
+      setVisibleCount(PAGE_SIZE);
+      // scroll to top when new query applied
+      try {
+        const listCurrent = (listRef as unknown as { current?: FlatList<Shop> | null }).current;
+        listCurrent?.scrollToOffset?.({ offset: 0, animated: true });
+      } catch {
         // ignore if not available
+      }
     }
-  }
-}, [params?.q]);
+  }, [params?.q]);
 
   useEffect(() => {
     if (loadMoreTimeout.current) {
