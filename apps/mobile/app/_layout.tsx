@@ -38,7 +38,7 @@ function RootStack() {
       ]}
     >
       <StatusBar hidden={false} style='dark' backgroundColor='transparent' />
-      <Stack screenOptions={{ headerBackTitle: '戻る' }}>
+      <Stack>
         <Stack.Screen name='index' options={{ headerShown: false }} />
         <Stack.Screen name='(tabs)' options={{ headerShown: false }} />
         <Stack.Screen name='login' options={{ title: 'ログイン', headerShown: true }} />
