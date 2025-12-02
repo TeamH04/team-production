@@ -59,22 +59,22 @@ export default function HomeScreen() {
     });
   }, [normalizedQuery, selectedCategory]);
 
-  useEffect(() => {
-    // If 'q' is provided via router params (e.g., from a tag tap), apply it as searchQuery
-    const q = params?.q;
-    if (typeof q === 'string' && q.trim().length > 0) {
-      setSearchQuery(q);
-      setVisibleCount(PAGE_SIZE);
-      // scroll to top when new query applied
-      try {
-        // listRef is a Reanimated ref; attempt native scroll if available
-        const listCurrent = (listRef as unknown as { current?: FlatList<Shop> | null }).current;
-        listCurrent?.scrollToOffset?.({ offset: 0, animated: true });
-      } catch {
+  const prevQueryRef = useRef<string | undefined>(undefined);
+useEffect(() => {
+  const q = params?.q;
+  if (typeof q === 'string' && q.trim().length > 0 && prevQueryRef.current !== q) {
+    prevQueryRef.current = q;
+    setSearchQuery(q);
+    setVisibleCount(PAGE_SIZE);
+    // scroll to top when new query applied
+    try {
+      const listCurrent = (listRef as unknown as { current?: FlatList<Shop> | null }).current;
+      listCurrent?.scrollToOffset?.({ offset: 0, animated: true });
+    } catch {
         // ignore if not available
-      }
     }
-  }, [params?.q, listRef]);
+  }
+}, [params?.q]);
 
   useEffect(() => {
     if (loadMoreTimeout.current) {
@@ -168,7 +168,7 @@ export default function HomeScreen() {
                       setSearchQuery(tag);
                       setVisibleCount(PAGE_SIZE);
                       // sync route param so behavior matches ShopDetail tag taps
-                      router.replace({ pathname: '/(tabs)', params: { q: tag } } as Href);
+                      router.setParams({ q: tag });
                       try {
                         const listCurrent = (
                           listRef as unknown as { current?: FlatList<Shop> | null }
@@ -189,7 +189,7 @@ export default function HomeScreen() {
         </View>
       );
     },
-    [router, listRef, searchInputRef]
+    [router]
   );
 
   const renderListHeader = useMemo(

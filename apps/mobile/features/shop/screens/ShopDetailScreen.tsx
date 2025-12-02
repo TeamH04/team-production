@@ -90,7 +90,10 @@ export default function ShopDetailScreen() {
               style={styles.tagPill}
               accessibilityLabel={`タグ ${tag} で検索`}
               onPress={() => {
-                router.navigate({ pathname: '/(tabs)', params: { q: tag } });
+                router.back();
+                setTimeout(() => {
+                  router.setParams({ q: tag });
+                }, 100);
               }}
             >
               <Text style={styles.tagText}>{tag}</Text>
