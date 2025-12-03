@@ -105,7 +105,7 @@ export default function ReviewModalScreen() {
       <Pressable
         style={styles.primaryBtn}
         onPress={() => {
-          if (!comment.trim()) return; // コメントが空なら何もしない
+          if (!comment.trim() || rating === 0) return; // コメントが空なら何もしない or
           const selected = menu.find(m => m.id === selectedMenuId);
           addReview(shop.id, {
             rating,
