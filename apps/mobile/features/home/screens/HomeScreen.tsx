@@ -66,12 +66,12 @@ export default function HomeScreen() {
       prevQueryRef.current = q;
       setSearchQuery(q);
       setVisibleCount(PAGE_SIZE);
-      // scroll to top when new query applied
+      // 新しいクエリが適用されたときに先頭までスクロールする
       try {
         const listCurrent = (listRef as unknown as { current?: FlatList<Shop> | null }).current;
         listCurrent?.scrollToOffset?.({ offset: 0, animated: true });
       } catch {
-        // ignore if not available
+        // 利用不可なら無視
       }
     }
   }, [params?.q]);
@@ -167,7 +167,7 @@ export default function HomeScreen() {
                     onPress={() => {
                       setSearchQuery(tag);
                       setVisibleCount(PAGE_SIZE);
-                      // sync route param so behavior matches ShopDetail tag taps
+                      // ShopDetailのタグタップと挙動を揃えるためにルートパラメータを同期する
                       router.setParams({ q: tag });
                       try {
                         const listCurrent = (
