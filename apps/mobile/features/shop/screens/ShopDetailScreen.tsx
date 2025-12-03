@@ -85,9 +85,19 @@ export default function ShopDetailScreen() {
 
         <View style={styles.tagRow}>
           {shop.tags.map(tag => (
-            <View key={tag} style={styles.tagPill}>
+            <Pressable
+              key={tag}
+              style={styles.tagPill}
+              accessibilityLabel={`タグ ${tag} で検索`}
+              onPress={() => {
+                router.back();
+                setTimeout(() => {
+                  router.setParams({ q: tag });
+                }, 100);
+              }}
+            >
               <Text style={styles.tagText}>{tag}</Text>
-            </View>
+            </Pressable>
           ))}
         </View>
 
