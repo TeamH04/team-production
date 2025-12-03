@@ -35,7 +35,7 @@ export default function ReviewModalScreen() {
   const menu = shop?.menu ?? [];
 
   // ユーザー入力用のstate
-  const [rating, setRating] = useState(5); // 評価（初期値5）
+  const [rating, setRating] = useState(0); // 評価（初期値0）
   const [comment, setComment] = useState(''); // コメント
   const [selectedMenuId, setSelectedMenuId] = useState<string | undefined>(undefined); // メニュー選択
 
