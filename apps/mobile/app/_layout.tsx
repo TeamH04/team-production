@@ -10,10 +10,13 @@ import { StyleSheet, View } from 'react-native';
 import 'react-native-reanimated';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { palette } from '@/constants/palette';
 import { useColorScheme } from '@/hooks/useColorScheme';
 
 const layoutColors = {
-  surface: '#FFFFFF',
+  // top safe-area (status bar area) should be white to match expectation
+  // while inner screen body uses palette.background.
+  surface: palette.surface,
 } as const;
 
 const styles = StyleSheet.create({
@@ -27,7 +30,8 @@ function RootStack() {
   const insets = useSafeAreaInsets();
   const segments = useSegments();
   const first = segments[0] ?? '';
-  const padTop = first !== 'shop' && first !== 'profile' ? insets.top : 0;
+  const isInsideTabs = segments.some(seg => seg === '(tabs)');
+  const padTop = !isInsideTabs && first !== 'shop' && first !== 'profile' ? insets.top : 0;
   return (
     <View
       style={[
