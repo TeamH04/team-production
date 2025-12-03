@@ -5,6 +5,7 @@ import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-
 import { SHOPS } from '@/features/home/data/shops';
 import { useReviews } from '@/features/reviews/ReviewsContext';
 
+// カラー定義（画面の配色をまとめて管理）
 const palette = {
   accent: '#0EA5E9',
   background: '#F9FAFB',
@@ -22,18 +23,23 @@ const palette = {
   surface: '#FFFFFF',
 } as const;
 
+// レビュー投稿画面のコンポーネント
 export default function ReviewModalScreen() {
+  // URLパラメータから店舗IDを取得
   const { id } = useLocalSearchParams<{ id: string }>();
-  const router = useRouter();
-  const { addReview } = useReviews();
+  const router = useRouter(); // 画面遷移用
+  const { addReview } = useReviews(); // レビュー追加関数
 
+  // 店舗情報を取得
   const shop = useMemo(() => SHOPS.find(s => s.id === id), [id]);
   const menu = shop?.menu ?? [];
 
-  const [rating, setRating] = useState(5);
-  const [comment, setComment] = useState('');
-  const [selectedMenuId, setSelectedMenuId] = useState<string | undefined>(undefined);
+  // ユーザー入力用のstate
+  const [rating, setRating] = useState(0); // 評価（初期値0）
+  const [comment, setComment] = useState(''); // コメント
+  const [selectedMenuId, setSelectedMenuId] = useState<string | undefined>(undefined); // メニュー選択
 
+  // 店舗が見つからない場合の表示
   if (!shop) {
     return (
       <View style={[styles.screen, styles.centered]}>
@@ -45,9 +51,12 @@ export default function ReviewModalScreen() {
     );
   }
 
+  // レビュー投稿画面の表示
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
+      {/* 店舗名 */}
       <Text style={styles.heading}>{shop.name}</Text>
+      {/* 評価（星） */}
       <Text style={styles.sectionLabel}>評価</Text>
       <View style={styles.starsRow}>
         {[1, 2, 3, 4, 5].map(n => (
@@ -57,6 +66,7 @@ export default function ReviewModalScreen() {
         ))}
       </View>
 
+      {/* メニュー選択（店舗にメニューがある場合のみ表示） */}
       {menu.length > 0 ? (
         <View style={styles.menuSection}>
           <Text style={styles.sectionLabel}>メニュー</Text>
@@ -80,6 +90,7 @@ export default function ReviewModalScreen() {
         </View>
       ) : null}
 
+      {/* コメント入力欄 */}
       <Text style={styles.sectionLabel}>コメント</Text>
       <TextInput
         value={comment}
@@ -90,10 +101,11 @@ export default function ReviewModalScreen() {
         style={styles.input}
       />
 
+      {/* 投稿ボタン */}
       <Pressable
-        style={({ pressed }) => [styles.primaryBtn, pressed && styles.btnPressed]}
+        style={styles.primaryBtn}
         onPress={() => {
-          if (!comment.trim()) return;
+          if (!comment.trim() || rating === 0) return; // コメントが空なら何もしない or
           const selected = menu.find(m => m.id === selectedMenuId);
           addReview(shop.id, {
             rating,
@@ -101,12 +113,13 @@ export default function ReviewModalScreen() {
             menuItemId: selected?.id,
             menuItemName: selected?.name,
           });
-          router.back();
+          router.back(); // 投稿後に前の画面に戻る
         }}
       >
         <Text style={styles.primaryBtnText}>投稿する</Text>
       </Pressable>
 
+      {/* キャンセルボタン */}
       <Pressable style={styles.secondaryBtn} onPress={() => router.back()}>
         <Text style={styles.secondaryBtnText}>キャンセル</Text>
       </Pressable>
@@ -114,11 +127,11 @@ export default function ReviewModalScreen() {
   );
 }
 
+// スタイル定義（見た目の調整）
 const styles = StyleSheet.create({
-  btnPressed: { opacity: 0.9 },
-  centered: { alignItems: 'center', justifyContent: 'center' },
-  content: { padding: 16 },
-  heading: { color: palette.primary, fontSize: 18, fontWeight: '800', marginBottom: 8 },
+  centered: { alignItems: 'center', justifyContent: 'center' }, // 中央寄せ
+  content: { padding: 16 }, // 画面内余白
+  heading: { color: palette.primary, fontSize: 18, fontWeight: '800', marginBottom: 8 }, // 店舗名
   input: {
     backgroundColor: palette.background,
     borderColor: palette.border,
@@ -150,7 +163,7 @@ const styles = StyleSheet.create({
   primaryBtn: {
     backgroundColor: palette.accent,
     borderRadius: 12,
-    marginTop: 16,
+    marginTop: 18,
     paddingVertical: 12,
   },
   primaryBtnText: { color: palette.primaryOnAccent, fontWeight: '700', textAlign: 'center' },

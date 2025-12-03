@@ -1,5 +1,5 @@
 import { Image } from 'expo-image';
-import { useRouter, type Href } from 'expo-router';
+import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { FlatList } from 'react-native';
 import {
@@ -35,7 +35,9 @@ const KEY_EXTRACTOR = (item: Shop) => item.id;
 
 export default function HomeScreen() {
   const router = useRouter();
+  const params = useLocalSearchParams<{ q?: string }>();
   const [searchQuery, setSearchQuery] = useState('');
+  const searchInputRef = useRef<TextInput | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<CategoryFilter>(CATEGORY_ALL);
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
@@ -56,6 +58,23 @@ export default function HomeScreen() {
       return matchesCategory && matchesQuery;
     });
   }, [normalizedQuery, selectedCategory]);
+
+  const prevQueryRef = useRef<string | undefined>(undefined);
+  useEffect(() => {
+    const q = params?.q;
+    if (typeof q === 'string' && q.trim().length > 0 && prevQueryRef.current !== q) {
+      prevQueryRef.current = q;
+      setSearchQuery(q);
+      setVisibleCount(PAGE_SIZE);
+      // 新しいクエリが適用されたときに先頭までスクロールする
+      try {
+        const listCurrent = (listRef as unknown as { current?: FlatList<Shop> | null }).current;
+        listCurrent?.scrollToOffset?.({ offset: 0, animated: true });
+      } catch {
+        // 利用不可なら無視
+      }
+    }
+  }, [params?.q]);
 
   useEffect(() => {
     if (loadMoreTimeout.current) {
@@ -141,9 +160,28 @@ export default function HomeScreen() {
               <Text style={styles.cardDescription}>{item.description}</Text>
               <View style={styles.tagRow}>
                 {item.tags.map(tag => (
-                  <View key={tag} style={styles.tagPill}>
+                  <Pressable
+                    key={tag}
+                    style={styles.tagPill}
+                    accessibilityLabel={`タグ ${tag} で検索`}
+                    onPress={() => {
+                      setSearchQuery(tag);
+                      setVisibleCount(PAGE_SIZE);
+                      // ShopDetailのタグタップと挙動を揃えるためにルートパラメータを同期する
+                      router.setParams({ q: tag });
+                      try {
+                        const listCurrent = (
+                          listRef as unknown as { current?: FlatList<Shop> | null }
+                        ).current;
+                        listCurrent?.scrollToOffset?.({ offset: 0, animated: true });
+                      } catch {
+                        // ignore
+                      }
+                      searchInputRef.current?.focus();
+                    }}
+                  >
                     <Text style={styles.tagText}>{tag}</Text>
-                  </View>
+                  </Pressable>
                 ))}
               </View>
             </View>
@@ -170,6 +208,7 @@ export default function HomeScreen() {
         </View>
         <View style={[styles.searchWrapper, styles.shadowLight]}>
           <TextInput
+            ref={searchInputRef}
             value={searchQuery}
             onChangeText={setSearchQuery}
             placeholder='お店名・雰囲気・タグで検索'

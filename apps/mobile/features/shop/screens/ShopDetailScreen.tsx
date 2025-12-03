@@ -85,9 +85,19 @@ export default function ShopDetailScreen() {
 
         <View style={styles.tagRow}>
           {shop.tags.map(tag => (
-            <View key={tag} style={styles.tagPill}>
+            <Pressable
+              key={tag}
+              style={styles.tagPill}
+              accessibilityLabel={`タグ ${tag} で検索`}
+              onPress={() => {
+                router.back();
+                setTimeout(() => {
+                  router.setParams({ q: tag });
+                }, 100);
+              }}
+            >
               <Text style={styles.tagText}>{tag}</Text>
-            </View>
+            </Pressable>
           ))}
         </View>
 
@@ -97,7 +107,7 @@ export default function ShopDetailScreen() {
         </View>
 
         <Pressable
-          style={({ pressed }) => [styles.primaryBtn, pressed && styles.btnPressed]}
+          style={styles.primaryBtn}
           onPress={() => router.push({ pathname: '/shop/[id]/review', params: { id: shop.id } })}
         >
           <Text style={styles.primaryBtnText}>レビューを書く</Text>
@@ -152,7 +162,8 @@ const styles = StyleSheet.create({
   primaryBtn: {
     backgroundColor: palette.accent,
     borderRadius: 12,
-    marginTop: 12,
+    marginBottom: 16,
+    marginTop: 13,
     paddingVertical: 12,
   },
   primaryBtnText: { color: palette.primaryOnAccent, fontWeight: '700', textAlign: 'center' },
