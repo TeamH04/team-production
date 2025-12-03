@@ -35,7 +35,7 @@ export default function ReviewModalScreen() {
   const menu = shop?.menu ?? [];
 
   // ユーザー入力用のstate
-  const [rating, setRating] = useState(5); // 評価（初期値5）
+  const [rating, setRating] = useState(0); // 評価（初期値0）
   const [comment, setComment] = useState(''); // コメント
   const [selectedMenuId, setSelectedMenuId] = useState<string | undefined>(undefined); // メニュー選択
 
@@ -105,7 +105,7 @@ export default function ReviewModalScreen() {
       <Pressable
         style={styles.primaryBtn}
         onPress={() => {
-          if (!comment.trim()) return; // コメントが空なら何もしない
+          if (!comment.trim() || rating === 0) return; // コメントが空なら何もしない or
           const selected = menu.find(m => m.id === selectedMenuId);
           addReview(shop.id, {
             rating,
