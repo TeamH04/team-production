@@ -40,7 +40,7 @@ export default function ReviewModalScreen() {
     navigation.setOptions?.({
       title: 'レビュー',
       headerBackTitle: '戻る',
-      headerBackTitleVisible: false,
+      
     });
   }, [navigation]);
 
