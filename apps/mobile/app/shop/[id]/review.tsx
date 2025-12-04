@@ -83,7 +83,7 @@ export default function ReviewModalScreen() {
           </Pressable>
         ))}
       </View>
-      {ratingError && <Text style={styles.errorText}>❌ 評価を選択してください</Text>}
+      {ratingError && <Text style={styles.errorText}>※ 評価を選択してください</Text>}
 
       {/* メニュー選択（店舗にメニューがある場合のみ表示） */}
       {menu.length > 0 ? (
@@ -122,7 +122,7 @@ export default function ReviewModalScreen() {
         multiline
         style={styles.input}
       />
-      {commentError && <Text style={styles.errorText}>❌ コメントを入力してください</Text>}
+      {commentError && <Text style={styles.errorText}>※ コメントを入力してください</Text>}
 
       {/* 投稿ボタン */}
       <Pressable
