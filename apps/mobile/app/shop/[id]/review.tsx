@@ -49,7 +49,6 @@ export default function ReviewModalScreen() {
   const [comment, setComment] = useState(''); // コメント
   const [selectedMenuId, setSelectedMenuId] = useState<string | undefined>(undefined); // メニュー選択
   const [ratingError, setRatingError] = useState(false); // 評価エラー表示
-  const [commentError, setCommentError] = useState(false); // コメントエラー表示
 
   // 店舗が見つからない場合の表示
   if (!shop) {
@@ -113,33 +112,23 @@ export default function ReviewModalScreen() {
       <Text style={styles.sectionLabel}>コメント</Text>
       <TextInput
         value={comment}
-        onChangeText={text => {
-          setComment(text);
-          setCommentError(false);
-        }}
+        onChangeText={setComment}
         placeholder='雰囲気・味・接客など自由に書いてください'
         placeholderTextColor={palette.muted}
         multiline
         style={styles.input}
       />
-      {commentError && <Text style={styles.errorText}>※ コメントを入力してください</Text>}
 
       {/* 投稿ボタン */}
       <Pressable
         style={styles.primaryBtn}
         onPress={() => {
           // バリデーション
-          let hasError = false;
           if (rating === 0) {
             setRatingError(true);
-            hasError = true;
+            return;
           }
-          if (!comment.trim()) {
-            setCommentError(true);
-            hasError = true;
-          }
-          if (hasError) return;
-
+          if (!comment.trim()) return; // コメントが空なら何もしない
           const selected = menu.find(m => m.id === selectedMenuId);
           addReview(shop.id, {
             rating,
