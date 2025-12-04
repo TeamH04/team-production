@@ -1,5 +1,5 @@
-﻿import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useMemo, useState } from 'react';
+﻿import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
+import { useLayoutEffect, useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { SHOPS } from '@/features/home/data/shops';
@@ -10,6 +10,7 @@ const palette = {
   accent: '#0EA5E9',
   background: '#F9FAFB',
   border: '#E5E7EB',
+  error: '#DC2626',
   menuBackground: '#F9FAFB',
   menuSelectedBackground: '#DBEAFE',
   menuSelectedBorder: '#93C5FD',
@@ -28,16 +29,26 @@ export default function ReviewModalScreen() {
   // URLパラメータから店舗IDを取得
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter(); // 画面遷移用
+  const navigation = useNavigation();
   const { addReview } = useReviews(); // レビュー追加関数
 
   // 店舗情報を取得
   const shop = useMemo(() => SHOPS.find(s => s.id === id), [id]);
   const menu = shop?.menu ?? [];
 
+  // ヘッダータイトルを設定
+  useLayoutEffect(() => {
+    navigation.setOptions?.({
+      title: 'レビュー',
+      headerBackTitle: '戻る',
+    });
+  }, [navigation]);
+
   // ユーザー入力用のstate
   const [rating, setRating] = useState(0); // 評価（初期値0）
   const [comment, setComment] = useState(''); // コメント
   const [selectedMenuId, setSelectedMenuId] = useState<string | undefined>(undefined); // メニュー選択
+  const [ratingError, setRatingError] = useState(false); // 評価エラー表示
 
   // 店舗が見つからない場合の表示
   if (!shop) {
@@ -60,11 +71,18 @@ export default function ReviewModalScreen() {
       <Text style={styles.sectionLabel}>評価</Text>
       <View style={styles.starsRow}>
         {[1, 2, 3, 4, 5].map(n => (
-          <Pressable key={n} onPress={() => setRating(n)}>
+          <Pressable
+            key={n}
+            onPress={() => {
+              setRating(n);
+              setRatingError(false);
+            }}
+          >
             <Text style={[styles.star, n <= rating ? styles.starActive : undefined]}>★</Text>
           </Pressable>
         ))}
       </View>
+      {ratingError && <Text style={styles.errorText}>※ 評価を選択してください</Text>}
 
       {/* メニュー選択（店舗にメニューがある場合のみ表示） */}
       {menu.length > 0 ? (
@@ -105,7 +123,12 @@ export default function ReviewModalScreen() {
       <Pressable
         style={styles.primaryBtn}
         onPress={() => {
-          if (!comment.trim() || rating === 0) return; // コメントが空なら何もしない or
+          // バリデーション
+          if (rating === 0) {
+            setRatingError(true);
+            return;
+          }
+          if (!comment.trim()) return; // コメントが空なら何もしない
           const selected = menu.find(m => m.id === selectedMenuId);
           addReview(shop.id, {
             rating,
@@ -131,6 +154,7 @@ export default function ReviewModalScreen() {
 const styles = StyleSheet.create({
   centered: { alignItems: 'center', justifyContent: 'center' }, // 中央寄せ
   content: { padding: 16 }, // 画面内余白
+  errorText: { color: palette.error, fontSize: 14, marginTop: 4 }, // エラーメッセージ
   heading: { color: palette.primary, fontSize: 18, fontWeight: '800', marginBottom: 8 }, // 店舗名
   input: {
     backgroundColor: palette.background,
