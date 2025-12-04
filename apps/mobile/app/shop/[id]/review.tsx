@@ -1,5 +1,5 @@
-﻿import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useMemo, useState } from 'react';
+﻿import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
+import { useLayoutEffect, useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { SHOPS } from '@/features/home/data/shops';
@@ -28,11 +28,20 @@ export default function ReviewModalScreen() {
   // URLパラメータから店舗IDを取得
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter(); // 画面遷移用
+  const navigation = useNavigation();
   const { addReview } = useReviews(); // レビュー追加関数
 
   // 店舗情報を取得
   const shop = useMemo(() => SHOPS.find(s => s.id === id), [id]);
   const menu = shop?.menu ?? [];
+
+  // ヘッダータイトルを設定
+  useLayoutEffect(() => {
+    navigation.setOptions?.({
+      title: 'レビュー',
+      headerBackTitle: '戻る',
+    });
+  }, [navigation]);
 
   // ユーザー入力用のstate
   const [rating, setRating] = useState(0); // 評価（初期値0）

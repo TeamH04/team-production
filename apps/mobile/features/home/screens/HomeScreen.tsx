@@ -74,7 +74,7 @@ export default function HomeScreen() {
         // 利用不可なら無視
       }
     }
-  }, [params?.q]);
+  }, [params?.q, listRef]);
 
   useEffect(() => {
     if (loadMoreTimeout.current) {
@@ -189,7 +189,7 @@ export default function HomeScreen() {
         </View>
       );
     },
-    [router]
+    [router, listRef, searchInputRef]
   );
 
   const renderListHeader = useMemo(
