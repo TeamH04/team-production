@@ -5,7 +5,7 @@ import (
 
 	"github.com/TeamH04/team-production/apps/backend/internal/apperr"
 	"github.com/TeamH04/team-production/apps/backend/internal/domain"
-	"github.com/TeamH04/team-production/apps/backend/internal/ports"
+	"github.com/TeamH04/team-production/apps/backend/internal/usecase/output"
 )
 
 // AdminUseCase は管理者機能に関するビジネスロジックを提供します
@@ -16,11 +16,11 @@ type AdminUseCase interface {
 }
 
 type adminUseCase struct {
-	storeRepo ports.StoreRepository
+	storeRepo output.StoreRepository
 }
 
 // NewAdminUseCase は AdminUseCase の実装を生成します
-func NewAdminUseCase(storeRepo ports.StoreRepository) AdminUseCase {
+func NewAdminUseCase(storeRepo output.StoreRepository) AdminUseCase {
 	return &adminUseCase{
 		storeRepo: storeRepo,
 	}

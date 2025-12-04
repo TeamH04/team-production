@@ -6,10 +6,11 @@ import (
 
 	"github.com/TeamH04/team-production/apps/backend/internal/domain"
 	"github.com/TeamH04/team-production/apps/backend/internal/usecase"
+	"github.com/TeamH04/team-production/apps/backend/internal/usecase/input"
 )
 
 type UserHandler struct {
-	userUseCase usecase.UserUseCase
+	userUseCase input.UserUseCase
 }
 
 var _ UserController = (*UserHandler)(nil)
@@ -21,8 +22,8 @@ type UpdateUserCommand struct {
 	Birthday *time.Time
 }
 
-func (c UpdateUserCommand) toInput() usecase.UpdateUserInput {
-	return usecase.UpdateUserInput{
+func (c UpdateUserCommand) toInput() input.UpdateUserInput {
+	return input.UpdateUserInput{
 		Name:     c.Name,
 		IconURL:  c.IconURL,
 		Gender:   c.Gender,
@@ -30,7 +31,7 @@ func (c UpdateUserCommand) toInput() usecase.UpdateUserInput {
 	}
 }
 
-func NewUserHandler(userUseCase usecase.UserUseCase) *UserHandler {
+func NewUserHandler(userUseCase input.UserUseCase) *UserHandler {
 	return &UserHandler{
 		userUseCase: userUseCase,
 	}

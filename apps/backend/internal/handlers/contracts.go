@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/TeamH04/team-production/apps/backend/internal/domain"
-	"github.com/TeamH04/team-production/apps/backend/internal/usecase"
+	"github.com/TeamH04/team-production/apps/backend/internal/usecase/input"
 )
 
 // StoreController exposes store operations to driving adapters.
@@ -60,7 +60,7 @@ type AdminController interface {
 // MediaController exposes media operations.
 type MediaController interface {
 	GetMedia(ctx context.Context, mediaID int64) (*domain.Media, error)
-	UploadMedia(ctx context.Context, userID string, cmd UploadMediaCommand) (*usecase.SignedUploadURL, error)
+	UploadMedia(ctx context.Context, userID string, cmd UploadMediaCommand) (*input.SignedUploadURL, error)
 }
 
 // AuthController exposes auth/user-profile operations.
@@ -68,5 +68,5 @@ type AuthController interface {
 	GetMe(ctx context.Context, userID string) (*domain.User, error)
 	UpdateRole(ctx context.Context, userID string, cmd UpdateRoleCommand) error
 	Signup(ctx context.Context, cmd SignupCommand) (*domain.User, error)
-	Login(ctx context.Context, cmd LoginCommand) (*usecase.AuthSession, error)
+	Login(ctx context.Context, cmd LoginCommand) (*input.AuthSession, error)
 }

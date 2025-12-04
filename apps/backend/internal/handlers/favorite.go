@@ -5,10 +5,11 @@ import (
 
 	"github.com/TeamH04/team-production/apps/backend/internal/domain"
 	"github.com/TeamH04/team-production/apps/backend/internal/usecase"
+	"github.com/TeamH04/team-production/apps/backend/internal/usecase/input"
 )
 
 type FavoriteHandler struct {
-	favoriteUseCase usecase.FavoriteUseCase
+	favoriteUseCase input.FavoriteUseCase
 }
 
 var _ FavoriteController = (*FavoriteHandler)(nil)
@@ -17,7 +18,7 @@ type AddFavoriteCommand struct {
 	StoreID int64
 }
 
-func NewFavoriteHandler(favoriteUseCase usecase.FavoriteUseCase) *FavoriteHandler {
+func NewFavoriteHandler(favoriteUseCase input.FavoriteUseCase) *FavoriteHandler {
 	return &FavoriteHandler{
 		favoriteUseCase: favoriteUseCase,
 	}

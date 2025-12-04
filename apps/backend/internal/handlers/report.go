@@ -5,10 +5,11 @@ import (
 
 	"github.com/TeamH04/team-production/apps/backend/internal/domain"
 	"github.com/TeamH04/team-production/apps/backend/internal/usecase"
+	"github.com/TeamH04/team-production/apps/backend/internal/usecase/input"
 )
 
 type ReportHandler struct {
-	reportUseCase usecase.ReportUseCase
+	reportUseCase input.ReportUseCase
 }
 
 var _ ReportController = (*ReportHandler)(nil)
@@ -19,8 +20,8 @@ type CreateReportCommand struct {
 	Reason     string
 }
 
-func (c CreateReportCommand) toInput(userID string) usecase.CreateReportInput {
-	return usecase.CreateReportInput{
+func (c CreateReportCommand) toInput(userID string) input.CreateReportInput {
+	return input.CreateReportInput{
 		UserID:     userID,
 		TargetType: c.TargetType,
 		TargetID:   c.TargetID,
@@ -28,7 +29,7 @@ func (c CreateReportCommand) toInput(userID string) usecase.CreateReportInput {
 	}
 }
 
-func NewReportHandler(reportUseCase usecase.ReportUseCase) *ReportHandler {
+func NewReportHandler(reportUseCase input.ReportUseCase) *ReportHandler {
 	return &ReportHandler{
 		reportUseCase: reportUseCase,
 	}

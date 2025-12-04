@@ -5,7 +5,7 @@ import (
 
 	"github.com/TeamH04/team-production/apps/backend/internal/apperr"
 	"github.com/TeamH04/team-production/apps/backend/internal/domain"
-	"github.com/TeamH04/team-production/apps/backend/internal/ports"
+	"github.com/TeamH04/team-production/apps/backend/internal/usecase/output"
 )
 
 // FavoriteUseCase はお気に入りに関するビジネスロジックを提供します
@@ -16,16 +16,16 @@ type FavoriteUseCase interface {
 }
 
 type favoriteUseCase struct {
-	favoriteRepo ports.FavoriteRepository
-	userRepo     ports.UserRepository
-	storeRepo    ports.StoreRepository
+	favoriteRepo output.FavoriteRepository
+	userRepo     output.UserRepository
+	storeRepo    output.StoreRepository
 }
 
 // NewFavoriteUseCase は FavoriteUseCase の実装を生成します
 func NewFavoriteUseCase(
-	favoriteRepo ports.FavoriteRepository,
-	userRepo ports.UserRepository,
-	storeRepo ports.StoreRepository,
+	favoriteRepo output.FavoriteRepository,
+	userRepo output.UserRepository,
+	storeRepo output.StoreRepository,
 ) FavoriteUseCase {
 	return &favoriteUseCase{
 		favoriteRepo: favoriteRepo,

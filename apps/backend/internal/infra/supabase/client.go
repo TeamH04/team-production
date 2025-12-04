@@ -14,8 +14,8 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 
-	"github.com/TeamH04/team-production/apps/backend/internal/ports"
 	"github.com/TeamH04/team-production/apps/backend/internal/security"
+	"github.com/TeamH04/team-production/apps/backend/internal/usecase/output"
 )
 
 // Client provides access to Supabase Auth / Storage APIs.
@@ -82,7 +82,7 @@ func decodeSupabaseError(resp *http.Response) error {
 }
 
 // Signup creates a new user via Supabase Admin API.
-func (c *Client) Signup(ctx context.Context, input ports.AuthSignupInput) (*ports.AuthUser, error) {
+func (c *Client) Signup(ctx context.Context, input output.AuthSignupInput) (*output.AuthUser, error) {
 	if c.baseURL == "" || c.serviceKey == "" {
 		return nil, errors.New("supabase admin api not configured")
 	}
@@ -135,7 +135,7 @@ func (c *Client) Signup(ctx context.Context, input ports.AuthSignupInput) (*port
 		role = "user"
 	}
 
-	return &ports.AuthUser{
+	return &output.AuthUser{
 		ID:    result.ID,
 		Email: result.Email,
 		Role:  role,
@@ -143,7 +143,7 @@ func (c *Client) Signup(ctx context.Context, input ports.AuthSignupInput) (*port
 }
 
 // Login executes the password grant flow against Supabase Auth.
-func (c *Client) Login(ctx context.Context, input ports.AuthLoginInput) (*ports.AuthSession, error) {
+func (c *Client) Login(ctx context.Context, input output.AuthLoginInput) (*output.AuthSession, error) {
 	if c.baseURL == "" || (c.anonKey == "" && c.serviceKey == "") {
 		return nil, errors.New("supabase auth api not configured")
 	}
@@ -208,12 +208,12 @@ func (c *Client) Login(ctx context.Context, input ports.AuthLoginInput) (*ports.
 		role = "user"
 	}
 
-	return &ports.AuthSession{
+	return &output.AuthSession{
 		AccessToken:  result.AccessToken,
 		RefreshToken: result.RefreshToken,
 		TokenType:    result.TokenType,
 		ExpiresIn:    result.ExpiresIn,
-		User: ports.AuthUser{
+		User: output.AuthUser{
 			ID:    result.User.ID,
 			Email: result.User.Email,
 			Role:  role,
@@ -262,7 +262,7 @@ func (c *Client) Verify(token string) (*security.TokenClaims, error) {
 }
 
 // GenerateSignedUploadURL creates a signed upload URL for Supabase Storage.
-func (c *Client) GenerateSignedUploadURL(ctx context.Context, bucket, objectPath, contentType string, expiresIn time.Duration) (*ports.SignedUploadURL, error) {
+func (c *Client) GenerateSignedUploadURL(ctx context.Context, bucket, objectPath, contentType string, expiresIn time.Duration) (*output.SignedUploadURL, error) {
 	if c.baseURL == "" || c.serviceKey == "" {
 		return nil, errors.New("supabase storage api not configured")
 	}
@@ -313,7 +313,7 @@ func (c *Client) GenerateSignedUploadURL(ctx context.Context, bucket, objectPath
 		urlStr = c.baseURL + urlStr
 	}
 
-	return &ports.SignedUploadURL{
+	return &output.SignedUploadURL{
 		URL:         urlStr,
 		Path:        path.Join(bucket, objectPath),
 		Token:       result.Token,

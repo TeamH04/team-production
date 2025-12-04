@@ -6,31 +6,25 @@ import (
 
 	"github.com/TeamH04/team-production/apps/backend/internal/apperr"
 	"github.com/TeamH04/team-production/apps/backend/internal/domain"
-	"github.com/TeamH04/team-production/apps/backend/internal/ports"
+	"github.com/TeamH04/team-production/apps/backend/internal/usecase/input"
+	"github.com/TeamH04/team-production/apps/backend/internal/usecase/output"
 )
 
 // UserUseCase はユーザーに関するビジネスロジックを提供します
 type UserUseCase interface {
 	GetUserByID(ctx context.Context, userID string) (*domain.User, error)
-	UpdateUser(ctx context.Context, userID string, input UpdateUserInput) (*domain.User, error)
+	UpdateUser(ctx context.Context, userID string, input input.UpdateUserInput) (*domain.User, error)
 	UpdateUserRole(ctx context.Context, userID string, role string) error
 	GetUserReviews(ctx context.Context, userID string) ([]domain.Review, error)
 }
 
-type UpdateUserInput struct {
-	Name     *string
-	IconURL  *string
-	Gender   *string
-	Birthday *time.Time
-}
-
 type userUseCase struct {
-	userRepo   ports.UserRepository
-	reviewRepo ports.ReviewRepository
+	userRepo   output.UserRepository
+	reviewRepo output.ReviewRepository
 }
 
 // NewUserUseCase は UserUseCase の実装を生成します
-func NewUserUseCase(userRepo ports.UserRepository, reviewRepo ports.ReviewRepository) UserUseCase {
+func NewUserUseCase(userRepo output.UserRepository, reviewRepo output.ReviewRepository) UserUseCase {
 	return &userUseCase{
 		userRepo:   userRepo,
 		reviewRepo: reviewRepo,
@@ -48,7 +42,7 @@ func (uc *userUseCase) GetUserByID(ctx context.Context, userID string) (*domain.
 	return user, nil
 }
 
-func (uc *userUseCase) UpdateUser(ctx context.Context, userID string, input UpdateUserInput) (*domain.User, error) {
+func (uc *userUseCase) UpdateUser(ctx context.Context, userID string, input input.UpdateUserInput) (*domain.User, error) {
 	user, err := uc.userRepo.FindByID(ctx, userID)
 	if err != nil {
 		if apperr.IsCode(err, apperr.CodeNotFound) {

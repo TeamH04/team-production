@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"github.com/TeamH04/team-production/apps/backend/internal/domain"
-	"github.com/TeamH04/team-production/apps/backend/internal/usecase"
+	"github.com/TeamH04/team-production/apps/backend/internal/usecase/input"
 )
 
 type StoreResponse struct {
@@ -88,11 +88,11 @@ type MediaResponse struct {
 }
 
 type AuthSessionResponse struct {
-	AccessToken  string            `json:"access_token"`
-	RefreshToken string            `json:"refresh_token"`
-	TokenType    string            `json:"token_type"`
-	ExpiresIn    int               `json:"expires_in"`
-	User         AuthUserResponse  `json:"user"`
+	AccessToken  string           `json:"access_token"`
+	RefreshToken string           `json:"refresh_token"`
+	TokenType    string           `json:"token_type"`
+	ExpiresIn    int              `json:"expires_in"`
+	User         AuthUserResponse `json:"user"`
 }
 
 type AuthUserResponse struct {
@@ -219,7 +219,7 @@ func NewFavoriteResponses(favorites []domain.Favorite) []FavoriteResponse {
 	return resp
 }
 
-func NewAuthSessionResponse(session *usecase.AuthSession) AuthSessionResponse {
+func NewAuthSessionResponse(session *input.AuthSession) AuthSessionResponse {
 	if session == nil {
 		return AuthSessionResponse{}
 	}
@@ -232,7 +232,7 @@ func NewAuthSessionResponse(session *usecase.AuthSession) AuthSessionResponse {
 	}
 }
 
-func NewAuthUserResponse(user usecase.AuthUser) AuthUserResponse {
+func NewAuthUserResponse(user input.AuthUser) AuthUserResponse {
 	return AuthUserResponse{
 		ID:    user.ID,
 		Email: user.Email,

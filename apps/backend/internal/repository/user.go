@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/TeamH04/team-production/apps/backend/internal/domain"
-	"github.com/TeamH04/team-production/apps/backend/internal/ports"
 	"github.com/TeamH04/team-production/apps/backend/internal/repository/model"
+	"github.com/TeamH04/team-production/apps/backend/internal/usecase/output"
 	"gorm.io/gorm"
 )
 
@@ -14,7 +14,7 @@ type userRepository struct {
 }
 
 // NewUserRepository は UserRepository の実装を生成します
-func NewUserRepository(db *gorm.DB) ports.UserRepository {
+func NewUserRepository(db *gorm.DB) output.UserRepository {
 	return &userRepository{db: db}
 }
 

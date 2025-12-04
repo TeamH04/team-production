@@ -4,11 +4,11 @@ import (
 	"context"
 
 	"github.com/TeamH04/team-production/apps/backend/internal/domain"
-	"github.com/TeamH04/team-production/apps/backend/internal/usecase"
+	"github.com/TeamH04/team-production/apps/backend/internal/usecase/input"
 )
 
 type MenuHandler struct {
-	menuUseCase usecase.MenuUseCase
+	menuUseCase input.MenuUseCase
 }
 
 var _ MenuController = (*MenuHandler)(nil)
@@ -20,8 +20,8 @@ type CreateMenuCommand struct {
 	Description *string
 }
 
-func (c CreateMenuCommand) toInput() usecase.CreateMenuInput {
-	return usecase.CreateMenuInput{
+func (c CreateMenuCommand) toInput() input.CreateMenuInput {
+	return input.CreateMenuInput{
 		Name:        c.Name,
 		Price:       c.Price,
 		ImageURL:    c.ImageURL,
@@ -29,7 +29,7 @@ func (c CreateMenuCommand) toInput() usecase.CreateMenuInput {
 	}
 }
 
-func NewMenuHandler(menuUseCase usecase.MenuUseCase) *MenuHandler {
+func NewMenuHandler(menuUseCase input.MenuUseCase) *MenuHandler {
 	return &MenuHandler{
 		menuUseCase: menuUseCase,
 	}

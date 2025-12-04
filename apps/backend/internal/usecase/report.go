@@ -5,39 +5,33 @@ import (
 
 	"github.com/TeamH04/team-production/apps/backend/internal/apperr"
 	"github.com/TeamH04/team-production/apps/backend/internal/domain"
-	"github.com/TeamH04/team-production/apps/backend/internal/ports"
+	"github.com/TeamH04/team-production/apps/backend/internal/usecase/input"
+	"github.com/TeamH04/team-production/apps/backend/internal/usecase/output"
 )
 
 // ReportUseCase は通報に関するビジネスロジックを提供します
 type ReportUseCase interface {
-	CreateReport(ctx context.Context, input CreateReportInput) (*domain.Report, error)
+	CreateReport(ctx context.Context, input input.CreateReportInput) (*domain.Report, error)
 	GetAllReports(ctx context.Context) ([]domain.Report, error)
-	HandleReport(ctx context.Context, reportID int64, action string) error
-}
-
-type CreateReportInput struct {
-	UserID     string
-	TargetType string
-	TargetID   int64
-	Reason     string
+	HandleReport(ctx context.Context, reportID int64, action input.HandleReportAction) error
 }
 
 type reportUseCase struct {
-	reportRepo ports.ReportRepository
-	userRepo   ports.UserRepository
+	reportRepo output.ReportRepository
+	userRepo   output.UserRepository
 }
 
 // NewReportUseCase は ReportUseCase の実装を生成します
-func NewReportUseCase(reportRepo ports.ReportRepository, userRepo ports.UserRepository) ReportUseCase {
+func NewReportUseCase(reportRepo output.ReportRepository, userRepo output.UserRepository) ReportUseCase {
 	return &reportUseCase{
 		reportRepo: reportRepo,
 		userRepo:   userRepo,
 	}
 }
 
-func (uc *reportUseCase) CreateReport(ctx context.Context, input CreateReportInput) (*domain.Report, error) {
+func (uc *reportUseCase) CreateReport(ctx context.Context, req input.CreateReportInput) (*domain.Report, error) {
 	// ユーザーの存在確認
-	if _, err := uc.userRepo.FindByID(ctx, input.UserID); err != nil {
+	if _, err := uc.userRepo.FindByID(ctx, req.UserID); err != nil {
 		if apperr.IsCode(err, apperr.CodeNotFound) {
 			return nil, ErrUserNotFound
 		}
@@ -45,7 +39,7 @@ func (uc *reportUseCase) CreateReport(ctx context.Context, input CreateReportInp
 	}
 
 	// バリデーション
-	if input.TargetType == "" || input.Reason == "" {
+	if req.TargetType == "" || req.Reason == "" {
 		return nil, ErrInvalidInput
 	}
 
@@ -53,15 +47,15 @@ func (uc *reportUseCase) CreateReport(ctx context.Context, input CreateReportInp
 		"review": true,
 		"store":  true,
 	}
-	if !validTargetTypes[input.TargetType] {
+	if !validTargetTypes[req.TargetType] {
 		return nil, ErrInvalidTargetType
 	}
 
 	report := &domain.Report{
-		UserID:     input.UserID,
-		TargetType: input.TargetType,
-		TargetID:   input.TargetID,
-		Reason:     input.Reason,
+		UserID:     req.UserID,
+		TargetType: req.TargetType,
+		TargetID:   req.TargetID,
+		Reason:     req.Reason,
 		Status:     "pending",
 	}
 
@@ -76,7 +70,7 @@ func (uc *reportUseCase) GetAllReports(ctx context.Context) ([]domain.Report, er
 	return uc.reportRepo.FindAll(ctx)
 }
 
-func (uc *reportUseCase) HandleReport(ctx context.Context, reportID int64, action string) error {
+func (uc *reportUseCase) HandleReport(ctx context.Context, reportID int64, action input.HandleReportAction) error {
 	// 通報の存在確認
 	if _, err := uc.reportRepo.FindByID(ctx, reportID); err != nil {
 		if apperr.IsCode(err, apperr.CodeNotFound) {
@@ -86,9 +80,9 @@ func (uc *reportUseCase) HandleReport(ctx context.Context, reportID int64, actio
 	}
 
 	// アクションのバリデーション
-	validActions := map[string]string{
-		"resolve": "resolved",
-		"reject":  "rejected",
+	validActions := map[input.HandleReportAction]string{
+		input.HandleReportResolve: "resolved",
+		input.HandleReportReject:  "rejected",
 	}
 
 	status, ok := validActions[action]

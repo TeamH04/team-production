@@ -15,11 +15,11 @@ import (
 	"github.com/TeamH04/team-production/apps/backend/internal/handlers"
 	"github.com/TeamH04/team-production/apps/backend/internal/presentation"
 	"github.com/TeamH04/team-production/apps/backend/internal/presentation/presenter"
-	"github.com/TeamH04/team-production/apps/backend/internal/usecase"
+	"github.com/TeamH04/team-production/apps/backend/internal/usecase/input"
 )
 
 type stubAuthController struct {
-	loginFn func(ctx context.Context, cmd handlers.LoginCommand) (*usecase.AuthSession, error)
+	loginFn func(ctx context.Context, cmd handlers.LoginCommand) (*input.AuthSession, error)
 }
 
 func (s *stubAuthController) GetMe(ctx context.Context, userID string) (*domain.User, error) {
@@ -34,7 +34,7 @@ func (s *stubAuthController) Signup(ctx context.Context, cmd handlers.SignupComm
 	return nil, nil
 }
 
-func (s *stubAuthController) Login(ctx context.Context, cmd handlers.LoginCommand) (*usecase.AuthSession, error) {
+func (s *stubAuthController) Login(ctx context.Context, cmd handlers.LoginCommand) (*input.AuthSession, error) {
 	if s.loginFn != nil {
 		return s.loginFn(ctx, cmd)
 	}
@@ -43,16 +43,16 @@ func (s *stubAuthController) Login(ctx context.Context, cmd handlers.LoginComman
 
 func TestAuthHandler_Login_Success(t *testing.T) {
 	controller := &stubAuthController{
-		loginFn: func(ctx context.Context, cmd handlers.LoginCommand) (*usecase.AuthSession, error) {
+		loginFn: func(ctx context.Context, cmd handlers.LoginCommand) (*input.AuthSession, error) {
 			if cmd.Email != "user@example.com" || cmd.Password != "secret" {
 				t.Fatalf("unexpected command: %+v", cmd)
 			}
-			return &usecase.AuthSession{
+			return &input.AuthSession{
 				AccessToken:  "access",
 				RefreshToken: "refresh",
 				TokenType:    "bearer",
 				ExpiresIn:    3600,
-				User: usecase.AuthUser{
+				User: input.AuthUser{
 					ID:    "user-1",
 					Email: "user@example.com",
 					Role:  "user",

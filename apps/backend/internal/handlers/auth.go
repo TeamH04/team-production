@@ -6,11 +6,12 @@ import (
 
 	"github.com/TeamH04/team-production/apps/backend/internal/domain"
 	"github.com/TeamH04/team-production/apps/backend/internal/usecase"
+	"github.com/TeamH04/team-production/apps/backend/internal/usecase/input"
 )
 
 type AuthHandler struct {
-	authUseCase usecase.AuthUseCase
-	userUseCase usecase.UserUseCase
+	authUseCase input.AuthUseCase
+	userUseCase input.UserUseCase
 }
 
 var _ AuthController = (*AuthHandler)(nil)
@@ -21,8 +22,8 @@ type SignupCommand struct {
 	Name     string
 }
 
-func (c SignupCommand) toInput() usecase.AuthSignupInput {
-	return usecase.AuthSignupInput{
+func (c SignupCommand) toInput() input.AuthSignupInput {
+	return input.AuthSignupInput{
 		Email:    c.Email,
 		Password: c.Password,
 		Name:     c.Name,
@@ -34,8 +35,8 @@ type LoginCommand struct {
 	Password string
 }
 
-func (c LoginCommand) toInput() usecase.AuthLoginInput {
-	return usecase.AuthLoginInput{
+func (c LoginCommand) toInput() input.AuthLoginInput {
+	return input.AuthLoginInput{
 		Email:    c.Email,
 		Password: c.Password,
 	}
@@ -46,7 +47,7 @@ type UpdateRoleCommand struct {
 }
 
 // NewAuthHandler は AuthHandler を生成します
-func NewAuthHandler(authUseCase usecase.AuthUseCase, userUseCase usecase.UserUseCase) *AuthHandler {
+func NewAuthHandler(authUseCase input.AuthUseCase, userUseCase input.UserUseCase) *AuthHandler {
 	return &AuthHandler{
 		authUseCase: authUseCase,
 		userUseCase: userUseCase,
@@ -73,6 +74,6 @@ func (h *AuthHandler) Signup(ctx context.Context, cmd SignupCommand) (*domain.Us
 	return h.authUseCase.Signup(ctx, cmd.toInput())
 }
 
-func (h *AuthHandler) Login(ctx context.Context, cmd LoginCommand) (*usecase.AuthSession, error) {
+func (h *AuthHandler) Login(ctx context.Context, cmd LoginCommand) (*input.AuthSession, error) {
 	return h.authUseCase.Login(ctx, cmd.toInput())
 }

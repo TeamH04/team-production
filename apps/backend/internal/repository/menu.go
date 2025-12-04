@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/TeamH04/team-production/apps/backend/internal/domain"
-	"github.com/TeamH04/team-production/apps/backend/internal/ports"
 	"github.com/TeamH04/team-production/apps/backend/internal/repository/model"
+	"github.com/TeamH04/team-production/apps/backend/internal/usecase/output"
 	"gorm.io/gorm"
 )
 
@@ -14,7 +14,7 @@ type menuRepository struct {
 }
 
 // NewMenuRepository は MenuRepository の実装を生成します
-func NewMenuRepository(db *gorm.DB) ports.MenuRepository {
+func NewMenuRepository(db *gorm.DB) output.MenuRepository {
 	return &menuRepository{db: db}
 }
 

@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/TeamH04/team-production/apps/backend/internal/domain"
-	"github.com/TeamH04/team-production/apps/backend/internal/ports"
 	"github.com/TeamH04/team-production/apps/backend/internal/repository/model"
+	"github.com/TeamH04/team-production/apps/backend/internal/usecase/output"
 	"gorm.io/gorm"
 )
 
@@ -14,7 +14,7 @@ type reportRepository struct {
 }
 
 // NewReportRepository は ReportRepository の実装を生成します
-func NewReportRepository(db *gorm.DB) ports.ReportRepository {
+func NewReportRepository(db *gorm.DB) output.ReportRepository {
 	return &reportRepository{db: db}
 }
 

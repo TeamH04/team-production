@@ -7,12 +7,13 @@ import (
 
 	"github.com/TeamH04/team-production/apps/backend/internal/domain"
 	"github.com/TeamH04/team-production/apps/backend/internal/usecase"
+	"github.com/TeamH04/team-production/apps/backend/internal/usecase/input"
 )
 
 type AdminHandler struct {
-	adminUseCase  usecase.AdminUseCase
-	reportUseCase usecase.ReportUseCase
-	userUseCase   usecase.UserUseCase
+	adminUseCase  input.AdminUseCase
+	reportUseCase input.ReportUseCase
+	userUseCase   input.UserUseCase
 }
 
 var _ AdminController = (*AdminHandler)(nil)
@@ -28,7 +29,7 @@ func (c HandleReportCommand) Validate() error {
 	return nil
 }
 
-func NewAdminHandler(adminUseCase usecase.AdminUseCase, reportUseCase usecase.ReportUseCase, userUseCase usecase.UserUseCase) *AdminHandler {
+func NewAdminHandler(adminUseCase input.AdminUseCase, reportUseCase input.ReportUseCase, userUseCase input.UserUseCase) *AdminHandler {
 	return &AdminHandler{
 		adminUseCase:  adminUseCase,
 		reportUseCase: reportUseCase,
@@ -56,7 +57,7 @@ func (h *AdminHandler) HandleReport(ctx context.Context, reportID int64, cmd Han
 	if err := cmd.Validate(); err != nil {
 		return err
 	}
-	return h.reportUseCase.HandleReport(ctx, reportID, cmd.Action)
+	return h.reportUseCase.HandleReport(ctx, reportID, input.HandleReportAction(cmd.Action))
 }
 
 func (h *AdminHandler) GetUserByID(ctx context.Context, userID string) (*domain.User, error) {

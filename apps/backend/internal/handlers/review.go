@@ -5,10 +5,11 @@ import (
 
 	"github.com/TeamH04/team-production/apps/backend/internal/domain"
 	"github.com/TeamH04/team-production/apps/backend/internal/usecase"
+	"github.com/TeamH04/team-production/apps/backend/internal/usecase/input"
 )
 
 type ReviewHandler struct {
-	reviewUseCase usecase.ReviewUseCase
+	reviewUseCase input.ReviewUseCase
 }
 
 var _ ReviewController = (*ReviewHandler)(nil)
@@ -20,8 +21,8 @@ type CreateReviewCommand struct {
 	ImageURLs []string
 }
 
-func (c CreateReviewCommand) toInput(userID string) usecase.CreateReviewInput {
-	return usecase.CreateReviewInput{
+func (c CreateReviewCommand) toInput(userID string) input.CreateReviewInput {
+	return input.CreateReviewInput{
 		UserID:    userID,
 		MenuID:    c.MenuID,
 		Rating:    c.Rating,
@@ -30,7 +31,7 @@ func (c CreateReviewCommand) toInput(userID string) usecase.CreateReviewInput {
 	}
 }
 
-func NewReviewHandler(reviewUseCase usecase.ReviewUseCase) *ReviewHandler {
+func NewReviewHandler(reviewUseCase input.ReviewUseCase) *ReviewHandler {
 	return &ReviewHandler{
 		reviewUseCase: reviewUseCase,
 	}
@@ -45,5 +46,5 @@ func (h *ReviewHandler) CreateReview(ctx context.Context, storeID int64, userID 
 		return nil, usecase.ErrUnauthorized
 	}
 
-	return h.reviewUseCase.CreateReview(ctx, storeID, cmd.toInput(userID))
+	return h.reviewUseCase.CreateReview(ctx, storeID, userID, cmd.toInput(userID))
 }

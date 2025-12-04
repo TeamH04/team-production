@@ -6,30 +6,23 @@ import (
 
 	"github.com/TeamH04/team-production/apps/backend/internal/apperr"
 	"github.com/TeamH04/team-production/apps/backend/internal/domain"
-	"github.com/TeamH04/team-production/apps/backend/internal/ports"
+	"github.com/TeamH04/team-production/apps/backend/internal/usecase/input"
+	"github.com/TeamH04/team-production/apps/backend/internal/usecase/output"
 )
 
 // ReviewUseCase はレビューに関するビジネスロジックを提供します
 type ReviewUseCase interface {
 	GetReviewsByStoreID(ctx context.Context, storeID int64) ([]domain.Review, error)
-	CreateReview(ctx context.Context, storeID int64, input CreateReviewInput) (*domain.Review, error)
-}
-
-type CreateReviewInput struct {
-	UserID    string
-	MenuID    int64
-	Rating    int
-	Content   *string
-	ImageURLs []string
+	CreateReview(ctx context.Context, storeID int64, userID string, input input.CreateReviewInput) (*domain.Review, error)
 }
 
 type reviewUseCase struct {
-	reviewRepo ports.ReviewRepository
-	storeRepo  ports.StoreRepository
+	reviewRepo output.ReviewRepository
+	storeRepo  output.StoreRepository
 }
 
 // NewReviewUseCase は ReviewUseCase の実装を生成します
-func NewReviewUseCase(reviewRepo ports.ReviewRepository, storeRepo ports.StoreRepository) ReviewUseCase {
+func NewReviewUseCase(reviewRepo output.ReviewRepository, storeRepo output.StoreRepository) ReviewUseCase {
 	return &reviewUseCase{
 		reviewRepo: reviewRepo,
 		storeRepo:  storeRepo,
@@ -48,8 +41,8 @@ func (uc *reviewUseCase) GetReviewsByStoreID(ctx context.Context, storeID int64)
 	return uc.reviewRepo.FindByStoreID(ctx, storeID)
 }
 
-func (uc *reviewUseCase) CreateReview(ctx context.Context, storeID int64, input CreateReviewInput) (*domain.Review, error) {
-	if input.MenuID <= 0 {
+func (uc *reviewUseCase) CreateReview(ctx context.Context, storeID int64, userID string, in input.CreateReviewInput) (*domain.Review, error) {
+	if in.MenuID <= 0 {
 		return nil, ErrInvalidInput
 	}
 	// ストアの存在確認
@@ -61,20 +54,20 @@ func (uc *reviewUseCase) CreateReview(ctx context.Context, storeID int64, input 
 	}
 
 	// バリデーション
-	if input.UserID == "" {
+	if in.UserID == "" {
 		return nil, ErrInvalidInput
 	}
-	if input.Rating < 1 || input.Rating > 5 {
+	if in.Rating < 1 || in.Rating > 5 {
 		return nil, ErrInvalidRating
 	}
 
 	review := &domain.Review{
 		StoreID:   storeID,
-		UserID:    input.UserID,
-		MenuID:    input.MenuID,
-		Rating:    input.Rating,
-		Content:   input.Content,
-		ImageURLs: append([]string(nil), input.ImageURLs...),
+		UserID:    in.UserID,
+		MenuID:    in.MenuID,
+		Rating:    in.Rating,
+		Content:   in.Content,
+		ImageURLs: append([]string(nil), in.ImageURLs...),
 		PostedAt:  time.Now(),
 	}
 

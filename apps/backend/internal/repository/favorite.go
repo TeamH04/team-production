@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/TeamH04/team-production/apps/backend/internal/domain"
-	"github.com/TeamH04/team-production/apps/backend/internal/ports"
 	"github.com/TeamH04/team-production/apps/backend/internal/repository/model"
+	"github.com/TeamH04/team-production/apps/backend/internal/usecase/output"
 	"gorm.io/gorm"
 )
 
@@ -14,7 +14,7 @@ type favoriteRepository struct {
 }
 
 // NewFavoriteRepository は FavoriteRepository の実装を生成します
-func NewFavoriteRepository(db *gorm.DB) ports.FavoriteRepository {
+func NewFavoriteRepository(db *gorm.DB) output.FavoriteRepository {
 	return &favoriteRepository{db: db}
 }
 

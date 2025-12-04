@@ -6,48 +6,25 @@ import (
 
 	"github.com/TeamH04/team-production/apps/backend/internal/apperr"
 	"github.com/TeamH04/team-production/apps/backend/internal/domain"
-	"github.com/TeamH04/team-production/apps/backend/internal/ports"
+	"github.com/TeamH04/team-production/apps/backend/internal/usecase/input"
+	"github.com/TeamH04/team-production/apps/backend/internal/usecase/output"
 )
 
 // StoreUseCase はストアに関するビジネスロジックを提供します
 type StoreUseCase interface {
 	GetAllStores(ctx context.Context) ([]domain.Store, error)
 	GetStoreByID(ctx context.Context, id int64) (*domain.Store, error)
-	CreateStore(ctx context.Context, input CreateStoreInput) (*domain.Store, error)
-	UpdateStore(ctx context.Context, id int64, input UpdateStoreInput) (*domain.Store, error)
+	CreateStore(ctx context.Context, input input.CreateStoreInput) (*domain.Store, error)
+	UpdateStore(ctx context.Context, id int64, input input.UpdateStoreInput) (*domain.Store, error)
 	DeleteStore(ctx context.Context, id int64) error
 }
 
-type CreateStoreInput struct {
-	Name            string
-	Address         string
-	ThumbnailURL    string
-	OpenedAt        *time.Time
-	Description     *string
-	OpeningHours    *string
-	LandscapePhotos []string
-	Latitude        float64
-	Longitude       float64
-}
-
-type UpdateStoreInput struct {
-	Name            *string
-	Address         *string
-	ThumbnailURL    *string
-	OpenedAt        *time.Time
-	Description     *string
-	OpeningHours    *string
-	LandscapePhotos []string
-	Latitude        *float64
-	Longitude       *float64
-}
-
 type storeUseCase struct {
-	storeRepo ports.StoreRepository
+	storeRepo output.StoreRepository
 }
 
 // NewStoreUseCase は StoreUseCase の実装を生成します
-func NewStoreUseCase(storeRepo ports.StoreRepository) StoreUseCase {
+func NewStoreUseCase(storeRepo output.StoreRepository) StoreUseCase {
 	return &storeUseCase{
 		storeRepo: storeRepo,
 	}
@@ -68,25 +45,25 @@ func (uc *storeUseCase) GetStoreByID(ctx context.Context, id int64) (*domain.Sto
 	return store, nil
 }
 
-func (uc *storeUseCase) CreateStore(ctx context.Context, input CreateStoreInput) (*domain.Store, error) {
+func (uc *storeUseCase) CreateStore(ctx context.Context, in input.CreateStoreInput) (*domain.Store, error) {
 	// バリデーション
-	if input.Name == "" || input.Address == "" || input.ThumbnailURL == "" {
+	if in.Name == "" || in.Address == "" || in.ThumbnailURL == "" {
 		return nil, ErrInvalidInput
 	}
-	if input.Latitude == 0.0 || input.Longitude == 0.0 {
+	if in.Latitude == 0.0 || in.Longitude == 0.0 {
 		return nil, ErrInvalidCoordinates
 	}
 
 	store := &domain.Store{
-		Name:            input.Name,
-		Address:         input.Address,
-		ThumbnailURL:    input.ThumbnailURL,
-		OpenedAt:        input.OpenedAt,
-		Description:     input.Description,
-		LandscapePhotos: append([]string(nil), input.LandscapePhotos...),
-		OpeningHours:    input.OpeningHours,
-		Latitude:        input.Latitude,
-		Longitude:       input.Longitude,
+		Name:            in.Name,
+		Address:         in.Address,
+		ThumbnailURL:    in.ThumbnailURL,
+		OpenedAt:        in.OpenedAt,
+		Description:     in.Description,
+		LandscapePhotos: append([]string(nil), in.LandscapePhotos...),
+		OpeningHours:    in.OpeningHours,
+		Latitude:        in.Latitude,
+		Longitude:       in.Longitude,
 		IsApproved:      false,
 	}
 
@@ -97,7 +74,7 @@ func (uc *storeUseCase) CreateStore(ctx context.Context, input CreateStoreInput)
 	return store, nil
 }
 
-func (uc *storeUseCase) UpdateStore(ctx context.Context, id int64, input UpdateStoreInput) (*domain.Store, error) {
+func (uc *storeUseCase) UpdateStore(ctx context.Context, id int64, in input.UpdateStoreInput) (*domain.Store, error) {
 	// 既存のストアを取得
 	store, err := uc.storeRepo.FindByID(ctx, id)
 	if err != nil {
@@ -108,32 +85,32 @@ func (uc *storeUseCase) UpdateStore(ctx context.Context, id int64, input UpdateS
 	}
 
 	// 更新フィールドの適用
-	if input.Name != nil {
-		store.Name = *input.Name
+	if in.Name != nil {
+		store.Name = *in.Name
 	}
-	if input.Address != nil {
-		store.Address = *input.Address
+	if in.Address != nil {
+		store.Address = *in.Address
 	}
-	if input.ThumbnailURL != nil {
-		store.ThumbnailURL = *input.ThumbnailURL
+	if in.ThumbnailURL != nil {
+		store.ThumbnailURL = *in.ThumbnailURL
 	}
-	if input.OpenedAt != nil {
-		store.OpenedAt = input.OpenedAt
+	if in.OpenedAt != nil {
+		store.OpenedAt = in.OpenedAt
 	}
-	if input.Description != nil {
-		store.Description = input.Description
+	if in.Description != nil {
+		store.Description = in.Description
 	}
-	if input.OpeningHours != nil {
-		store.OpeningHours = input.OpeningHours
+	if in.OpeningHours != nil {
+		store.OpeningHours = in.OpeningHours
 	}
-	if len(input.LandscapePhotos) > 0 {
-		store.LandscapePhotos = append([]string(nil), input.LandscapePhotos...)
+	if len(in.LandscapePhotos) > 0 {
+		store.LandscapePhotos = append([]string(nil), in.LandscapePhotos...)
 	}
-	if input.Latitude != nil {
-		store.Latitude = *input.Latitude
+	if in.Latitude != nil {
+		store.Latitude = *in.Latitude
 	}
-	if input.Longitude != nil {
-		store.Longitude = *input.Longitude
+	if in.Longitude != nil {
+		store.Longitude = *in.Longitude
 	}
 	store.UpdatedAt = time.Now()
 

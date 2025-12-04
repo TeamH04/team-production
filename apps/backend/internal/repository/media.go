@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/TeamH04/team-production/apps/backend/internal/domain"
-	"github.com/TeamH04/team-production/apps/backend/internal/ports"
 	"github.com/TeamH04/team-production/apps/backend/internal/repository/model"
+	"github.com/TeamH04/team-production/apps/backend/internal/usecase/output"
 	"gorm.io/gorm"
 )
 
@@ -14,7 +14,7 @@ type mediaRepository struct {
 }
 
 // NewMediaRepository は MediaRepository の実装を生成します
-func NewMediaRepository(db *gorm.DB) ports.MediaRepository {
+func NewMediaRepository(db *gorm.DB) output.MediaRepository {
 	return &mediaRepository{db: db}
 }
 

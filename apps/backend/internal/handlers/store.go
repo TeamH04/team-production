@@ -5,11 +5,11 @@ import (
 	"time"
 
 	"github.com/TeamH04/team-production/apps/backend/internal/domain"
-	"github.com/TeamH04/team-production/apps/backend/internal/usecase"
+	"github.com/TeamH04/team-production/apps/backend/internal/usecase/input"
 )
 
 type StoreHandler struct {
-	storeUseCase usecase.StoreUseCase
+	storeUseCase input.StoreUseCase
 }
 
 var _ StoreController = (*StoreHandler)(nil)
@@ -26,8 +26,8 @@ type CreateStoreCommand struct {
 	Longitude       float64
 }
 
-func (c CreateStoreCommand) toInput() usecase.CreateStoreInput {
-	return usecase.CreateStoreInput{
+func (c CreateStoreCommand) toInput() input.CreateStoreInput {
+	return input.CreateStoreInput{
 		Name:            c.Name,
 		Address:         c.Address,
 		ThumbnailURL:    c.ThumbnailURL,
@@ -52,8 +52,8 @@ type UpdateStoreCommand struct {
 	Longitude       *float64
 }
 
-func (c UpdateStoreCommand) toInput() usecase.UpdateStoreInput {
-	return usecase.UpdateStoreInput{
+func (c UpdateStoreCommand) toInput() input.UpdateStoreInput {
+	return input.UpdateStoreInput{
 		Name:            c.Name,
 		Address:         c.Address,
 		ThumbnailURL:    c.ThumbnailURL,
@@ -66,7 +66,7 @@ func (c UpdateStoreCommand) toInput() usecase.UpdateStoreInput {
 	}
 }
 
-func NewStoreHandler(storeUseCase usecase.StoreUseCase) *StoreHandler {
+func NewStoreHandler(storeUseCase input.StoreUseCase) *StoreHandler {
 	return &StoreHandler{
 		storeUseCase: storeUseCase,
 	}

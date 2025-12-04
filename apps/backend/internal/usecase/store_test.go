@@ -7,6 +7,7 @@ import (
 
 	"github.com/TeamH04/team-production/apps/backend/internal/domain"
 	"github.com/TeamH04/team-production/apps/backend/internal/usecase"
+	"github.com/TeamH04/team-production/apps/backend/internal/usecase/input"
 )
 
 // モックリポジトリの実装
@@ -85,7 +86,7 @@ func TestCreateStore_Success(t *testing.T) {
 
 	uc := usecase.NewStoreUseCase(mockRepo)
 
-	input := usecase.CreateStoreInput{
+	req := input.CreateStoreInput{
 		Name:         "Test Store",
 		Address:      "Test Address",
 		ThumbnailURL: "https://example.com/image.jpg",
@@ -93,14 +94,14 @@ func TestCreateStore_Success(t *testing.T) {
 		Longitude:    139.7671,
 	}
 
-	store, err := uc.CreateStore(context.Background(), input)
+	store, err := uc.CreateStore(context.Background(), req)
 
 	if err != nil {
 		t.Errorf("unexpected error: %v", err)
 	}
 
-	if store.Name != input.Name {
-		t.Errorf("expected name %s, got %s", input.Name, store.Name)
+	if store.Name != req.Name {
+		t.Errorf("expected name %s, got %s", req.Name, store.Name)
 	}
 
 	if store.StoreID == 0 {
@@ -114,12 +115,12 @@ func TestCreateStore_InvalidInput(t *testing.T) {
 
 	tests := []struct {
 		name  string
-		input usecase.CreateStoreInput
+		input input.CreateStoreInput
 		want  error
 	}{
 		{
 			name: "empty name",
-			input: usecase.CreateStoreInput{
+			input: input.CreateStoreInput{
 				Address:      "Test Address",
 				ThumbnailURL: "https://example.com/image.jpg",
 				Latitude:     35.6812,
@@ -129,7 +130,7 @@ func TestCreateStore_InvalidInput(t *testing.T) {
 		},
 		{
 			name: "invalid coordinates",
-			input: usecase.CreateStoreInput{
+			input: input.CreateStoreInput{
 				Name:         "Test Store",
 				Address:      "Test Address",
 				ThumbnailURL: "https://example.com/image.jpg",

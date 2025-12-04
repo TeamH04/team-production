@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/TeamH04/team-production/apps/backend/internal/domain"
-	"github.com/TeamH04/team-production/apps/backend/internal/ports"
 	"github.com/TeamH04/team-production/apps/backend/internal/repository/model"
+	"github.com/TeamH04/team-production/apps/backend/internal/usecase/output"
 	"gorm.io/gorm"
 )
 
@@ -14,7 +14,7 @@ type reviewRepository struct {
 }
 
 // NewReviewRepository は ReviewRepository の実装を生成します
-func NewReviewRepository(db *gorm.DB) ports.ReviewRepository {
+func NewReviewRepository(db *gorm.DB) output.ReviewRepository {
 	return &reviewRepository{db: db}
 }
 
