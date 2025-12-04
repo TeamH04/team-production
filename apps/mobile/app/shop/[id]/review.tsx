@@ -10,6 +10,7 @@ const palette = {
   accent: '#0EA5E9',
   background: '#F9FAFB',
   border: '#E5E7EB',
+  error: '#DC2626',
   menuBackground: '#F9FAFB',
   menuSelectedBackground: '#DBEAFE',
   menuSelectedBorder: '#93C5FD',
@@ -47,6 +48,8 @@ export default function ReviewModalScreen() {
   const [rating, setRating] = useState(0); // 評価（初期値0）
   const [comment, setComment] = useState(''); // コメント
   const [selectedMenuId, setSelectedMenuId] = useState<string | undefined>(undefined); // メニュー選択
+  const [ratingError, setRatingError] = useState(false); // 評価エラー表示
+  const [commentError, setCommentError] = useState(false); // コメントエラー表示
 
   // 店舗が見つからない場合の表示
   if (!shop) {
@@ -69,11 +72,18 @@ export default function ReviewModalScreen() {
       <Text style={styles.sectionLabel}>評価</Text>
       <View style={styles.starsRow}>
         {[1, 2, 3, 4, 5].map(n => (
-          <Pressable key={n} onPress={() => setRating(n)}>
+          <Pressable
+            key={n}
+            onPress={() => {
+              setRating(n);
+              setRatingError(false);
+            }}
+          >
             <Text style={[styles.star, n <= rating ? styles.starActive : undefined]}>★</Text>
           </Pressable>
         ))}
       </View>
+      {ratingError && <Text style={styles.errorText}>❌ 評価を選択してください</Text>}
 
       {/* メニュー選択（店舗にメニューがある場合のみ表示） */}
       {menu.length > 0 ? (
@@ -103,18 +113,33 @@ export default function ReviewModalScreen() {
       <Text style={styles.sectionLabel}>コメント</Text>
       <TextInput
         value={comment}
-        onChangeText={setComment}
+        onChangeText={text => {
+          setComment(text);
+          setCommentError(false);
+        }}
         placeholder='雰囲気・味・接客など自由に書いてください'
         placeholderTextColor={palette.muted}
         multiline
         style={styles.input}
       />
+      {commentError && <Text style={styles.errorText}>❌ コメントを入力してください</Text>}
 
       {/* 投稿ボタン */}
       <Pressable
         style={styles.primaryBtn}
         onPress={() => {
-          if (!comment.trim() || rating === 0) return; // コメントが空なら何もしない or
+          // バリデーション
+          let hasError = false;
+          if (rating === 0) {
+            setRatingError(true);
+            hasError = true;
+          }
+          if (!comment.trim()) {
+            setCommentError(true);
+            hasError = true;
+          }
+          if (hasError) return;
+
           const selected = menu.find(m => m.id === selectedMenuId);
           addReview(shop.id, {
             rating,
@@ -140,6 +165,7 @@ export default function ReviewModalScreen() {
 const styles = StyleSheet.create({
   centered: { alignItems: 'center', justifyContent: 'center' }, // 中央寄せ
   content: { padding: 16 }, // 画面内余白
+  errorText: { color: palette.error, fontSize: 14, marginTop: 4 }, // エラーメッセージ
   heading: { color: palette.primary, fontSize: 18, fontWeight: '800', marginBottom: 8 }, // 店舗名
   input: {
     backgroundColor: palette.background,
