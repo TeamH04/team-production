@@ -1,6 +1,6 @@
 ﻿import { Image } from 'expo-image';
-import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
-import { useLayoutEffect, useMemo } from 'react';
+import { useFocusEffect, useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
+import { useCallback, useLayoutEffect, useMemo } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { useFavorites } from '@/features/favorites/FavoritesContext';
@@ -44,6 +44,13 @@ export default function ShopDetailScreen() {
       navigation.setOptions?.({ title: shop.name, headerBackTitle: '戻る' });
     }
   }, [navigation, shop]);
+
+  // 画面にフォーカスが戻った時にheaderBackTitleを復元
+  useFocusEffect(
+    useCallback(() => {
+      navigation.setOptions?.({ headerBackTitle: '戻る' });
+    }, [navigation])
+  );
 
   const isFav = id ? isFavorite(id) : false;
   const reviews = id ? getReviews(id) : [];
@@ -90,10 +97,9 @@ export default function ShopDetailScreen() {
               style={styles.tagPill}
               accessibilityLabel={`タグ ${tag} で検索`}
               onPress={() => {
-                router.back();
-                setTimeout(() => {
-                  router.setParams({ q: tag });
-                }, 100);
+                // タグ検索も即時に、戻るテキストは維持
+                navigation.setOptions?.({ headerBackTitle: '戻る' });
+                router.navigate({ pathname: '/(tabs)', params: { q: tag } });
               }}
             >
               <Text style={styles.tagText}>{tag}</Text>
@@ -108,7 +114,11 @@ export default function ShopDetailScreen() {
 
         <Pressable
           style={styles.primaryBtn}
-          onPress={() => router.push({ pathname: '/shop/[id]/review', params: { id: shop.id } })}
+          onPress={() => {
+            // 戻るテキストは常に「戻る」に固定し、即座に遷移
+            navigation.setOptions?.({ headerBackTitle: '戻る' });
+            router.push({ pathname: '/shop/[id]/review', params: { id: shop.id } });
+          }}
         >
           <Text style={styles.primaryBtnText}>レビューを書く</Text>
         </Pressable>
