@@ -2,29 +2,30 @@
 
 ## 概要
 
-- モバイル (Expo) とバックエンド (Go) をまとめたモノレポ構成です。
-- 依存関係は pnpm ワークスペースで管理し、`Makefile` に共通コマンドをまとめています。
+- モバイル(Expo)とバックエンド(Go)を一体管理するモノレポです。
+- パッケージ管理は pnpm、共通タスクは `Makefile` で提供しています。
 
 ## ディレクトリ
 
-| パス           | 説明                                                         |
-| -------------- | ------------------------------------------------------------ |
-| `apps/mobile`  | Expo + React Native クライアント。`README.md` で詳細を管理。 |
-| `apps/backend` | Go 製 API。`README.md` でセットアップやコマンドを記載。      |
-| `supabase`     | ローカル DB 用の Docker Compose 定義。                       |
-| `docs/`        | アーキテクチャ資料などのドキュメント。                       |
+| パス           | 説明                                                            |
+| -------------- | --------------------------------------------------------------- |
+| `apps/mobile`  | Expo + React Native クライアント。詳細は各 `README.md` を参照。 |
+| `apps/backend` | Go 製の API。セットアップとコマンドは `README.md` を参照。      |
+| `supabase`     | ローカル DB 用の Docker Compose 一式。                          |
+| `docs/`        | アーキテクチャや運用ノートなどのドキュメント。                  |
 
 ## セットアップ
 
-1. Node.js 20 系、Go 1.23 以降、Docker (Compose v2) をインストールします。
-2. ルートで以下を実行して依存関係を揃えます。
+1. Node.js 20 系、Go 1.23 以上、Docker(Compose v2) を用意します。
+2. ルートで依存関係をインストールします。
 
    ```bash
    corepack enable pnpm
    pnpm install
    ```
 
-3. 各アプリケーションの `.env.example` を `.env` にコピーし、必要な値を設定します。
+3. 各アプリケーションの `.env.example` を `.env` にコピーし、必要値を設定します。
+4. Windows 環境では bash 前提の Makefile を使用するため、Git Bash (MINGW64) から `make` を実行してください（PowerShell / cmd では一部ターゲットが動作しません）。
 
 ## コマンド
 
@@ -86,9 +87,8 @@ CI/CD で使用される環境変数：
 - `NODE_VERSION`: `20.x`
 - `GO_VERSION`: `1.24.0`
 
-#
-
 ## ドキュメント
 
-- バックエンドの詳細は `apps/backend/README.md`
-- モバイルの詳細は `apps/mobile/README.md`
+- バックエンド: `apps/backend/README.md`
+- モバイル: `apps/mobile/README.md`
+- Expo 開発環境の補足: `apps/mobile/scripts/start-dev.js`（`make dev` で利用する起動スクリプト。Expo CLI の非推奨フラグを排除し、環境変数でポートを制御します）

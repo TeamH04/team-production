@@ -34,5 +34,6 @@
   "files.associations": {
     "**/apps/mobile/**/*.css": "tailwindcss"
   },
-  "tailwindCSS.experimental.configFile": "apps/mobile/tailwind.config.js"
+  "tailwindCSS.experimental.configFile": "apps/mobile/tailwind.config.js",
+  "makefile.configureOnOpen": false
 }

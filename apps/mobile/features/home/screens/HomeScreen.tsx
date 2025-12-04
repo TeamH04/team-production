@@ -1,7 +1,10 @@
-﻿import { Image } from 'expo-image';
+import { Image } from 'expo-image';
+import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import type { FlatList } from 'react-native';
 import {
   ActivityIndicator,
+  Alert,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -9,10 +12,11 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import type { FlatList } from 'react-native';
 import Animated, { useAnimatedRef } from 'react-native-reanimated';
 
+import { palette } from '@/constants/palette';
 import { CATEGORIES, SHOPS, type Shop, type ShopCategory } from '@/features/home/data/shops';
+import { getSupabase } from '@/lib/supabase';
 
 const PAGE_SIZE = 10;
 const CATEGORY_ALL = 'すべて';
@@ -27,26 +31,13 @@ const BUDGET_LABEL: Record<Shop['budget'], string> = {
   $$$: '¥¥¥',
 };
 
-const palette = {
-  accent: '#0EA5E9',
-  background: '#F9FAFB',
-  border: '#E5E7EB',
-  chipTextInactive: '#374151',
-  divider: '#D1D5DB',
-  highlight: '#FEF3C7',
-  primaryText: '#111827',
-  ratingText: '#B45309',
-  secondaryText: '#6B7280',
-  shadow: '#0f172a',
-  surface: '#FFFFFF',
-  tagSurface: '#F3F4F6',
-  tertiaryText: '#4B5563',
-} as const;
-
 const KEY_EXTRACTOR = (item: Shop) => item.id;
 
 export default function HomeScreen() {
+  const router = useRouter();
+  const params = useLocalSearchParams<{ q?: string }>();
   const [searchQuery, setSearchQuery] = useState('');
+  const searchInputRef = useRef<TextInput | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<CategoryFilter>(CATEGORY_ALL);
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
@@ -67,6 +58,23 @@ export default function HomeScreen() {
       return matchesCategory && matchesQuery;
     });
   }, [normalizedQuery, selectedCategory]);
+
+  const prevQueryRef = useRef<string | undefined>(undefined);
+  useEffect(() => {
+    const q = params?.q;
+    if (typeof q === 'string' && q.trim().length > 0 && prevQueryRef.current !== q) {
+      prevQueryRef.current = q;
+      setSearchQuery(q);
+      setVisibleCount(PAGE_SIZE);
+      // 新しいクエリが適用されたときに先頭までスクロールする
+      try {
+        const listCurrent = (listRef as unknown as { current?: FlatList<Shop> | null }).current;
+        listCurrent?.scrollToOffset?.({ offset: 0, animated: true });
+      } catch {
+        // 利用不可なら無視
+      }
+    }
+  }, [params?.q, listRef]);
 
   useEffect(() => {
     if (loadMoreTimeout.current) {
@@ -115,42 +123,83 @@ export default function HomeScreen() {
     setSelectedCategory(current => (current === category ? CATEGORY_ALL : category));
   }, []);
 
-  const renderShop = useCallback(({ item }: { item: Shop }) => {
-    return (
-      <View style={styles.cardShadow}>
-        <View style={styles.cardContainer}>
-          <Image source={{ uri: item.imageUrl }} style={styles.cardImage} contentFit='cover' />
-          <View style={styles.cardBody}>
-            <View style={styles.cardHeader}>
-              <Text style={styles.cardTitle}>{item.name}</Text>
-              <View style={styles.ratingBadge}>
-                <Text style={styles.ratingText}>{`★ ${item.rating.toFixed(1)}`}</Text>
+  const handleLogout = useCallback(async () => {
+    try {
+      await getSupabase().auth.signOut();
+      router.replace('/login' as Href);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Unknown error';
+      Alert.alert('ログアウトに失敗しました', message);
+    }
+  }, [router]);
+
+  const renderShop = useCallback(
+    ({ item }: { item: Shop }) => {
+      return (
+        <View style={styles.cardShadow}>
+          <Pressable
+            accessibilityLabel={`${item.name} の詳細へ`}
+            onPress={() => router.push({ pathname: '/shop/[id]', params: { id: item.id } })}
+            style={styles.cardContainer}
+          >
+            <Image source={{ uri: item.imageUrl }} style={styles.cardImage} contentFit='cover' />
+            <View style={styles.cardBody}>
+              <View style={styles.cardHeader}>
+                <Text style={styles.cardTitle}>{item.name}</Text>
+                <View style={styles.ratingBadge}>
+                  <Text style={styles.ratingText}>{`★ ${item.rating.toFixed(1)}`}</Text>
+                </View>
+              </View>
+              <View style={styles.metaRow}>
+                <Text style={styles.metaText}>{item.category}</Text>
+                <Text style={styles.metaSeparator}>│</Text>
+                <Text style={styles.metaText}>{`徒歩${item.distanceMinutes}分`}</Text>
+                <Text style={styles.metaSeparator}>│</Text>
+                <Text style={styles.metaText}>{`予算 ${BUDGET_LABEL[item.budget]}`}</Text>
+              </View>
+              <Text style={styles.cardDescription}>{item.description}</Text>
+              <View style={styles.tagRow}>
+                {item.tags.map(tag => (
+                  <Pressable
+                    key={tag}
+                    style={styles.tagPill}
+                    accessibilityLabel={`タグ ${tag} で検索`}
+                    onPress={() => {
+                      setSearchQuery(tag);
+                      setVisibleCount(PAGE_SIZE);
+                      // ShopDetailのタグタップと挙動を揃えるためにルートパラメータを同期する
+                      router.setParams({ q: tag });
+                      try {
+                        const listCurrent = (
+                          listRef as unknown as { current?: FlatList<Shop> | null }
+                        ).current;
+                        listCurrent?.scrollToOffset?.({ offset: 0, animated: true });
+                      } catch {
+                        // ignore
+                      }
+                      searchInputRef.current?.focus();
+                    }}
+                  >
+                    <Text style={styles.tagText}>{tag}</Text>
+                  </Pressable>
+                ))}
               </View>
             </View>
-            <View style={styles.metaRow}>
-              <Text style={styles.metaText}>{item.category}</Text>
-              <Text style={styles.metaSeparator}>│</Text>
-              <Text style={styles.metaText}>{`徒歩${item.distanceMinutes}分`}</Text>
-              <Text style={styles.metaSeparator}>│</Text>
-              <Text style={styles.metaText}>{`予算 ${BUDGET_LABEL[item.budget]}`}</Text>
-            </View>
-            <Text style={styles.cardDescription}>{item.description}</Text>
-            <View style={styles.tagRow}>
-              {item.tags.map(tag => (
-                <View key={tag} style={styles.tagPill}>
-                  <Text style={styles.tagText}>{tag}</Text>
-                </View>
-              ))}
-            </View>
-          </View>
+          </Pressable>
         </View>
-      </View>
-    );
-  }, []);
+      );
+    },
+    [router, listRef, searchInputRef]
+  );
 
   const renderListHeader = useMemo(
     () => (
       <View style={styles.headerContainer}>
+        <View style={styles.logoutRow}>
+          <Pressable onPress={handleLogout} hitSlop={8}>
+            <Text style={styles.logoutText}>ログアウト</Text>
+          </Pressable>
+        </View>
         <View style={styles.headerTextBlock}>
           <Text style={styles.screenTitle}>次に通いたくなるお店を見つけよう</Text>
           <Text style={styles.screenSubtitle}>
@@ -159,6 +208,7 @@ export default function HomeScreen() {
         </View>
         <View style={[styles.searchWrapper, styles.shadowLight]}>
           <TextInput
+            ref={searchInputRef}
             value={searchQuery}
             onChangeText={setSearchQuery}
             placeholder='お店名・雰囲気・タグで検索'
@@ -203,7 +253,7 @@ export default function HomeScreen() {
         </ScrollView>
       </View>
     ),
-    [handleCategoryPress, searchQuery, selectedCategory]
+    [handleCategoryPress, handleLogout, searchQuery, selectedCategory]
   );
 
   const renderEmptyState = useMemo(
@@ -345,6 +395,15 @@ const styles = StyleSheet.create({
   },
   headerTextBlock: {
     marginBottom: 16,
+  },
+  logoutRow: {
+    alignItems: 'flex-end',
+    marginBottom: 8,
+  },
+  logoutText: {
+    color: palette.link,
+    fontSize: 12,
+    fontWeight: '500',
   },
   metaRow: {
     alignItems: 'center',

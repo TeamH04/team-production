@@ -33,18 +33,15 @@ async function findFree(start, attempts, host) {
     const expoPort = await findFree(EXPO_START, EXPO_ATTEMPTS, '0.0.0.0');
     const metroPort = await findFree(METRO_START, METRO_ATTEMPTS, '0.0.0.0');
     console.log(`[start-dev] expoPort=${expoPort} metroPort=${metroPort}`);
-
     const args = [
       '--dir',
       MOBILE_DIR,
       'exec',
       'expo',
       'start',
-      '--non-interactive',
+      // '--clear',
       '--port',
       String(expoPort),
-      '--metro-port',
-      String(metroPort),
     ];
 
     const child = spawn(PNPM_BIN, args, {
@@ -53,7 +50,6 @@ async function findFree(start, attempts, host) {
       shell: process.platform === 'win32',
       env: {
         ...process.env,
-        EXPO_NO_INTERACTIVE: '1',
         EXPO_DEV_SERVER_PORT: String(expoPort),
         EXPO_METRO_LISTEN_PORT: String(metroPort),
       },
