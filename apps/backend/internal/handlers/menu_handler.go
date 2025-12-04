@@ -7,15 +7,15 @@ import (
 
 	"github.com/labstack/echo/v4"
 
-	"github.com/TeamH04/team-production/apps/backend/internal/usecase"
+	"github.com/TeamH04/team-production/apps/backend/internal/usecase/interactor"
 )
 
 type MenuHandler struct {
-	menuUseCase usecase.MenuUseCase
+	menuUseCase interactor.MenuUseCase
 }
 
 // NewMenuHandler は MenuHandler を生成します
-func NewMenuHandler(menuUseCase usecase.MenuUseCase) *MenuHandler {
+func NewMenuHandler(menuUseCase interactor.MenuUseCase) *MenuHandler {
 	return &MenuHandler{
 		menuUseCase: menuUseCase,
 	}
@@ -34,7 +34,7 @@ func (h *MenuHandler) GetMenusByStoreID(c echo.Context) error {
 
 	menus, err := h.menuUseCase.GetMenusByStoreID(ctx, storeID)
 	if err != nil {
-		if errors.Is(err, usecase.ErrStoreNotFound) {
+		if errors.Is(err, interactor.ErrStoreNotFound) {
 			return c.JSON(http.StatusNotFound, echo.Map{"error": "store not found"})
 		}
 		return c.JSON(http.StatusInternalServerError, echo.Map{"error": err.Error()})
@@ -54,17 +54,17 @@ func (h *MenuHandler) CreateMenu(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, echo.Map{"error": "invalid store id"})
 	}
 
-	var req usecase.CreateMenuInput
+	var req interactor.CreateMenuInput
 	if err := c.Bind(&req); err != nil {
 		return c.JSON(http.StatusBadRequest, echo.Map{"error": "invalid JSON"})
 	}
 
 	menu, err := h.menuUseCase.CreateMenu(ctx, storeID, req)
 	if err != nil {
-		if errors.Is(err, usecase.ErrStoreNotFound) {
+		if errors.Is(err, interactor.ErrStoreNotFound) {
 			return c.JSON(http.StatusNotFound, echo.Map{"error": "store not found"})
 		}
-		if errors.Is(err, usecase.ErrInvalidInput) {
+		if errors.Is(err, interactor.ErrInvalidInput) {
 			return c.JSON(http.StatusBadRequest, echo.Map{"error": err.Error()})
 		}
 		return c.JSON(http.StatusInternalServerError, echo.Map{"error": err.Error()})

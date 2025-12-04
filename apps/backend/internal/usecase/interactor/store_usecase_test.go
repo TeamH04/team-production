@@ -1,4 +1,4 @@
-package usecase_test
+package interactor_test
 
 import (
 	"context"
@@ -6,7 +6,8 @@ import (
 	"testing"
 
 	"github.com/TeamH04/team-production/apps/backend/internal/domain"
-	"github.com/TeamH04/team-production/apps/backend/internal/usecase"
+	"github.com/TeamH04/team-production/apps/backend/internal/usecase/input_port"
+	"github.com/TeamH04/team-production/apps/backend/internal/usecase/interactor"
 )
 
 // モックリポジトリの実装
@@ -61,7 +62,7 @@ func TestStoreUseCase_GetAllStores(t *testing.T) {
 		},
 	}
 
-	uc := usecase.NewStoreUseCase(mockRepo)
+	uc := interactor.NewStoreUseCase(mockRepo)
 
 	stores, err := uc.GetAllStores(context.Background())
 
@@ -79,9 +80,9 @@ func TestStoreUseCase_CreateStore_Success(t *testing.T) {
 		stores: []domain.Store{},
 	}
 
-	uc := usecase.NewStoreUseCase(mockRepo)
+	uc := interactor.NewStoreUseCase(mockRepo)
 
-	input := usecase.CreateStoreInput{
+	input := input_port.CreateStoreInput{
 		Name:         "Test Store",
 		Address:      "Test Address",
 		ThumbnailURL: "https://example.com/image.jpg",
@@ -106,33 +107,33 @@ func TestStoreUseCase_CreateStore_Success(t *testing.T) {
 
 func TestStoreUseCase_CreateStore_InvalidInput(t *testing.T) {
 	mockRepo := &mockStoreRepository{}
-	uc := usecase.NewStoreUseCase(mockRepo)
+	uc := interactor.NewStoreUseCase(mockRepo)
 
 	tests := []struct {
 		name  string
-		input usecase.CreateStoreInput
+		input input_port.CreateStoreInput
 		want  error
 	}{
 		{
 			name: "empty name",
-			input: usecase.CreateStoreInput{
+			input: input_port.CreateStoreInput{
 				Address:      "Test Address",
 				ThumbnailURL: "https://example.com/image.jpg",
 				Latitude:     35.6812,
 				Longitude:    139.7671,
 			},
-			want: usecase.ErrInvalidInput,
+			want: interactor.ErrInvalidInput,
 		},
 		{
 			name: "invalid coordinates",
-			input: usecase.CreateStoreInput{
+			input: input_port.CreateStoreInput{
 				Name:         "Test Store",
 				Address:      "Test Address",
 				ThumbnailURL: "https://example.com/image.jpg",
 				Latitude:     0,
 				Longitude:    0,
 			},
-			want: usecase.ErrInvalidCoordinates,
+			want: interactor.ErrInvalidCoordinates,
 		},
 	}
 
