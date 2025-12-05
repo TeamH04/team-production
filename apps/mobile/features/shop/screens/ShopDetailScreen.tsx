@@ -77,8 +77,13 @@ export default function ShopDetailScreen() {
         <View style={styles.heroContainer}>
           <FlatList
             data={imageUrls}
-            renderItem={({ item }) => (
-              <Image source={{ uri: item }} style={styles.hero} contentFit='cover' />
+            renderItem={({ item, index }) => (
+              <Image
+                source={{ uri: item }}
+                style={styles.hero}
+                contentFit='cover'
+                accessibilityLabel={`${shop.name} image ${index + 1} of ${imageUrls.length}`}
+              />
             )}
             keyExtractor={(_, index) => index.toString()}
             horizontal
