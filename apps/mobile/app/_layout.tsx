@@ -14,8 +14,6 @@ import { palette } from '@/constants/palette';
 import { useColorScheme } from '@/hooks/useColorScheme';
 
 const layoutColors = {
-  // top safe-area (status bar area) should be white to match expectation
-  // while inner screen body uses palette.background.
   surface: palette.surface,
 } as const;
 

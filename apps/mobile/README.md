@@ -71,21 +71,12 @@
 - `crypto.subtle.digest is not a function`: `expo-standard-web-crypto` を利用しています（内部で `expo-random` が必要）。
 - サインイン前に Supabase の `getUser()` で `AuthSessionMissingError` が出る場合がありますが、アプリ側で未ログインとして扱うようにしています（例外発生時もログアウト状態として継続します）。
 
-## Safe Area の方針（2025-10-14 更新）
+## Safe Area の方針
 
 - ルート `app/_layout.tsx` は `SafeAreaProvider` のみを配置し、個々の画面では不要なパディングをしません。
 - タブ配下 `app/(tabs)/_layout.tsx` は `react-native-safe-area-context` の `SafeAreaView` を使用し、`edges={['top','left','right']}` を適用しています。
 - ヘッダー表示のあるスタック（例: `/shop/*`, `/profile/*`）は React Navigation のヘッダーに任せ、二重パディングを避けています。
 - `react-native` 標準の `SafeAreaView` は使用していません。必要に応じて ESLint でインポートを禁止しています。
-
-### 2025-12-01: ルート背景の更新 ✅
-
-- ルート `app/_layout.tsx` の `surface` をアプリの `palette.surface` (#FFFFFF / 白) に戻しました。これによりステータスバー直下の領域は白色になり、トップの灰色表示を解消しています。
-
-### 2025-12-01: ルート SafeArea 余白の重複を解消 ✅
-
-- `app/_layout.tsx` 側で SafeArea の top padding を直接入れていたため、`app/(tabs)/_layout.tsx` の `SafeAreaView` と重複してトップに余白ができていました。
-- 対応: `(tabs)` 配下のときは root の paddingTop を追加しないよう条件を追加し、ホーム画面上部にできていた灰色の余白（黒線で囲った領域）を削除しました。
 
 ## ログイン後のリダイレクト（2025-10-15 更新）
 
