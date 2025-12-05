@@ -1,4 +1,5 @@
-﻿import { Tabs } from 'expo-router';
+﻿import { palette } from '@/constants/palette';
+import { Tabs } from 'expo-router';
 import React from 'react';
 import { Platform, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -52,6 +53,8 @@ export default function TabLayout() {
 
 const styles = StyleSheet.create({
   container: {
+    // make top safe-area explicit white so status-bar area is white on all devices
+    backgroundColor: palette.surface,
     flex: 1,
   },
 });

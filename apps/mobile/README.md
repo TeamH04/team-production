@@ -71,7 +71,7 @@
 - `crypto.subtle.digest is not a function`: `expo-standard-web-crypto` を利用しています（内部で `expo-random` が必要）。
 - サインイン前に Supabase の `getUser()` で `AuthSessionMissingError` が出る場合がありますが、アプリ側で未ログインとして扱うようにしています（例外発生時もログアウト状態として継続します）。
 
-## Safe Area の方針（2025-10-14 更新）
+## Safe Area の方針
 
 - ルート `app/_layout.tsx` は `SafeAreaProvider` のみを配置し、個々の画面では不要なパディングをしません。
 - タブ配下 `app/(tabs)/_layout.tsx` は `react-native-safe-area-context` の `SafeAreaView` を使用し、`edges={['top','left','right']}` を適用しています。
