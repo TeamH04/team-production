@@ -1,7 +1,7 @@
 ﻿import { Image } from 'expo-image';
 import { useFocusEffect, useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
-import { useCallback, useLayoutEffect, useMemo } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useCallback, useLayoutEffect, useMemo, useState } from 'react';
+import { Dimensions, FlatList, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { useFavorites } from '@/features/favorites/FavoritesContext';
 import { SHOPS, type Shop } from '@/features/home/data/shops';
@@ -29,6 +29,8 @@ const BUDGET_LABEL: Record<Shop['budget'], string> = {
   $$$: '¥¥¥',
 };
 
+const SCREEN_WIDTH = Dimensions.get('window').width;
+
 export default function ShopDetailScreen() {
   const params = useLocalSearchParams<{ id?: string | string[] }>();
   const id = Array.isArray(params.id) ? params.id[0] : params.id;
@@ -36,6 +38,7 @@ export default function ShopDetailScreen() {
   const navigation = useNavigation();
   const { isFavorite, toggleFavorite } = useFavorites();
   const { getReviews } = useReviews();
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   const shop = useMemo(() => SHOPS.find(s => s.id === id), [id]);
 
@@ -54,6 +57,7 @@ export default function ShopDetailScreen() {
 
   const isFav = id ? isFavorite(id) : false;
   const reviews = id ? getReviews(id) : [];
+  const imageUrls = shop?.imageUrls;
 
   if (!shop) {
     return (
@@ -68,7 +72,42 @@ export default function ShopDetailScreen() {
 
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
-      <Image source={{ uri: shop.imageUrl }} style={styles.hero} contentFit='cover' />
+      {/* 画像ギャラリー */}
+      {imageUrls && imageUrls.length > 0 ? (
+        <View style={styles.heroContainer}>
+          <FlatList
+            data={imageUrls}
+            renderItem={({ item }) => (
+              <Image source={{ uri: item }} style={styles.hero} contentFit='cover' />
+            )}
+            keyExtractor={(_, index) => index.toString()}
+            horizontal
+            pagingEnabled
+            scrollEnabled
+            showsHorizontalScrollIndicator={false}
+            onMomentumScrollEnd={event => {
+              const contentOffsetX = event.nativeEvent.contentOffset.x;
+              const currentIndex = Math.round(contentOffsetX / SCREEN_WIDTH);
+              setCurrentImageIndex(currentIndex);
+            }}
+          />
+          {imageUrls.length > 1 && (
+            <View style={styles.paginationContainer}>
+              {imageUrls.map((_, idx) => (
+                <View
+                  key={idx}
+                  style={[
+                    styles.paginationDot,
+                    idx === currentImageIndex && styles.paginationDotActive,
+                  ]}
+                />
+              ))}
+            </View>
+          )}
+        </View>
+      ) : (
+        <Image source={{ uri: shop.imageUrl }} style={styles.hero} contentFit='cover' />
+      )}
 
       <View style={styles.container}>
         <View style={styles.headerRow}>
@@ -166,9 +205,27 @@ const styles = StyleSheet.create({
   favIcon: { color: palette.muted, fontSize: 24 },
   favIconActive: { color: palette.favoriteActive },
   headerRow: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between' },
-  hero: { backgroundColor: palette.heroPlaceholder, height: 220, width: '100%' },
+  hero: { backgroundColor: palette.heroPlaceholder, height: 220, width: SCREEN_WIDTH },
+  heroContainer: { marginBottom: 0, position: 'relative' },
   meta: { color: palette.muted, marginTop: 6 },
   muted: { color: palette.muted },
+  paginationContainer: {
+    bottom: 12,
+    flexDirection: 'row',
+    gap: 6,
+    justifyContent: 'center',
+    left: 0,
+    position: 'absolute',
+    right: 0,
+  },
+  paginationDot: {
+    backgroundColor: palette.muted,
+    borderRadius: 3,
+    height: 6,
+    opacity: 0.5,
+    width: 6,
+  },
+  paginationDotActive: { backgroundColor: palette.primaryOnAccent },
   primaryBtn: {
     backgroundColor: palette.accent,
     borderRadius: 12,
