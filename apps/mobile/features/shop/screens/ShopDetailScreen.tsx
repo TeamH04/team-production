@@ -1,6 +1,6 @@
 ﻿import { Image } from 'expo-image';
 import { useFocusEffect, useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
-import { useCallback, useLayoutEffect, useMemo, useState } from 'react';
+import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Dimensions, FlatList, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { useFavorites } from '@/features/favorites/FavoritesContext';
@@ -9,6 +9,7 @@ import { useReviews } from '@/features/reviews/ReviewsContext';
 
 const palette = {
   accent: '#0EA5E9',
+  arrowButtonBg: 'rgba(255, 255, 255, 0.9)',
   background: '#F9FAFB',
   border: '#E5E7EB',
   favoriteActive: '#DC2626',
@@ -58,6 +59,11 @@ export default function ShopDetailScreen() {
   const isFav = id ? isFavorite(id) : false;
   const reviews = id ? getReviews(id) : [];
   const imageUrls = shop?.imageUrls;
+  const flatListRef = useRef<FlatList>(null);
+
+  const scrollToImage = (index: number) => {
+    flatListRef.current?.scrollToIndex({ index, animated: true });
+  };
 
   if (!shop) {
     return (
@@ -76,6 +82,7 @@ export default function ShopDetailScreen() {
       {imageUrls && imageUrls.length > 0 ? (
         <View style={styles.heroContainer}>
           <FlatList
+            ref={flatListRef}
             data={imageUrls}
             renderItem={({ item, index }) => (
               <Image
@@ -97,17 +104,40 @@ export default function ShopDetailScreen() {
             }}
           />
           {imageUrls.length > 1 && (
-            <View style={styles.paginationContainer}>
-              {imageUrls.map((_, idx) => (
-                <View
-                  key={idx}
-                  style={[
-                    styles.paginationDot,
-                    idx === currentImageIndex && styles.paginationDotActive,
-                  ]}
-                />
-              ))}
-            </View>
+            <>
+              {/* 左矢印ボタン */}
+              {currentImageIndex > 0 && (
+                <Pressable
+                  style={[styles.arrowButton, styles.arrowButtonLeft]}
+                  onPress={() => scrollToImage(currentImageIndex - 1)}
+                  accessibilityLabel='前の画像'
+                >
+                  <Text style={styles.arrowText}>‹</Text>
+                </Pressable>
+              )}
+              {/* 右矢印ボタン */}
+              {currentImageIndex < imageUrls.length - 1 && (
+                <Pressable
+                  style={[styles.arrowButton, styles.arrowButtonRight]}
+                  onPress={() => scrollToImage(currentImageIndex + 1)}
+                  accessibilityLabel='次の画像'
+                >
+                  <Text style={styles.arrowText}>›</Text>
+                </Pressable>
+              )}
+              {/* ページネーションドット */}
+              <View style={styles.paginationContainer}>
+                {imageUrls.map((_, idx) => (
+                  <View
+                    key={idx}
+                    style={[
+                      styles.paginationDot,
+                      idx === currentImageIndex && styles.paginationDotActive,
+                    ]}
+                  />
+                ))}
+              </View>
+            </>
           )}
         </View>
       ) : (
@@ -192,6 +222,34 @@ export default function ShopDetailScreen() {
 }
 
 const styles = StyleSheet.create({
+  arrowButton: {
+    alignItems: 'center',
+    backgroundColor: palette.arrowButtonBg,
+    borderRadius: 20,
+    elevation: 3,
+    height: 40,
+    justifyContent: 'center',
+    position: 'absolute',
+    shadowColor: palette.shadow,
+    shadowOffset: { height: 2, width: 0 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    top: '50%',
+    transform: [{ translateY: -20 }],
+    width: 40,
+  },
+  arrowButtonLeft: {
+    left: 12,
+  },
+  arrowButtonRight: {
+    right: 12,
+  },
+  arrowText: {
+    color: palette.primary,
+    fontSize: 32,
+    fontWeight: '600',
+    lineHeight: 32,
+  },
   btnPressed: { opacity: 0.9 },
   card: { backgroundColor: palette.surface, borderRadius: 16, padding: 16 },
   cardShadow: {
