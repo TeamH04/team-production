@@ -3,6 +3,8 @@ module github.com/TeamH04/team-production/apps/backend
 go 1.24.6
 
 require (
+	github.com/golang-jwt/jwt/v5 v5.2.2
+	github.com/google/uuid v1.6.0
 	github.com/labstack/echo/v4 v4.13.4
 	github.com/lib/pq v1.10.9
 	gorm.io/driver/postgres v1.6.0
