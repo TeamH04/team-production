@@ -119,9 +119,12 @@ export default function HomeScreen() {
     }, 350);
   }, [filteredShops.length, hasMoreResults, isLoadingMore]);
 
-  const handleCategoryPress = useCallback((category: CategoryFilter) => {
-    setSelectedCategory(current => (current === category ? CATEGORY_ALL : category));
-  }, []);
+  const handleCategoryPress = useCallback(
+    (category: CategoryFilter) => {
+      setSelectedCategory(category);
+    },
+    [setSelectedCategory]
+  );
 
   const handleLogout = useCallback(async () => {
     try {
