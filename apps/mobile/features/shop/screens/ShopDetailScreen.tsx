@@ -181,65 +181,57 @@ export default function ShopDetailScreen() {
           ))}
         </View>
 
-        {shop.paymentMethods &&
-        (shop.paymentMethods.cash !== undefined ||
-          shop.paymentMethods.creditCard?.length ||
-          shop.paymentMethods.qrCode?.length ||
-          shop.paymentMethods.mobilePay?.length ||
-          shop.paymentMethods.transit?.length ||
-          shop.paymentMethods.other?.length) ? (
+        {shop.paymentMethods && Object.keys(shop.paymentMethods).length > 0 ? (
           <>
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionTitle}>決済方法</Text>
             </View>
-            {shop.paymentMethods.cash !== undefined && <View style={styles.paymentSpacer} />}
             {shop.paymentMethods.cash !== undefined && (
-              <View style={styles.paymentCategoryContainer}>
-                <Text style={styles.paymentCategoryLabel}>現金</Text>
-                <View style={styles.paymentRow}>
-                  {shop.paymentMethods.cash ? (
-                    <Text style={styles.cashText}>利用可</Text>
-                  ) : (
-                    <Text style={styles.unavailableText}>利用不可</Text>
-                  )}
+              <>
+                <View style={styles.paymentSpacer} />
+                <View style={styles.paymentCategoryContainer}>
+                  <Text style={styles.paymentCategoryLabel}>現金</Text>
+                  <View style={styles.paymentRow}>
+                    {shop.paymentMethods.cash ? (
+                      <Text style={styles.cashText}>利用可</Text>
+                    ) : (
+                      <Text style={styles.unavailableText}>利用不可</Text>
+                    )}
+                  </View>
                 </View>
-              </View>
+                <View style={styles.paymentSpacer} />
+              </>
             )}
-            {shop.paymentMethods.cash !== undefined && <View style={styles.paymentSpacer} />}
             {/* クレジットカード系 */}
-            {shop.paymentMethods && (
-              <View style={styles.paymentCategoryContainer}>
-                <Text style={styles.paymentCategoryLabel}>クレジットカード</Text>
-                <View style={styles.paymentRow}>
-                  {shop.paymentMethods.creditCard && shop.paymentMethods.creditCard.length > 0 ? (
-                    shop.paymentMethods.creditCard.map(method => (
-                      <View key={method} style={styles.paymentPill}>
-                        <Text style={styles.paymentPillText}>{method}</Text>
-                      </View>
-                    ))
-                  ) : (
-                    <Text style={styles.unavailableText}>利用不可</Text>
-                  )}
-                </View>
+            <View style={styles.paymentCategoryContainer}>
+              <Text style={styles.paymentCategoryLabel}>クレジットカード</Text>
+              <View style={styles.paymentRow}>
+                {shop.paymentMethods.creditCard && shop.paymentMethods.creditCard.length > 0 ? (
+                  shop.paymentMethods.creditCard.map(method => (
+                    <View key={method} style={styles.paymentPill}>
+                      <Text style={styles.paymentPillText}>{method}</Text>
+                    </View>
+                  ))
+                ) : (
+                  <Text style={styles.unavailableText}>利用不可</Text>
+                )}
               </View>
-            )}
+            </View>
             {/* QRコード決済 */}
-            {shop.paymentMethods && (
-              <View style={styles.paymentCategoryContainer}>
-                <Text style={styles.paymentCategoryLabel}>バーコード決済</Text>
-                <View style={styles.paymentRow}>
-                  {shop.paymentMethods.qrCode && shop.paymentMethods.qrCode.length > 0 ? (
-                    shop.paymentMethods.qrCode.map(method => (
-                      <View key={method} style={styles.paymentPill}>
-                        <Text style={styles.paymentPillText}>{method}</Text>
-                      </View>
-                    ))
-                  ) : (
-                    <Text style={styles.unavailableText}>利用不可</Text>
-                  )}
-                </View>
+            <View style={styles.paymentCategoryContainer}>
+              <Text style={styles.paymentCategoryLabel}>バーコード決済</Text>
+              <View style={styles.paymentRow}>
+                {shop.paymentMethods.qrCode && shop.paymentMethods.qrCode.length > 0 ? (
+                  shop.paymentMethods.qrCode.map(method => (
+                    <View key={method} style={styles.paymentPill}>
+                      <Text style={styles.paymentPillText}>{method}</Text>
+                    </View>
+                  ))
+                ) : (
+                  <Text style={styles.unavailableText}>利用不可</Text>
+                )}
               </View>
-            )}
+            </View>
             {/* モバイル決済 */}
             {shop.paymentMethods && (
               <View style={styles.paymentCategoryContainer}>

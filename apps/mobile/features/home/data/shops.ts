@@ -153,7 +153,7 @@ export const SHOPS: Shop[] = [
       'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80',
       'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=600&q=80',
     ],
-    tags: ['ヘルシー', 'ティクアアウト', 'ランチ'],
+    tags: ['ヘルシー', 'テイクアウト', 'ランチ'],
     paymentMethods: {
       cash: true,
       transitAvailable: true,
@@ -375,7 +375,7 @@ export const SHOPS: Shop[] = [
       'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=600&q=80',
       'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80',
     ],
-    tags: ['デリ', 'ティクアアウト', 'ヘルシー'],
+    tags: ['デリ', 'テイクアウト', 'ヘルシー'],
     paymentMethods: {
       cash: true,
       transitAvailable: true,
