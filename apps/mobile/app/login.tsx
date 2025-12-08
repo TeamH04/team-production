@@ -1,6 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as AppleAuthentication from 'expo-apple-authentication';
 import { makeRedirectUri } from 'expo-auth-session';
+import * as Crypto from 'expo-crypto';
 import { useRouter, type Href } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import React, { useCallback, useState } from 'react';
@@ -31,9 +33,29 @@ function parseParamsFromUrl(url: string) {
   }
 }
 
+function createNonce(length = 32) {
+  const charset = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
+  const nativeCrypto = typeof globalThis.crypto !== 'undefined' ? globalThis.crypto : undefined;
+  const randomValues = nativeCrypto?.getRandomValues
+    ? nativeCrypto.getRandomValues(new Uint8Array(length))
+    : Array.from({ length }, () => Math.floor(Math.random() * charset.length));
+  return Array.from(randomValues, v => charset[v % charset.length])
+    .slice(0, length)
+    .join('');
+}
+
 export default function LoginScreen() {
   const router = useRouter();
   const [loading, setLoading] = useState<null | 'google' | 'apple' | 'guest'>(null);
+
+  const finishLogin = useCallback(async () => {
+    const { isOwner } = await checkIsOwner();
+    Alert.alert(
+      'ログイン完了',
+      isOwner ? 'オーナーとしてログインしました。' : '正常にログインしました。'
+    );
+    router.replace((isOwner ? '/owner' : '/(tabs)') as Href);
+  }, [router]);
 
   const handleOAuth = useCallback(
     async (provider: 'google' | 'apple') => {
@@ -79,14 +101,7 @@ export default function LoginScreen() {
             throw new Error('No tokens found in redirect URL');
           }
 
-          // Decide destination by role
-          const { isOwner } = await checkIsOwner();
-          Alert.alert(
-            'ログイン完了',
-            isOwner ? 'オーナーとしてログインしました。' : '正常にログインしました。'
-          );
-          // Jump directly to the app home stacks to avoid extra redirect hops
-          router.replace((isOwner ? '/owner' : '/(tabs)') as Href);
+          await finishLogin();
         } else if (result.type === 'dismiss') {
           // user cancelled
         } else {
@@ -106,8 +121,70 @@ export default function LoginScreen() {
         setLoading(null);
       }
     },
-    [router]
+    [finishLogin]
   );
+
+  const handleAppleNative = useCallback(async () => {
+    if (!isSupabaseConfigured()) {
+      Alert.alert(
+        '未設定',
+        'Supabaseの環境変数が未設定です。EXPO_PUBLIC_SUPABASE_URL と EXPO_PUBLIC_SUPABASE_ANON_KEY を設定してください。'
+      );
+      return;
+    }
+
+    if (Platform.OS !== 'ios') {
+      return handleOAuth('apple');
+    }
+
+    const isAppleAvailable = await AppleAuthentication.isAvailableAsync();
+    if (!isAppleAvailable) {
+      return handleOAuth('apple');
+    }
+
+    setLoading('apple');
+    try {
+      const rawNonce = createNonce();
+      const hashedNonce = await Crypto.digestStringAsync(
+        Crypto.CryptoDigestAlgorithm.SHA256,
+        rawNonce
+      );
+      const credential = await AppleAuthentication.signInAsync({
+        requestedScopes: [
+          AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+          AppleAuthentication.AppleAuthenticationScope.EMAIL,
+        ],
+        nonce: hashedNonce,
+      });
+
+      if (!credential.identityToken) {
+        throw new Error('Appleの認証トークンを取得できませんでした。');
+      }
+
+      const { error } = await getSupabase().auth.signInWithIdToken({
+        provider: 'apple',
+        token: credential.identityToken,
+        nonce: rawNonce,
+      });
+      if (error) throw error;
+
+      await finishLogin();
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : String(e ?? 'Unknown error');
+      if (/Unsupported provider|invalid_provider/i.test(msg)) {
+        Alert.alert(
+          'プロバイダ未設定',
+          'Supabase で Apple のプロバイダが無効です。Authentication > Providers で有効化し、クライアントID/シークレットとリダイレクトURLを設定してください。'
+        );
+      } else if (/Sign in with Apple is not available/i.test(msg)) {
+        Alert.alert('非対応端末', 'この端末ではAppleによるサインインが利用できません。');
+      } else {
+        Alert.alert('ログイン失敗', msg);
+      }
+    } finally {
+      setLoading(null);
+    }
+  }, [finishLogin, handleOAuth]);
 
   const handleDevGuestLogin = useCallback(async () => {
     if (!DEV_LOGIN_ENABLED || loading) return;
@@ -127,7 +204,15 @@ export default function LoginScreen() {
     <View style={styles.screen}>
       <View style={styles.cardShadow}>
         <View style={styles.card}>
-          <Text style={styles.title}>サインイン</Text>
+          <View style={styles.titleContainer}>
+            <Text style={styles.title}>さぁ、はじめよう</Text>
+            <Ionicons
+              name='sparkles'
+              size={20}
+              color={palette.primaryText}
+              style={styles.sparkleIcon}
+            />
+          </View>
 
           <View style={styles.actions}>
             <Pressable
@@ -136,37 +221,39 @@ export default function LoginScreen() {
               style={({ pressed }) => [
                 styles.button,
                 styles.buttonOutline,
-                pressed && { opacity: 0.9 },
-                loading === 'google' && { opacity: 0.75 },
+                pressed && styles.buttonPressed,
+                loading === 'google' && styles.buttonLoading,
               ]}
             >
               <View style={styles.buttonContent}>
                 <Ionicons name='logo-google' size={20} color={palette.outline} />
                 <Text style={styles.buttonOutlineText}>
-                  {loading === 'google' ? 'Googleで処理中…' : 'Google で続行'}
+                  {loading === 'google' ? 'Processing with Google…' : 'Continue with Google'}
                 </Text>
               </View>
             </Pressable>
-
-            {Platform.OS === 'ios' && (
-              <Pressable
-                disabled={loading !== null}
-                onPress={() => handleOAuth('apple')}
-                style={({ pressed }) => [
-                  styles.button,
-                  styles.apple,
-                  pressed && { opacity: 0.95 },
-                  loading === 'apple' && { opacity: 0.75 },
-                ]}
-              >
-                <View style={styles.buttonContent}>
-                  <Ionicons name='logo-apple' size={20} color={palette.surface} />
-                  <Text style={styles.buttonText}>
-                    {loading === 'apple' ? 'Appleで処理中…' : 'Apple で続行'}
-                  </Text>
-                </View>
-              </Pressable>
-            )}
+            <Pressable
+              disabled={loading !== null}
+              onPress={handleAppleNative}
+              style={({ pressed }) => [
+                styles.button,
+                styles.buttonOutline,
+                pressed && styles.buttonPressed,
+                loading === 'apple' && styles.buttonLoading,
+              ]}
+            >
+              <View style={styles.buttonContent}>
+                <Ionicons
+                  name='logo-apple'
+                  size={26}
+                  color={palette.outline}
+                  style={styles.appleIconAdjust}
+                />
+                <Text style={styles.buttonOutlineText}>
+                  {loading === 'apple' ? 'Processing with Apple…' : 'Continue with Apple'}
+                </Text>
+              </View>
+            </Pressable>
           </View>
 
           <View style={styles.ownerBox}>
@@ -205,21 +292,30 @@ export default function LoginScreen() {
 
 const styles = StyleSheet.create({
   actions: {
+    alignSelf: 'stretch',
     gap: 12,
-    marginTop: 18,
+    marginTop: 32,
+    width: '100%',
   },
-  apple: {
-    backgroundColor: palette.apple,
+  appleIconAdjust: {
+    position: 'relative',
+    top: -3,
   },
   button: {
     borderRadius: 14,
-    paddingVertical: 12,
+    height: 52,
+    justifyContent: 'center',
+    width: '100%',
   },
   buttonContent: {
     alignItems: 'center',
     flexDirection: 'row',
     gap: 10,
     justifyContent: 'center',
+    paddingHorizontal: 12,
+  },
+  buttonLoading: {
+    opacity: 0.75,
   },
   buttonOutline: {
     backgroundColor: palette.surface,
@@ -228,20 +324,19 @@ const styles = StyleSheet.create({
   },
   buttonOutlineText: {
     color: palette.outline,
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: '700',
+    textAlign: 'center',
   },
-  buttonText: {
-    color: palette.surface,
-    fontSize: 16,
-    fontWeight: '700',
+  buttonPressed: {
+    opacity: 0.9,
   },
   card: {
     backgroundColor: palette.surface,
     borderColor: palette.border,
     borderRadius: 16,
     borderWidth: 1,
-    padding: 20,
+    padding: 24,
   },
   cardShadow: {
     alignSelf: 'center',
@@ -286,8 +381,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderTopColor: palette.border,
     borderTopWidth: 1,
-    marginTop: 20,
-    paddingTop: 12,
+    marginTop: 32,
+    paddingTop: 24,
   },
   ownerLead: {
     color: palette.secondaryText,
@@ -297,7 +392,7 @@ const styles = StyleSheet.create({
     color: palette.link,
     fontSize: 16,
     fontWeight: '700',
-    marginTop: 8,
+    marginTop: 12,
   },
   screen: {
     alignItems: 'stretch',
@@ -308,9 +403,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingTop: 8,
   },
+  sparkleIcon: {
+    marginLeft: 8,
+  },
   title: {
     color: palette.primaryText,
     fontSize: 24,
     fontWeight: '700',
+    textAlign: 'center',
+  },
+  titleContainer: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginBottom: 16,
   },
 });
