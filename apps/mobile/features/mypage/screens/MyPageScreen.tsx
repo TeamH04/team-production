@@ -20,9 +20,9 @@ const palette = {
   secondarySurface: '#F3F4F6',
   shadow: '#0f172a',
   surface: '#FFFFFF',
-  dangerBg: '#FEE2E2',
-  dangerBorder: '#FECACA',
-  dangerText: '#DC2626',
+  dangerBg: '#DC2626',
+  dangerBorder: '#B91C1C',
+  dangerText: '#FFFFFF',
 } as const;
 
 // マイページ画面のコンポーネント
@@ -249,13 +249,16 @@ const styles = StyleSheet.create({
   // レイアウト全体の余白
   content: { padding: 16, paddingBottom: 24 },
 
-  // 削除ボタン固有の色（赤系）
-  deleteBtn: { backgroundColor: palette.dangerBg, borderColor: palette.dangerBorder },
-  deleteBtnText: { color: palette.dangerText },
+  // 削除ボタン固有の色など
+  deleteBtn: {
+    backgroundColor: palette.dangerBg,
+    borderColor: palette.dangerBorder,
+  },
+  deleteBtnText: { color: palette.dangerText, fontWeight: '700', textAlign: 'center' },
 
   // 編集ボタン固有の色など
   editBtn: { backgroundColor: palette.accent, borderColor: palette.border },
-  editBtnText: { color: palette.primaryOnAccent },
+  editBtnText: { color: palette.primaryOnAccent, fontWeight: '700', textAlign: 'center' },
 
   // 空状態表示（お気に入りやレビューが無い時）
   emptyBox: {
@@ -293,7 +296,7 @@ const styles = StyleSheet.create({
   profileSub: { color: palette.mutedText, marginTop: 4 },
 
   // レビューフッター（編集・削除ボタンを横並びで配置）
-  // 注: gap は環境によって非サポートしていない場合があります。必要なら各ボタンに margin を追加してください。
+  // 注: gap は環境によって非サポートの場合があります。必要なら各ボタンに margin を追加してください。
   reviewFooter: { alignItems: 'center', flexDirection: 'row', gap: 12, marginTop: 12 },
 
   // レビューヘッダー（店舗名＋メニューボタンの横並び）
