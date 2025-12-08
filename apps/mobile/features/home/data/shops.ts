@@ -21,6 +21,16 @@ export interface Shop {
   imageUrl: string;
   imageUrls?: string[]; // 複数画像対応
   tags: string[];
+
+  paymentMethods?: {
+    cash?: boolean; // 現金対応可否
+    transitAvailable?: boolean; // 交通系IC可否
+    creditCard?: string[]; // クレジットカード系（VISA, MasterCard, JCB等）
+    qrCode?: string[]; // QRコード決済（PayPay等）
+    mobilePay?: string[]; // モバイル決済（Apple Pay, Google Pay等）
+    transit?: string[]; // 交通系IC
+    other?: string[]; // その他（iD, QUICPayなど）
+  };
   menu?: { id: string; name: string }[];
 }
 
@@ -41,6 +51,14 @@ export const SHOPS: Shop[] = [
       'https://images.unsplash.com/photo-1509042239860-f550ce710b93?auto=format&fit=crop&w=600&q=80',
     ],
     tags: ['コーヒー', '静かな空間', 'Wi-Fi'],
+    paymentMethods: {
+      cash: true,
+      transitAvailable: true,
+      creditCard: ['VISA', 'MasterCard', 'JCB'],
+      qrCode: ['PayPay', 'd払い', 'au PAY'],
+      mobilePay: ['Apple Pay'],
+      other: ['iD', 'QUICPay'],
+    },
     menu: [
       { id: 'm-1-1', name: 'ハンドドリップ コーヒー' },
       { id: 'm-1-2', name: 'カフェラテ' },
@@ -63,6 +81,12 @@ export const SHOPS: Shop[] = [
       'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80',
     ],
     tags: ['寿司', 'カウンター', '記念日'],
+    paymentMethods: {
+      cash: false,
+      transitAvailable: true,
+      creditCard: ['VISA', 'MasterCard', 'JCB'],
+      mobilePay: ['Apple Pay'],
+    },
     menu: [
       { id: 'm-2-1', name: 'おまかせコース' },
       { id: 'm-2-2', name: '白身三昧' },
@@ -85,6 +109,12 @@ export const SHOPS: Shop[] = [
       'https://images.unsplash.com/photo-1588286840104-8957b019727f?auto=format&fit=crop&w=600&q=80',
     ],
     tags: ['ヨガ', 'コミュニティ', 'ドロップイン'],
+    paymentMethods: {
+      cash: true,
+      transitAvailable: false,
+      creditCard: ['VISA'],
+      qrCode: ['PayPay'],
+    },
   },
   {
     id: 'shop-4',
@@ -102,6 +132,11 @@ export const SHOPS: Shop[] = [
       'https://images.unsplash.com/photo-1470337458703-46ad1756a187?auto=format&fit=crop&w=600&q=80',
     ],
     tags: ['ワイン', '大人の雰囲気', '音楽'],
+    paymentMethods: {
+      cash: true,
+      transitAvailable: false,
+      creditCard: ['VISA'],
+    },
   },
   {
     id: 'shop-5',
@@ -118,7 +153,15 @@ export const SHOPS: Shop[] = [
       'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80',
       'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=600&q=80',
     ],
-    tags: ['ヘルシー', 'テイクアウト', 'ランチ'],
+    tags: ['ヘルシー', 'ティクアアウト', 'ランチ'],
+    paymentMethods: {
+      cash: true,
+      transitAvailable: true,
+      creditCard: ['VISA', 'JCB'],
+      qrCode: ['PayPay', 'au PAY'],
+      mobilePay: ['Apple Pay'],
+      other: ['QUICPay'],
+    },
   },
   {
     id: 'shop-6',
@@ -136,6 +179,13 @@ export const SHOPS: Shop[] = [
       'https://images.unsplash.com/photo-1509042239860-f550ce710b93?auto=format&fit=crop&w=600&q=80',
     ],
     tags: ['パン', 'モーニング', 'テラス席'],
+    paymentMethods: {
+      cash: true,
+      transitAvailable: true,
+      creditCard: ['VISA', 'MasterCard'],
+      qrCode: ['PayPay'],
+      other: ['iD'],
+    },
     menu: [
       { id: 'm-6-1', name: 'クロワッサン' },
       { id: 'm-6-2', name: 'サワードウ' },
@@ -158,6 +208,13 @@ export const SHOPS: Shop[] = [
       'https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&w=600&q=80',
     ],
     tags: ['本', 'トークイベント', 'ギフト'],
+    paymentMethods: {
+      cash: true,
+      transitAvailable: false,
+      creditCard: ['VISA', 'MasterCard', 'JCB'],
+      qrCode: ['PayPay', 'd払い'],
+      mobilePay: ['Apple Pay'],
+    },
   },
   {
     id: 'shop-8',
@@ -175,6 +232,12 @@ export const SHOPS: Shop[] = [
       'https://images.unsplash.com/photo-1544984243-ec57ea16fe25?auto=format&fit=crop&w=600&q=80',
     ],
     tags: ['リラックス', 'アロマ', 'ご褒美'],
+    paymentMethods: {
+      cash: false,
+      transitAvailable: false,
+      creditCard: ['VISA', 'MasterCard', 'JCB'],
+      mobilePay: ['Apple Pay'],
+    },
   },
   {
     id: 'shop-9',
@@ -192,6 +255,13 @@ export const SHOPS: Shop[] = [
       'https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&w=600&q=80',
     ],
     tags: ['コワーキング', '会議室', 'イベント'],
+    paymentMethods: {
+      cash: false,
+      transitAvailable: true,
+      creditCard: ['VISA', 'MasterCard'],
+      qrCode: ['PayPay', 'd払い'],
+      other: ['iD', 'QUICPay'],
+    },
   },
   {
     id: 'shop-10',
@@ -209,6 +279,13 @@ export const SHOPS: Shop[] = [
       'https://images.unsplash.com/photo-1545239351-1141bd82e8a6?auto=format&fit=crop&w=600&q=80',
     ],
     tags: ['ゲーム', 'グループ', '夜遊び'],
+    paymentMethods: {
+      cash: true,
+      transitAvailable: false,
+      creditCard: ['VISA', 'JCB'],
+      qrCode: ['PayPay', 'au PAY'],
+      other: ['iD'],
+    },
   },
   {
     id: 'shop-11',
@@ -226,6 +303,13 @@ export const SHOPS: Shop[] = [
       'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=600&q=80',
     ],
     tags: ['シーフード', 'ディナー', '予約制'],
+    paymentMethods: {
+      cash: true,
+      transitAvailable: true,
+      creditCard: ['VISA', 'MasterCard', 'JCB'],
+      mobilePay: ['Apple Pay'],
+      other: ['QUICPay'],
+    },
   },
   {
     id: 'shop-12',
@@ -243,6 +327,13 @@ export const SHOPS: Shop[] = [
       'https://images.unsplash.com/photo-1470337458703-46ad1756a187?auto=format&fit=crop&w=600&q=80',
     ],
     tags: ['ジャズ', 'ライブ', '夜景'],
+    paymentMethods: {
+      cash: true,
+      transitAvailable: false,
+      creditCard: ['VISA', 'MasterCard'],
+      qrCode: ['PayPay'],
+      other: ['iD'],
+    },
   },
   {
     id: 'shop-13',
@@ -260,6 +351,14 @@ export const SHOPS: Shop[] = [
       'https://images.unsplash.com/photo-1524178232363-1fb2b075b655?auto=format&fit=crop&w=600&q=80',
     ],
     tags: ['クリエイティブ', 'ワークショップ', 'テック'],
+    paymentMethods: {
+      cash: false,
+      transitAvailable: true,
+      creditCard: ['VISA', 'MasterCard'],
+      qrCode: ['PayPay', 'd払い'],
+      mobilePay: ['Apple Pay'],
+      other: ['QUICPay'],
+    },
   },
   {
     id: 'shop-14',
@@ -276,7 +375,15 @@ export const SHOPS: Shop[] = [
       'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=600&q=80',
       'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80',
     ],
-    tags: ['デリ', 'テイクアウト', 'ヘルシー'],
+    tags: ['デリ', 'ティクアアウト', 'ヘルシー'],
+    paymentMethods: {
+      cash: true,
+      transitAvailable: true,
+      creditCard: ['VISA', 'MasterCard'],
+      qrCode: ['PayPay', 'au PAY'],
+      mobilePay: ['Apple Pay'],
+      other: ['iD'],
+    },
   },
 ];
 

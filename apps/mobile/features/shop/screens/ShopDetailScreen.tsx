@@ -181,6 +181,117 @@ export default function ShopDetailScreen() {
           ))}
         </View>
 
+        {shop.paymentMethods &&
+        (shop.paymentMethods.cash !== undefined ||
+          shop.paymentMethods.creditCard?.length ||
+          shop.paymentMethods.qrCode?.length ||
+          shop.paymentMethods.mobilePay?.length ||
+          shop.paymentMethods.transit?.length ||
+          shop.paymentMethods.other?.length) ? (
+          <>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>決済方法</Text>
+            </View>
+            {shop.paymentMethods.cash !== undefined && <View style={styles.paymentSpacer} />}
+            {shop.paymentMethods.cash !== undefined && (
+              <View style={styles.paymentCategoryContainer}>
+                <Text style={styles.paymentCategoryLabel}>現金</Text>
+                <View style={styles.paymentRow}>
+                  {shop.paymentMethods.cash ? (
+                    <Text style={styles.cashText}>利用可</Text>
+                  ) : (
+                    <Text style={styles.unavailableText}>利用不可</Text>
+                  )}
+                </View>
+              </View>
+            )}
+            {shop.paymentMethods.cash !== undefined && <View style={styles.paymentSpacer} />}
+            {/* クレジットカード系 */}
+            {shop.paymentMethods && (
+              <View style={styles.paymentCategoryContainer}>
+                <Text style={styles.paymentCategoryLabel}>クレジットカード</Text>
+                <View style={styles.paymentRow}>
+                  {shop.paymentMethods.creditCard && shop.paymentMethods.creditCard.length > 0 ? (
+                    shop.paymentMethods.creditCard.map(method => (
+                      <View key={method} style={styles.paymentPill}>
+                        <Text style={styles.paymentPillText}>{method}</Text>
+                      </View>
+                    ))
+                  ) : (
+                    <Text style={styles.unavailableText}>利用不可</Text>
+                  )}
+                </View>
+              </View>
+            )}
+            {/* QRコード決済 */}
+            {shop.paymentMethods && (
+              <View style={styles.paymentCategoryContainer}>
+                <Text style={styles.paymentCategoryLabel}>バーコード決済</Text>
+                <View style={styles.paymentRow}>
+                  {shop.paymentMethods.qrCode && shop.paymentMethods.qrCode.length > 0 ? (
+                    shop.paymentMethods.qrCode.map(method => (
+                      <View key={method} style={styles.paymentPill}>
+                        <Text style={styles.paymentPillText}>{method}</Text>
+                      </View>
+                    ))
+                  ) : (
+                    <Text style={styles.unavailableText}>利用不可</Text>
+                  )}
+                </View>
+              </View>
+            )}
+            {/* モバイル決済 */}
+            {shop.paymentMethods && (
+              <View style={styles.paymentCategoryContainer}>
+                <Text style={styles.paymentCategoryLabel}>モバイル決済</Text>
+                <View style={styles.paymentRow}>
+                  {shop.paymentMethods.mobilePay && shop.paymentMethods.mobilePay.length > 0 ? (
+                    shop.paymentMethods.mobilePay.map(method => (
+                      <View key={method} style={styles.paymentPill}>
+                        <Text style={styles.paymentPillText}>{method}</Text>
+                      </View>
+                    ))
+                  ) : (
+                    <Text style={styles.unavailableText}>利用不可</Text>
+                  )}
+                </View>
+              </View>
+            )}
+            {/* その他 */}
+            {shop.paymentMethods && (
+              <View style={styles.paymentCategoryContainer}>
+                <Text style={styles.paymentCategoryLabel}>電子マネー</Text>
+                <View style={styles.paymentRow}>
+                  {shop.paymentMethods.other && shop.paymentMethods.other.length > 0 ? (
+                    shop.paymentMethods.other.map(method => (
+                      <View key={method} style={styles.paymentPill}>
+                        <Text style={styles.paymentPillText}>{method}</Text>
+                      </View>
+                    ))
+                  ) : (
+                    <Text style={styles.unavailableText}>利用不可</Text>
+                  )}
+                </View>
+              </View>
+            )}
+            {/* 交通系IC */}
+            {shop.paymentMethods &&
+              (() => {
+                const transitAvailable =
+                  shop.paymentMethods.transitAvailable ??
+                  (shop.paymentMethods.transit && shop.paymentMethods.transit.length > 0);
+                return (
+                  <View style={styles.paymentCategoryContainer}>
+                    <Text style={styles.paymentCategoryLabel}>交通系IC</Text>
+                    <Text style={transitAvailable ? styles.cashText : styles.unavailableText}>
+                      {transitAvailable ? '利用可' : '利用不可'}
+                    </Text>
+                  </View>
+                );
+              })()}
+          </>
+        ) : null}
+
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>レビュー</Text>
           <Text style={styles.sectionSub}>みんなの感想や体験談</Text>
@@ -260,6 +371,12 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.06,
     shadowRadius: 12,
   },
+  cashText: {
+    color: palette.primary,
+    fontSize: 13,
+    fontWeight: '600',
+    marginBottom: 8,
+  },
   centered: { alignItems: 'center', justifyContent: 'center' },
   container: { padding: 16 },
   content: { paddingBottom: 24 },
@@ -289,6 +406,39 @@ const styles = StyleSheet.create({
     width: 6,
   },
   paginationDotActive: { backgroundColor: palette.primaryOnAccent },
+  paymentCategoryContainer: {
+    marginBottom: 12,
+  },
+  paymentCategoryLabel: {
+    color: palette.primary,
+    fontSize: 13,
+    fontWeight: '600',
+    marginBottom: 8,
+  },
+  paymentPill: {
+    backgroundColor: palette.secondarySurface,
+    borderColor: palette.border,
+    borderRadius: 10,
+    borderWidth: 1,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  paymentPillText: {
+    color: palette.primary,
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  paymentRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+    justifyContent: 'flex-start',
+    marginBottom: 12,
+    marginTop: 8,
+  },
+  paymentSpacer: {
+    height: 8,
+  },
   primaryBtn: {
     backgroundColor: palette.accent,
     borderRadius: 12,
@@ -324,4 +474,9 @@ const styles = StyleSheet.create({
   tagRow: { flexDirection: 'row', flexWrap: 'wrap', marginTop: 12 },
   tagText: { color: palette.tagText, fontSize: 12, fontWeight: '600' },
   title: { color: palette.primary, fontSize: 22, fontWeight: '800' },
+  unavailableText: {
+    color: palette.muted,
+    fontSize: 13,
+    fontWeight: '600',
+  },
 });
