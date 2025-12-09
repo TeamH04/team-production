@@ -1,14 +1,13 @@
 import { palette } from '@/constants/palette';
 import { useFavorites } from '@/features/favorites/FavoritesContext';
+import type { Shop } from '@/features/home/data/shops';
 import { SHOPS } from '@/features/home/data/shops';
 import { useRouter } from 'expo-router';
 import { FlatList, Image, Pressable, StyleSheet, Text, View } from 'react-native';
-
-const BUDGET_LABEL: Record<string, string> = {
-  '1': '〜1000円',
-  '2': '1000〜2000円',
-  '3': '2000〜3000円',
-  '4': '3000円〜',
+const BUDGET_LABEL: Record<Shop['budget'], string> = {
+  $: '¥',
+  $$: '¥¥',
+  $$$: '¥¥¥',
 };
 
 export default function FavoritesScreen() {
@@ -47,8 +46,7 @@ export default function FavoritesScreen() {
                   </View>
                 </View>
                 <Text style={styles.shopMeta}>
-                  {item.category} • 徒歩{item.distanceMinutes}分 • 予算{' '}
-                  {BUDGET_LABEL[String(item.budget)]}
+                  {item.category} • 徒歩{item.distanceMinutes}分 • 予算 {BUDGET_LABEL[item.budget]}
                 </Text>
                 <Text style={styles.shopDescription} numberOfLines={2}>
                   {item.description}
@@ -101,6 +99,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   screenTitle: {
+    color: palette.primaryText,
     fontSize: 28,
     fontWeight: '700',
   },
