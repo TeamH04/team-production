@@ -35,10 +35,10 @@ function parseParamsFromUrl(url: string) {
 
 function createNonce(length = 32) {
   const charset = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
-  const nativeCrypto = typeof globalThis.crypto !== 'undefined' ? globalThis.crypto : undefined;
-  const randomValues = nativeCrypto?.getRandomValues
-    ? nativeCrypto.getRandomValues(new Uint8Array(length))
-    : Array.from({ length }, () => Math.floor(Math.random() * charset.length));
+  const randomValues =
+    typeof globalThis.crypto?.getRandomValues === 'function'
+      ? globalThis.crypto.getRandomValues(new Uint8Array(length))
+      : Crypto.getRandomBytes(length);
   return Array.from(randomValues, v => charset[v % charset.length])
     .slice(0, length)
     .join('');
@@ -170,6 +170,16 @@ export default function LoginScreen() {
 
       await finishLogin();
     } catch (e: unknown) {
+      if (
+        typeof e === 'object' &&
+        e !== null &&
+        'code' in e &&
+        ((e as { code?: string }).code === 'ERR_REQUEST_CANCELED' ||
+          (e as { code?: string }).code === 'ERR_CANCELED')
+      ) {
+        return;
+      }
+
       const msg = e instanceof Error ? e.message : String(e ?? 'Unknown error');
       if (/Unsupported provider|invalid_provider/i.test(msg)) {
         Alert.alert(
@@ -228,7 +238,7 @@ export default function LoginScreen() {
               <View style={styles.buttonContent}>
                 <Ionicons name='logo-google' size={20} color={palette.outline} />
                 <Text style={styles.buttonOutlineText}>
-                  {loading === 'google' ? 'Processing with Google…' : 'Continue with Google'}
+                  {loading === 'google' ? 'Google で処理中…' : 'Google で続行'}
                 </Text>
               </View>
             </Pressable>
@@ -245,12 +255,12 @@ export default function LoginScreen() {
               <View style={styles.buttonContent}>
                 <Ionicons
                   name='logo-apple'
-                  size={26}
+                  size={20}
                   color={palette.outline}
                   style={styles.appleIconAdjust}
                 />
                 <Text style={styles.buttonOutlineText}>
-                  {loading === 'apple' ? 'Processing with Apple…' : 'Continue with Apple'}
+                  {loading === 'apple' ? 'Apple で処理中…' : 'Apple で続行'}
                 </Text>
               </View>
             </Pressable>
