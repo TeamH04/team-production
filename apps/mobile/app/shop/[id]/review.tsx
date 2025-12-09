@@ -94,7 +94,7 @@ export default function ReviewModalScreen() {
               return (
                 <Pressable
                   key={m.id}
-                  onPress={() => setSelectedMenuId(m.id)}
+                  onPress={() => setSelectedMenuId(selected ? undefined : m.id)}
                   style={[styles.menuItem, selected && styles.menuItemSelected]}
                 >
                   <Text style={[styles.menuItemText, selected && styles.menuItemTextSelected]}>
