@@ -1,8 +1,9 @@
+packages:
+  - apps/*
+  - packages/*
+
 nodeLinker: hoisted
 
 onlyBuiltDependencies:
+  - sharp
   - unrs-resolver
-
-packages:
-  - 'apps/*'
-  - 'packages/*'
