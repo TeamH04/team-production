@@ -1,10 +1,9 @@
 import { Image } from 'expo-image';
-import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { FlatList } from 'react-native';
 import {
   ActivityIndicator,
-  Alert,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -15,7 +14,6 @@ import {
 import Animated, { useAnimatedRef } from 'react-native-reanimated';
 
 import { palette } from '@/constants/palette';
-import { getSupabase } from '@/lib/supabase';
 import { CATEGORIES, SHOPS, type Shop, type ShopCategory } from '@team/shop-core';
 
 const PAGE_SIZE = 10;
@@ -123,16 +121,6 @@ export default function HomeScreen() {
     setSelectedCategory(current => (current === category ? CATEGORY_ALL : category));
   }, []);
 
-  const handleLogout = useCallback(async () => {
-    try {
-      await getSupabase().auth.signOut();
-      router.replace('/login' as Href);
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Unknown error';
-      Alert.alert('ログアウトに失敗しました', message);
-    }
-  }, [router]);
-
   const renderShop = useCallback(
     ({ item }: { item: Shop }) => {
       return (
@@ -195,11 +183,6 @@ export default function HomeScreen() {
   const renderListHeader = useMemo(
     () => (
       <View style={styles.headerContainer}>
-        <View style={styles.logoutRow}>
-          <Pressable onPress={handleLogout} hitSlop={8}>
-            <Text style={styles.logoutText}>ログアウト</Text>
-          </Pressable>
-        </View>
         <View style={styles.headerTextBlock}>
           <Text style={styles.screenTitle}>次に通いたくなるお店を見つけよう</Text>
           <Text style={styles.screenSubtitle}>
@@ -253,7 +236,7 @@ export default function HomeScreen() {
         </ScrollView>
       </View>
     ),
-    [handleCategoryPress, handleLogout, searchQuery, selectedCategory]
+    [handleCategoryPress, searchQuery, selectedCategory]
   );
 
   const renderEmptyState = useMemo(
@@ -395,15 +378,6 @@ const styles = StyleSheet.create({
   },
   headerTextBlock: {
     marginBottom: 16,
-  },
-  logoutRow: {
-    alignItems: 'flex-end',
-    marginBottom: 8,
-  },
-  logoutText: {
-    color: palette.link,
-    fontSize: 12,
-    fontWeight: '500',
   },
   metaRow: {
     alignItems: 'center',
