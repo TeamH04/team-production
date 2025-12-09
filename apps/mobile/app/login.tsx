@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as AppleAuthentication from 'expo-apple-authentication';
-import { makeRedirectUri } from 'expo-auth-session';
+import * as AuthSession from 'expo-auth-session';
 import * as Crypto from 'expo-crypto';
 import { useRouter, type Href } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
@@ -69,9 +69,10 @@ export default function LoginScreen() {
 
       setLoading(provider);
       try {
-        // expo-auth-session types may lag; explicitly allow `useProxy`
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const redirectUrl = makeRedirectUri({ useProxy: true } as any);
+        const redirectUrl = AuthSession.makeRedirectUri({
+          scheme: 'shopmobile',
+          path: 'auth/callback',
+        });
         const { data, error } = await getSupabase().auth.signInWithOAuth({
           provider,
           options: {
