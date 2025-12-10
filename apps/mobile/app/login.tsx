@@ -309,7 +309,7 @@ const styles = StyleSheet.create({
   actions: {
     alignSelf: 'stretch',
     gap: 12,
-    marginTop: 32,
+    marginTop: 12,
     width: '100%',
   },
   appleIconAdjust: {
@@ -335,7 +335,9 @@ const styles = StyleSheet.create({
   buttonOutline: {
     backgroundColor: palette.surface,
     borderColor: palette.outline,
-    borderWidth: 1,
+    borderRadius: 14,
+    borderWidth: 2,
+    overflow: 'hidden',
   },
   buttonOutlineText: {
     color: palette.outline,
@@ -431,6 +433,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'center',
-    marginBottom: 16,
+    marginBottom: 8,
   },
 });
