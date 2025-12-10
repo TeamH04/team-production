@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
@@ -12,9 +12,9 @@ type CategoryFilter = ShopCategory | typeof CATEGORY_ALL;
 const CATEGORY_ALL = 'すべて';
 const CATEGORY_OPTIONS: CategoryFilter[] = [CATEGORY_ALL, ...[...CATEGORIES].sort()];
 const BUDGET_LABEL: Record<Shop['budget'], string> = {
-  $: '¥',
-  $$: '¥¥',
-  $$$: '¥¥¥',
+  $: '\u00a5',
+  $$: '\u00a5\u00a5',
+  $$$: '\u00a5\u00a5\u00a5',
 };
 const PAGE_SIZE = 9;
 
@@ -23,11 +23,24 @@ export default function HomePage() {
   const router = useRouter();
   const pathname = usePathname();
 
+  const [searchText, setSearchText] = useState(() => searchParams.get('q') ?? '');
+  const [isComposing, setIsComposing] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<CategoryFilter>(CATEGORY_ALL);
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
 
-  const searchQuery = searchParams.get('q') ?? '';
-  const normalizedQuery = searchQuery.trim().toLowerCase();
+  useEffect(() => {
+    if (isComposing) return;
+    const handle = setTimeout(() => {
+      const query = searchText.trim();
+      const target = query.length > 0 ? `${pathname}?q=${encodeURIComponent(query)}` : pathname;
+      router.replace(target, { scroll: false });
+      setVisibleCount(PAGE_SIZE);
+    }, 180);
+
+    return () => clearTimeout(handle);
+  }, [isComposing, pathname, router, searchText]);
+
+  const normalizedQuery = searchText.trim().toLowerCase();
 
   const filteredShops = useMemo(() => {
     return SHOPS.filter(shop => {
@@ -45,17 +58,6 @@ export default function HomePage() {
   const visibleShops = filteredShops.slice(0, visibleCount);
   const hasMore = visibleCount < filteredShops.length;
 
-  const updateQueryParam = (value: string) => {
-    const query = value.trim();
-    const target = query.length > 0 ? `${pathname}?q=${encodeURIComponent(query)}` : pathname;
-    router.replace(target, { scroll: false });
-  };
-
-  const handleSearchChange = (value: string) => {
-    updateQueryParam(value);
-    setVisibleCount(PAGE_SIZE);
-  };
-
   const handleCategoryClick = (category: CategoryFilter) => {
     setSelectedCategory(current => (current === category ? CATEGORY_ALL : category));
     setVisibleCount(PAGE_SIZE);
@@ -68,7 +70,7 @@ export default function HomePage() {
 
   const handleTagClick = (tag: string) => {
     setSelectedCategory(CATEGORY_ALL);
-    handleSearchChange(tag);
+    setSearchText(tag);
   };
 
   return (
@@ -131,15 +133,20 @@ export default function HomePage() {
           <div className='mt-5 grid gap-4'>
             <label className='relative block'>
               <input
-                value={searchQuery}
-                onChange={event => handleSearchChange(event.target.value)}
+                value={searchText}
+                onChange={event => setSearchText(event.target.value)}
+                onCompositionStart={() => setIsComposing(true)}
+                onCompositionEnd={event => {
+                  setIsComposing(false);
+                  setSearchText(event.currentTarget.value);
+                }}
                 placeholder='お店名・雰囲気・タグで検索'
                 className='w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-base text-slate-900 shadow-sm outline-none transition focus:border-sky-400 focus:ring-2 focus:ring-sky-100'
               />
-              {searchQuery.length > 0 && (
+              {searchText.length > 0 && (
                 <button
                   type='button'
-                  onClick={() => handleSearchChange('')}
+                  onClick={() => setSearchText('')}
                   className='absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700 transition hover:bg-slate-200'
                 >
                   クリア
@@ -173,7 +180,7 @@ export default function HomePage() {
           <div className='text-sm font-semibold text-slate-700'>
             検索結果 {filteredShops.length} 件
             {normalizedQuery && (
-              <span className='text-slate-400'>（キーワード: {searchQuery}）</span>
+              <span className='text-slate-400'>（キーワード: {searchText}）</span>
             )}
           </div>
           <p className='text-xs text-slate-500'>カードをクリックすると詳細ページへ遷移します。</p>

@@ -9,6 +9,7 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  transpilePackages: ['@team/shop-core'],
 };
 
 export default nextConfig;

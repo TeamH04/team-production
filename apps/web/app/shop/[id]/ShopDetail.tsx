@@ -9,9 +9,9 @@ import type { Shop } from '@team/shop-core';
 const FAVORITE_STORAGE_KEY = 'shop-web-favorites';
 
 const BUDGET_LABEL: Record<Shop['budget'], string> = {
-  $: '¥',
-  $$: '¥¥',
-  $$$: '¥¥¥',
+  $: '\u00a5',
+  $$: '\u00a5\u00a5',
+  $$$: '\u00a5\u00a5\u00a5',
 };
 
 type ShopDetailProps = {
@@ -46,7 +46,6 @@ export default function ShopDetail({ shop }: ShopDetailProps) {
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
-
     window.localStorage.setItem(FAVORITE_STORAGE_KEY, JSON.stringify(favorites));
   }, [favorites]);
 
@@ -217,53 +216,53 @@ export default function ShopDetail({ shop }: ShopDetailProps) {
         </div>
       </section>
 
-      <aside className='w-full max-w-xl space-y-4 rounded-3xl bg-slate-900 p-6 text-slate-100 shadow-2xl lg:sticky lg:top-10'>
+      <aside className='w-full max-w-xl space-y-4 rounded-3xl bg-white p-6 text-slate-900 shadow-xl ring-1 ring-slate-100 lg:sticky lg:top-10'>
         <div className='flex items-start justify-between gap-2'>
           <div>
-            <p className='text-xs uppercase tracking-[0.2em] text-slate-400'>Overview</p>
-            <h2 className='text-2xl font-semibold text-white'>{shop.name}</h2>
+            <p className='text-xs uppercase tracking-[0.2em] text-slate-500'>Overview</p>
+            <h2 className='text-2xl font-semibold text-slate-900'>{shop.name}</h2>
           </div>
-          <span className='rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-amber-300 ring-1 ring-white/15'>
+          <span className='rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700 ring-1 ring-amber-100'>
             ★ {shop.rating.toFixed(1)}
           </span>
         </div>
 
         <dl className='grid grid-cols-2 gap-3 text-sm sm:grid-cols-3'>
-          <div className='rounded-2xl bg-white/5 p-3 ring-1 ring-white/10'>
-            <dt className='text-xs text-slate-400'>ジャンル</dt>
-            <dd className='text-base font-semibold text-white'>{shop.category}</dd>
+          <div className='rounded-2xl bg-slate-50 p-3 ring-1 ring-slate-100'>
+            <dt className='text-xs text-slate-500'>ジャンル</dt>
+            <dd className='text-base font-semibold text-slate-900'>{shop.category}</dd>
           </div>
-          <div className='rounded-2xl bg-white/5 p-3 ring-1 ring-white/10'>
-            <dt className='text-xs text-slate-400'>距離</dt>
-            <dd className='text-base font-semibold text-white'>徒歩{shop.distanceMinutes}分</dd>
+          <div className='rounded-2xl bg-slate-50 p-3 ring-1 ring-slate-100'>
+            <dt className='text-xs text-slate-500'>距離</dt>
+            <dd className='text-base font-semibold text-slate-900'>徒歩{shop.distanceMinutes}分</dd>
           </div>
-          <div className='rounded-2xl bg-white/5 p-3 ring-1 ring-white/10'>
-            <dt className='text-xs text-slate-400'>予算</dt>
-            <dd className='text-base font-semibold text-white'>{BUDGET_LABEL[shop.budget]}</dd>
+          <div className='rounded-2xl bg-slate-50 p-3 ring-1 ring-slate-100'>
+            <dt className='text-xs text-slate-500'>予算</dt>
+            <dd className='text-base font-semibold text-slate-900'>{BUDGET_LABEL[shop.budget]}</dd>
           </div>
         </dl>
 
-        <div className='space-y-2 rounded-2xl bg-white/5 p-4 ring-1 ring-white/10'>
+        <div className='space-y-2 rounded-2xl bg-slate-50 p-4 ring-1 ring-slate-100'>
           <div className='flex items-center justify-between'>
-            <p className='text-sm font-semibold text-white'>レビュー</p>
-            <span className='rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-slate-200'>
+            <p className='text-sm font-semibold text-slate-900'>レビュー</p>
+            <span className='rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600'>
               Coming soon
             </span>
           </div>
-          <p className='text-sm leading-6 text-slate-200'>
+          <p className='text-sm leading-6 text-slate-700'>
             Webでもレビューを投稿できるように準備中です。気に入ったポイントをメモしておきましょう。
           </p>
           <button
             type='button'
-            className='w-full rounded-2xl bg-white/15 px-4 py-3 text-sm font-semibold text-white transition hover:bg-white/20'
+            className='w-full rounded-2xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-slate-800'
           >
             レビューを書く（近日公開）
           </button>
         </div>
 
-        <div className='rounded-2xl bg-white/5 p-4 ring-1 ring-white/10'>
-          <p className='text-sm font-semibold text-white'>シェア</p>
-          <p className='mt-1 text-sm text-slate-200'>
+        <div className='rounded-2xl bg-slate-50 p-4 ring-1 ring-slate-100'>
+          <p className='text-sm font-semibold text-slate-900'>シェア</p>
+          <p className='mt-1 text-sm text-slate-700'>
             共有リンクをコピーして友人や同僚にお店を紹介できます。
           </p>
           <button
@@ -274,7 +273,7 @@ export default function ShopDetail({ shop }: ShopDetailProps) {
             リンクを共有する
           </button>
           {shareMessage && (
-            <p className='mt-2 text-xs font-semibold text-emerald-200'>{shareMessage}</p>
+            <p className='mt-2 text-xs font-semibold text-emerald-600'>{shareMessage}</p>
           )}
         </div>
       </aside>

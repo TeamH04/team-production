@@ -7,15 +7,17 @@ import { SHOPS } from '@team/shop-core';
 import ShopDetail from './ShopDetail';
 
 type ShopPageProps = {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 };
 
 export function generateStaticParams() {
   return SHOPS.map(shop => ({ id: shop.id }));
 }
 
-export function generateMetadata({ params }: ShopPageProps): Metadata {
-  const shop = SHOPS.find(entry => entry.id === params.id);
+export async function generateMetadata({ params }: ShopPageProps): Promise<Metadata> {
+  const { id } = await params;
+  const shopId = decodeURIComponent(id).trim();
+  const shop = SHOPS.find(entry => entry.id === shopId);
 
   return {
     title: shop ? `${shop.name} | 店舗詳細` : '店舗詳細',
@@ -23,8 +25,10 @@ export function generateMetadata({ params }: ShopPageProps): Metadata {
   };
 }
 
-export default function ShopPage({ params }: ShopPageProps) {
-  const shop = SHOPS.find(entry => entry.id === params.id);
+export default async function ShopPage({ params }: ShopPageProps) {
+  const { id } = await params;
+  const shopId = decodeURIComponent(id).trim();
+  const shop = SHOPS.find(entry => entry.id === shopId);
 
   if (!shop) {
     notFound();
