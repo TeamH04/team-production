@@ -212,9 +212,7 @@ export default function ShopDetailScreen() {
               {review.menuItemName ? (
                 <Text style={styles.muted}>メニュー: {review.menuItemName}</Text>
               ) : null}
-              {review.comment ? (
-                <Text style={styles.reviewBody}>{review.comment}</Text>
-              ) : null}
+              {review.comment ? <Text style={styles.reviewBody}>{review.comment}</Text> : null}
             </View>
           ))
         )}

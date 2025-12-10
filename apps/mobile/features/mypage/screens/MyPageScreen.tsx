@@ -128,9 +128,7 @@ export default function MyPageScreen() {
                   {review.menuItemName ? (
                     <Text style={styles.rowCardSub}>メニュー: {review.menuItemName}</Text>
                   ) : null}
-                  {review.comment ? (
-                    <Text style={styles.reviewText}>{review.comment}</Text>
-                  ) : null}
+                  {review.comment ? <Text style={styles.reviewText}>{review.comment}</Text> : null}
                 </View>
               </View>
             );
