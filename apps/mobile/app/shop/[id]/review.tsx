@@ -128,7 +128,6 @@ export default function ReviewModalScreen() {
             setRatingError(true);
             return;
           }
-          if (!comment.trim()) return; // コメントが空なら何もしない
           const selected = menu.find(m => m.id === selectedMenuId);
           addReview(shop.id, {
             rating,
