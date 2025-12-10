@@ -13,6 +13,7 @@ import {
 
 import { useUser } from '@/features/user/UserContext';
 
+// カラー定義: 画面全体で使う色をまとめて管理しています
 const palette = {
   accent: '#0EA5E9',
   avatarBackground: '#DBEAFE',
@@ -26,28 +27,37 @@ const palette = {
   surface: '#FFFFFF',
 } as const;
 
+// プロフィール編集画面コンポーネント
 export default function EditProfileScreen() {
+  // 画面遷移用フック
   const router = useRouter();
+
+  // ユーザー情報取得・更新用のコンテキスト
   const { profile, updateProfile } = useUser();
 
+  // ローカルなフォーム state（入力値を保持）
   const [name, setName] = useState(profile.name);
   const [email, setEmail] = useState(profile.email);
 
+  // 保存ボタンを有効にするかの判定（簡易バリデーション）
   const canSave = useMemo(() => {
     const emailOk = /.+@.+\..+/.test(email.trim());
     return name.trim().length > 0 && emailOk;
   }, [name, email]);
 
+  // レンダリング
   return (
     <KeyboardAvoidingView
       behavior={Platform.select({ ios: 'padding', default: undefined })}
       style={styles.keyboard}
     >
       <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
+        {/* アバター（表示名の先頭2文字を表示） */}
         <View style={styles.avatar}>
           <Text style={styles.avatarText}>{(name || 'U').slice(0, 2).toUpperCase()}</Text>
         </View>
 
+        {/* 表示名入力 */}
         <Text style={styles.label}>表示名</Text>
         <TextInput
           value={name}
@@ -58,6 +68,7 @@ export default function EditProfileScreen() {
           autoCapitalize='words'
         />
 
+        {/* メールアドレス入力 */}
         <Text style={styles.label}>メールアドレス</Text>
         <TextInput
           value={email}
@@ -69,20 +80,21 @@ export default function EditProfileScreen() {
           keyboardType='email-address'
         />
 
+        {/* 保存ボタン
+            - disabled 時は押せない
+            - 押したら updateProfile を呼んで前の画面へ戻る */}
         <Pressable
           disabled={!canSave}
           onPress={() => {
             updateProfile({ name: name.trim(), email: email.trim() });
             router.back();
           }}
-          style={({ pressed }) => [
-            styles.primaryBtn,
-            (!canSave || pressed) && styles.primaryBtnDimmed,
-          ]}
+          style={styles.primaryBtn}
         >
           <Text style={styles.primaryBtnText}>保存</Text>
         </Pressable>
 
+        {/* キャンセルボタン（編集を破棄して戻る） */}
         <Pressable onPress={() => router.back()} style={styles.secondaryBtn}>
           <Text style={styles.secondaryBtnText}>キャンセル</Text>
         </Pressable>
@@ -91,7 +103,10 @@ export default function EditProfileScreen() {
   );
 }
 
+// スタイル定義（見た目の調整）
+// 各スタイルは用途ごとにコメントを付けています
 const styles = StyleSheet.create({
+  // Avatar（ユーザーアイコン）
   avatar: {
     alignItems: 'center',
     alignSelf: 'center',
@@ -103,7 +118,11 @@ const styles = StyleSheet.create({
     width: 88,
   },
   avatarText: { color: palette.avatarText, fontSize: 28, fontWeight: '800' },
+
+  // コンテンツの余白
   content: { padding: 16 },
+
+  // 入力欄のスタイル
   input: {
     backgroundColor: palette.background,
     borderColor: palette.border,
@@ -114,18 +133,32 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 12,
   },
+
+  // キーボード回避用コンテナ
   keyboard: { flex: 1 },
+
+  // ラベル（表示名・メールなどの見出し）
   label: { color: palette.primary, fontWeight: '700', marginBottom: 8 },
-  primaryBtn: { backgroundColor: palette.accent, borderRadius: 12, paddingVertical: 12 },
-  primaryBtnDimmed: { opacity: 0.7 },
+
+  // プライマリボタン（保存）
+  primaryBtn: {
+    backgroundColor: palette.accent,
+    borderRadius: 12,
+    marginTop: 28,
+    paddingVertical: 12,
+  },
   primaryBtnText: { color: palette.primaryOnAccent, fontWeight: '700', textAlign: 'center' },
+
+  // 画面背景
   screen: { backgroundColor: palette.surface, flex: 1 },
+
+  // セカンダリボタン（キャンセル）
   secondaryBtn: {
     backgroundColor: palette.secondarySurface,
     borderColor: palette.border,
-    borderRadius: 10,
+    borderRadius: 12,
     borderWidth: 1,
-    marginTop: 12,
+    marginTop: 14,
     paddingHorizontal: 14,
     paddingVertical: 10,
   },
