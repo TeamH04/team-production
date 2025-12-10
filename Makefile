@@ -11,7 +11,7 @@ SHELL := /usr/bin/env bash
 .PHONY: help setup dev build test lint clean deploy frontend backend \
         frontend-web frontend-lint backend-db-up backend-db-down \
         backend-destroy backend-db-init backend-test status ci-info \
-        dev-backend dev-mobile install
+        dev-backend dev-mobile install web web-lint web-build f b i w
 
 # Colors for output (ANSI escape sequences)
 RED    := \033[0;31m
@@ -59,6 +59,20 @@ setup: ## 🚀 Initial project setup (run from Git Bash on Windows)
 
 # Legacy compatibility commands
 install: setup ## 📦 Install dependencies (legacy)
+
+web: ## 🌐 Start the Next.js web app
+	$(PNPM) --dir apps/web dev
+
+web-lint: ## 🌐 Lint the Next.js web app
+	$(PNPM) --dir apps/web lint
+
+web-build: ## 🌐 Build the Next.js web app
+	$(PNPM) --dir apps/web build
+
+f: frontend ## 🔁 Alias: make f -> make frontend
+b: backend  ## 🔁 Alias: make b -> make backend
+w: web      ## 🔁 Alias: make w -> make web
+i: install  ## 🔁 Alias: make i -> make install
 
 ## ----- Development Commands -----
 
