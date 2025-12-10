@@ -14,8 +14,8 @@ import {
 } from 'react-native';
 
 import { useFavorites } from '@/features/favorites/FavoritesContext';
-import { SHOPS, type Shop } from '@/features/home/data/shops';
 import { useReviews } from '@/features/reviews/ReviewsContext';
+import { SHOPS, type Shop } from '@team/shop-core';
 
 const palette = {
   accent: '#0EA5E9',

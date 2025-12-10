@@ -3,10 +3,10 @@ import { useCallback, useMemo } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { useFavorites } from '@/features/favorites/FavoritesContext';
-import { SHOPS, type Shop } from '@/features/home/data/shops';
 import { useReviews } from '@/features/reviews/ReviewsContext';
 import { useUser } from '@/features/user/UserContext';
 import { getSupabase } from '@/lib/supabase';
+import { SHOPS, type Shop } from '@team/shop-core';
 
 const palette = {
   accent: '#0EA5E9',
