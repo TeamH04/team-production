@@ -77,6 +77,7 @@ export default function ShopDetailScreen() {
   const handleShare = useCallback(() => {
     if (!shop) return;
 
+    // ToDo: VercelにデプロイしたらURLを差し替える
     const url = `shopmobile://shop/${shop.id}`;
 
     Share.share({
