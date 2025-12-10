@@ -62,6 +62,9 @@
   - 将来のネイティブ（スタンドアロン）向けには `shopmobile://auth/callback` のスキームも登録可能です。
 - プロバイダー設定（Authentication > Providers）
   - Google / Apple を有効化し、クライアント ID などを設定してください。
+- iOS の Apple サインイン
+  - 端末では `expo-apple-authentication` を使ってネイティブにサインインし、取得した `identityToken + nonce` を Supabase の `signInWithIdToken` (provider: 'apple') に渡しています。
+  - App Store 配布時は Apple Developer コンソールで Services ID / Team ID / Key ID / 秘密鍵を設定し、`app.json` の `ios.bundleIdentifier` と一致させてください。Supabase のリダイレクト URL には `https://auth.expo.dev/...`（開発）と `shopmobile://auth/callback`（スタンドアロン）を登録します。
 
 トラブルシューティング
 

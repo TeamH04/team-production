@@ -47,6 +47,11 @@ jobs:
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
 
+      - name: Ensure pnpm cache dirs
+        run: |
+          mkdir -p "$HOME/.pnpm-store"
+          mkdir -p "$HOME/.local/share/pnpm"
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
           node-version: ${{ env.NODE_VERSION }}
@@ -84,6 +89,11 @@ jobs:
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
+
+      - name: Ensure pnpm cache dirs
+        run: |
+          mkdir -p "$HOME/.pnpm-store"
+          mkdir -p "$HOME/.local/share/pnpm"
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -157,6 +167,11 @@ jobs:
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
 
+      - name: Ensure pnpm cache dirs
+        run: |
+          mkdir -p "$HOME/.pnpm-store"
+          mkdir -p "$HOME/.local/share/pnpm"
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
           node-version: ${{ env.NODE_VERSION }}
@@ -194,6 +209,11 @@ jobs:
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
+
+      - name: Ensure pnpm cache dirs
+        run: |
+          mkdir -p "$HOME/.pnpm-store"
+          mkdir -p "$HOME/.local/share/pnpm"
 
       - name: Setup Node.js
         uses: actions/setup-node@v4

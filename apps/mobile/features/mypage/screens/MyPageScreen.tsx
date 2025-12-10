@@ -1,11 +1,12 @@
 ﻿import { useRouter } from 'expo-router';
-import { useMemo } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useCallback, useMemo } from 'react';
+import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { useFavorites } from '@/features/favorites/FavoritesContext';
 import { SHOPS, type Shop } from '@/features/home/data/shops';
 import { useReviews } from '@/features/reviews/ReviewsContext';
 import { useUser } from '@/features/user/UserContext';
+import { getSupabase } from '@/lib/supabase';
 
 const palette = {
   accent: '#0EA5E9',
@@ -37,6 +38,16 @@ export default function MyPageScreen() {
     return all.sort((a, b) => b.createdAt.localeCompare(a.createdAt)).slice(0, 20);
   }, [reviewsByShop]);
 
+  const handleLogout = useCallback(async () => {
+    try {
+      await getSupabase().auth.signOut();
+      router.replace('/login');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Unknown error';
+      Alert.alert('ログアウトに失敗しました', message);
+    }
+  }, [router]);
+
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
       <View style={styles.cardShadow}>
@@ -51,6 +62,9 @@ export default function MyPageScreen() {
               <Text style={styles.profileName}>{profile.name}</Text>
               <Text style={styles.profileSub}>{profile.email}</Text>
             </View>
+            <Pressable onPress={handleLogout} style={styles.logoutBtn} hitSlop={8}>
+              <Text style={styles.logoutText}>ログアウト</Text>
+            </Pressable>
           </View>
           <Pressable
             onPress={() => router.push('/profile/edit')}
@@ -114,7 +128,7 @@ export default function MyPageScreen() {
                   {review.menuItemName ? (
                     <Text style={styles.rowCardSub}>メニュー: {review.menuItemName}</Text>
                   ) : null}
-                  <Text style={styles.reviewText}>{review.comment}</Text>
+                  {review.comment ? <Text style={styles.reviewText}>{review.comment}</Text> : null}
                 </View>
               </View>
             );
@@ -154,6 +168,14 @@ const styles = StyleSheet.create({
     paddingVertical: 24,
   },
   emptyText: { color: palette.mutedText },
+  logoutBtn: {
+    alignSelf: 'flex-start',
+    marginLeft: 'auto',
+    marginTop: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  logoutText: { color: palette.accent, fontSize: 14, fontWeight: '600' },
   primaryBtn: {
     backgroundColor: palette.accent,
     borderRadius: 12,

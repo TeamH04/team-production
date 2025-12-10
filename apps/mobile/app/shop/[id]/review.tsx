@@ -94,7 +94,7 @@ export default function ReviewModalScreen() {
               return (
                 <Pressable
                   key={m.id}
-                  onPress={() => setSelectedMenuId(m.id)}
+                  onPress={() => setSelectedMenuId(selected ? undefined : m.id)}
                   style={[styles.menuItem, selected && styles.menuItemSelected]}
                 >
                   <Text style={[styles.menuItemText, selected && styles.menuItemTextSelected]}>
@@ -128,7 +128,6 @@ export default function ReviewModalScreen() {
             setRatingError(true);
             return;
           }
-          if (!comment.trim()) return; // コメントが空なら何もしない
           const selected = menu.find(m => m.id === selectedMenuId);
           addReview(shop.id, {
             rating,
