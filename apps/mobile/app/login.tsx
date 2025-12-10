@@ -162,13 +162,17 @@ export default function LoginScreen() {
         throw new Error('Appleの認証トークンを取得できませんでした。');
       }
 
-      const { error } = await getSupabase().auth.signInWithIdToken({
-        provider: 'apple',
-        token: credential.identityToken,
-        nonce: rawNonce,
-      });
-      if (error) throw error;
+      // TODO: Supabase 側で Apple の Services ID / Team ID / Key ID / 秘密鍵 を設定する必要があります。
+      // 実運用では以下のコメントを解除して `signInWithIdToken` を使ってください。
+      // const { error } = await getSupabase().auth.signInWithIdToken({
+      //   provider: 'apple',
+      //   token: credential.identityToken,
+      //   nonce: rawNonce,
+      // });
+      // if (error) throw error;
 
+      // 開発時の一時的な振る舞い: Supabase の設定が整うまでログイン完了処理を直接呼びます。
+      // (本番では上のコメントを戻してこちらを削除してください)
       await finishLogin();
     } catch (e: unknown) {
       if (
