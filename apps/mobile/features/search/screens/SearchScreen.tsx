@@ -39,10 +39,11 @@ export default function SearchScreen() {
       const matchesTags = shop.tags.some(tag => tag.toLowerCase().includes(query));
       const matchesDesc = shop.description.toLowerCase().includes(query);
       const matchesCategory = shop.category.toLowerCase().includes(query);
+      const matchesMenu = shop.menu?.some(item => item.name.toLowerCase().includes(query)) ?? false;
 
       if (matchesName) {
         shopNameResults.push(shop);
-      } else if (matchesTags || matchesDesc || matchesCategory) {
+      } else if (matchesTags || matchesDesc || matchesCategory || matchesMenu) {
         tagResults.push(shop);
       }
     });
