@@ -2,15 +2,7 @@ import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { FlatList } from 'react-native';
-import {
-  ActivityIndicator,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Animated, { useAnimatedRef } from 'react-native-reanimated';
 
 import { palette } from '@/constants/palette';
@@ -35,7 +27,6 @@ export default function HomeScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{ q?: string }>();
   const [searchQuery, setSearchQuery] = useState('');
-  const searchInputRef = useRef<TextInput | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<CategoryFilter>(CATEGORY_ALL);
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
@@ -165,7 +156,6 @@ export default function HomeScreen() {
                       } catch {
                         // ignore
                       }
-                      searchInputRef.current?.focus();
                     }}
                   >
                     <Text style={styles.tagText}>{tag}</Text>
@@ -177,7 +167,7 @@ export default function HomeScreen() {
         </View>
       );
     },
-    [router, listRef, searchInputRef]
+    [router, listRef]
   );
 
   const renderListHeader = useMemo(
@@ -188,19 +178,6 @@ export default function HomeScreen() {
           <Text style={styles.screenSubtitle}>
             気分に合わせてカテゴリやキーワードで、行きつけにしたいスポットを探せます。
           </Text>
-        </View>
-        <View style={[styles.searchWrapper, styles.shadowLight]}>
-          <TextInput
-            ref={searchInputRef}
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-            placeholder='お店名・雰囲気・タグで検索'
-            placeholderTextColor='#9CA3AF'
-            style={styles.searchInput}
-            autoCorrect={false}
-            autoCapitalize='none'
-            clearButtonMode='while-editing'
-          />
         </View>
         <ScrollView
           horizontal
@@ -236,7 +213,7 @@ export default function HomeScreen() {
         </ScrollView>
       </View>
     ),
-    [handleCategoryPress, searchQuery, selectedCategory]
+    [handleCategoryPress, selectedCategory]
   );
 
   const renderEmptyState = useMemo(
@@ -418,17 +395,6 @@ const styles = StyleSheet.create({
     color: palette.primaryText,
     fontSize: 28,
     fontWeight: '700',
-  },
-  searchInput: {
-    color: palette.primaryText,
-    fontSize: 16,
-  },
-  searchWrapper: {
-    backgroundColor: palette.surface,
-    borderRadius: 24,
-    marginBottom: 20,
-    paddingHorizontal: 20,
-    paddingVertical: 14,
   },
   shadowLight: {
     elevation: 3,
