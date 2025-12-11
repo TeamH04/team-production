@@ -118,7 +118,7 @@ export default function HomeScreen() {
   }, [filteredShops.length, hasMoreResults, isLoadingMore]);
 
   const handleCategoryPress = useCallback((category: CategoryFilter) => {
-    setSelectedCategory(current => (current === category ? CATEGORY_ALL : category));
+    setSelectedCategory(category);
   }, []);
 
   const renderShop = useCallback(
