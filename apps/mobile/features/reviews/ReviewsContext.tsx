@@ -67,9 +67,13 @@ export function ReviewsProvider({ children }: { children: React.ReactNode }) {
     setReviewsByShop(prev => {
       const next = { ...prev };
       // 全店舗のレビューから指定IDを削除
-      Object.keys(next).forEach(shopId => {
-        next[shopId] = next[shopId].filter(review => review.id !== reviewId);
-      });
+      for (const shopId of Object.keys(next)) {
+        const filtered = next[shopId].filter(review => review.id !== reviewId);
+        if (filtered.length !== next[shopId].length) {
+          next[shopId] = filtered;
+          break; // レビューが見つかったら終了
+        }
+      }
       return next;
     });
   }, []);

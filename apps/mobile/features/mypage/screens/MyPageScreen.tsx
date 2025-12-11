@@ -164,10 +164,8 @@ export default function MyPageScreen() {
                     <View style={styles.reviewFooter}>
                       <Pressable
                         onPress={() => {
-                          // 編集処理のトリガー（実装は context 側に依存）
-                          // ここでは削除の例を置いています（後で編集モーダルを開く実装に差し替えてください）
-                          deleteReview(review.id);
-                          setExpandedReviewId(null);
+                          // 編集機能は未実装のため、"coming soon" メッセージを表示
+                          Alert.alert('編集中', '編集機能は近日公開予定です');
                         }}
                         style={[styles.commonBtn, styles.editBtn]}
                       >
@@ -182,13 +180,8 @@ export default function MyPageScreen() {
                               text: '削除',
                               style: 'destructive',
                               onPress: () => {
-                                try {
-                                  deleteReview(review.id);
-                                  setExpandedReviewId(null);
-                                } catch (e) {
-                                  console.warn(e);
-                                  Alert.alert('削除に失敗しました');
-                                }
+                                deleteReview(review.id);
+                                setExpandedReviewId(null);
                               },
                             },
                           ])
@@ -254,11 +247,11 @@ const styles = StyleSheet.create({
     backgroundColor: palette.dangerBg,
     borderColor: palette.dangerBorder,
   },
-  deleteBtnText: { color: palette.dangerText, fontWeight: '700', textAlign: 'center' },
+  deleteBtnText: { color: palette.dangerText },
 
   // 編集ボタン固有の色など
-  editBtn: { backgroundColor: palette.accent, borderColor: palette.border },
-  editBtnText: { color: palette.primaryOnAccent, fontWeight: '700', textAlign: 'center' },
+  editBtn: { backgroundColor: palette.accent, borderColor: palette.border, marginRight: 12 },
+  editBtnText: { color: palette.primaryOnAccent },
 
   // 空状態表示（お気に入りやレビューが無い時）
   emptyBox: {
@@ -296,8 +289,7 @@ const styles = StyleSheet.create({
   profileSub: { color: palette.mutedText, marginTop: 4 },
 
   // レビューフッター（編集・削除ボタンを横並びで配置）
-  // 注: gap は環境によって非サポートの場合があります。必要なら各ボタンに margin を追加してください。
-  reviewFooter: { alignItems: 'center', flexDirection: 'row', gap: 12, marginTop: 12 },
+  reviewFooter: { alignItems: 'center', flexDirection: 'row', marginTop: 12 },
 
   // レビューヘッダー（店舗名＋メニューボタンの横並び）
   reviewHeader: {
