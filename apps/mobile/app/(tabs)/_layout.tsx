@@ -38,6 +38,22 @@ export default function TabLayout() {
           }}
         />
         <Tabs.Screen
+          name='search'
+          options={{
+            title: '検索',
+            tabBarIcon: ({ color }) => (
+              <IconSymbol size={28} name='magnifyingglass' color={color} />
+            ),
+          }}
+        />
+        <Tabs.Screen
+          name='favorites'
+          options={{
+            title: 'お気に入り',
+            tabBarIcon: ({ color }) => <IconSymbol size={28} name='heart.fill' color={color} />,
+          }}
+        />
+        <Tabs.Screen
           name='mypage'
           options={{
             title: 'マイページ',
