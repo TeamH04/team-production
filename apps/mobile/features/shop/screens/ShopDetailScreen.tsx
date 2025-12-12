@@ -182,9 +182,11 @@ export default function ShopDetailScreen() {
               onPress={() => toggleFavorite(shop.id)}
               style={({ pressed }) => [styles.favBtn, pressed && styles.btnPressed]}
             >
-              <Text style={[styles.favIcon, isFav && styles.favIconActive]}>
-                {isFav ? '♥' : '♡'}
-              </Text>
+              <Ionicons
+                name={isFav ? 'heart' : 'heart-outline'}
+                size={24}
+                color={isFav ? palette.favoriteActive : palette.muted}
+              />
             </Pressable>
           </View>
         </View>
@@ -305,14 +307,10 @@ const styles = StyleSheet.create({
     marginTop: 12,
   },
   favBtn: { marginLeft: 12 },
-  favIcon: {
-    color: palette.muted,
-    fontSize: 24,
-  },
-  favIconActive: { color: palette.favoriteActive },
   headerActions: {
     alignItems: 'center',
     flexDirection: 'row',
+    gap: 4,
   },
   headerRow: {
     alignItems: 'center',

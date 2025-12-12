@@ -18,6 +18,24 @@ type ShopDetailProps = {
   shop: Shop;
 };
 
+function HeartIcon({ filled }: { filled: boolean }) {
+  return (
+    <svg
+      width='18'
+      height='18'
+      viewBox='0 0 24 24'
+      fill={filled ? '#dc2626' : 'none'}
+      stroke={filled ? '#dc2626' : '#475569'}
+      strokeWidth='2'
+      strokeLinecap='round'
+      strokeLinejoin='round'
+      aria-hidden='true'
+    >
+      <path d='M12 21s-6-4.35-9-8.7C1.5 9.15 2.25 6 5.25 4.65 7.5 3.6 9.75 4.5 12 7.5c2.25-3 4.5-3.9 6.75-2.85C21.75 6 22.5 9.15 21 12.3 18 16.65 12 21 12 21Z' />
+    </svg>
+  );
+}
+
 export default function ShopDetail({ shop }: ShopDetailProps) {
   const [currentImage, setCurrentImage] = useState(0);
   const [favorites, setFavorites] = useState<string[]>([]);
@@ -171,7 +189,10 @@ export default function ShopDetail({ shop }: ShopDetailProps) {
                     : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                 }`}
               >
-                {isFavorite ? '♥ お気に入り済み' : '♡ お気に入りに追加'}
+                <span className='inline-flex items-center gap-2'>
+                  <HeartIcon filled={isFavorite} />
+                  <span>{isFavorite ? 'お気に入り済み' : 'お気に入りに追加'}</span>
+                </span>
               </button>
             </div>
           </div>
