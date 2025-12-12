@@ -8,10 +8,11 @@
 SHELL := /usr/bin/env bash
 
 .DEFAULT_GOAL := help
-.PHONY: help setup dev build test lint clean deploy frontend backend \
-        frontend-web frontend-lint backend-db-up backend-db-down \
-        backend-destroy backend-db-init backend-test status ci-info \
-        dev-backend dev-mobile install web web-lint web-build f b i w
+.PHONY: help setup dev build test lint clean deploy \
+	frontend backend frontend-web frontend-lint \
+	db-up db-down db-init db-reset backend-destroy \
+	status ci-info install \
+	web web-lint web-build f b i w
 
 # Colors for output (ANSI escape sequences)
 RED    := \033[0;31m
@@ -20,22 +21,23 @@ YELLOW := \033[0;33m
 BLUE   := \033[0;34m
 NC     := \033[0m # No Color
 
-# Legacy variables for backward compatibility
+# Variables
 PNPM        := pnpm
 BACKEND_DIR := apps/backend
 MOBILE_DIR  := apps/mobile
 
-# Frontend dev command
-# NOTE:
-#   - Cross-platform (Linux/macOS/Windows + Git Bash)
-#   - Expo CLI の古いフラグ (--non-interactive / --metro-port) は使わず、
-#     pnpm exec expo start をラップした start-dev.js を叩く。
+# Frontend dev command (Expo / mobile)
+# NOTE: Expo をラップする start-dev.js を使う想定
 FRONTEND_CMD := node $(MOBILE_DIR)/scripts/start-dev.js
 
-# Backend dev command (Go server)
-BACKEND_CMD  := $(MAKE) -C $(BACKEND_DIR) serve
+# Backend dev command
+# NOTE: ローカル go run は使わず、Docker Compose の backend サービスを使う
+BACKEND_CMD := docker compose up backend
 
-CONCURRENT   := $(PNPM) dlx --package concurrently@9.2.1 concurrently --kill-others-on-fail --names "frontend,backend" --prefix-colors "cyan,green"
+CONCURRENT   := $(PNPM) dlx --package concurrently@9.2.1 concurrently \
+	--kill-others-on-fail \
+	--names "frontend,backend" \
+	--prefix-colors "cyan,green"
 
 ## ----- Setup Commands -----
 
@@ -57,8 +59,9 @@ setup: ## 🚀 Initial project setup (run from Git Bash on Windows)
 	fi
 	@printf '%b\n' "$(GREEN)✅ Setup completed!$(NC)"
 
-# Legacy compatibility commands
-install: setup ## 📦 Install dependencies (legacy)
+install: setup ## 📦 Install dependencies (alias)
+
+## ----- Web (Next.js) -----
 
 web: ## 🌐 Start the Next.js web app
 	$(PNPM) --dir apps/web dev
@@ -69,6 +72,7 @@ web-lint: ## 🌐 Lint the Next.js web app
 web-build: ## 🌐 Build the Next.js web app
 	$(PNPM) --dir apps/web build
 
+## ショートエイリアス
 f: frontend ## 🔁 Alias: make f -> make frontend
 b: backend  ## 🔁 Alias: make b -> make backend
 w: web      ## 🔁 Alias: make w -> make web
@@ -76,49 +80,48 @@ i: install  ## 🔁 Alias: make i -> make install
 
 ## ----- Development Commands -----
 
-dev: backend-db-up ## 🔧 Start development servers (DB + backend + mobile)
+dev: db-up ## 🔧 Start dev: DB + backend(Docker) + mobile(Expo)
 	@printf '%b\n' "$(BLUE)Starting development servers...$(NC)"
-	@printf '%b\n' "$(YELLOW)Backend will start on :8080$(NC)"
+	@printf '%b\n' "$(YELLOW)Backend (Docker) will run via docker compose up backend$(NC)"
 	@printf '%b\n' "$(YELLOW)Mobile app will start with Expo$(NC)"
 	$(CONCURRENT) "$(FRONTEND_CMD)" "$(BACKEND_CMD)"
 
-dev-backend: backend ## 🐹 Start backend development server
+frontend: ## 📱 Start the Expo app
+	@printf '%b\n' "$(BLUE)Starting frontend (Expo)...$(NC)"
+	$(FRONTEND_CMD)
 
-dev-mobile: frontend ## 📱 Start mobile development server
-
-# Legacy compatibility commands
-frontend: ## 📱 Start the Expo app (legacy)
-	$(PNPM) --dir $(MOBILE_DIR) start
-
-frontend-web: ## 🌐 Run Expo in web mode (legacy)
+frontend-web: ## 🌐 Run Expo in web mode
 	$(PNPM) --dir $(MOBILE_DIR) web
 
-frontend-lint: ## 🔍 Lint the mobile app (legacy)
+frontend-lint: ## 🔍 Lint the mobile app
 	$(PNPM) --dir $(MOBILE_DIR) lint
 
-backend: ## 🐹 Start DB and Go API (legacy)
-	$(MAKE) -C $(BACKEND_DIR) run-dev
+backend: db-up ## 🐳 Start backend via Docker Compose
+	@printf '%b\n' "$(BLUE)Starting backend (Docker Compose)...$(NC)"
+	$(BACKEND_CMD)
 
-backend-db-up: ## 🗄️ Start database stack
+## ----- Backend / DB Commands -----
+
+db-up: ## 🗄️ Start database stack
 	$(MAKE) -C $(BACKEND_DIR) db-up
 
-backend-db-down: ## 🗄️ Stop database stack
+db-down: ## 🗄️ Stop database stack
 	$(MAKE) -C $(BACKEND_DIR) db-down
 
 backend-destroy: ## 🗄️ Stop DB and remove volumes
 	$(MAKE) -C $(BACKEND_DIR) destroy
 
-backend-db-init: ## 🗄️ Run migrations against local DB
+db-init: ## 🗄️ Run migrations against local DB
 	$(MAKE) -C $(BACKEND_DIR) db-init
 
-backend-test: ## 🧪 Run Go unit tests
-	$(MAKE) -C $(BACKEND_DIR) test
+db-reset: ## 🗄️ Reset database (drop & recreate with migrations)
+	$(MAKE) -C $(BACKEND_DIR) db-reset
 
 ## ----- Enhanced Commands -----
 
 test: ## 🧪 Run all tests
 	@printf '%b\n' "$(BLUE)Running all tests...$(NC)"
-	@$(MAKE) backend-test
+	@$(MAKE) -C $(BACKEND_DIR) test
 	@printf '%b\n' "$(GREEN)✅ All tests completed!$(NC)"
 
 lint: ## 🔍 Run linters
