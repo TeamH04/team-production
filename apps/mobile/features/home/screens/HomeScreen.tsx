@@ -6,7 +6,7 @@ import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from
 import Animated, { useAnimatedRef } from 'react-native-reanimated';
 
 import { palette } from '@/constants/palette';
-import { CATEGORIES, SHOPS, type Shop, type ShopCategory } from '@/features/home/data/shops';
+import { CATEGORIES, SHOPS, type Shop, type ShopCategory } from '@team/shop-core';
 
 const PAGE_SIZE = 10;
 const CATEGORY_ALL = 'すべて';

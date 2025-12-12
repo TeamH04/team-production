@@ -41,18 +41,33 @@ handlers/ (Presentation) → usecase/ (Application) → repository/ (Infrastruct
 
 ## セットアップ
 
-```bash
-make tools           # swag / migrate の CLI をインストール（任意）
-cp .env.example .env # 必要に応じて値を設定
-```
+1. 環境変数を準備します（Supabase 認証は本番のキーをそのまま利用します）。
+
+   ```bash
+   cp .env.example .env
+   # SUPABASE_URL / SUPABASE_* を本番と同じ値に設定
+   # DATABASE_URL は空で OK（Docker Compose 側で上書き）
+   ```
+
+2. Docker Compose でローカル DB と Go サーバーを起動します。
+
+   ```bash
+   # リポジトリルートで実行
+   docker compose up -d db backend
+   ```
+
+   - DB はローカルの PostgreSQL コンテナ (`tp-local-postgres`) を使用します。
+   - Supabase 認証まわりは `.env` に設定した本番キーをそのまま参照します。
+
+3. ローカルでマイグレーションを適用する場合は `make db-init` を使用してください（事前に `docker compose up -d db` で DB を起こしておく）。
 
 ## よく使うコマンド
 
 | コマンド                       | 説明                                                                           |
 | ------------------------------ | ------------------------------------------------------------------------------ |
 | `make run-dev`                 | DB を起動して `go run ./cmd/server` を実行                                     |
-| `make db-up` / `make db-down`  | Docker Compose で DB を起動 / 停止                                             |
-| `make db-init`                 | ローカル Docker (Supabase) にマイグレーションを適用 (`db-up` を含む)           |
+| `make db-up` / `make db-down`  | Docker Compose（リポジトリルートの `docker-compose.yml`）で DB を起動 / 停止   |
+| `make db-init`                 | ローカル Docker DB にマイグレーションを適用 (`db-up` を含む)                   |
 | `make destroy`                 | DB コンテナを停止しボリュームも削除                                            |
 | `make serve`                   | DB が稼働している前提で API のみを起動                                         |
 | `make migrate`                 | `migrations/` 配下の SQL をローカル Docker DSN (`MIGRATE_DATABASE_URL`) に適用 |

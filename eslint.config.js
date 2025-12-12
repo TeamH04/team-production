@@ -19,6 +19,8 @@ export default [
       '**/.expo/**',
       '**/.eas/**',
       '**/web-build/**',
+      '**/.next/**',
+      '**/next-env.d.ts',
     ],
   },
 
@@ -37,13 +39,24 @@ export default [
     },
     settings: {
       react: { version: 'detect' },
+      'import/resolver': {
+        typescript: {
+          project: [
+            path.resolve(process.cwd(), 'tsconfig.json'),
+            path.resolve(process.cwd(), 'apps/mobile/tsconfig.json'),
+            path.resolve(process.cwd(), 'apps/web/tsconfig.json'),
+            path.resolve(process.cwd(), 'packages/shop-core/tsconfig.json'),
+          ],
+          alwaysTryTypes: true,
+        },
+        node: { extensions: ['.ts', '.tsx', '.js', '.jsx', '.json'] },
+      },
     },
     rules: {
       ...js.configs.recommended.rules,
       ...tsPlugin.configs.recommended.rules,
       ...reactHooks.configs.recommended.rules,
       'react/react-in-jsx-scope': 'off',
-      'react-native/no-raw-text': ['error', { skip: ['ThemedText'] }],
       'import/no-unresolved': 'error',
       'import/extensions': [
         'error',
@@ -54,6 +67,24 @@ export default [
       '@typescript-eslint/no-var-requires': 'off',
       // Prettierとの競合回避のため、関連ルールを無効化
       ...prettierConfig.rules,
+    },
+  },
+
+  // Next.js / web 用設定
+  {
+    files: ['apps/web/**/*.{ts,tsx,js,jsx}'],
+    settings: {
+      react: { version: 'detect' },
+      'import/resolver': {
+        typescript: {
+          project: [path.resolve(process.cwd(), 'apps/web/tsconfig.json')],
+          alwaysTryTypes: true,
+        },
+        node: { extensions: ['.ts', '.tsx', '.js', '.jsx', '.json'] },
+      },
+    },
+    rules: {
+      'react-native/no-raw-text': 'off',
     },
   },
 
@@ -75,6 +106,7 @@ export default [
     rules: {
       ...reactNative.configs.all.rules,
       'react-native/no-inline-styles': 'warn',
+      'react-native/no-raw-text': ['error', { skip: ['ThemedText'] }],
       'react-native/split-platform-components': 'off',
     },
   },

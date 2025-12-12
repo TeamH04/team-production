@@ -2,8 +2,8 @@
 import { useLayoutEffect, useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
-import { SHOPS } from '@/features/home/data/shops';
 import { useReviews } from '@/features/reviews/ReviewsContext';
+import { SHOPS } from '@team/shop-core';
 
 // カラー定義（画面の配色をまとめて管理）
 const palette = {

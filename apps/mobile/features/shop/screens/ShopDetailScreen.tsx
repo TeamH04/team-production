@@ -1,11 +1,21 @@
-﻿import { Image } from 'expo-image';
+﻿import { Ionicons } from '@expo/vector-icons';
+import { Image } from 'expo-image';
 import { useFocusEffect, useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
 import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { Dimensions, FlatList, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import {
+  Dimensions,
+  FlatList,
+  Pressable,
+  ScrollView,
+  Share,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 
 import { useFavorites } from '@/features/favorites/FavoritesContext';
-import { SHOPS, type Shop } from '@/features/home/data/shops';
 import { useReviews } from '@/features/reviews/ReviewsContext';
+import { SHOPS, type Shop } from '@team/shop-core';
 
 const palette = {
   accent: '#0EA5E9',
@@ -49,7 +59,6 @@ export default function ShopDetailScreen() {
     }
   }, [navigation, shop]);
 
-  // 画面にフォーカスが戻った時にheaderBackTitleを復元
   useFocusEffect(
     useCallback(() => {
       navigation.setOptions?.({ headerBackTitle: '戻る' });
@@ -65,6 +74,21 @@ export default function ShopDetailScreen() {
     flatListRef.current?.scrollToIndex({ index, animated: true });
   };
 
+  const handleShare = useCallback(() => {
+    if (!shop) return;
+
+    // ToDo: VercelにデプロイしたらURLを差し替える
+    const url = `shopmobile://shop/${shop.id}`;
+
+    Share.share({
+      message: `${shop.name}\n${shop.description}\n${url}`,
+      url,
+      title: shop.name, // for android
+    }).catch(err => {
+      console.warn('Failed to share shop', err);
+    });
+  }, [shop]);
+
   if (!shop) {
     return (
       <View style={[styles.screen, styles.centered]}>
@@ -78,7 +102,6 @@ export default function ShopDetailScreen() {
 
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
-      {/* 画像ギャラリー */}
       {imageUrls && imageUrls.length > 0 ? (
         <View style={styles.heroContainer}>
           <FlatList
@@ -105,7 +128,6 @@ export default function ShopDetailScreen() {
           />
           {imageUrls.length > 1 && (
             <>
-              {/* 左矢印ボタン */}
               {currentImageIndex > 0 && (
                 <Pressable
                   style={[styles.arrowButton, styles.arrowButtonLeft]}
@@ -115,7 +137,6 @@ export default function ShopDetailScreen() {
                   <Text style={styles.arrowText}>‹</Text>
                 </Pressable>
               )}
-              {/* 右矢印ボタン */}
               {currentImageIndex < imageUrls.length - 1 && (
                 <Pressable
                   style={[styles.arrowButton, styles.arrowButtonRight]}
@@ -125,7 +146,6 @@ export default function ShopDetailScreen() {
                   <Text style={styles.arrowText}>›</Text>
                 </Pressable>
               )}
-              {/* ページネーションドット */}
               <View style={styles.paginationContainer}>
                 {imageUrls.map((_, idx) => (
                   <View
@@ -147,15 +167,28 @@ export default function ShopDetailScreen() {
       <View style={styles.container}>
         <View style={styles.headerRow}>
           <Text style={styles.title}>{shop.name}</Text>
-          <Pressable
-            accessibilityLabel='お気に入り切り替え'
-            onPress={() => toggleFavorite(shop.id)}
-            style={({ pressed }) => [styles.favBtn, pressed && styles.btnPressed]}
-          >
-            <Text style={[styles.favIcon, isFav && styles.favIconActive]}>
-              {isFav ? '♥' : '♡'}
-            </Text>
-          </Pressable>
+
+          <View style={styles.headerActions}>
+            <Pressable
+              accessibilityLabel='このお店を共有'
+              onPress={handleShare}
+              style={({ pressed }) => [styles.shareBtn, pressed && styles.btnPressed]}
+            >
+              <Ionicons name='share-outline' size={22} color={palette.muted} />
+            </Pressable>
+
+            <Pressable
+              accessibilityLabel='お気に入り切り替え'
+              onPress={() => toggleFavorite(shop.id)}
+              style={({ pressed }) => [styles.favBtn, pressed && styles.btnPressed]}
+            >
+              <Ionicons
+                name={isFav ? 'heart' : 'heart-outline'}
+                size={24}
+                color={isFav ? palette.favoriteActive : palette.muted}
+              />
+            </Pressable>
+          </View>
         </View>
 
         <Text
@@ -171,7 +204,6 @@ export default function ShopDetailScreen() {
               style={styles.tagPill}
               accessibilityLabel={`タグ ${tag} で検索`}
               onPress={() => {
-                // タグ検索も即時に、戻るテキストは維持
                 navigation.setOptions?.({ headerBackTitle: '戻る' });
                 router.navigate({ pathname: '/(tabs)', params: { q: tag } });
               }}
@@ -189,7 +221,6 @@ export default function ShopDetailScreen() {
         <Pressable
           style={styles.primaryBtn}
           onPress={() => {
-            // 戻るテキストは常に「戻る」に固定し、即座に遷移
             navigation.setOptions?.({ headerBackTitle: '戻る' });
             router.push({ pathname: '/shop/[id]/review', params: { id: shop.id } });
           }}
@@ -251,7 +282,11 @@ const styles = StyleSheet.create({
     lineHeight: 32,
   },
   btnPressed: { opacity: 0.9 },
-  card: { backgroundColor: palette.surface, borderRadius: 16, padding: 16 },
+  card: {
+    backgroundColor: palette.surface,
+    borderRadius: 16,
+    padding: 16,
+  },
   cardShadow: {
     elevation: 4,
     marginBottom: 16,
@@ -260,14 +295,28 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.06,
     shadowRadius: 12,
   },
-  centered: { alignItems: 'center', justifyContent: 'center' },
+  centered: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   container: { padding: 16 },
   content: { paddingBottom: 24 },
-  description: { color: palette.primary, lineHeight: 20, marginTop: 12 },
+  description: {
+    color: palette.primary,
+    lineHeight: 20,
+    marginTop: 12,
+  },
   favBtn: { marginLeft: 12 },
-  favIcon: { color: palette.muted, fontSize: 24 },
-  favIconActive: { color: palette.favoriteActive },
-  headerRow: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between' },
+  headerActions: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 4,
+  },
+  headerRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
   hero: { backgroundColor: palette.heroPlaceholder, height: 220, width: SCREEN_WIDTH },
   heroContainer: { marginBottom: 0, position: 'relative' },
   meta: { color: palette.muted, marginTop: 6 },
@@ -313,6 +362,10 @@ const styles = StyleSheet.create({
   sectionHeader: { marginBottom: 8, marginTop: 16 },
   sectionSub: { color: palette.muted, marginTop: 2 },
   sectionTitle: { color: palette.primary, fontSize: 18, fontWeight: '700' },
+  shareBtn: {
+    marginLeft: 8,
+    padding: 4,
+  },
   tagPill: {
     backgroundColor: palette.tagSurface,
     borderRadius: 999,
