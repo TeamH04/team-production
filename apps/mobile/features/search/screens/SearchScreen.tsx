@@ -1,5 +1,5 @@
 import { palette } from '@/constants/palette';
-import { SHOPS, type Shop } from '@/features/home/data/shops';
+import { SHOPS, type Shop } from '@team/shop-core';
 import { useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import {

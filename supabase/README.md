@@ -2,7 +2,7 @@
 
 ## 概要
 
-`docker-compose.yml` で Supabase エコシステム（PostgreSQL、Realtime、Auth、Studio など）をまとめて起動します。バックエンド API (`apps/backend`) のローカル開発ならびに動作確認向けの最小構成です。
+`docker-compose.yml` でローカル PostgreSQL + pgAdmin を起動する補助用の構成です。バックエンド API (`apps/backend`) のローカル開発は、リポジトリルートの `docker-compose.yml` で Go サーバーと DB をまとめて起動する運用に統一しています。ここでは単体で DB を動かしたい場合のみに利用してください。
 
 ## セットアップ
 
@@ -28,7 +28,7 @@
 
 ## バックエンド Makefile との関係
 
-- `apps/backend/Makefile` の `run-dev`, `db-up`, `db-down`, `destroy` ターゲットがこの Compose ファイルを参照します。バックエンド開発では Makefile 経由での操作を推奨します。
+- ルートの `docker-compose.yml` を参照するよう変更しました。`apps/backend/Makefile` の `db-up`/`db-down` はそちらを呼び出します。本ファイルは DB 単体を起動したい場合にのみ直接利用してください。
 
 ## Studio へのアクセス
 

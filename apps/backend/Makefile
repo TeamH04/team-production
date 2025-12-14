@@ -3,7 +3,7 @@
 .DEFAULT_GOAL := help
 
 MIGRATIONS_DIR         := ./migrations
-DB_COMPOSE             := ../../supabase/docker-compose.yml
+DB_COMPOSE             := ../../docker-compose.yml
 LOCAL_DATABASE_URL    ?= postgres://postgres:postgres@localhost:5432/app?sslmode=disable
 MIGRATE_DATABASE_URL  ?= $(LOCAL_DATABASE_URL)
 
