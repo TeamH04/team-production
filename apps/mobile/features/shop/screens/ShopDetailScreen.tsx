@@ -53,6 +53,8 @@ export default function ShopDetailScreen() {
 
   const shop = useMemo(() => SHOPS.find(s => s.id === id), [id]);
 
+  const webBaseUrl = process.env.EXPO_PUBLIC_WEB_BASE_URL?.replace(/\/$/, '');
+
   useLayoutEffect(() => {
     if (shop) {
       navigation.setOptions?.({ title: shop.name, headerBackTitle: '戻る' });
@@ -77,17 +79,21 @@ export default function ShopDetailScreen() {
   const handleShare = useCallback(() => {
     if (!shop) return;
 
-    // ToDo: VercelにデプロイしたらURLを差し替える
-    const url = `shopmobile://shop/${shop.id}`;
+    if (!webBaseUrl) {
+      console.warn('EXPO_PUBLIC_WEB_BASE_URL is not defined');
+      return;
+    }
+
+    const url = `${webBaseUrl}/shop/${shop.id}`;
 
     Share.share({
       message: `${shop.name}\n${shop.description}\n${url}`,
       url,
-      title: shop.name, // for android
+      title: shop.name,
     }).catch(err => {
       console.warn('Failed to share shop', err);
     });
-  }, [shop]);
+  }, [shop, webBaseUrl]);
 
   if (!shop) {
     return (
@@ -172,7 +178,12 @@ export default function ShopDetailScreen() {
             <Pressable
               accessibilityLabel='このお店を共有'
               onPress={handleShare}
-              style={({ pressed }) => [styles.shareBtn, pressed && styles.btnPressed]}
+              disabled={!webBaseUrl}
+              style={({ pressed }) => [
+                styles.shareBtn,
+                pressed && styles.btnPressed,
+                !webBaseUrl && { opacity: 0.4 },
+              ]}
             >
               <Ionicons name='share-outline' size={22} color={palette.muted} />
             </Pressable>
