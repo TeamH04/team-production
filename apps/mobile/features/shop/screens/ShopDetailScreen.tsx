@@ -3,6 +3,7 @@ import { Image } from 'expo-image';
 import { useFocusEffect, useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
 import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import {
+  Alert,
   Dimensions,
   FlatList,
   Pressable,
@@ -53,6 +54,8 @@ export default function ShopDetailScreen() {
 
   const shop = useMemo(() => SHOPS.find(s => s.id === id), [id]);
 
+  const webBaseUrl = process.env.EXPO_PUBLIC_WEB_BASE_URL?.replace(/\/$/, '');
+
   useLayoutEffect(() => {
     if (shop) {
       navigation.setOptions?.({ title: shop.name, headerBackTitle: '戻る' });
@@ -77,17 +80,25 @@ export default function ShopDetailScreen() {
   const handleShare = useCallback(() => {
     if (!shop) return;
 
-    // ToDo: VercelにデプロイしたらURLを差し替える
-    const url = `shopmobile://shop/${shop.id}`;
+    if (!webBaseUrl) {
+      Alert.alert(
+        '共有できません',
+        '共有URLの設定が見つからないため、この機能は現在利用できません。'
+      );
+      return;
+    }
+
+    const url = `${webBaseUrl}/shop/${shop.id}`;
 
     Share.share({
       message: `${shop.name}\n${shop.description}\n${url}`,
       url,
-      title: shop.name, // for android
+      title: shop.name,
     }).catch(err => {
       console.warn('Failed to share shop', err);
+      Alert.alert('共有に失敗しました', 'もう一度お試しください。');
     });
-  }, [shop]);
+  }, [shop, webBaseUrl]);
 
   if (!shop) {
     return (
@@ -172,7 +183,12 @@ export default function ShopDetailScreen() {
             <Pressable
               accessibilityLabel='このお店を共有'
               onPress={handleShare}
-              style={({ pressed }) => [styles.shareBtn, pressed && styles.btnPressed]}
+              disabled={!webBaseUrl}
+              style={({ pressed }) => [
+                styles.shareBtn,
+                pressed && styles.btnPressed,
+                !webBaseUrl && { opacity: 0.4 },
+              ]}
             >
               <Ionicons name='share-outline' size={22} color={palette.muted} />
             </Pressable>
