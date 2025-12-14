@@ -3,6 +3,7 @@ import { Image } from 'expo-image';
 import { useFocusEffect, useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
 import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import {
+  Alert,
   Dimensions,
   FlatList,
   Pressable,
@@ -80,7 +81,10 @@ export default function ShopDetailScreen() {
     if (!shop) return;
 
     if (!webBaseUrl) {
-      console.warn('EXPO_PUBLIC_WEB_BASE_URL is not defined');
+      Alert.alert(
+        '共有できません',
+        '共有URLの設定が見つからないため、この機能は現在利用できません。'
+      );
       return;
     }
 
@@ -92,6 +96,7 @@ export default function ShopDetailScreen() {
       title: shop.name,
     }).catch(err => {
       console.warn('Failed to share shop', err);
+      Alert.alert('共有に失敗しました', 'もう一度お試しください。');
     });
   }, [shop, webBaseUrl]);
 
