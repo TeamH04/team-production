@@ -202,7 +202,6 @@ export default function SearchScreen() {
               data={searchHistory}
               keyExtractor={(item, index) => `${item}-${index}`}
               scrollEnabled={false}
-              nestedScrollEnabled={true}
               renderItem={({ item }) => (
                 <View style={styles.historyItem}>
                   <Pressable onPress={() => handleSearch(item)} style={styles.historyTextContainer}>
