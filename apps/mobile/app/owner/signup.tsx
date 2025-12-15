@@ -1,5 +1,6 @@
-import { useRouter } from 'expo-router';
-import React, { useState } from 'react';
+import { Ionicons } from '@expo/vector-icons';
+import { useNavigation, useRouter } from 'expo-router';
+import React, { useLayoutEffect, useState } from 'react';
 import {
   Alert,
   KeyboardAvoidingView,
@@ -13,18 +14,29 @@ import {
 } from 'react-native';
 
 import { palette } from '@/constants/palette';
+import { useSocialAuth } from '@/hooks/useSocialAuth';
 
 export default function OwnerSignupScreen() {
   const router = useRouter();
+  const navigation = useNavigation();
+  const { signInWithGoogle, signInWithApple, loading: socialLoading } = useSocialAuth();
   const [storeName, setStoreName] = useState('');
   const [contactName, setContactName] = useState('');
   const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [phone, setPhone] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
+  useLayoutEffect(() => {
+    navigation.setOptions?.({
+      title: 'オーナー新規作成',
+      headerBackTitle: '戻る',
+    });
+  }, [navigation]);
+
   const onSubmit = async () => {
-    if (!storeName || !contactName || !email) {
-      Alert.alert('入力不足', '必須項目（店舗名/担当者名/メール）を入力してください');
+    if (!storeName || !contactName || !email || !password) {
+      Alert.alert('入力不足', '必須項目（店舗名/担当者名/メール/パスワード）を入力してください');
       return;
     }
 
@@ -39,6 +51,30 @@ export default function OwnerSignupScreen() {
       Alert.alert('作成失敗', message);
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleGoogleSignup = async () => {
+    if (socialLoading || submitting) return;
+
+    const result = await signInWithGoogle();
+    if (result.success) {
+      Alert.alert('作成完了', `${result.user?.email ?? 'Google'} でアカウントを作成しました`);
+      router.replace('/owner');
+    } else {
+      Alert.alert('作成失敗', result.error ?? 'Google での作成に失敗しました');
+    }
+  };
+
+  const handleAppleSignup = async () => {
+    if (socialLoading || submitting) return;
+
+    const result = await signInWithApple();
+    if (result.success) {
+      Alert.alert('作成完了', `${result.user?.email ?? 'Apple'} でアカウントを作成しました`);
+      router.replace('/owner');
+    } else {
+      Alert.alert('作成失敗', result.error ?? 'Apple での作成に失敗しました');
     }
   };
 
@@ -86,6 +122,17 @@ export default function OwnerSignupScreen() {
             placeholderTextColor={palette.secondaryText}
           />
 
+          <Text style={styles.label}>パスワード（必須）</Text>
+          <TextInput
+            style={styles.input}
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry
+            autoCapitalize='none'
+            placeholder='8文字以上'
+            placeholderTextColor={palette.secondaryText}
+          />
+
           <Text style={styles.label}>電話番号（任意）</Text>
           <TextInput
             style={styles.input}
@@ -112,12 +159,64 @@ export default function OwnerSignupScreen() {
             </Pressable>
           </View>
         </View>
+
+        <View style={styles.socialSection}>
+          <View style={styles.dividerRow}>
+            <View style={styles.dividerLine} />
+            <Text style={styles.dividerText}>または</Text>
+            <View style={styles.dividerLine} />
+          </View>
+
+          <View style={styles.socialButtonsContainer}>
+            <Pressable
+              onPress={handleGoogleSignup}
+              disabled={socialLoading || submitting}
+              style={({ pressed }) => [
+                styles.socialButton,
+                (pressed || socialLoading || submitting) && { opacity: 0.8 },
+              ]}
+            >
+              <View style={styles.socialButtonContent}>
+                <Ionicons name='logo-google' size={20} color={palette.outline} />
+                <Text style={styles.socialButtonText}>
+                  {socialLoading ? 'Google で処理中…' : 'Google で作成'}
+                </Text>
+              </View>
+            </Pressable>
+
+            {Platform.OS === 'ios' && (
+              <Pressable
+                onPress={handleAppleSignup}
+                disabled={socialLoading || submitting}
+                style={({ pressed }) => [
+                  styles.socialButton,
+                  (pressed || socialLoading || submitting) && { opacity: 0.8 },
+                ]}
+              >
+                <View style={styles.socialButtonContent}>
+                  <Ionicons
+                    name='logo-apple'
+                    size={20}
+                    color={palette.outline}
+                    style={styles.appleIconAdjust}
+                  />
+                  <Text style={styles.socialButtonText}>
+                    {socialLoading ? 'Apple で処理中…' : 'Apple で作成'}
+                  </Text>
+                </View>
+              </Pressable>
+            )}
+          </View>
+        </View>
       </ScrollView>
     </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
+  appleIconAdjust: {
+    marginTop: 2,
+  },
   buttonContainer: {
     backgroundColor: palette.button,
     borderColor: palette.buttonBorder,
@@ -149,6 +248,22 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 32,
   },
+  dividerLine: {
+    backgroundColor: palette.border,
+    flex: 1,
+    height: 1,
+  },
+  dividerRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 12,
+  },
+  dividerText: {
+    color: palette.secondaryText,
+    fontSize: 12,
+    fontWeight: '600',
+  },
   form: {
     gap: 8,
   },
@@ -177,6 +292,32 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
     paddingBottom: 24,
+  },
+  socialButton: {
+    alignItems: 'center',
+    backgroundColor: palette.surface,
+    borderColor: palette.outline,
+    borderRadius: 12,
+    borderWidth: 1,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
+  socialButtonContent: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 12,
+    justifyContent: 'center',
+  },
+  socialButtonText: {
+    color: palette.outline,
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  socialButtonsContainer: {
+    gap: 12,
+  },
+  socialSection: {
+    marginTop: 28,
   },
   subtitle: {
     color: palette.secondaryText,
