@@ -40,6 +40,11 @@ export default function OwnerSignupScreen() {
       return;
     }
 
+    if (password.length < 8) {
+      Alert.alert('入力エラー', 'パスワードは8文字以上で入力してください');
+      return;
+    }
+
     try {
       setSubmitting(true);
       // NOTE: Backend 未実装。将来的にここで API に POST する想定。
@@ -59,7 +64,7 @@ export default function OwnerSignupScreen() {
 
     const result = await signInWithGoogle();
     if (result.success) {
-      Alert.alert('作成完了', `${result.user?.email ?? 'Google'} でアカウントを作成しました`);
+      Alert.alert('作成完了', `${result.user?.email ?? 'Googleアカウント'} で作成しました`);
       router.replace('/owner');
     } else {
       Alert.alert('作成失敗', result.error ?? 'Google での作成に失敗しました');
@@ -71,7 +76,7 @@ export default function OwnerSignupScreen() {
 
     const result = await signInWithApple();
     if (result.success) {
-      Alert.alert('作成完了', `${result.user?.email ?? 'Apple'} でアカウントを作成しました`);
+      Alert.alert('作成完了', `${result.user?.email ?? 'Appleアカウント'} で作成しました`);
       router.replace('/owner');
     } else {
       Alert.alert('作成失敗', result.error ?? 'Apple での作成に失敗しました');

@@ -14,6 +14,7 @@ import {
 
 import { palette } from '@/constants/palette';
 import { useSocialAuth } from '@/hooks/useSocialAuth';
+import { getSupabase, isSupabaseConfigured } from '@/lib/supabase';
 
 export default function OwnerLoginScreen() {
   const router = useRouter();
@@ -40,21 +41,28 @@ export default function OwnerLoginScreen() {
 
     setLoading(true);
     try {
-      // TODO: 実際の認証処理を実装
-      // ここでは仮の認証チェック（将来的にSupabaseなどのAPIに置き換え）
-      await new Promise(r => setTimeout(r, 500));
-
-      // 仮の認証失敗シミュレーション（実装時は実際のAPI結果で判定）
-      const isAuthSuccess = false; // 実際はAPIレスポンスで判定
-
-      if (!isAuthSuccess) {
+      if (!isSupabaseConfigured()) {
         Alert.alert(
-          'ログイン失敗',
-          'メールアドレスまたはパスワードが正しくありません。再度入力してください。'
+          '未設定',
+          'Supabaseの環境変数が未設定です。EXPO_PUBLIC_SUPABASE_URL と EXPO_PUBLIC_SUPABASE_ANON_KEY を設定してください。'
         );
         return;
       }
 
+      const { data, error } = await getSupabase().auth.signInWithPassword({
+        email: email.trim(),
+        password,
+      });
+
+      if (error) {
+        const msg = /invalid/i.test(error.message)
+          ? 'メールアドレスまたはパスワードが正しくありません。再度入力してください。'
+          : error.message;
+        Alert.alert('ログイン失敗', msg);
+        return;
+      }
+
+      Alert.alert('ログイン成功', `${data.user?.email ?? 'メール/パスワード'}でログインしました`);
       router.replace('/owner' as Href);
     } finally {
       setLoading(false);
@@ -64,7 +72,8 @@ export default function OwnerLoginScreen() {
   const handleGoogleSignIn = async () => {
     const result = await signInWithGoogle();
     if (result.success) {
-      Alert.alert('ログイン成功', `${result.user?.email} でログインしました`);
+      const display = result.user?.email ?? 'Googleアカウント';
+      Alert.alert('ログイン成功', `${display}でログインしました`);
       router.replace('/owner' as Href);
     } else {
       Alert.alert('ログイン失敗', result.error || 'Google ログインに失敗しました');
@@ -74,7 +83,8 @@ export default function OwnerLoginScreen() {
   const handleAppleSignIn = async () => {
     const result = await signInWithApple();
     if (result.success) {
-      Alert.alert('ログイン成功', `${result.user?.email} でログインしました`);
+      const display = result.user?.email ?? 'Appleアカウント';
+      Alert.alert('ログイン成功', `${display}でログインしました`);
       router.replace('/owner' as Href);
     } else {
       Alert.alert('ログイン失敗', result.error || 'Apple ログインに失敗しました');
@@ -285,10 +295,8 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '700',
     height: 44,
-    includeFontPadding: false,
     lineHeight: 44,
     textAlign: 'center',
-    textAlignVertical: 'center',
   },
   loginButtonWrapper: {
     alignItems: 'center',
