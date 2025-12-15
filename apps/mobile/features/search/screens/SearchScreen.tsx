@@ -3,14 +3,14 @@ import { SHOPS, type Shop } from '@team/shop-core';
 import { useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import {
-  FlatList,
-  Image,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
+    FlatList,
+    Image,
+    Pressable,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    View,
 } from 'react-native';
 
 const BUDGET_LABEL: Record<Shop['budget'], string> = {
@@ -73,7 +73,7 @@ export default function SearchScreen() {
   };
 
   return (
-    <View style={styles.container}>
+    <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer} showsVerticalScrollIndicator={false}>
       {/* タイトル */}
       <View style={styles.headerTextBlock}>
         <Text style={styles.screenTitle}>お店を検索</Text>
@@ -115,7 +115,7 @@ export default function SearchScreen() {
           </Text>
 
           {shopNameResults.length > 0 || tagResults.length > 0 ? (
-            <ScrollView showsVerticalScrollIndicator={false}>
+            <View>
               {/* 店名で見つけたもの */}
               {shopNameResults.length > 0 && (
                 <View style={styles.categorySection}>
@@ -177,7 +177,7 @@ export default function SearchScreen() {
                   ))}
                 </View>
               )}
-            </ScrollView>
+            </View>
           ) : (
             <View style={styles.emptyState}>
               <Text style={styles.emptyTitle}>条件に合うお店が見つかりませんでした</Text>
@@ -195,6 +195,7 @@ export default function SearchScreen() {
               data={searchHistory}
               keyExtractor={(item, index) => `${item}-${index}`}
               scrollEnabled={false}
+              nestedScrollEnabled={true}
               renderItem={({ item }) => (
                 <View style={styles.historyItem}>
                   <Pressable onPress={() => handleSearch(item)} style={styles.historyTextContainer}>
@@ -211,7 +212,7 @@ export default function SearchScreen() {
           )}
         </View>
       )}
-    </View>
+    </ScrollView>
   );
 }
 
@@ -246,6 +247,10 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 24,
     paddingTop: 24,
+  },
+  contentContainer: {
+    flexGrow: 1,
+    paddingBottom: 129,
   },
   emptyHistoryText: {
     color: palette.secondaryText,
