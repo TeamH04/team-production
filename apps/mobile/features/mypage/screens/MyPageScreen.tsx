@@ -22,6 +22,8 @@ const palette = {
   surface: '#FFFFFF',
 } as const;
 
+const TAB_BAR_SPACING = 125;
+
 export default function MyPageScreen() {
   const router = useRouter();
   const { favorites } = useFavorites();
@@ -159,7 +161,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.06,
     shadowRadius: 12,
   },
-  content: { padding: 16, paddingBottom: 125 },
+  content: { padding: 16, paddingBottom: TAB_BAR_SPACING },
   emptyBox: {
     alignItems: 'center',
     backgroundColor: palette.surface,

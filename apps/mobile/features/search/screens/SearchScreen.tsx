@@ -18,6 +18,9 @@ const BUDGET_LABEL: Record<Shop['budget'], string> = {
   $$: '¥¥',
   $$$: '¥¥¥',
 };
+
+const TAB_BAR_SPACING = 129;
+
 export default function SearchScreen() {
   const router = useRouter();
   const [searchText, setSearchText] = useState('');
@@ -254,7 +257,7 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     flexGrow: 1,
-    paddingBottom: 129,
+    paddingBottom: TAB_BAR_SPACING,
   },
   emptyHistoryText: {
     color: palette.secondaryText,

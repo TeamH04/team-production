@@ -9,6 +9,8 @@ const BUDGET_LABEL: Record<Shop['budget'], string> = {
   $$$: '¥¥¥',
 };
 
+const TAB_BAR_SPACING = 113;
+
 export default function FavoritesScreen() {
   const router = useRouter();
   const { favorites } = useFavorites();
@@ -83,7 +85,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   listContent: {
-    paddingBottom: 113,
+    paddingBottom: TAB_BAR_SPACING,
   },
   ratingBadge: {
     backgroundColor: palette.highlight,
