@@ -159,7 +159,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.06,
     shadowRadius: 12,
   },
-  content: { padding: 16, paddingBottom: 24 },
+  content: { padding: 16, paddingBottom: 125 },
   emptyBox: {
     alignItems: 'center',
     backgroundColor: palette.surface,

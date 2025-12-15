@@ -83,7 +83,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   listContent: {
-    paddingBottom: 20,
+    paddingBottom: 113,
   },
   ratingBadge: {
     backgroundColor: palette.highlight,
