@@ -25,10 +25,15 @@ export default [
   },
 
   {
-    files: ['**/*.{ts,tsx,js,jsx}'],
+    files: ['**/*.{ts,tsx}'],
     languageOptions: {
       parser: tsParser,
-      parserOptions: { ecmaVersion: 'latest', sourceType: 'module' }, // 型なし運用
+      parserOptions: {
+        ecmaVersion: 'latest',
+        sourceType: 'module',
+        project: true,
+        tsconfigRootDir: process.cwd(),
+      },
       globals: { ...globals.browser, ...globals.node },
     },
     plugins: {
@@ -66,6 +71,34 @@ export default [
       '@typescript-eslint/no-require-imports': 'off',
       '@typescript-eslint/no-var-requires': 'off',
       // Prettierとの競合回避のため、関連ルールを無効化
+      ...prettierConfig.rules,
+    },
+  },
+
+  // JavaScript ファイル用の設定（parserOptionsなし）
+  {
+    files: ['**/*.{js,jsx}'],
+    languageOptions: {
+      ecmaVersion: 'latest',
+      sourceType: 'module',
+      globals: { ...globals.browser, ...globals.node },
+    },
+    plugins: {
+      react,
+      'react-hooks': reactHooks,
+      import: importPlugin,
+    },
+    settings: {
+      react: { version: 'detect' },
+      'import/resolver': {
+        node: { extensions: ['.js', '.jsx', '.json'] },
+      },
+    },
+    rules: {
+      ...js.configs.recommended.rules,
+      ...reactHooks.configs.recommended.rules,
+      'react/react-in-jsx-scope': 'off',
+      'import/no-unresolved': 'error',
       ...prettierConfig.rules,
     },
   },

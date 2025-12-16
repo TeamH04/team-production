@@ -325,10 +325,11 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   heroTitleWrap: {
+    alignSelf: 'center',
     aspectRatio: HERO_TITLE_VIEWBOX_WIDTH / HERO_TITLE_VIEWBOX_HEIGHT,
     marginBottom: 6,
     marginTop: 12,
-    width: '100%',
+    width: '70%',
   },
   metaRow: {
     alignItems: 'center',
