@@ -34,15 +34,13 @@ export default function SearchScreen() {
 
   const TAGS_BY_CATEGORY = useMemo(() => {
     const m = new Map<string, Set<string>>();
-    SHOPS.forEach((shop) => {
+    SHOPS.forEach(shop => {
       const cat = shop.category;
       if (!m.has(cat)) m.set(cat, new Set());
-      shop.tags.forEach((t) => m.get(cat)!.add(t));
+      shop.tags.forEach(t => m.get(cat)!.add(t));
     });
     const out: Record<string, string[]> = {};
-    Array.from(m.entries()).forEach(
-      ([cat, s]) => (out[cat] = Array.from(s).sort()),
-    );
+    Array.from(m.entries()).forEach(([cat, s]) => (out[cat] = Array.from(s).sort()));
     return out;
   }, []);
 
@@ -54,7 +52,7 @@ export default function SearchScreen() {
 
     if (queryToSave) {
       const trimmedQuery = queryToSave.trim();
-      const filtered = searchHistory.filter((h) => h !== trimmedQuery);
+      const filtered = searchHistory.filter(h => h !== trimmedQuery);
       setSearchHistory([trimmedQuery, ...filtered]);
     }
 
@@ -64,25 +62,21 @@ export default function SearchScreen() {
   };
 
   const handleRemoveHistory = (item: string) => {
-    setSearchHistory(searchHistory.filter((h) => h !== item));
+    setSearchHistory(searchHistory.filter(h => h !== item));
   };
 
   const handleTagPress = (tag: string) => {
-    setSelectedTags((prev) =>
-      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag],
-    );
+    setSelectedTags(prev => (prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]));
   };
 
   const handleCategoryPress = (category: string) => {
-    setActiveCategories((prev) => {
+    setActiveCategories(prev => {
       const isDeselecting = prev.includes(category);
 
       if (isDeselecting) {
         const tagsToRemove = TAGS_BY_CATEGORY[category] || [];
-        setSelectedTags((currentTags) =>
-          currentTags.filter((tag) => !tagsToRemove.includes(tag)),
-        );
-        return prev.filter((c) => c !== category);
+        setSelectedTags(currentTags => currentTags.filter(tag => !tagsToRemove.includes(tag)));
+        return prev.filter(c => c !== category);
       } else {
         return [...prev, category];
       }
@@ -95,36 +89,32 @@ export default function SearchScreen() {
 
   const searchResults = useMemo(() => {
     const q = currentSearchText.trim().toLowerCase();
-    const tags = selectedTags.map((t) => t.toLowerCase());
+    const tags = selectedTags.map(t => t.toLowerCase());
     const hasCategories = activeCategories.length > 0;
 
     if (q.length === 0 && tags.length === 0 && !hasCategories) {
       return [];
     }
 
-    return SHOPS.filter((shop) => {
+    return SHOPS.filter(shop => {
       const matchesText =
         q.length > 0
           ? shop.name.toLowerCase().includes(q) ||
             shop.description.toLowerCase().includes(q) ||
             shop.category.toLowerCase().includes(q) ||
-            (shop.menu?.some((item) => item.name.toLowerCase().includes(q)) ??
-              false)
+            (shop.menu?.some(item => item.name.toLowerCase().includes(q)) ?? false)
           : true;
 
       const matchesTags =
         tags.length > 0
           ? tags.some(
-              (tag) =>
-                shop.tags.some((shopTag) =>
-                  shopTag.toLowerCase().includes(tag),
-                ) || shop.category.toLowerCase().includes(tag),
+              tag =>
+                shop.tags.some(shopTag => shopTag.toLowerCase().includes(tag)) ||
+                shop.category.toLowerCase().includes(tag)
             )
           : true;
 
-      const matchesCategory = hasCategories
-        ? activeCategories.includes(shop.category)
-        : true;
+      const matchesCategory = hasCategories ? activeCategories.includes(shop.category) : true;
 
       return matchesText && matchesTags && matchesCategory;
     });
@@ -134,7 +124,7 @@ export default function SearchScreen() {
     <ScrollView
       style={styles.scrollView}
       contentContainerStyle={styles.containerContent}
-      keyboardShouldPersistTaps="handled"
+      keyboardShouldPersistTaps='handled'
     >
       <View style={styles.headerTextBlock}>
         <Text style={styles.screenTitle}>お店を検索</Text>
@@ -145,12 +135,12 @@ export default function SearchScreen() {
           <View style={[styles.searchWrapper, styles.shadowLight]}>
             <TextInput
               style={styles.searchInput}
-              placeholder="お店名・雰囲気"
+              placeholder='お店名・雰囲気'
               placeholderTextColor={palette.secondaryText}
               value={userTypedText}
               onChangeText={setUserTypedText}
               onSubmitEditing={() => handleSearch()}
-              returnKeyType="search"
+              returnKeyType='search'
             />
             <Pressable
               onPress={() => {
@@ -158,10 +148,7 @@ export default function SearchScreen() {
                 setSelectedTags([]);
                 setActiveCategories([]);
               }}
-              style={[
-                styles.clearButton,
-                !userTypedText && styles.clearButtonHidden,
-              ]}
+              style={[styles.clearButton, !userTypedText && styles.clearButtonHidden]}
             >
               <Text style={styles.clearButtonText}>✕</Text>
             </Pressable>
@@ -170,12 +157,10 @@ export default function SearchScreen() {
 
         {currentSearchText.length === 0 && (
           <View style={styles.tagGroupsContainer}>
-            <Text style={styles.sectionLabel}>
-              カテゴリから探す（複数選択可）
-            </Text>
+            <Text style={styles.sectionLabel}>カテゴリから探す（複数選択可）</Text>
 
             <View style={styles.categoriesRow}>
-              {CATEGORY_OPTIONS.map((cat) => {
+              {CATEGORY_OPTIONS.map(cat => {
                 const isActive = activeCategories.includes(cat);
                 return (
                   <Pressable
@@ -183,9 +168,7 @@ export default function SearchScreen() {
                     onPress={() => handleCategoryPress(cat)}
                     style={[
                       styles.categoryButton,
-                      isActive
-                        ? styles.categoryButtonActive
-                        : styles.categoryButtonInactive,
+                      isActive ? styles.categoryButtonActive : styles.categoryButtonInactive,
                     ]}
                   >
                     <Text
@@ -209,13 +192,10 @@ export default function SearchScreen() {
                   if (!tags) return null;
 
                   return (
-                    <View
-                      key={cat}
-                      style={index > 0 ? styles.subTagGroupMargin : undefined}
-                    >
+                    <View key={cat} style={index > 0 ? styles.subTagGroupMargin : undefined}>
                       <Text style={styles.subSectionLabel}>{cat}のタグ</Text>
                       <View style={styles.tagChipsWrapper}>
-                        {tags.map((tag) => (
+                        {tags.map(tag => (
                           <Pressable
                             key={tag}
                             onPress={() => handleTagPress(tag)}
@@ -247,27 +227,20 @@ export default function SearchScreen() {
         )}
       </View>
 
-      {(currentSearchText.length > 0 ||
-        selectedTags.length > 0 ||
-        activeCategories.length > 0) && (
+      {(currentSearchText.length > 0 || selectedTags.length > 0 || activeCategories.length > 0) && (
         <View style={styles.resultsSection}>
-          <Text style={styles.resultsTitle}>
-            {`検索結果：${searchResults.length}件`}
-          </Text>
+          <Text style={styles.resultsTitle}>{`検索結果：${searchResults.length}件`}</Text>
 
           {searchResults.length > 0 ? (
             <ScrollView showsVerticalScrollIndicator={false}>
               <View style={styles.categorySection}>
-                {searchResults.map((item) => (
+                {searchResults.map(item => (
                   <Pressable
                     key={item.id}
                     onPress={() => handleShopPress(item.id)}
                     style={styles.shopCard}
                   >
-                    <Image
-                      source={{ uri: item.imageUrl }}
-                      style={styles.shopImage}
-                    />
+                    <Image source={{ uri: item.imageUrl }} style={styles.shopImage} />
                     <View style={styles.shopInfo}>
                       <View style={styles.shopHeader}>
                         <Text style={styles.shopName}>{item.name}</Text>
@@ -289,9 +262,7 @@ export default function SearchScreen() {
             </ScrollView>
           ) : (
             <View style={styles.emptyState}>
-              <Text style={styles.emptyTitle}>
-                条件に合うお店が見つかりませんでした
-              </Text>
+              <Text style={styles.emptyTitle}>条件に合うお店が見つかりませんでした</Text>
             </View>
           )}
         </View>
@@ -309,10 +280,7 @@ export default function SearchScreen() {
                 scrollEnabled={false}
                 renderItem={({ item }) => (
                   <View style={styles.historyItem}>
-                    <Pressable
-                      onPress={() => handleSearch()}
-                      style={styles.historyTextContainer}
-                    >
+                    <Pressable onPress={() => handleSearch()} style={styles.historyTextContainer}>
                       <Text style={styles.historyText}>{item}</Text>
                     </Pressable>
                     <Pressable onPress={() => handleRemoveHistory(item)}>
@@ -322,9 +290,7 @@ export default function SearchScreen() {
                 )}
               />
             ) : (
-              <Text style={styles.emptyHistoryText}>
-                まだ検索履歴がありません
-              </Text>
+              <Text style={styles.emptyHistoryText}>まだ検索履歴がありません</Text>
             )}
           </View>
         )}
