@@ -46,11 +46,11 @@ export default [
     settings: {
       react: { version: 'detect' },
       'import/resolver': {
+        node: { extensions: ['.ts', '.tsx', '.js', '.jsx', '.json'] },
         typescript: {
           project: [path.resolve(process.cwd(), 'tsconfig.eslint.json')],
           alwaysTryTypes: true,
         },
-        node: { extensions: ['.ts', '.tsx', '.js', '.jsx', '.json'] },
       },
     },
     rules: {
@@ -58,7 +58,19 @@ export default [
       ...tsPlugin.configs.recommended.rules,
       ...reactHooks.configs.recommended.rules,
       'react/react-in-jsx-scope': 'off',
-      'import/no-unresolved': 'error',
+      'import/no-unresolved': [
+        'error',
+        {
+          ignore: [
+            '^next/',
+            'react-native-svg',
+            '^expo',
+            '^@expo/',
+            'react-native',
+            '^react-native/',
+          ],
+        },
+      ],
       'import/extensions': [
         'error',
         'ignorePackages',
@@ -105,11 +117,11 @@ export default [
     settings: {
       react: { version: 'detect' },
       'import/resolver': {
+        node: { extensions: ['.ts', '.tsx', '.js', '.jsx', '.json'] },
         typescript: {
           project: [path.resolve(process.cwd(), 'apps/web/tsconfig.json')],
           alwaysTryTypes: true,
         },
-        node: { extensions: ['.ts', '.tsx', '.js', '.jsx', '.json'] },
       },
     },
     rules: {
@@ -123,12 +135,12 @@ export default [
     plugins: { 'react-native': reactNative },
     settings: {
       'import/resolver': {
+        node: { extensions: ['.ts', '.tsx', '.js', '.jsx', '.json'] },
         typescript: {
           // tsconfig の paths (= @, ~) を使わせる
           project: [path.resolve(process.cwd(), 'apps/mobile/tsconfig.json')],
           alwaysTryTypes: true,
         },
-        node: { extensions: ['.ts', '.tsx', '.js', '.jsx', '.json'] },
       },
       react: { version: 'detect' },
     },
