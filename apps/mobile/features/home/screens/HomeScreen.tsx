@@ -24,6 +24,10 @@ const BUDGET_LABEL: Record<Shop['budget'], string> = {
 
 const KEY_EXTRACTOR = (item: Shop) => item.id;
 
+// Hero title SVG viewBox dimensions (from hero-title.svg viewBox="160 330 780 270")
+const HERO_TITLE_VIEWBOX_WIDTH = 780;
+const HERO_TITLE_VIEWBOX_HEIGHT = 270;
+
 export default function HomeScreen() {
   const router = useRouter();
   const [selectedCategory, setSelectedCategory] = useState<CategoryFilter>(CATEGORY_ALL);
@@ -321,7 +325,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   heroTitleWrap: {
-    aspectRatio: 780 / 270,
+    aspectRatio: HERO_TITLE_VIEWBOX_WIDTH / HERO_TITLE_VIEWBOX_HEIGHT,
     marginBottom: 6,
     marginTop: 12,
     width: '100%',
