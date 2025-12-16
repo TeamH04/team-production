@@ -1,7 +1,7 @@
 import { palette } from '@/constants/palette';
-import { SHOPS, type Shop } from '@/features/home/data/shops';
+import { CATEGORIES, SHOPS, type Shop } from '@/features/home/data/shops';
 import { useRouter } from 'expo-router';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   FlatList,
   Image,
@@ -20,60 +20,105 @@ const BUDGET_LABEL: Record<Shop['budget'], string> = {
 };
 export default function SearchScreen() {
   const router = useRouter();
+  const [userTypedText, setUserTypedText] = useState('');
   const [searchText, setSearchText] = useState('');
-  const [currentSearch, setCurrentSearch] = useState('');
+  const [currentSearchText, setCurrentSearchText] = useState('');
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [searchHistory, setSearchHistory] = useState<string[]>([]);
 
-  // 検索結果を店名とタグで分けて分類
-  const { shopNameResults, tagResults } = useMemo(() => {
-    if (!currentSearch.trim()) {
-      return { shopNameResults: [], tagResults: [] };
-    }
-    const query = currentSearch.trim().toLowerCase();
+  useEffect(() => {
+    const tagsText = selectedTags.join('・');
+    const newSearchText = [userTypedText, tagsText].filter(Boolean).join('・');
+    setSearchText(newSearchText);
+  }, [userTypedText, selectedTags]);
 
-    const shopNameResults: Shop[] = [];
-    const tagResults: Shop[] = [];
+  const handleSearch = () => {
+    // 検索条件をセット
+    setCurrentSearchText(userTypedText);
 
-    SHOPS.forEach(shop => {
-      const matchesName = shop.name.toLowerCase().includes(query);
-      const matchesTags = shop.tags.some(tag => tag.toLowerCase().includes(query));
-      const matchesDesc = shop.description.toLowerCase().includes(query);
-      const matchesCategory = shop.category.toLowerCase().includes(query);
-      const matchesMenu = shop.menu?.some(item => item.name.toLowerCase().includes(query)) ?? false;
-
-      if (matchesName) {
-        shopNameResults.push(shop);
-      } else if (matchesTags || matchesDesc || matchesCategory || matchesMenu) {
-        tagResults.push(shop);
-      }
-    });
-
-    return { shopNameResults, tagResults };
-  }, [currentSearch]);
-
-  const handleSearch = (query: string) => {
-    const trimmedQuery = query.trim();
-    if (trimmedQuery) {
-      setCurrentSearch(trimmedQuery);
-      // 新しい検索をhistoryの先頭に追加（重複は削除）
+    // 検索履歴に追加
+    if (searchText) {
+      const trimmedQuery = searchText.trim();
       const filtered = searchHistory.filter(h => h !== trimmedQuery);
       setSearchHistory([trimmedQuery, ...filtered]);
-    } else {
-      // 空欄の場合は検索結果をクリア
-      setCurrentSearch('');
     }
+
+    // 入力と選択をクリア
+    setUserTypedText('');
+    setSelectedTags([]);
   };
 
   const handleRemoveHistory = (item: string) => {
     setSearchHistory(searchHistory.filter(h => h !== item));
   };
 
+  const handleTagPress = (tag: string) => {
+    setSelectedTags(prev => (prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]));
+  };
+
   const handleShopPress = (shopId: string) => {
     router.push({ pathname: '/shop/[id]', params: { id: shopId } });
   };
 
+  const CATEGORY_OPTIONS = useMemo(() => [...CATEGORIES].sort(), []);
+  // タグ一覧をカテゴリごとに一意化して抽出（カテゴリ別表示）
+  const TAGS_BY_CATEGORY = useMemo(() => {
+    const m = new Map<string, Set<string>>();
+    SHOPS.forEach(shop => {
+      const cat = shop.category;
+      if (!m.has(cat)) m.set(cat, new Set());
+      shop.tags.forEach(t => m.get(cat)!.add(t));
+    });
+    const out: Record<string, string[]> = {};
+    Array.from(m.entries()).forEach(([cat, s]) => (out[cat] = Array.from(s).sort()));
+    return out;
+  }, []);
+
+  const searchResults = useMemo(() => {
+    const q = currentSearchText.trim().toLowerCase();
+    const tags = selectedTags.map(t => t.toLowerCase());
+
+    if (q.length === 0 && tags.length === 0) {
+      return [];
+    }
+
+    return SHOPS.filter(shop => {
+      const matchesText =
+        q.length > 0
+          ? shop.name.toLowerCase().includes(q) ||
+            shop.description.toLowerCase().includes(q) ||
+            shop.category.toLowerCase().includes(q) ||
+            (shop.menu?.some(item => item.name.toLowerCase().includes(q)) ?? false)
+          : true;
+
+      const matchesTags =
+        tags.length > 0
+          ? tags.some(
+              tag =>
+                shop.tags.some(shopTag => shopTag.toLowerCase().includes(tag)) ||
+                shop.category.toLowerCase().includes(tag)
+            )
+          : true;
+
+      if (q.length > 0 && tags.length > 0) {
+        return matchesText && matchesTags;
+      }
+      if (q.length > 0) {
+        return matchesText;
+      }
+      if (tags.length > 0) {
+        return matchesTags;
+      }
+      return false;
+    });
+  }, [currentSearchText, selectedTags]);
+
   return (
-    <View style={styles.container}>
+    <ScrollView
+      style={styles.scrollView}
+      contentContainerStyle={styles.containerContent}
+      keyboardShouldPersistTaps='handled'
+    >
       {/* タイトル */}
       <View style={styles.headerTextBlock}>
         <Text style={styles.screenTitle}>お店を検索</Text>
@@ -88,95 +133,123 @@ export default function SearchScreen() {
               placeholder='お店名・雰囲気・タグで検索'
               placeholderTextColor={palette.secondaryText}
               value={searchText}
-              onChangeText={setSearchText}
-              onSubmitEditing={() => handleSearch(searchText)}
+              onChangeText={setUserTypedText}
+              onSubmitEditing={() => handleSearch()}
             />
             <Pressable
               onPress={() => {
-                setSearchText('');
-                setCurrentSearch('');
+                setUserTypedText('');
+                setSelectedTags([]);
               }}
               style={[styles.clearButton, !searchText && styles.clearButtonHidden]}
             >
               <Text style={styles.clearButtonText}>✕</Text>
             </Pressable>
           </View>
-          <Pressable onPress={() => handleSearch(searchText)} style={styles.searchButton}>
+          <Pressable onPress={() => handleSearch()} style={styles.searchButton}>
             <Text style={styles.searchButtonText}>検索する</Text>
           </Pressable>
         </View>
+
+        {/* タグチップ */}
+        {currentSearchText.length === 0 && (
+          <View style={styles.tagGroupsContainer}>
+            {CATEGORY_OPTIONS.map(cat => {
+              const tags = TAGS_BY_CATEGORY[cat] ?? [];
+              if (tags.length === 0) return null;
+              return (
+                <View key={cat} style={styles.tagGroup}>
+                  <Pressable
+                    onPress={() => {
+                      handleTagPress(cat);
+                    }}
+                    style={[
+                      styles.categoryChip,
+                      selectedTags.includes(cat)
+                        ? styles.categoryChipSelected
+                        : styles.categoryChipUnselected,
+                    ]}
+                  >
+                    <Text
+                      style={
+                        selectedTags.includes(cat)
+                          ? styles.categoryChipTextSelected
+                          : styles.categoryChipTextUnselected
+                      }
+                    >
+                      {cat}
+                    </Text>
+                  </Pressable>
+                  <View style={styles.tagChipsContainer}>
+                    {tags.map(tag => (
+                      <Pressable
+                        key={tag}
+                        onPress={() => {
+                          handleTagPress(tag);
+                        }}
+                        style={[
+                          styles.tagChipSmall,
+                          selectedTags.includes(tag)
+                            ? styles.tagChipSmallSelected
+                            : styles.tagChipSmallUnselected,
+                        ]}
+                      >
+                        <Text
+                          style={
+                            selectedTags.includes(tag)
+                              ? styles.tagChipSmallTextSelected
+                              : styles.tagChipSmallTextUnselected
+                          }
+                        >
+                          {tag}
+                        </Text>
+                      </Pressable>
+                    ))}
+                  </View>
+                </View>
+              );
+            })}
+          </View>
+        )}
       </View>
 
       {/* 検索結果の表示 */}
-      {currentSearch && (
+      {(currentSearchText.length > 0 || selectedTags.length > 0) && (
         <View style={styles.resultsSection}>
           <Text style={styles.resultsTitle}>
-            「{currentSearch}」の検索結果：{shopNameResults.length + tagResults.length}件
+            {`「${[currentSearchText, ...selectedTags]
+              .filter(Boolean)
+              .join(' ')}」の検索結果：${searchResults.length}件`}
           </Text>
 
-          {shopNameResults.length > 0 || tagResults.length > 0 ? (
+          {searchResults.length > 0 ? (
             <ScrollView showsVerticalScrollIndicator={false}>
-              {/* 店名で見つけたもの */}
-              {shopNameResults.length > 0 && (
-                <View style={styles.categorySection}>
-                  <Text style={styles.categoryTitle}>店名で見つかったお店</Text>
-                  {shopNameResults.map(item => (
-                    <Pressable
-                      key={item.id}
-                      onPress={() => handleShopPress(item.id)}
-                      style={styles.shopCard}
-                    >
-                      <Image source={{ uri: item.imageUrl }} style={styles.shopImage} />
-                      <View style={styles.shopInfo}>
-                        <View style={styles.shopHeader}>
-                          <Text style={styles.shopName}>{item.name}</Text>
-                          <View style={styles.ratingBadge}>
-                            <Text style={styles.ratingText}>{`★ ${item.rating.toFixed(1)}`}</Text>
-                          </View>
+              <View style={styles.categorySection}>
+                {searchResults.map(item => (
+                  <Pressable
+                    key={item.id}
+                    onPress={() => handleShopPress(item.id)}
+                    style={styles.shopCard}
+                  >
+                    <Image source={{ uri: item.imageUrl }} style={styles.shopImage} />
+                    <View style={styles.shopInfo}>
+                      <View style={styles.shopHeader}>
+                        <Text style={styles.shopName}>{item.name}</Text>
+                        <View style={styles.ratingBadge}>
+                          <Text style={styles.ratingText}>{`★ ${item.rating.toFixed(1)}`}</Text>
                         </View>
-                        <Text style={styles.shopMeta}>
-                          {item.category} • 徒歩{item.distanceMinutes}分 • 予算{' '}
-                          {BUDGET_LABEL[item.budget]}
-                        </Text>
-                        <Text style={styles.shopDescription} numberOfLines={2}>
-                          {item.description}
-                        </Text>
                       </View>
-                    </Pressable>
-                  ))}
-                </View>
-              )}
-
-              {/* タグで見つけたもの */}
-              {tagResults.length > 0 && (
-                <View style={styles.categorySection}>
-                  <Text style={styles.categoryTitle}>タグ・説明で見つかったお店</Text>
-                  {tagResults.map(item => (
-                    <Pressable
-                      key={item.id}
-                      onPress={() => handleShopPress(item.id)}
-                      style={styles.shopCard}
-                    >
-                      <Image source={{ uri: item.imageUrl }} style={styles.shopImage} />
-                      <View style={styles.shopInfo}>
-                        <View style={styles.shopHeader}>
-                          <Text style={styles.shopName}>{item.name}</Text>
-                          <View style={styles.ratingBadge}>
-                            <Text style={styles.ratingText}>{`★ ${item.rating.toFixed(1)}`}</Text>
-                          </View>
-                        </View>
-                        <Text style={styles.shopMeta}>
-                          {item.category} • 徒歩{item.distanceMinutes}分 • 予算{' '}
-                          {BUDGET_LABEL[item.budget]}
-                        </Text>
-                        <Text style={styles.shopDescription} numberOfLines={2}>
-                          {item.description}
-                        </Text>
-                      </View>
-                    </Pressable>
-                  ))}
-                </View>
-              )}
+                      <Text style={styles.shopMeta}>
+                        {item.category} • 徒歩{item.distanceMinutes}分 • 予算{' '}
+                        {BUDGET_LABEL[item.budget]}
+                      </Text>
+                      <Text style={styles.shopDescription} numberOfLines={2}>
+                        {item.description}
+                      </Text>
+                    </View>
+                  </Pressable>
+                ))}
+              </View>
             </ScrollView>
           ) : (
             <View style={styles.emptyState}>
@@ -187,7 +260,7 @@ export default function SearchScreen() {
       )}
 
       {/* 検索履歴 */}
-      {!currentSearch && (
+      {currentSearchText.length === 0 && selectedTags.length === 0 && (
         <View style={styles.historySection}>
           <Text style={styles.historyTitle}>検索履歴</Text>
           {searchHistory.length > 0 ? (
@@ -197,7 +270,7 @@ export default function SearchScreen() {
               scrollEnabled={false}
               renderItem={({ item }) => (
                 <View style={styles.historyItem}>
-                  <Pressable onPress={() => handleSearch(item)} style={styles.historyTextContainer}>
+                  <Pressable onPress={() => handleSearch()} style={styles.historyTextContainer}>
                     <Text style={styles.historyText}>{item}</Text>
                   </Pressable>
                   <Pressable onPress={() => handleRemoveHistory(item)}>
@@ -211,20 +284,40 @@ export default function SearchScreen() {
           )}
         </View>
       )}
-    </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
+  categoryChip: {
+    alignSelf: 'flex-start',
+    borderRadius: 999,
+    borderWidth: 1,
+    marginBottom: 8,
+    marginRight: 12,
+    paddingHorizontal: 18,
+    paddingVertical: 10,
+  },
+  categoryChipSelected: {
+    backgroundColor: palette.primaryText,
+    borderColor: palette.primaryText,
+  },
+  categoryChipTextSelected: {
+    color: palette.surface,
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  categoryChipTextUnselected: {
+    color: palette.chipTextInactive,
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  categoryChipUnselected: {
+    backgroundColor: palette.surface,
+    borderColor: palette.border,
+  },
   categorySection: {
     marginBottom: 24,
-  },
-  categoryTitle: {
-    color: palette.primaryText,
-    fontSize: 13,
-    fontWeight: '600',
-    marginBottom: 12,
-    marginTop: 8,
   },
   clearButton: {
     alignItems: 'center',
@@ -241,9 +334,8 @@ const styles = StyleSheet.create({
     color: palette.secondaryText,
     fontSize: 20,
   },
-  container: {
+  containerContent: {
     backgroundColor: palette.background,
-    flex: 1,
     paddingHorizontal: 24,
     paddingTop: 24,
   },
@@ -305,9 +397,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     padding: 8,
   },
-  resultsSection: {
-    flex: 1,
-  },
+  resultsSection: {},
   resultsTitle: {
     color: palette.primaryText,
     fontSize: 14,
@@ -318,6 +408,10 @@ const styles = StyleSheet.create({
     color: palette.primaryText,
     fontSize: 28,
     fontWeight: '700',
+  },
+  scrollView: {
+    backgroundColor: palette.background,
+    flex: 1,
   },
   searchBarContainer: {
     marginBottom: 32,
@@ -402,5 +496,41 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 14,
     fontWeight: '600',
+  },
+  tagChipSmall: {
+    borderRadius: 999,
+    marginRight: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+  tagChipSmallSelected: {
+    backgroundColor: palette.primaryText,
+  },
+  tagChipSmallTextSelected: {
+    color: palette.surface,
+    fontSize: 12,
+  },
+  tagChipSmallTextUnselected: {
+    color: palette.tertiaryText,
+    fontSize: 12,
+  },
+  tagChipSmallUnselected: {
+    backgroundColor: palette.tagSurface,
+  },
+  tagChipsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 16,
+  },
+  tagGroup: {
+    borderBottomColor: palette.border,
+    borderBottomWidth: 1,
+    marginBottom: 8,
+    paddingBottom: 8,
+  },
+  tagGroupsContainer: {
+    marginBottom: 12,
+    marginTop: 12,
   },
 });

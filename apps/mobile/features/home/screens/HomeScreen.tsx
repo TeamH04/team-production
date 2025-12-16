@@ -2,18 +2,14 @@ import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { FlatList } from 'react-native';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, { useAnimatedRef } from 'react-native-reanimated';
 
 import { palette } from '@/constants/palette';
-import { CATEGORIES, SHOPS, type Shop, type ShopCategory } from '@/features/home/data/shops';
+import { SHOPS, type Shop } from '@/features/home/data/shops';
 
 const PAGE_SIZE = 10;
-const CATEGORY_ALL = 'すべて';
-
-type CategoryFilter = ShopCategory | typeof CATEGORY_ALL;
-
-const CATEGORY_OPTIONS: CategoryFilter[] = [CATEGORY_ALL, ...[...CATEGORIES].sort()];
+// Categories removed from Home screen; use Search screen for category/tag browsing
 
 const BUDGET_LABEL: Record<Shop['budget'], string> = {
   $: '¥',
@@ -25,19 +21,13 @@ const KEY_EXTRACTOR = (item: Shop) => item.id;
 
 export default function HomeScreen() {
   const router = useRouter();
-  const [selectedCategory, setSelectedCategory] = useState<CategoryFilter>(CATEGORY_ALL);
+  // category selection removed
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const loadMoreTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const listRef = useAnimatedRef<FlatList<Shop>>();
 
-  const filteredShops = useMemo(() => {
-    return SHOPS.filter(shop => {
-      const matchesCategory =
-        selectedCategory === CATEGORY_ALL || shop.category === selectedCategory;
-      return matchesCategory;
-    });
-  }, [selectedCategory]);
+  const filteredShops = useMemo(() => SHOPS, []);
 
   useEffect(() => {
     if (loadMoreTimeout.current) {
@@ -48,7 +38,7 @@ export default function HomeScreen() {
     setVisibleCount(
       filteredShops.length === 0 ? PAGE_SIZE : Math.min(PAGE_SIZE, filteredShops.length)
     );
-  }, [filteredShops.length, selectedCategory]);
+  }, [filteredShops.length]);
 
   useEffect(() => {
     return () => {
@@ -82,9 +72,7 @@ export default function HomeScreen() {
     }, 350);
   }, [filteredShops.length, hasMoreResults, isLoadingMore]);
 
-  const handleCategoryPress = useCallback((category: CategoryFilter) => {
-    setSelectedCategory(category);
-  }, []);
+  // handleCategoryPress removed; categories shown on Search screen
 
   const renderShop = useCallback(
     ({ item }: { item: Shop }) => {
@@ -111,13 +99,7 @@ export default function HomeScreen() {
                 <Text style={styles.metaText}>{`予算 ${BUDGET_LABEL[item.budget]}`}</Text>
               </View>
               <Text style={styles.cardDescription}>{item.description}</Text>
-              <View style={styles.tagRow}>
-                {item.tags.map(tag => (
-                  <View key={tag} style={styles.tagPill}>
-                    <Text style={styles.tagText}>{tag}</Text>
-                  </View>
-                ))}
-              </View>
+              {/* Tags removed from Home screen — use Search screen for tag browsing */}
             </View>
           </Pressable>
         </View>
@@ -132,44 +114,13 @@ export default function HomeScreen() {
         <View style={styles.headerTextBlock}>
           <Text style={styles.screenTitle}>次に通いたくなるお店を見つけよう</Text>
           <Text style={styles.screenSubtitle}>
-            カテゴリを切り替えて、行きつけにしたいスポットを探せます。
+            あなたの行きつけになりそうなお店を見つけましょう。
           </Text>
         </View>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.categoryScrollContent}
-          style={styles.categoryScroll}
-        >
-          {CATEGORY_OPTIONS.map(category => {
-            const isSelected = selectedCategory === category;
-            return (
-              <Pressable
-                key={category}
-                onPress={() => handleCategoryPress(category)}
-                style={[
-                  styles.categoryChip,
-                  isSelected ? styles.categoryChipSelected : styles.categoryChipUnselected,
-                  isSelected ? styles.shadowStrong : styles.shadowLight,
-                ]}
-              >
-                <Text
-                  style={[
-                    styles.categoryChipText,
-                    isSelected
-                      ? styles.categoryChipTextSelected
-                      : styles.categoryChipTextUnselected,
-                  ]}
-                >
-                  {category}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </ScrollView>
+        {/* Categories removed from Home screen; use Search screen */}
       </View>
     ),
-    [handleCategoryPress, selectedCategory]
+    []
   );
 
   const renderEmptyState = useMemo(
@@ -249,38 +200,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     marginRight: 12,
   },
-  categoryChip: {
-    borderRadius: 999,
-    borderWidth: 1,
-    marginRight: 12,
-    paddingHorizontal: 18,
-    paddingVertical: 10,
-  },
-  categoryChipSelected: {
-    backgroundColor: palette.primaryText,
-    borderColor: palette.primaryText,
-  },
-  categoryChipText: {
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  categoryChipTextSelected: {
-    color: palette.surface,
-  },
-  categoryChipTextUnselected: {
-    color: palette.chipTextInactive,
-  },
-  categoryChipUnselected: {
-    backgroundColor: palette.surface,
-    borderColor: palette.border,
-  },
-  categoryScroll: {
-    marginBottom: 4,
-  },
-  categoryScrollContent: {
-    alignItems: 'center',
-    paddingRight: 8,
-  },
+
   content: {
     paddingBottom: 32,
     paddingHorizontal: 24,
@@ -351,37 +271,5 @@ const styles = StyleSheet.create({
     color: palette.primaryText,
     fontSize: 28,
     fontWeight: '700',
-  },
-  shadowLight: {
-    elevation: 3,
-    shadowColor: palette.shadow,
-    shadowOffset: { height: 6, width: 0 },
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
-  },
-  shadowStrong: {
-    elevation: 5,
-    shadowColor: palette.shadow,
-    shadowOffset: { height: 8, width: 0 },
-    shadowOpacity: 0.12,
-    shadowRadius: 12,
-  },
-  tagPill: {
-    backgroundColor: palette.tagSurface,
-    borderRadius: 999,
-    marginBottom: 8,
-    marginRight: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-  },
-  tagRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    marginTop: 14,
-  },
-  tagText: {
-    color: palette.tertiaryText,
-    fontSize: 12,
-    fontWeight: '600',
   },
 });
