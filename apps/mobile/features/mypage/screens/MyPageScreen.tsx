@@ -171,7 +171,7 @@ export default function MyPageScreen() {
                     <Text style={styles.rowCardSub}>メニュー: {review.menuItemName}</Text>
                   ) : null}
 
-                  <Text style={styles.reviewText}>{review.comment}</Text>
+                  {review.comment ? <Text style={styles.reviewText}>{review.comment}</Text> : null}
 
                   {/* レビューフッター（編集・削除のアクション：展開時のみ表示） */}
                   {isExpanded ? (
