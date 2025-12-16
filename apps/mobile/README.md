@@ -62,6 +62,9 @@
   - 将来のネイティブ（スタンドアロン）向けには `shopmobile://auth/callback` のスキームも登録可能です。
 - プロバイダー設定（Authentication > Providers）
   - Google / Apple を有効化し、クライアント ID などを設定してください。
+- iOS の Apple サインイン
+  - 端末では `expo-apple-authentication` を使ってネイティブにサインインし、取得した `identityToken + nonce` を Supabase の `signInWithIdToken` (provider: 'apple') に渡しています。
+  - App Store 配布時は Apple Developer コンソールで Services ID / Team ID / Key ID / 秘密鍵を設定し、`app.json` の `ios.bundleIdentifier` と一致させてください。Supabase のリダイレクト URL には `https://auth.expo.dev/...`（開発）と `shopmobile://auth/callback`（スタンドアロン）を登録します。
 
 トラブルシューティング
 
@@ -71,7 +74,7 @@
 - `crypto.subtle.digest is not a function`: `expo-standard-web-crypto` を利用しています（内部で `expo-random` が必要）。
 - サインイン前に Supabase の `getUser()` で `AuthSessionMissingError` が出る場合がありますが、アプリ側で未ログインとして扱うようにしています（例外発生時もログアウト状態として継続します）。
 
-## Safe Area の方針（2025-10-14 更新）
+## Safe Area の方針
 
 - ルート `app/_layout.tsx` は `SafeAreaProvider` のみを配置し、個々の画面では不要なパディングをしません。
 - タブ配下 `app/(tabs)/_layout.tsx` は `react-native-safe-area-context` の `SafeAreaView` を使用し、`edges={['top','left','right']}` を適用しています。

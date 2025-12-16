@@ -1,22 +1,12 @@
 import { Image } from 'expo-image';
-import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { FlatList } from 'react-native';
-import {
-  ActivityIndicator,
-  Alert,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Animated, { useAnimatedRef } from 'react-native-reanimated';
 
 import { palette } from '@/constants/palette';
-import { CATEGORIES, SHOPS, type Shop, type ShopCategory } from '@/features/home/data/shops';
-import { getSupabase } from '@/lib/supabase';
+import { CATEGORIES, SHOPS, type Shop, type ShopCategory } from '@team/shop-core';
 
 const PAGE_SIZE = 10;
 const CATEGORY_ALL = 'すべて';
@@ -35,46 +25,19 @@ const KEY_EXTRACTOR = (item: Shop) => item.id;
 
 export default function HomeScreen() {
   const router = useRouter();
-  const params = useLocalSearchParams<{ q?: string }>();
-  const [searchQuery, setSearchQuery] = useState('');
-  const searchInputRef = useRef<TextInput | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<CategoryFilter>(CATEGORY_ALL);
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const loadMoreTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const listRef = useAnimatedRef<FlatList<Shop>>();
 
-  const normalizedQuery = useMemo(() => searchQuery.trim().toLowerCase(), [searchQuery]);
-
   const filteredShops = useMemo(() => {
     return SHOPS.filter(shop => {
       const matchesCategory =
         selectedCategory === CATEGORY_ALL || shop.category === selectedCategory;
-      const matchesQuery =
-        normalizedQuery.length === 0 ||
-        shop.name.toLowerCase().includes(normalizedQuery) ||
-        shop.tags.some(tag => tag.toLowerCase().includes(normalizedQuery)) ||
-        shop.description.toLowerCase().includes(normalizedQuery);
-      return matchesCategory && matchesQuery;
+      return matchesCategory;
     });
-  }, [normalizedQuery, selectedCategory]);
-
-  const prevQueryRef = useRef<string | undefined>(undefined);
-  useEffect(() => {
-    const q = params?.q;
-    if (typeof q === 'string' && q.trim().length > 0 && prevQueryRef.current !== q) {
-      prevQueryRef.current = q;
-      setSearchQuery(q);
-      setVisibleCount(PAGE_SIZE);
-      // 新しいクエリが適用されたときに先頭までスクロールする
-      try {
-        const listCurrent = (listRef as unknown as { current?: FlatList<Shop> | null }).current;
-        listCurrent?.scrollToOffset?.({ offset: 0, animated: true });
-      } catch {
-        // 利用不可なら無視
-      }
-    }
-  }, [params?.q, listRef]);
+  }, [selectedCategory]);
 
   useEffect(() => {
     if (loadMoreTimeout.current) {
@@ -85,7 +48,7 @@ export default function HomeScreen() {
     setVisibleCount(
       filteredShops.length === 0 ? PAGE_SIZE : Math.min(PAGE_SIZE, filteredShops.length)
     );
-  }, [filteredShops.length, normalizedQuery, selectedCategory]);
+  }, [filteredShops.length, selectedCategory]);
 
   useEffect(() => {
     return () => {
@@ -120,18 +83,8 @@ export default function HomeScreen() {
   }, [filteredShops.length, hasMoreResults, isLoadingMore]);
 
   const handleCategoryPress = useCallback((category: CategoryFilter) => {
-    setSelectedCategory(current => (current === category ? CATEGORY_ALL : category));
+    setSelectedCategory(category);
   }, []);
-
-  const handleLogout = useCallback(async () => {
-    try {
-      await getSupabase().auth.signOut();
-      router.replace('/login' as Href);
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Unknown error';
-      Alert.alert('ログアウトに失敗しました', message);
-    }
-  }, [router]);
 
   const renderShop = useCallback(
     ({ item }: { item: Shop }) => {
@@ -160,28 +113,9 @@ export default function HomeScreen() {
               <Text style={styles.cardDescription}>{item.description}</Text>
               <View style={styles.tagRow}>
                 {item.tags.map(tag => (
-                  <Pressable
-                    key={tag}
-                    style={styles.tagPill}
-                    accessibilityLabel={`タグ ${tag} で検索`}
-                    onPress={() => {
-                      setSearchQuery(tag);
-                      setVisibleCount(PAGE_SIZE);
-                      // ShopDetailのタグタップと挙動を揃えるためにルートパラメータを同期する
-                      router.setParams({ q: tag });
-                      try {
-                        const listCurrent = (
-                          listRef as unknown as { current?: FlatList<Shop> | null }
-                        ).current;
-                        listCurrent?.scrollToOffset?.({ offset: 0, animated: true });
-                      } catch {
-                        // ignore
-                      }
-                      searchInputRef.current?.focus();
-                    }}
-                  >
+                  <View key={tag} style={styles.tagPill}>
                     <Text style={styles.tagText}>{tag}</Text>
-                  </Pressable>
+                  </View>
                 ))}
               </View>
             </View>
@@ -189,35 +123,17 @@ export default function HomeScreen() {
         </View>
       );
     },
-    [router, listRef, searchInputRef]
+    [router]
   );
 
   const renderListHeader = useMemo(
     () => (
       <View style={styles.headerContainer}>
-        <View style={styles.logoutRow}>
-          <Pressable onPress={handleLogout} hitSlop={8}>
-            <Text style={styles.logoutText}>ログアウト</Text>
-          </Pressable>
-        </View>
         <View style={styles.headerTextBlock}>
           <Text style={styles.screenTitle}>次に通いたくなるお店を見つけよう</Text>
           <Text style={styles.screenSubtitle}>
-            気分に合わせてカテゴリやキーワードで、行きつけにしたいスポットを探せます。
+            カテゴリを切り替えて、行きつけにしたいスポットを探せます。
           </Text>
-        </View>
-        <View style={[styles.searchWrapper, styles.shadowLight]}>
-          <TextInput
-            ref={searchInputRef}
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-            placeholder='お店名・雰囲気・タグで検索'
-            placeholderTextColor='#9CA3AF'
-            style={styles.searchInput}
-            autoCorrect={false}
-            autoCapitalize='none'
-            clearButtonMode='while-editing'
-          />
         </View>
         <ScrollView
           horizontal
@@ -253,7 +169,7 @@ export default function HomeScreen() {
         </ScrollView>
       </View>
     ),
-    [handleCategoryPress, handleLogout, searchQuery, selectedCategory]
+    [handleCategoryPress, selectedCategory]
   );
 
   const renderEmptyState = useMemo(
@@ -396,15 +312,6 @@ const styles = StyleSheet.create({
   headerTextBlock: {
     marginBottom: 16,
   },
-  logoutRow: {
-    alignItems: 'flex-end',
-    marginBottom: 8,
-  },
-  logoutText: {
-    color: palette.link,
-    fontSize: 12,
-    fontWeight: '500',
-  },
   metaRow: {
     alignItems: 'center',
     flexDirection: 'row',
@@ -444,17 +351,6 @@ const styles = StyleSheet.create({
     color: palette.primaryText,
     fontSize: 28,
     fontWeight: '700',
-  },
-  searchInput: {
-    color: palette.primaryText,
-    fontSize: 16,
-  },
-  searchWrapper: {
-    backgroundColor: palette.surface,
-    borderRadius: 24,
-    marginBottom: 20,
-    paddingHorizontal: 20,
-    paddingVertical: 14,
   },
   shadowLight: {
     elevation: 3,

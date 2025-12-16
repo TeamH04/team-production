@@ -1,4 +1,5 @@
-﻿import { Tabs } from 'expo-router';
+﻿import { palette } from '@/constants/palette';
+import { Tabs } from 'expo-router';
 import React from 'react';
 import { Platform, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -37,6 +38,22 @@ export default function TabLayout() {
           }}
         />
         <Tabs.Screen
+          name='search'
+          options={{
+            title: '検索',
+            tabBarIcon: ({ color }) => (
+              <IconSymbol size={28} name='magnifyingglass' color={color} />
+            ),
+          }}
+        />
+        <Tabs.Screen
+          name='favorites'
+          options={{
+            title: 'お気に入り',
+            tabBarIcon: ({ color }) => <IconSymbol size={28} name='heart.fill' color={color} />,
+          }}
+        />
+        <Tabs.Screen
           name='mypage'
           options={{
             title: 'マイページ',
@@ -52,6 +69,8 @@ export default function TabLayout() {
 
 const styles = StyleSheet.create({
   container: {
+    // make top safe-area explicit white so status-bar area is white on all devices
+    backgroundColor: palette.surface,
     flex: 1,
   },
 });
