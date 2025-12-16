@@ -31,8 +31,9 @@ export default [
       parserOptions: {
         ecmaVersion: 'latest',
         sourceType: 'module',
-        project: true,
+        project: path.resolve(process.cwd(), 'tsconfig.eslint.json'),
         tsconfigRootDir: process.cwd(),
+        noWarnOnMultipleProjects: true,
       },
       globals: { ...globals.browser, ...globals.node },
     },
@@ -46,12 +47,7 @@ export default [
       react: { version: 'detect' },
       'import/resolver': {
         typescript: {
-          project: [
-            path.resolve(process.cwd(), 'tsconfig.json'),
-            path.resolve(process.cwd(), 'apps/mobile/tsconfig.json'),
-            path.resolve(process.cwd(), 'apps/web/tsconfig.json'),
-            path.resolve(process.cwd(), 'packages/shop-core/tsconfig.json'),
-          ],
+          project: [path.resolve(process.cwd(), 'tsconfig.eslint.json')],
           alwaysTryTypes: true,
         },
         node: { extensions: ['.ts', '.tsx', '.js', '.jsx', '.json'] },

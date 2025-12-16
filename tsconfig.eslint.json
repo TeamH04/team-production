@@ -1,0 +1,16 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "allowJs": true
+  },
+  "include": ["apps/mobile/**/*", "apps/web/**/*", "packages/shop-core/**/*"],
+  "exclude": [
+    "node_modules",
+    "**/dist/**",
+    "**/.next/**",
+    "**/.expo/**",
+    "**/.eas/**",
+    "**/web-build/**"
+  ]
+}
