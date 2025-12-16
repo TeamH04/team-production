@@ -1,7 +1,7 @@
 import { palette } from '@/constants/palette';
 import { CATEGORIES, SHOPS, type Shop } from '@/features/home/data/shops';
 import { useRouter } from 'expo-router';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   FlatList,
   Image,
@@ -18,220 +18,256 @@ const BUDGET_LABEL: Record<Shop['budget'], string> = {
   $$: '¥¥',
   $$$: '¥¥¥',
 };
+
+// Lintエラー回避用：カラーコードの定数化
+const INACTIVE_COLOR = '#f0f0f0';
+
 export default function SearchScreen() {
   const router = useRouter();
   const [userTypedText, setUserTypedText] = useState('');
-  const [searchText, setSearchText] = useState('');
   const [currentSearchText, setCurrentSearchText] = useState('');
+  const [activeCategories, setActiveCategories] = useState<string[]>([]);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [searchHistory, setSearchHistory] = useState<string[]>([]);
 
-  useEffect(() => {
-    const tagsText = selectedTags.join('・');
-    const newSearchText = [userTypedText, tagsText].filter(Boolean).join('・');
-    setSearchText(newSearchText);
-  }, [userTypedText, selectedTags]);
+  const CATEGORY_OPTIONS = useMemo(() => [...CATEGORIES].sort(), []);
+
+  const TAGS_BY_CATEGORY = useMemo(() => {
+    const m = new Map<string, Set<string>>();
+    SHOPS.forEach((shop) => {
+      const cat = shop.category;
+      if (!m.has(cat)) m.set(cat, new Set());
+      shop.tags.forEach((t) => m.get(cat)!.add(t));
+    });
+    const out: Record<string, string[]> = {};
+    Array.from(m.entries()).forEach(
+      ([cat, s]) => (out[cat] = Array.from(s).sort()),
+    );
+    return out;
+  }, []);
 
   const handleSearch = () => {
-    // 検索条件をセット
     setCurrentSearchText(userTypedText);
 
-    // 検索履歴に追加
-    if (searchText) {
-      const trimmedQuery = searchText.trim();
-      const filtered = searchHistory.filter(h => h !== trimmedQuery);
+    const tagsText = selectedTags.join('・');
+    const queryToSave = [userTypedText, tagsText].filter(Boolean).join('・');
+
+    if (queryToSave) {
+      const trimmedQuery = queryToSave.trim();
+      const filtered = searchHistory.filter((h) => h !== trimmedQuery);
       setSearchHistory([trimmedQuery, ...filtered]);
     }
 
-    // 入力と選択をクリア
     setUserTypedText('');
     setSelectedTags([]);
+    setActiveCategories([]);
   };
 
   const handleRemoveHistory = (item: string) => {
-    setSearchHistory(searchHistory.filter(h => h !== item));
+    setSearchHistory(searchHistory.filter((h) => h !== item));
   };
 
   const handleTagPress = (tag: string) => {
-    setSelectedTags(prev => (prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]));
+    setSelectedTags((prev) =>
+      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag],
+    );
+  };
+
+  const handleCategoryPress = (category: string) => {
+    setActiveCategories((prev) => {
+      const isDeselecting = prev.includes(category);
+
+      if (isDeselecting) {
+        const tagsToRemove = TAGS_BY_CATEGORY[category] || [];
+        setSelectedTags((currentTags) =>
+          currentTags.filter((tag) => !tagsToRemove.includes(tag)),
+        );
+        return prev.filter((c) => c !== category);
+      } else {
+        return [...prev, category];
+      }
+    });
   };
 
   const handleShopPress = (shopId: string) => {
     router.push({ pathname: '/shop/[id]', params: { id: shopId } });
   };
 
-  const CATEGORY_OPTIONS = useMemo(() => [...CATEGORIES].sort(), []);
-  // タグ一覧をカテゴリごとに一意化して抽出（カテゴリ別表示）
-  const TAGS_BY_CATEGORY = useMemo(() => {
-    const m = new Map<string, Set<string>>();
-    SHOPS.forEach(shop => {
-      const cat = shop.category;
-      if (!m.has(cat)) m.set(cat, new Set());
-      shop.tags.forEach(t => m.get(cat)!.add(t));
-    });
-    const out: Record<string, string[]> = {};
-    Array.from(m.entries()).forEach(([cat, s]) => (out[cat] = Array.from(s).sort()));
-    return out;
-  }, []);
-
   const searchResults = useMemo(() => {
     const q = currentSearchText.trim().toLowerCase();
-    const tags = selectedTags.map(t => t.toLowerCase());
+    const tags = selectedTags.map((t) => t.toLowerCase());
+    const hasCategories = activeCategories.length > 0;
 
-    if (q.length === 0 && tags.length === 0) {
+    if (q.length === 0 && tags.length === 0 && !hasCategories) {
       return [];
     }
 
-    return SHOPS.filter(shop => {
+    return SHOPS.filter((shop) => {
       const matchesText =
         q.length > 0
           ? shop.name.toLowerCase().includes(q) ||
             shop.description.toLowerCase().includes(q) ||
             shop.category.toLowerCase().includes(q) ||
-            (shop.menu?.some(item => item.name.toLowerCase().includes(q)) ?? false)
+            (shop.menu?.some((item) => item.name.toLowerCase().includes(q)) ??
+              false)
           : true;
 
       const matchesTags =
         tags.length > 0
           ? tags.some(
-              tag =>
-                shop.tags.some(shopTag => shopTag.toLowerCase().includes(tag)) ||
-                shop.category.toLowerCase().includes(tag)
+              (tag) =>
+                shop.tags.some((shopTag) =>
+                  shopTag.toLowerCase().includes(tag),
+                ) || shop.category.toLowerCase().includes(tag),
             )
           : true;
 
-      if (q.length > 0 && tags.length > 0) {
-        return matchesText && matchesTags;
-      }
-      if (q.length > 0) {
-        return matchesText;
-      }
-      if (tags.length > 0) {
-        return matchesTags;
-      }
-      return false;
+      const matchesCategory = hasCategories
+        ? activeCategories.includes(shop.category)
+        : true;
+
+      return matchesText && matchesTags && matchesCategory;
     });
-  }, [currentSearchText, selectedTags]);
+  }, [currentSearchText, selectedTags, activeCategories]);
 
   return (
     <ScrollView
       style={styles.scrollView}
       contentContainerStyle={styles.containerContent}
-      keyboardShouldPersistTaps='handled'
+      keyboardShouldPersistTaps="handled"
     >
-      {/* タイトル */}
       <View style={styles.headerTextBlock}>
         <Text style={styles.screenTitle}>お店を検索</Text>
       </View>
 
-      {/* 検索バー */}
       <View style={styles.searchBarContainer}>
         <View style={styles.searchBarRow}>
           <View style={[styles.searchWrapper, styles.shadowLight]}>
             <TextInput
               style={styles.searchInput}
-              placeholder='お店名・雰囲気・タグで検索'
+              placeholder="お店名・雰囲気"
               placeholderTextColor={palette.secondaryText}
-              value={searchText}
+              value={userTypedText}
               onChangeText={setUserTypedText}
               onSubmitEditing={() => handleSearch()}
+              returnKeyType="search"
             />
             <Pressable
               onPress={() => {
                 setUserTypedText('');
                 setSelectedTags([]);
+                setActiveCategories([]);
               }}
-              style={[styles.clearButton, !searchText && styles.clearButtonHidden]}
+              style={[
+                styles.clearButton,
+                !userTypedText && styles.clearButtonHidden,
+              ]}
             >
               <Text style={styles.clearButtonText}>✕</Text>
             </Pressable>
           </View>
-          <Pressable onPress={() => handleSearch()} style={styles.searchButton}>
-            <Text style={styles.searchButtonText}>検索する</Text>
-          </Pressable>
         </View>
 
-        {/* タグチップ */}
         {currentSearchText.length === 0 && (
           <View style={styles.tagGroupsContainer}>
-            {CATEGORY_OPTIONS.map(cat => {
-              const tags = TAGS_BY_CATEGORY[cat] ?? [];
-              if (tags.length === 0) return null;
-              return (
-                <View key={cat} style={styles.tagGroup}>
+            <Text style={styles.sectionLabel}>
+              カテゴリから探す（複数選択可）
+            </Text>
+
+            <View style={styles.categoriesRow}>
+              {CATEGORY_OPTIONS.map((cat) => {
+                const isActive = activeCategories.includes(cat);
+                return (
                   <Pressable
-                    onPress={() => {
-                      handleTagPress(cat);
-                    }}
+                    key={cat}
+                    onPress={() => handleCategoryPress(cat)}
                     style={[
-                      styles.categoryChip,
-                      selectedTags.includes(cat)
-                        ? styles.categoryChipSelected
-                        : styles.categoryChipUnselected,
+                      styles.categoryButton,
+                      isActive
+                        ? styles.categoryButtonActive
+                        : styles.categoryButtonInactive,
                     ]}
                   >
                     <Text
                       style={
-                        selectedTags.includes(cat)
-                          ? styles.categoryChipTextSelected
-                          : styles.categoryChipTextUnselected
+                        isActive
+                          ? styles.categoryButtonTextActive
+                          : styles.categoryButtonTextInactive
                       }
                     >
                       {cat}
                     </Text>
                   </Pressable>
-                  <View style={styles.tagChipsContainer}>
-                    {tags.map(tag => (
-                      <Pressable
-                        key={tag}
-                        onPress={() => {
-                          handleTagPress(tag);
-                        }}
-                        style={[
-                          styles.tagChipSmall,
-                          selectedTags.includes(tag)
-                            ? styles.tagChipSmallSelected
-                            : styles.tagChipSmallUnselected,
-                        ]}
-                      >
-                        <Text
-                          style={
-                            selectedTags.includes(tag)
-                              ? styles.tagChipSmallTextSelected
-                              : styles.tagChipSmallTextUnselected
-                          }
-                        >
-                          {tag}
-                        </Text>
-                      </Pressable>
-                    ))}
-                  </View>
-                </View>
-              );
-            })}
+                );
+              })}
+            </View>
+
+            {activeCategories.length > 0 && (
+              <View style={styles.subTagsContainer}>
+                {activeCategories.map((cat, index) => {
+                  const tags = TAGS_BY_CATEGORY[cat];
+                  if (!tags) return null;
+
+                  return (
+                    <View
+                      key={cat}
+                      style={index > 0 ? styles.subTagGroupMargin : undefined}
+                    >
+                      <Text style={styles.subSectionLabel}>{cat}のタグ</Text>
+                      <View style={styles.tagChipsWrapper}>
+                        {tags.map((tag) => (
+                          <Pressable
+                            key={tag}
+                            onPress={() => handleTagPress(tag)}
+                            style={[
+                              styles.tagChipSmall,
+                              selectedTags.includes(tag)
+                                ? styles.tagChipSmallSelected
+                                : styles.tagChipSmallUnselected,
+                            ]}
+                          >
+                            <Text
+                              style={
+                                selectedTags.includes(tag)
+                                  ? styles.tagChipSmallTextSelected
+                                  : styles.tagChipSmallTextUnselected
+                              }
+                            >
+                              {tag}
+                            </Text>
+                          </Pressable>
+                        ))}
+                      </View>
+                    </View>
+                  );
+                })}
+              </View>
+            )}
           </View>
         )}
       </View>
 
-      {/* 検索結果の表示 */}
-      {(currentSearchText.length > 0 || selectedTags.length > 0) && (
+      {(currentSearchText.length > 0 ||
+        selectedTags.length > 0 ||
+        activeCategories.length > 0) && (
         <View style={styles.resultsSection}>
           <Text style={styles.resultsTitle}>
-            {`「${[currentSearchText, ...selectedTags]
-              .filter(Boolean)
-              .join(' ')}」の検索結果：${searchResults.length}件`}
+            {`検索結果：${searchResults.length}件`}
           </Text>
 
           {searchResults.length > 0 ? (
             <ScrollView showsVerticalScrollIndicator={false}>
               <View style={styles.categorySection}>
-                {searchResults.map(item => (
+                {searchResults.map((item) => (
                   <Pressable
                     key={item.id}
                     onPress={() => handleShopPress(item.id)}
                     style={styles.shopCard}
                   >
-                    <Image source={{ uri: item.imageUrl }} style={styles.shopImage} />
+                    <Image
+                      source={{ uri: item.imageUrl }}
+                      style={styles.shopImage}
+                    />
                     <View style={styles.shopInfo}>
                       <View style={styles.shopHeader}>
                         <Text style={styles.shopName}>{item.name}</Text>
@@ -253,68 +289,75 @@ export default function SearchScreen() {
             </ScrollView>
           ) : (
             <View style={styles.emptyState}>
-              <Text style={styles.emptyTitle}>条件に合うお店が見つかりませんでした</Text>
+              <Text style={styles.emptyTitle}>
+                条件に合うお店が見つかりませんでした
+              </Text>
             </View>
           )}
         </View>
       )}
 
-      {/* 検索履歴 */}
-      {currentSearchText.length === 0 && selectedTags.length === 0 && (
-        <View style={styles.historySection}>
-          <Text style={styles.historyTitle}>検索履歴</Text>
-          {searchHistory.length > 0 ? (
-            <FlatList
-              data={searchHistory}
-              keyExtractor={(item, index) => `${item}-${index}`}
-              scrollEnabled={false}
-              renderItem={({ item }) => (
-                <View style={styles.historyItem}>
-                  <Pressable onPress={() => handleSearch()} style={styles.historyTextContainer}>
-                    <Text style={styles.historyText}>{item}</Text>
-                  </Pressable>
-                  <Pressable onPress={() => handleRemoveHistory(item)}>
-                    <Text style={styles.removeBtn}>✕</Text>
-                  </Pressable>
-                </View>
-              )}
-            />
-          ) : (
-            <Text style={styles.emptyHistoryText}>まだ検索履歴がありません</Text>
-          )}
-        </View>
-      )}
+      {currentSearchText.length === 0 &&
+        selectedTags.length === 0 &&
+        activeCategories.length === 0 && (
+          <View style={styles.historySection}>
+            <Text style={styles.historyTitle}>検索履歴</Text>
+            {searchHistory.length > 0 ? (
+              <FlatList
+                data={searchHistory}
+                keyExtractor={(item, index) => `${item}-${index}`}
+                scrollEnabled={false}
+                renderItem={({ item }) => (
+                  <View style={styles.historyItem}>
+                    <Pressable
+                      onPress={() => handleSearch()}
+                      style={styles.historyTextContainer}
+                    >
+                      <Text style={styles.historyText}>{item}</Text>
+                    </Pressable>
+                    <Pressable onPress={() => handleRemoveHistory(item)}>
+                      <Text style={styles.removeBtn}>✕</Text>
+                    </Pressable>
+                  </View>
+                )}
+              />
+            ) : (
+              <Text style={styles.emptyHistoryText}>
+                まだ検索履歴がありません
+              </Text>
+            )}
+          </View>
+        )}
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  categoryChip: {
-    alignSelf: 'flex-start',
+  categoriesRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 0,
+  },
+  categoryButton: {
     borderRadius: 999,
-    borderWidth: 1,
-    marginBottom: 8,
-    marginRight: 12,
-    paddingHorizontal: 18,
-    paddingVertical: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
   },
-  categoryChipSelected: {
+  categoryButtonActive: {
     backgroundColor: palette.primaryText,
-    borderColor: palette.primaryText,
   },
-  categoryChipTextSelected: {
+  categoryButtonInactive: {
+    backgroundColor: INACTIVE_COLOR,
+  },
+  categoryButtonTextActive: {
     color: palette.surface,
     fontSize: 14,
     fontWeight: '600',
   },
-  categoryChipTextUnselected: {
-    color: palette.chipTextInactive,
+  categoryButtonTextInactive: {
+    color: palette.tertiaryText,
     fontSize: 14,
-    fontWeight: '600',
-  },
-  categoryChipUnselected: {
-    backgroundColor: palette.surface,
-    borderColor: palette.border,
   },
   categorySection: {
     marginBottom: 24,
@@ -336,6 +379,7 @@ const styles = StyleSheet.create({
   },
   containerContent: {
     backgroundColor: palette.background,
+    paddingBottom: 40,
     paddingHorizontal: 24,
     paddingTop: 24,
   },
@@ -365,7 +409,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   historySection: {
-    marginTop: 70,
+    marginTop: 20,
   },
   historyText: {
     color: palette.primaryText,
@@ -414,25 +458,13 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   searchBarContainer: {
-    marginBottom: 32,
+    marginBottom: 24,
   },
   searchBarRow: {
     alignItems: 'center',
     flexDirection: 'row',
     gap: 8,
-  },
-  searchButton: {
-    alignItems: 'center',
-    backgroundColor: palette.primaryText,
-    borderRadius: 12,
-    justifyContent: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-  },
-  searchButtonText: {
-    color: palette.surface,
-    fontSize: 14,
-    fontWeight: '600',
+    marginBottom: 16,
   },
   searchInput: {
     color: palette.primaryText,
@@ -443,10 +475,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: palette.surface,
     borderRadius: 24,
-    flexDirection: 'row',
     flex: 1,
+    flexDirection: 'row',
     paddingHorizontal: 20,
     paddingVertical: 8,
+  },
+  sectionLabel: {
+    color: palette.secondaryText,
+    fontSize: 14,
+    fontWeight: '600',
+    marginBottom: 12,
+    marginTop: 0,
   },
   shadowLight: {
     elevation: 3,
@@ -497,11 +536,25 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
   },
+  subSectionLabel: {
+    color: palette.secondaryText,
+    fontSize: 12,
+    marginBottom: 12,
+  },
+  subTagGroupMargin: {
+    borderTopWidth: 0,
+    marginTop: 24,
+  },
+  subTagsContainer: {
+    borderTopColor: palette.border,
+    borderTopWidth: 1,
+    marginTop: 16,
+    paddingTop: 16,
+  },
   tagChipSmall: {
     borderRadius: 999,
-    marginRight: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
   },
   tagChipSmallSelected: {
     backgroundColor: palette.primaryText,
@@ -515,22 +568,17 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   tagChipSmallUnselected: {
-    backgroundColor: palette.tagSurface,
+    backgroundColor: INACTIVE_COLOR,
   },
-  tagChipsContainer: {
+  tagChipsWrapper: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
-    marginBottom: 16,
-  },
-  tagGroup: {
-    borderBottomColor: palette.border,
-    borderBottomWidth: 1,
-    marginBottom: 8,
-    paddingBottom: 8,
   },
   tagGroupsContainer: {
+    backgroundColor: palette.surface,
+    borderRadius: 12,
     marginBottom: 12,
-    marginTop: 12,
+    padding: 16,
   },
 });
