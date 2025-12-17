@@ -220,7 +220,6 @@ export default function MyPageScreen() {
 
 // スタイル定義（見た目の調整）
 const styles = StyleSheet.create({
-  // Avatar（ユーザーアイコン）周りのスタイル
   avatar: {
     alignItems: 'center',
     backgroundColor: palette.avatarBackground,
@@ -244,7 +243,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.06,
     shadowRadius: 12,
   },
-  content: { padding: 16, paddingBottom: TAB_BAR_SPACING },
 
   // 共通ボタンの基本スタイル（編集・削除 等で共用）
   commonBtn: {
@@ -256,8 +254,7 @@ const styles = StyleSheet.create({
   },
   commonBtnText: { fontWeight: '700', textAlign: 'center' },
 
-  // レイアウト全体の余白
-  content: { padding: 16, paddingBottom: 24 },
+  content: { padding: 16, paddingBottom: TAB_BAR_SPACING },
 
   // 削除ボタン固有の色など
   deleteBtn: {
