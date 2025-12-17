@@ -1,7 +1,6 @@
 import { palette } from '@/constants/palette';
 import { useFavorites } from '@/features/favorites/FavoritesContext';
-import type { Shop } from '@/features/home/data/shops';
-import { SHOPS } from '@/features/home/data/shops';
+import { SHOPS, type Shop } from '@team/shop-core';
 import { useRouter } from 'expo-router';
 import { FlatList, Image, Pressable, StyleSheet, Text, View } from 'react-native';
 const BUDGET_LABEL: Record<Shop['budget'], string> = {
@@ -9,6 +8,8 @@ const BUDGET_LABEL: Record<Shop['budget'], string> = {
   $$: '¥¥',
   $$$: '¥¥¥',
 };
+
+const TAB_BAR_SPACING = 113;
 
 export default function FavoritesScreen() {
   const router = useRouter();
@@ -84,7 +85,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   listContent: {
-    paddingBottom: 20,
+    paddingBottom: TAB_BAR_SPACING,
   },
   ratingBadge: {
     backgroundColor: palette.highlight,

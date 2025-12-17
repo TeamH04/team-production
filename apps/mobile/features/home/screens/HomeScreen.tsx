@@ -5,8 +5,9 @@ import type { FlatList } from 'react-native';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, { useAnimatedRef } from 'react-native-reanimated';
 
+import HeroTitle from '@/assets/icons/hero-title.svg';
 import { palette } from '@/constants/palette';
-import { SHOPS, type Shop } from '@/features/home/data/shops';
+import { SHOPS, type Shop } from '@team/shop-core';
 
 const PAGE_SIZE = 10;
 // Categories removed from Home screen; use Search screen for category/tag browsing
@@ -18,6 +19,11 @@ const BUDGET_LABEL: Record<Shop['budget'], string> = {
 };
 
 const KEY_EXTRACTOR = (item: Shop) => item.id;
+
+// Hero title SVG viewBox dimensions (from hero-title.svg viewBox="160 330 780 270")
+const HERO_TITLE_VIEWBOX_WIDTH = 780;
+const HERO_TITLE_VIEWBOX_HEIGHT = 270;
+const TAB_BAR_SPACING = 107;
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -112,7 +118,14 @@ export default function HomeScreen() {
     () => (
       <View style={styles.headerContainer}>
         <View style={styles.headerTextBlock}>
-          <Text style={styles.screenTitle}>次に通いたくなるお店を見つけよう</Text>
+          <View style={styles.heroTitleWrap}>
+            <HeroTitle
+              width='100%'
+              height='100%'
+              preserveAspectRatio='xMinYMin meet'
+              accessibilityLabel='次に通いたくなるお店を見つけよう'
+            />
+          </View>
           <Text style={styles.screenSubtitle}>
             あなたの行きつけになりそうなお店を見つけましょう。
           </Text>
@@ -202,7 +215,7 @@ const styles = StyleSheet.create({
   },
 
   content: {
-    paddingBottom: 32,
+    paddingBottom: TAB_BAR_SPACING,
     paddingHorizontal: 24,
     paddingTop: 24,
   },
@@ -231,6 +244,13 @@ const styles = StyleSheet.create({
   },
   headerTextBlock: {
     marginBottom: 16,
+  },
+  heroTitleWrap: {
+    alignSelf: 'center',
+    aspectRatio: HERO_TITLE_VIEWBOX_WIDTH / HERO_TITLE_VIEWBOX_HEIGHT,
+    marginBottom: 6,
+    marginTop: 12,
+    width: '70%',
   },
   metaRow: {
     alignItems: 'center',
@@ -267,9 +287,36 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginTop: 6,
   },
-  screenTitle: {
-    color: palette.primaryText,
-    fontSize: 28,
-    fontWeight: '700',
+  shadowLight: {
+    elevation: 3,
+    shadowColor: palette.shadow,
+    shadowOffset: { height: 6, width: 0 },
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+  },
+  shadowStrong: {
+    elevation: 5,
+    shadowColor: palette.shadow,
+    shadowOffset: { height: 8, width: 0 },
+    shadowOpacity: 0.12,
+    shadowRadius: 12,
+  },
+  tagPill: {
+    backgroundColor: palette.tagSurface,
+    borderRadius: 999,
+    marginBottom: 8,
+    marginRight: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
+  tagRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginTop: 14,
+  },
+  tagText: {
+    color: palette.tertiaryText,
+    fontSize: 12,
+    fontWeight: '600',
   },
 });

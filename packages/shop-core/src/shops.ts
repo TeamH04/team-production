@@ -1,4 +1,4 @@
-﻿export type ShopCategory =
+export type ShopCategory =
   | 'カフェ'
   | 'レストラン'
   | 'バー'
@@ -166,7 +166,7 @@ export const SHOPS: Shop[] = [
     distanceMinutes: 12,
     rating: 4.6,
     budget: '$$$',
-    description: 'アロマトリートメントとフェイシャルで愛やされるアーバンスパ。',
+    description: 'アロマトリートメントとフェイシャルで愛されるアーバンスパ。',
     imageUrl:
       'https://images.unsplash.com/photo-1544984243-ec57ea16fe25?auto=format&fit=crop&w=600&q=80',
     imageUrls: [
@@ -234,7 +234,7 @@ export const SHOPS: Shop[] = [
     distanceMinutes: 13,
     rating: 4.7,
     budget: '$$',
-    description: '生演奏のジャズと季節のカクテルを気味める大人の社交場。',
+    description: '生演奏のジャズと季節のカクテルを楽しめる大人の社交場。',
     imageUrl:
       'https://images.unsplash.com/photo-1470337458703-46ad1756a187?auto=format&fit=crop&w=600&q=80',
     imageUrls: [

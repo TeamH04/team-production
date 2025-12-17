@@ -1,0 +1,23 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "commonjs",
+    "lib": ["ES2020"],
+    "jsx": "react-native",
+    "noEmit": true,
+    "allowJs": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    "moduleResolution": "node"
+  },
+  "include": ["apps/mobile/**/*", "apps/web/**/*", "packages/shop-core/**/*"],
+  "exclude": [
+    "node_modules",
+    "**/dist/**",
+    "**/.next/**",
+    "**/.expo/**",
+    "**/.eas/**",
+    "**/web-build/**"
+  ]
+}

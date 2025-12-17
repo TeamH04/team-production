@@ -1,5 +1,5 @@
 import { palette } from '@/constants/palette';
-import { CATEGORIES, SHOPS, type Shop } from '@/features/home/data/shops';
+import { CATEGORIES, SHOPS, type Shop } from '@team/shop-core';
 import { useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import {
@@ -18,6 +18,9 @@ const BUDGET_LABEL: Record<Shop['budget'], string> = {
   $$: '¥¥',
   $$$: '¥¥¥',
 };
+
+const TAB_BAR_SPACING = 129;
+
 
 // Lintエラー回避用：カラーコードの定数化
 const INACTIVE_COLOR = '#f0f0f0';
@@ -122,10 +125,11 @@ export default function SearchScreen() {
 
   return (
     <ScrollView
-      style={styles.scrollView}
-      contentContainerStyle={styles.containerContent}
-      keyboardShouldPersistTaps='handled'
+      style={styles.container}
+      contentContainerStyle={styles.contentContainer}
+      showsVerticalScrollIndicator={false}
     >
+      {/* タイトル */}
       <View style={styles.headerTextBlock}>
         <Text style={styles.screenTitle}>お店を検索</Text>
       </View>
@@ -232,7 +236,7 @@ export default function SearchScreen() {
           <Text style={styles.resultsTitle}>{`検索結果：${searchResults.length}件`}</Text>
 
           {searchResults.length > 0 ? (
-            <ScrollView showsVerticalScrollIndicator={false}>
+            <View>
               <View style={styles.categorySection}>
                 {searchResults.map(item => (
                   <Pressable
@@ -259,7 +263,7 @@ export default function SearchScreen() {
                   </Pressable>
                 ))}
               </View>
-            </ScrollView>
+            </View>
           ) : (
             <View style={styles.emptyState}>
               <Text style={styles.emptyTitle}>条件に合うお店が見つかりませんでした</Text>
@@ -268,32 +272,31 @@ export default function SearchScreen() {
         </View>
       )}
 
-      {currentSearchText.length === 0 &&
-        selectedTags.length === 0 &&
-        activeCategories.length === 0 && (
-          <View style={styles.historySection}>
-            <Text style={styles.historyTitle}>検索履歴</Text>
-            {searchHistory.length > 0 ? (
-              <FlatList
-                data={searchHistory}
-                keyExtractor={(item, index) => `${item}-${index}`}
-                scrollEnabled={false}
-                renderItem={({ item }) => (
-                  <View style={styles.historyItem}>
-                    <Pressable onPress={() => handleSearch()} style={styles.historyTextContainer}>
-                      <Text style={styles.historyText}>{item}</Text>
-                    </Pressable>
-                    <Pressable onPress={() => handleRemoveHistory(item)}>
-                      <Text style={styles.removeBtn}>✕</Text>
-                    </Pressable>
-                  </View>
-                )}
-              />
-            ) : (
-              <Text style={styles.emptyHistoryText}>まだ検索履歴がありません</Text>
-            )}
-          </View>
-        )}
+      {/* 検索履歴 */}
+      {!currentSearch && (
+        <View style={styles.historySection}>
+          <Text style={styles.historyTitle}>検索履歴</Text>
+          {searchHistory.length > 0 ? (
+            <FlatList
+              data={searchHistory}
+              keyExtractor={(item, index) => `${item}-${index}`}
+              scrollEnabled={false}
+              renderItem={({ item }) => (
+                <View style={styles.historyItem}>
+                  <Pressable onPress={() => handleSearch(item)} style={styles.historyTextContainer}>
+                    <Text style={styles.historyText}>{item}</Text>
+                  </Pressable>
+                  <Pressable onPress={() => handleRemoveHistory(item)}>
+                    <Text style={styles.removeBtn}>✕</Text>
+                  </Pressable>
+                </View>
+              )}
+            />
+          ) : (
+            <Text style={styles.emptyHistoryText}>まだ検索履歴がありません</Text>
+          )}
+        </View>
+      )}
     </ScrollView>
   );
 }
@@ -348,6 +351,10 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
     paddingHorizontal: 24,
     paddingTop: 24,
+  },
+  contentContainer: {
+    flexGrow: 1,
+    paddingBottom: TAB_BAR_SPACING,
   },
   emptyHistoryText: {
     color: palette.secondaryText,
