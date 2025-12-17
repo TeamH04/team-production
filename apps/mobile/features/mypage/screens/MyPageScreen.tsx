@@ -181,9 +181,9 @@ export default function MyPageScreen() {
                           // 編集機能は未実装のため、"coming soon" メッセージを表示
                           Alert.alert('編集中', '編集機能は近日公開予定です');
                         }}
-                        style={[styles.commonBtn, styles.editBtn]}
+                        style={[styles.primaryBtn, styles.reviewFooterPrimaryBtn]}
                       >
-                        <Text style={[styles.commonBtnText, styles.editBtnText]}>編集</Text>
+                        <Text style={styles.primaryBtnText}>編集</Text>
                       </Pressable>
 
                       <Pressable
@@ -263,10 +263,6 @@ const styles = StyleSheet.create({
   },
   deleteBtnText: { color: palette.dangerText },
 
-  // 編集ボタン固有の色など
-  editBtn: { backgroundColor: palette.accent, borderColor: palette.border, marginRight: 12 },
-  editBtnText: { color: palette.primaryOnAccent },
-
   // 空状態表示（お気に入りやレビューが無い時）
   emptyBox: {
     alignItems: 'center',
@@ -277,7 +273,7 @@ const styles = StyleSheet.create({
   },
   emptyText: { color: palette.mutedText },
 
-  // プライマリボタン（プロフィール編集 等）
+  // ログアウトボタン
   logoutBtn: {
     alignSelf: 'flex-start',
     marginLeft: 'auto',
@@ -286,9 +282,12 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
   },
   logoutText: { color: palette.accent, fontSize: 14, fontWeight: '600' },
+
   // 小さなメニューボタン（レビュー右上の「･･･」）
   menuBtn: { paddingHorizontal: 8, paddingVertical: 4 },
   menuBtnText: { color: palette.mutedText, fontSize: 18, fontWeight: '700' },
+
+  // プライマリボタン（プロフィール編集 等）
   primaryBtn: {
     backgroundColor: palette.accent,
     borderRadius: 12,
@@ -311,6 +310,7 @@ const styles = StyleSheet.create({
 
   // レビューフッター（編集・削除ボタンを横並びで配置）
   reviewFooter: { alignItems: 'center', flexDirection: 'row', marginTop: 12 },
+  reviewFooterPrimaryBtn: { flex: 1, marginRight: 12, marginTop: 0 },
 
   // レビューヘッダー（店舗名＋メニューボタンの横並び）
   reviewHeader: {
