@@ -287,36 +287,4 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginTop: 6,
   },
-  shadowLight: {
-    elevation: 3,
-    shadowColor: palette.shadow,
-    shadowOffset: { height: 6, width: 0 },
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
-  },
-  shadowStrong: {
-    elevation: 5,
-    shadowColor: palette.shadow,
-    shadowOffset: { height: 8, width: 0 },
-    shadowOpacity: 0.12,
-    shadowRadius: 12,
-  },
-  tagPill: {
-    backgroundColor: palette.tagSurface,
-    borderRadius: 999,
-    marginBottom: 8,
-    marginRight: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-  },
-  tagRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    marginTop: 14,
-  },
-  tagText: {
-    color: palette.tertiaryText,
-    fontSize: 12,
-    fontWeight: '600',
-  },
 });

@@ -21,7 +21,6 @@ const BUDGET_LABEL: Record<Shop['budget'], string> = {
 
 const TAB_BAR_SPACING = 129;
 
-
 // Lintエラー回避用：カラーコードの定数化
 const INACTIVE_COLOR = '#f0f0f0';
 
@@ -273,7 +272,7 @@ export default function SearchScreen() {
       )}
 
       {/* 検索履歴 */}
-      {!currentSearch && (
+      {!currentSearchText && (
         <View style={styles.historySection}>
           <Text style={styles.historyTitle}>検索履歴</Text>
           {searchHistory.length > 0 ? (
@@ -283,7 +282,13 @@ export default function SearchScreen() {
               scrollEnabled={false}
               renderItem={({ item }) => (
                 <View style={styles.historyItem}>
-                  <Pressable onPress={() => handleSearch(item)} style={styles.historyTextContainer}>
+                  <Pressable
+                    onPress={() => {
+                      setUserTypedText(item);
+                      setCurrentSearchText(item);
+                    }}
+                    style={styles.historyTextContainer}
+                  >
                     <Text style={styles.historyText}>{item}</Text>
                   </Pressable>
                   <Pressable onPress={() => handleRemoveHistory(item)}>
@@ -346,11 +351,9 @@ const styles = StyleSheet.create({
     color: palette.secondaryText,
     fontSize: 20,
   },
-  containerContent: {
+  container: {
     backgroundColor: palette.background,
-    paddingBottom: 40,
-    paddingHorizontal: 24,
-    paddingTop: 24,
+    flex: 1,
   },
   contentContainer: {
     flexGrow: 1,
@@ -425,10 +428,6 @@ const styles = StyleSheet.create({
     color: palette.primaryText,
     fontSize: 28,
     fontWeight: '700',
-  },
-  scrollView: {
-    backgroundColor: palette.background,
-    flex: 1,
   },
   searchBarContainer: {
     marginBottom: 24,
