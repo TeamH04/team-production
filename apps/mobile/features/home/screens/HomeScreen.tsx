@@ -23,6 +23,8 @@ const BUDGET_LABEL: Record<Shop['budget'], string> = {
 
 const KEY_EXTRACTOR = (item: Shop) => item.id;
 
+const TAB_BAR_SPACING = 107;
+
 export default function HomeScreen() {
   const router = useRouter();
   const [selectedCategory, setSelectedCategory] = useState<CategoryFilter>(CATEGORY_ALL);
@@ -282,7 +284,7 @@ const styles = StyleSheet.create({
     paddingRight: 8,
   },
   content: {
-    paddingBottom: 32,
+    paddingBottom: TAB_BAR_SPACING,
     paddingHorizontal: 24,
     paddingTop: 24,
   },
