@@ -14,6 +14,7 @@ export default function OwnerLoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [emailError, setEmailError] = useState(false);
 
   useLayoutEffect(() => {
     navigation.setOptions?.({
@@ -32,10 +33,11 @@ export default function OwnerLoginScreen() {
     }
 
     if (!isLikelyEmail(trimmedEmail)) {
-      Alert.alert('入力エラー', '正式なメールアドレスを入力してください');
+      setEmailError(true);
       return;
     }
 
+    setEmailError(false);
     setLoading(true);
     try {
       if (!isSupabaseConfigured()) {
@@ -85,7 +87,10 @@ export default function OwnerLoginScreen() {
               <Text style={styles.label}>メールアドレス</Text>
               <TextInput
                 value={email}
-                onChangeText={setEmail}
+                onChangeText={text => {
+                  setEmail(text);
+                  setEmailError(false);
+                }}
                 autoCapitalize='none'
                 autoCorrect={false}
                 keyboardType='email-address'
@@ -93,6 +98,7 @@ export default function OwnerLoginScreen() {
                 placeholderTextColor={palette.tertiaryText}
                 style={styles.input}
               />
+              {emailError && <Text style={styles.errorText}>※ 正しく入力してください</Text>}
             </View>
 
             <View style={styles.inputGroup}>
@@ -162,6 +168,7 @@ const styles = StyleSheet.create({
     height: 1,
     marginVertical: 16,
   },
+  errorText: { color: palette.dangerBorder, fontSize: 14, marginTop: 4 },
   icon: { marginLeft: 8 },
   input: {
     backgroundColor: palette.surface,
