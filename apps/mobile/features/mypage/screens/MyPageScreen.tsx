@@ -26,6 +26,8 @@ const palette = {
   dangerText: '#FFFFFF',
 } as const;
 
+const TAB_BAR_SPACING = 125;
+
 // マイページ画面のコンポーネント
 export default function MyPageScreen() {
   // 画面遷移用
@@ -242,6 +244,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.06,
     shadowRadius: 12,
   },
+  content: { padding: 16, paddingBottom: TAB_BAR_SPACING },
 
   // 共通ボタンの基本スタイル（編集・削除 等で共用）
   commonBtn: {

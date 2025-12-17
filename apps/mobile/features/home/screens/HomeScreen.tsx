@@ -5,6 +5,7 @@ import type { FlatList } from 'react-native';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Animated, { useAnimatedRef } from 'react-native-reanimated';
 
+import HeroTitle from '@/assets/icons/hero-title.svg';
 import { palette } from '@/constants/palette';
 import { CATEGORIES, SHOPS, type Shop, type ShopCategory } from '@team/shop-core';
 
@@ -22,6 +23,11 @@ const BUDGET_LABEL: Record<Shop['budget'], string> = {
 };
 
 const KEY_EXTRACTOR = (item: Shop) => item.id;
+
+// Hero title SVG viewBox dimensions (from hero-title.svg viewBox="160 330 780 270")
+const HERO_TITLE_VIEWBOX_WIDTH = 780;
+const HERO_TITLE_VIEWBOX_HEIGHT = 270;
+const TAB_BAR_SPACING = 107;
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -130,7 +136,14 @@ export default function HomeScreen() {
     () => (
       <View style={styles.headerContainer}>
         <View style={styles.headerTextBlock}>
-          <Text style={styles.screenTitle}>次に通いたくなるお店を見つけよう</Text>
+          <View style={styles.heroTitleWrap}>
+            <HeroTitle
+              width='100%'
+              height='100%'
+              preserveAspectRatio='xMinYMin meet'
+              accessibilityLabel='次に通いたくなるお店を見つけよう'
+            />
+          </View>
           <Text style={styles.screenSubtitle}>
             カテゴリを切り替えて、行きつけにしたいスポットを探せます。
           </Text>
@@ -282,7 +295,7 @@ const styles = StyleSheet.create({
     paddingRight: 8,
   },
   content: {
-    paddingBottom: 32,
+    paddingBottom: TAB_BAR_SPACING,
     paddingHorizontal: 24,
     paddingTop: 24,
   },
@@ -311,6 +324,13 @@ const styles = StyleSheet.create({
   },
   headerTextBlock: {
     marginBottom: 16,
+  },
+  heroTitleWrap: {
+    alignSelf: 'center',
+    aspectRatio: HERO_TITLE_VIEWBOX_WIDTH / HERO_TITLE_VIEWBOX_HEIGHT,
+    marginBottom: 6,
+    marginTop: 12,
+    width: '70%',
   },
   metaRow: {
     alignItems: 'center',
@@ -346,11 +366,6 @@ const styles = StyleSheet.create({
     color: palette.secondaryText,
     fontSize: 16,
     marginTop: 6,
-  },
-  screenTitle: {
-    color: palette.primaryText,
-    fontSize: 28,
-    fontWeight: '700',
   },
   shadowLight: {
     elevation: 3,
