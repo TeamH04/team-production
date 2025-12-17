@@ -22,6 +22,7 @@ type ReviewsContextValue = {
     shopId: string,
     input: { rating: number; comment: string; menuItemId?: string; menuItemName?: string }
   ) => void; // レビュー追加
+  deleteReview: (reviewId: string) => void; // レビュー削除
 };
 
 // Contextの作成（初期値はundefined）
@@ -61,10 +62,26 @@ export function ReviewsProvider({ children }: { children: React.ReactNode }) {
     []
   );
 
+  // レビューを削除する関数
+  const deleteReview = useCallback((reviewId: string) => {
+    setReviewsByShop(prev => {
+      const next = { ...prev };
+      // 全店舗のレビューから指定IDを削除
+      for (const shopId of Object.keys(next)) {
+        const filtered = next[shopId].filter(review => review.id !== reviewId);
+        if (filtered.length !== next[shopId].length) {
+          next[shopId] = filtered;
+          break; // レビューが見つかったら終了
+        }
+      }
+      return next;
+    });
+  }, []);
+
   // Contextで提供する値をまとめる
   const value = useMemo<ReviewsContextValue>(
-    () => ({ reviewsByShop, getReviews, addReview }),
-    [reviewsByShop, getReviews, addReview]
+    () => ({ reviewsByShop, getReviews, addReview, deleteReview }),
+    [reviewsByShop, getReviews, addReview, deleteReview]
   );
 
   // Providerで子コンポーネントをラップ
