@@ -27,6 +27,7 @@ const KEY_EXTRACTOR = (item: Shop) => item.id;
 // Hero title SVG viewBox dimensions (from hero-title.svg viewBox="160 330 780 270")
 const HERO_TITLE_VIEWBOX_WIDTH = 780;
 const HERO_TITLE_VIEWBOX_HEIGHT = 270;
+const TAB_BAR_SPACING = 107;
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -294,7 +295,7 @@ const styles = StyleSheet.create({
     paddingRight: 8,
   },
   content: {
-    paddingBottom: 32,
+    paddingBottom: TAB_BAR_SPACING,
     paddingHorizontal: 24,
     paddingTop: 24,
   },
