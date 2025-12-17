@@ -1,25 +1,16 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useRouter, type Href } from 'expo-router';
 import React, { useLayoutEffect, useState } from 'react';
-import {
-  Alert,
-  Platform,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
+import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { palette } from '@/constants/palette';
-import { useSocialAuth } from '@/hooks/useSocialAuth';
 import { getSupabase, isSupabaseConfigured } from '@/lib/supabase';
+
+const isLikelyEmail = (value: string) => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(value.trim());
 
 export default function OwnerLoginScreen() {
   const router = useRouter();
   const navigation = useNavigation();
-  const { signInWithGoogle, signInWithApple, loading: socialLoading } = useSocialAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -34,8 +25,14 @@ export default function OwnerLoginScreen() {
   const handleLogin = async () => {
     if (loading) return;
 
-    if (!email.trim() || !password.trim()) {
+    const trimmedEmail = email.trim();
+    if (!trimmedEmail || !password.trim()) {
       Alert.alert('入力不足', 'メールアドレスとパスワードを入力してください');
+      return;
+    }
+
+    if (!isLikelyEmail(trimmedEmail)) {
+      Alert.alert('入力エラー', '正式なメールアドレスを入力してください');
       return;
     }
 
@@ -50,7 +47,7 @@ export default function OwnerLoginScreen() {
       }
 
       const { data, error } = await getSupabase().auth.signInWithPassword({
-        email: email.trim(),
+        email: trimmedEmail,
         password,
       });
 
@@ -66,28 +63,6 @@ export default function OwnerLoginScreen() {
       router.replace('/owner' as Href);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleGoogleSignIn = async () => {
-    const result = await signInWithGoogle();
-    if (result.success) {
-      const display = result.user?.email ?? 'Googleアカウント';
-      Alert.alert('ログイン成功', `${display}でログインしました`);
-      router.replace('/owner' as Href);
-    } else {
-      Alert.alert('ログイン失敗', result.error || 'Google ログインに失敗しました');
-    }
-  };
-
-  const handleAppleSignIn = async () => {
-    const result = await signInWithApple();
-    if (result.success) {
-      const display = result.user?.email ?? 'Appleアカウント';
-      Alert.alert('ログイン成功', `${display}でログインしました`);
-      router.replace('/owner' as Href);
-    } else {
-      Alert.alert('ログイン失敗', result.error || 'Apple ログインに失敗しました');
     }
   };
 
@@ -132,60 +107,14 @@ export default function OwnerLoginScreen() {
               />
             </View>
 
-            {/* ソーシャルログインセクション */}
-            <View style={styles.socialButtonsContainer}>
-              <Pressable
-                onPress={handleGoogleSignIn}
-                disabled={socialLoading || loading}
-                style={({ pressed }) => [
-                  styles.button,
-                  styles.socialButtonOutline,
-                  pressed && styles.buttonPressed,
-                  (socialLoading || loading) && styles.buttonLoading,
-                ]}
-              >
-                <View style={styles.buttonContent}>
-                  <Ionicons name='logo-google' size={20} color={palette.outline} />
-                  <Text style={styles.buttonOutlineText}>
-                    {socialLoading ? 'Google で処理中…' : 'Google で続行'}
-                  </Text>
-                </View>
-              </Pressable>
-
-              {Platform.OS === 'ios' && (
-                <Pressable
-                  onPress={handleAppleSignIn}
-                  disabled={socialLoading || loading}
-                  style={({ pressed }) => [
-                    styles.button,
-                    styles.socialButtonOutline,
-                    pressed && styles.buttonPressed,
-                    (socialLoading || loading) && styles.buttonLoading,
-                  ]}
-                >
-                  <View style={styles.buttonContent}>
-                    <Ionicons
-                      name='logo-apple'
-                      size={20}
-                      color={palette.outline}
-                      style={styles.appleIconAdjust}
-                    />
-                    <Text style={styles.buttonOutlineText}>
-                      {socialLoading ? 'Apple で処理中…' : 'Apple で続行'}
-                    </Text>
-                  </View>
-                </Pressable>
-              )}
-            </View>
-
             <View style={styles.loginButtonWrapper}>
               <View style={styles.loginButtonContainer}>
                 <Pressable
                   onPress={handleLogin}
-                  disabled={loading || socialLoading}
+                  disabled={loading}
                   style={({ pressed }) => [
                     styles.loginButtonPressable,
-                    (pressed || loading || socialLoading) && { opacity: 0.7 },
+                    (pressed || loading) && { opacity: 0.7 },
                   ]}
                 >
                   <Text style={styles.loginButtonText}>{loading ? 'ログイン中…' : 'ログイン'}</Text>
@@ -209,31 +138,6 @@ export default function OwnerLoginScreen() {
 }
 
 const styles = StyleSheet.create({
-  appleIconAdjust: {
-    marginTop: 2,
-  },
-  button: {
-    alignSelf: 'stretch',
-    backgroundColor: palette.action,
-    borderRadius: 12,
-    justifyContent: 'center',
-    marginVertical: 8,
-    minHeight: 48,
-    paddingVertical: 12,
-  },
-  buttonContent: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: 12,
-    justifyContent: 'center',
-  },
-  buttonLoading: { opacity: 0.75 },
-  buttonOutlineText: {
-    color: palette.outline,
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  buttonPressed: { opacity: 0.9 },
   card: {
     alignSelf: 'stretch',
     backgroundColor: palette.surface,
@@ -324,17 +228,6 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   secondaryBtnText: { color: palette.link, fontWeight: '700', textAlign: 'center' },
-  socialButtonOutline: {
-    backgroundColor: palette.surface,
-    borderColor: palette.outline,
-    borderWidth: 1,
-  },
-  socialButtonsContainer: {
-    alignSelf: 'stretch',
-    flexDirection: 'column',
-    gap: 12,
-    marginTop: 4,
-  },
   title: { color: palette.primaryText, fontSize: 20, fontWeight: '800' },
   titleContainer: {
     alignItems: 'center',

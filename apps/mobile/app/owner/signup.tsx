@@ -1,4 +1,3 @@
-import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useRouter } from 'expo-router';
 import React, { useLayoutEffect, useState } from 'react';
 import {
@@ -14,12 +13,12 @@ import {
 } from 'react-native';
 
 import { palette } from '@/constants/palette';
-import { useSocialAuth } from '@/hooks/useSocialAuth';
+
+const isLikelyEmail = (value: string) => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(value.trim());
 
 export default function OwnerSignupScreen() {
   const router = useRouter();
   const navigation = useNavigation();
-  const { signInWithGoogle, signInWithApple, loading: socialLoading } = useSocialAuth();
   const [storeName, setStoreName] = useState('');
   const [contactName, setContactName] = useState('');
   const [email, setEmail] = useState('');
@@ -35,8 +34,15 @@ export default function OwnerSignupScreen() {
   }, [navigation]);
 
   const onSubmit = async () => {
-    if (!storeName || !contactName || !email || !password) {
+    const trimmedEmail = email.trim();
+
+    if (!storeName || !contactName || !trimmedEmail || !password) {
       Alert.alert('入力不足', '必須項目（店舗名/担当者名/メール/パスワード）を入力してください');
+      return;
+    }
+
+    if (!isLikelyEmail(trimmedEmail)) {
+      Alert.alert('入力エラー', '正式なメールアドレスを入力してください');
       return;
     }
 
@@ -56,30 +62,6 @@ export default function OwnerSignupScreen() {
       Alert.alert('作成失敗', message);
     } finally {
       setSubmitting(false);
-    }
-  };
-
-  const handleGoogleSignup = async () => {
-    if (socialLoading || submitting) return;
-
-    const result = await signInWithGoogle();
-    if (result.success) {
-      Alert.alert('作成完了', `${result.user?.email ?? 'Googleアカウント'} で作成しました`);
-      router.replace('/owner');
-    } else {
-      Alert.alert('作成失敗', result.error ?? 'Google での作成に失敗しました');
-    }
-  };
-
-  const handleAppleSignup = async () => {
-    if (socialLoading || submitting) return;
-
-    const result = await signInWithApple();
-    if (result.success) {
-      Alert.alert('作成完了', `${result.user?.email ?? 'Appleアカウント'} で作成しました`);
-      router.replace('/owner');
-    } else {
-      Alert.alert('作成失敗', result.error ?? 'Apple での作成に失敗しました');
     }
   };
 
@@ -164,64 +146,12 @@ export default function OwnerSignupScreen() {
             </Pressable>
           </View>
         </View>
-
-        <View style={styles.socialSection}>
-          <View style={styles.dividerRow}>
-            <View style={styles.dividerLine} />
-            <Text style={styles.dividerText}>または</Text>
-            <View style={styles.dividerLine} />
-          </View>
-
-          <View style={styles.socialButtonsContainer}>
-            <Pressable
-              onPress={handleGoogleSignup}
-              disabled={socialLoading || submitting}
-              style={({ pressed }) => [
-                styles.socialButton,
-                (pressed || socialLoading || submitting) && { opacity: 0.8 },
-              ]}
-            >
-              <View style={styles.socialButtonContent}>
-                <Ionicons name='logo-google' size={20} color={palette.outline} />
-                <Text style={styles.socialButtonText}>
-                  {socialLoading ? 'Google で処理中…' : 'Google で作成'}
-                </Text>
-              </View>
-            </Pressable>
-
-            {Platform.OS === 'ios' && (
-              <Pressable
-                onPress={handleAppleSignup}
-                disabled={socialLoading || submitting}
-                style={({ pressed }) => [
-                  styles.socialButton,
-                  (pressed || socialLoading || submitting) && { opacity: 0.8 },
-                ]}
-              >
-                <View style={styles.socialButtonContent}>
-                  <Ionicons
-                    name='logo-apple'
-                    size={20}
-                    color={palette.outline}
-                    style={styles.appleIconAdjust}
-                  />
-                  <Text style={styles.socialButtonText}>
-                    {socialLoading ? 'Apple で処理中…' : 'Apple で作成'}
-                  </Text>
-                </View>
-              </Pressable>
-            )}
-          </View>
-        </View>
       </ScrollView>
     </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  appleIconAdjust: {
-    marginTop: 2,
-  },
   buttonContainer: {
     backgroundColor: palette.button,
     borderColor: palette.buttonBorder,
@@ -253,22 +183,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 32,
   },
-  dividerLine: {
-    backgroundColor: palette.border,
-    flex: 1,
-    height: 1,
-  },
-  dividerRow: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: 8,
-    marginBottom: 12,
-  },
-  dividerText: {
-    color: palette.secondaryText,
-    fontSize: 12,
-    fontWeight: '600',
-  },
   form: {
     gap: 8,
   },
@@ -297,32 +211,6 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
     paddingBottom: 24,
-  },
-  socialButton: {
-    alignItems: 'center',
-    backgroundColor: palette.surface,
-    borderColor: palette.outline,
-    borderRadius: 12,
-    borderWidth: 1,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-  },
-  socialButtonContent: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: 12,
-    justifyContent: 'center',
-  },
-  socialButtonText: {
-    color: palette.outline,
-    fontSize: 15,
-    fontWeight: '700',
-  },
-  socialButtonsContainer: {
-    gap: 12,
-  },
-  socialSection: {
-    marginTop: 28,
   },
   subtitle: {
     color: palette.secondaryText,
