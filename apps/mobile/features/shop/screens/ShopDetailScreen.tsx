@@ -1,12 +1,15 @@
+import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { useFocusEffect, useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
 import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import {
+  Alert,
   Dimensions,
   FlatList,
   Linking,
   Pressable,
   ScrollView,
+  Share,
   StyleSheet,
   Text,
   TextInput,
@@ -16,8 +19,8 @@ import {
 import { Collapsible } from '@/components/Collapsible';
 import { IconSymbol } from '@/components/ui/IconSymbol';
 import { useFavorites } from '@/features/favorites/FavoritesContext';
-import { SHOPS, type Shop } from '@/features/home/data/shops';
 import { useReviews } from '@/features/reviews/ReviewsContext';
+import { SHOPS, type Shop } from '@team/shop-core';
 
 const palette = {
   accent: '#0EA5E9',
@@ -62,13 +65,14 @@ export default function ShopDetailScreen() {
 
   const shop = useMemo(() => SHOPS.find(s => s.id === id), [id]);
 
+  const webBaseUrl = process.env.EXPO_PUBLIC_WEB_BASE_URL?.replace(/\/$/, '');
+
   useLayoutEffect(() => {
     if (shop) {
       navigation.setOptions?.({ title: shop.name, headerBackTitle: '戻る' });
     }
   }, [navigation, shop]);
 
-  // 画面にフォーカスが戻った時にheaderBackTitleを復元
   useFocusEffect(
     useCallback(() => {
       navigation.setOptions?.({ headerBackTitle: '戻る' });
@@ -134,6 +138,21 @@ export default function ShopDetailScreen() {
     setNewRating(5);
     setReviewError('');
   }, [addReview, newRating, newReview, shop]);
+
+  const handleShare = useCallback(() => {
+    if (!shop) return;
+
+    const url = `${webBaseUrl}/shop/${shop.id}`;
+
+    Share.share({
+      message: `${shop.name}\n${shop.description}\n${url}`,
+      url,
+      title: shop.name,
+    }).catch(err => {
+      console.warn('Failed to share shop', err);
+      Alert.alert('共有に失敗しました', 'もう一度お試しください。');
+    });
+  }, [shop, webBaseUrl]);
 
   if (!shop) {
     return (
@@ -220,7 +239,33 @@ export default function ShopDetailScreen() {
           <Image source={{ uri: shop.imageUrl }} style={styles.hero} contentFit='cover' />
         )}
 
-        <View style={styles.container}>
+        <View style={styles.headerActions}>
+          <Pressable
+            accessibilityLabel='このお店を共有'
+            onPress={handleShare}
+            disabled={!webBaseUrl}
+            style={({ pressed }) => [
+              styles.shareBtn,
+              pressed && styles.btnPressed,
+              !webBaseUrl && { opacity: 0.4 },
+            ]}
+          >
+            <Ionicons name='share-outline' size={22} color={palette.muted} />
+          </Pressable>
+          <View style={styles.headerActions}>
+            <Pressable
+              accessibilityLabel='このお店を共有'
+              onPress={handleShare}
+              disabled={!webBaseUrl}
+              style={({ pressed }) => [
+                styles.shareBtn,
+                pressed && styles.btnPressed,
+                !webBaseUrl && { opacity: 0.4 },
+              ]}
+            >
+              <Ionicons name='share-outline' size={22} color={palette.muted} />
+            </Pressable>
+          </View>
           <View style={styles.headerRow}>
             <Text style={styles.title}>{shop.name}</Text>
             <Pressable
@@ -612,7 +657,11 @@ const styles = StyleSheet.create({
   arrowButtonRight: { right: 12 },
   arrowText: { color: palette.primary, fontSize: 32, fontWeight: '600', lineHeight: 32 },
   btnPressed: { opacity: 0.9 },
-  card: { backgroundColor: palette.surface, borderRadius: 16, padding: 20 },
+  card: {
+    backgroundColor: palette.surface,
+    borderRadius: 16,
+    padding: 16,
+  },
   cardShadow: {
     elevation: 4,
     marginBottom: 16,
@@ -623,7 +672,6 @@ const styles = StyleSheet.create({
   },
   cashText: { color: palette.primary, fontSize: 13, fontWeight: '600', marginBottom: 8 },
   centered: { alignItems: 'center', justifyContent: 'center' },
-  container: { paddingHorizontal: 24, paddingVertical: 24 },
 
   content: { paddingBottom: 40 },
   description: { color: palette.primary, lineHeight: 20, marginTop: 12 },
@@ -648,7 +696,11 @@ const styles = StyleSheet.create({
     height: GALLERY_ITEM_SIZE,
     width: GALLERY_ITEM_SIZE,
   },
-
+  headerActions: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 4,
+  },
   headerRow: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between' },
   hero: { backgroundColor: palette.heroPlaceholder, height: 220, width: SCREEN_WIDTH },
 
@@ -779,6 +831,10 @@ const styles = StyleSheet.create({
   sectionHeader: { marginBottom: 6, marginTop: 16 },
   sectionSub: { color: palette.muted, marginBottom: 8 },
   sectionTitle: { color: palette.primary, fontSize: 16, fontWeight: '800', marginBottom: 6 },
+  shareBtn: {
+    marginLeft: 8,
+    padding: 4,
+  },
   similarCard: { marginTop: 12 },
   similarImage: { borderRadius: 12, height: 72, width: 72 },
   similarInfo: { flex: 1, gap: 4 },

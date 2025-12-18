@@ -5,7 +5,8 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./*"],
-      "~/*": ["app/*"]
+      "~/*": ["app/*"],
+      "@team/shop-core": ["../../packages/shop-core/src"]
     }
   },
   "include": [

@@ -19,14 +19,22 @@ export default [
       '**/.expo/**',
       '**/.eas/**',
       '**/web-build/**',
+      '**/.next/**',
+      '**/next-env.d.ts',
     ],
   },
 
   {
-    files: ['**/*.{ts,tsx,js,jsx}'],
+    files: ['**/*.{ts,tsx}'],
     languageOptions: {
       parser: tsParser,
-      parserOptions: { ecmaVersion: 'latest', sourceType: 'module' }, // 型なし運用
+      parserOptions: {
+        ecmaVersion: 'latest',
+        sourceType: 'module',
+        project: path.resolve(process.cwd(), 'tsconfig.eslint.json'),
+        tsconfigRootDir: process.cwd(),
+        noWarnOnMultipleProjects: true,
+      },
       globals: { ...globals.browser, ...globals.node },
     },
     plugins: {
@@ -37,14 +45,32 @@ export default [
     },
     settings: {
       react: { version: 'detect' },
+      'import/resolver': {
+        node: { extensions: ['.ts', '.tsx', '.js', '.jsx', '.json'] },
+        typescript: {
+          project: [path.resolve(process.cwd(), 'tsconfig.eslint.json')],
+          alwaysTryTypes: true,
+        },
+      },
     },
     rules: {
       ...js.configs.recommended.rules,
       ...tsPlugin.configs.recommended.rules,
       ...reactHooks.configs.recommended.rules,
       'react/react-in-jsx-scope': 'off',
-      'react-native/no-raw-text': ['error', { skip: ['ThemedText'] }],
-      'import/no-unresolved': 'error',
+      'import/no-unresolved': [
+        'error',
+        {
+          ignore: [
+            '^next/',
+            'react-native-svg',
+            '^expo',
+            '^@expo/',
+            'react-native',
+            '^react-native/',
+          ],
+        },
+      ],
       'import/extensions': [
         'error',
         'ignorePackages',
@@ -57,24 +83,71 @@ export default [
     },
   },
 
+  // JavaScript ファイル用の設定（parserOptionsなし）
+  {
+    files: ['**/*.{js,jsx}'],
+    languageOptions: {
+      ecmaVersion: 'latest',
+      sourceType: 'module',
+      globals: { ...globals.browser, ...globals.node },
+    },
+    plugins: {
+      react,
+      'react-hooks': reactHooks,
+      import: importPlugin,
+    },
+    settings: {
+      react: { version: 'detect' },
+      'import/resolver': {
+        node: { extensions: ['.js', '.jsx', '.json'] },
+      },
+    },
+    rules: {
+      ...js.configs.recommended.rules,
+      ...reactHooks.configs.recommended.rules,
+      'react/react-in-jsx-scope': 'off',
+      'import/no-unresolved': 'error',
+      ...prettierConfig.rules,
+    },
+  },
+
+  // Next.js / web 用設定
+  {
+    files: ['apps/web/**/*.{ts,tsx,js,jsx}'],
+    settings: {
+      react: { version: 'detect' },
+      'import/resolver': {
+        node: { extensions: ['.ts', '.tsx', '.js', '.jsx', '.json'] },
+        typescript: {
+          project: [path.resolve(process.cwd(), 'apps/web/tsconfig.json')],
+          alwaysTryTypes: true,
+        },
+      },
+    },
+    rules: {
+      'react-native/no-raw-text': 'off',
+    },
+  },
+
   // ★ Expo / mobile 用の resolver をここで確実に適用
   {
     files: ['apps/mobile/**/*.{ts,tsx,js,jsx}'],
     plugins: { 'react-native': reactNative },
     settings: {
       'import/resolver': {
+        node: { extensions: ['.ts', '.tsx', '.js', '.jsx', '.json'] },
         typescript: {
           // tsconfig の paths (= @, ~) を使わせる
           project: [path.resolve(process.cwd(), 'apps/mobile/tsconfig.json')],
           alwaysTryTypes: true,
         },
-        node: { extensions: ['.ts', '.tsx', '.js', '.jsx', '.json'] },
       },
       react: { version: 'detect' },
     },
     rules: {
       ...reactNative.configs.all.rules,
       'react-native/no-inline-styles': 'warn',
+      'react-native/no-raw-text': ['error', { skip: ['ThemedText'] }],
       'react-native/split-platform-components': 'off',
     },
   },

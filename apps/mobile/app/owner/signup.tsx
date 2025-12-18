@@ -1,5 +1,5 @@
-import { useRouter } from 'expo-router';
-import React, { useState } from 'react';
+import { useNavigation, useRouter } from 'expo-router';
+import React, { useLayoutEffect, useState } from 'react';
 import {
   Alert,
   KeyboardAvoidingView,
@@ -14,17 +14,40 @@ import {
 
 import { palette } from '@/constants/palette';
 
+const isLikelyEmail = (value: string) => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(value.trim());
+
 export default function OwnerSignupScreen() {
   const router = useRouter();
+  const navigation = useNavigation();
   const [storeName, setStoreName] = useState('');
   const [contactName, setContactName] = useState('');
   const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [phone, setPhone] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
+  useLayoutEffect(() => {
+    navigation.setOptions?.({
+      title: 'オーナー新規作成',
+      headerBackTitle: '戻る',
+    });
+  }, [navigation]);
+
   const onSubmit = async () => {
-    if (!storeName || !contactName || !email) {
-      Alert.alert('入力不足', '必須項目（店舗名/担当者名/メール）を入力してください');
+    const trimmedEmail = email.trim();
+
+    if (!storeName || !contactName || !trimmedEmail || !password) {
+      Alert.alert('入力不足', '必須項目（店舗名/担当者名/メール/パスワード）を入力してください');
+      return;
+    }
+
+    if (!isLikelyEmail(trimmedEmail)) {
+      Alert.alert('入力エラー', '正式なメールアドレスを入力してください');
+      return;
+    }
+
+    if (password.length < 8) {
+      Alert.alert('入力エラー', 'パスワードは8文字以上で入力してください');
       return;
     }
 
@@ -83,6 +106,17 @@ export default function OwnerSignupScreen() {
             inputMode='email'
             autoCapitalize='none'
             placeholder='owner@example.com'
+            placeholderTextColor={palette.secondaryText}
+          />
+
+          <Text style={styles.label}>パスワード（必須）</Text>
+          <TextInput
+            style={styles.input}
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry
+            autoCapitalize='none'
+            placeholder='8文字以上'
             placeholderTextColor={palette.secondaryText}
           />
 
