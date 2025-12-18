@@ -21,41 +21,58 @@ const formatDateInput = (value: string): string => {
 
   const limitedDigits = digits.slice(0, 8);
 
-  if (limitedDigits.length <= 4) {
+  if (limitedDigits.length < 4) {
     return limitedDigits;
-  } else if (limitedDigits.length <= 6) {
+  } else if (limitedDigits.length === 4) {
+    return `${limitedDigits}-`;
+  } else if (limitedDigits.length < 6) {
     return `${limitedDigits.slice(0, 4)}-${limitedDigits.slice(4)}`;
+  } else if (limitedDigits.length === 6) {
+    return `${limitedDigits.slice(0, 4)}-${limitedDigits.slice(4)}-`;
   } else {
     return `${limitedDigits.slice(0, 4)}-${limitedDigits.slice(4, 6)}-${limitedDigits.slice(6)}`;
   }
 };
 
-const validateDateRange = (dateString: string): string[] => {
-  const errors: string[] = [];
-  if (dateString.length !== 10) return errors;
+const isInvalidDate = (dateString: string): boolean => {
+  if (!dateString) return false;
+  if (dateString.length > 10) return true; // 長すぎは即エラー
+
   const parts = dateString.split('-');
-  if (parts.length !== 3) return errors;
-  const year = parseInt(parts[0], 10);
-  const month = parseInt(parts[1], 10);
-  const day = parseInt(parts[2], 10);
-  if (Number.isNaN(year) || Number.isNaN(month) || Number.isNaN(day)) {
-    errors.push('正しい日付をYYYY-MM-DD形式で入力してください');
-    return errors;
-  }
-  if (month < 1 || month > 12) {
-    errors.push('月は1〜12で入力してください');
-  }
-  if (day < 1 || day > 31) {
-    errors.push('日は1〜31で入力してください');
-  }
-  // ここまでエラーがなければ、実在する日付かどうかを確認する
-  if (errors.length === 0) {
-    const date = new Date(year, month - 1, day);
-    if (date.getFullYear() !== year || date.getMonth() !== month - 1 || date.getDate() !== day) {
-      errors.push('存在しない日付です');
+  if (parts.length > 3) return true; // 区切り過多
+
+  const [yearStr = '', monthStr, dayStr] = parts;
+
+  if (yearStr && yearStr.length > 4) return true; // 年は最大4桁、それ以上はエラー
+
+  if (monthStr !== undefined) {
+    if (monthStr.length > 2) return true; // 桁超過
+    const m = parseInt(monthStr, 10);
+    if (!Number.isNaN(m)) {
+      if (m < 1 || m > 12) return true; // 範囲外は途中でもエラー
     }
   }
-  return errors;
+
+  if (dayStr !== undefined) {
+    if (dayStr.length > 2) return true; // 桁超過
+    const d = parseInt(dayStr, 10);
+    if (!Number.isNaN(d)) {
+      if (d < 1 || d > 31) return true; // 範囲外は途中でもエラー
+    }
+  }
+
+  if (dateString.length === 10 && parts.length === 3) {
+    const y = parseInt(yearStr, 10);
+    const m = parseInt(monthStr ?? '', 10);
+    const d = parseInt(dayStr ?? '', 10);
+    if (Number.isNaN(y) || Number.isNaN(m) || Number.isNaN(d)) return true;
+    const date = new Date(y, m - 1, d);
+    if (date.getFullYear() !== y || date.getMonth() !== m - 1 || date.getDate() !== d) {
+      return true;
+    }
+  }
+
+  return false;
 };
 
 export default function OwnerSignupScreen() {
@@ -67,14 +84,15 @@ export default function OwnerSignupScreen() {
   const [password, setPassword] = useState('');
   const [phone, setPhone] = useState('');
   const [openingDate, setOpeningDate] = useState('');
-  const [openingDateErrors, setOpeningDateErrors] = useState<string[]>([]);
+  const [openingDateInvalid, setOpeningDateInvalid] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
   const handleDateChange = (text: string) => {
-    const formatted = formatDateInput(text);
-    setOpeningDate(formatted);
-    const errors = validateDateRange(formatted);
-    setOpeningDateErrors(errors);
+    const prevText = openingDate;
+    const isDeleting = text.length < prevText.length;
+    const nextValue = isDeleting ? text.replace(/[^0-9-]/g, '') : formatDateInput(text);
+    setOpeningDate(nextValue);
+    setOpeningDateInvalid(isInvalidDate(nextValue));
   };
 
   useLayoutEffect(() => {
@@ -87,23 +105,12 @@ export default function OwnerSignupScreen() {
   const onSubmit = async () => {
     const trimmedEmail = email.trim();
 
-    if (
-      !storeName ||
-      !contactName ||
-      !trimmedEmail ||
-      !password ||
-      !openingDate ||
-      openingDate.length !== 10
-    ) {
-      Alert.alert(
-        '入力不足',
-        '必須項目（店舗名/担当者名/メール/パスワード/開店日）を入力してください'
-      );
+    if (!storeName || !contactName || !trimmedEmail || !password) {
+      Alert.alert('入力不足', '必須項目（店舗名/担当者名/メール/パスワード）を入力してください');
       return;
     }
-
-    if (openingDateErrors.length > 0) {
-      Alert.alert('入力エラー', openingDateErrors.join('\n'));
+    if (!openingDate || openingDate.length !== 10 || isInvalidDate(openingDate)) {
+      Alert.alert('入力エラー', '正しい日付で入力してください');
       return;
     }
 
@@ -170,15 +177,13 @@ export default function OwnerSignupScreen() {
             value={openingDate}
             onChangeText={handleDateChange}
             keyboardType='numeric'
-            placeholder='YYYY-MM-DD (例: 2024-01-15)'
+            placeholder='YYYYMMDD (例: 20240115)'
             placeholderTextColor={palette.secondaryText}
             maxLength={10}
           />
-          {openingDateErrors.map((error, index) => (
-            <Text key={index} style={styles.errorText}>
-              ※ {error}
-            </Text>
-          ))}
+          {openingDateInvalid && (
+            <Text style={styles.errorText}>※ 正しい日付で入力してください</Text>
+          )}
 
           <Text style={styles.label}>メールアドレス（必須）</Text>
           <TextInput
