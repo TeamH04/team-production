@@ -32,6 +32,7 @@ CREATE TABLE IF NOT EXISTS public.stores (
     description TEXT,
     landscape_photos TEXT[],
     address TEXT,
+    place_id TEXT NOT NULL,
     opening_hours TEXT,
     latitude DOUBLE PRECISION,
     longitude DOUBLE PRECISION,

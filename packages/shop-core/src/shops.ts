@@ -20,11 +20,16 @@ export interface Shop {
   createdAt: string; // アプリに追加した日
   openedAt: string; // 実際のオープン日
   description: string;
+  placeId: string;
   imageUrl: string;
   imageUrls?: string[]; // 複数画像対応
   tags: string[];
   menu?: { id: string; name: string }[];
 }
+
+// NOTE: This is a shared placeholder Google Place ID used for demo/development data.
+// In production, each shop should have its own unique and correct Google Place ID.
+const DEFAULT_PLACE_ID = 'ChIJRUjlH92OAGAR6otTD3tUcrg';
 
 export const SHOPS: Shop[] = [
   {
@@ -39,6 +44,7 @@ export const SHOPS: Shop[] = [
     description: '一杯ずつハンドドリップで淹れるコーヒーと、静かな時間を楽しめる朝カフェ。',
     imageUrl:
       'https://images.unsplash.com/photo-1509042239860-f550ce710b93?auto=format&fit=crop&w=600&q=80',
+    placeId: DEFAULT_PLACE_ID,
     imageUrls: [
       'https://images.unsplash.com/photo-1509042239860-f550ce710b93?auto=format&fit=crop&w=600&q=80',
       'https://images.unsplash.com/photo-1495521821757-a1efb6729352?auto=format&fit=crop&w=600&q=80',
@@ -63,6 +69,7 @@ export const SHOPS: Shop[] = [
     description: '旬の魚を使ったおまかせコースが人気のカウンター寿司。',
     imageUrl:
       'https://images.unsplash.com/photo-1553621042-f6e147245754?auto=format&fit=crop&w=600&q=80',
+    placeId: DEFAULT_PLACE_ID,
     imageUrls: [
       'https://images.unsplash.com/photo-1553621042-f6e147245754?auto=format&fit=crop&w=600&q=80',
       'https://images.unsplash.com/photo-1553621042-f6e147245754?auto=format&fit=crop&w=600&q=80',
@@ -87,6 +94,7 @@ export const SHOPS: Shop[] = [
     description: 'キャンドルの灯りで行う夜ヨガと、朝のエナジーフローが評判のスタジオ。',
     imageUrl:
       'https://images.unsplash.com/photo-1506126613408-eca07ce68773?auto=format&fit=crop&w=600&q=80',
+    placeId: DEFAULT_PLACE_ID,
     imageUrls: [
       'https://images.unsplash.com/photo-1506126613408-eca07ce68773?auto=format&fit=crop&w=600&q=80',
       'https://images.unsplash.com/photo-1506126613408-eca07ce68773?auto=format&fit=crop&w=600&q=80',
@@ -106,6 +114,7 @@ export const SHOPS: Shop[] = [
     description: '自然派ワインと季節の小皿料理、レコードの音色が心地よい隠れ家バー。',
     imageUrl:
       'https://images.unsplash.com/photo-1470337458703-46ad1756a187?auto=format&fit=crop&w=600&q=80',
+    placeId: DEFAULT_PLACE_ID,
     imageUrls: [
       'https://images.unsplash.com/photo-1470337458703-46ad1756a187?auto=format&fit=crop&w=600&q=80',
       'https://images.unsplash.com/photo-1470337458703-46ad1756a187?auto=format&fit=crop&w=600&q=80',
@@ -125,6 +134,7 @@ export const SHOPS: Shop[] = [
     description: '旬の野菜を使ったボウルとスープが揃うヘルシーランチスポット。',
     imageUrl:
       'https://images.unsplash.com/photo-1525755662778-989d0524087e?auto=format&fit=crop&w=600&q=80',
+    placeId: DEFAULT_PLACE_ID,
     imageUrls: [
       'https://images.unsplash.com/photo-1525755662778-989d0524087e?auto=format&fit=crop&w=600&q=80',
       'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80',
@@ -144,6 +154,7 @@ export const SHOPS: Shop[] = [
     description: '焼きたてのクロワッサンとサワードウが並ぶ人気ベーカリー。',
     imageUrl:
       'https://images.unsplash.com/photo-1544984243-ec57ea16fe25?auto=format&fit=crop&w=600&q=80',
+    placeId: DEFAULT_PLACE_ID,
     imageUrls: [
       'https://images.unsplash.com/photo-1544984243-ec57ea16fe25?auto=format&fit=crop&w=600&q=80',
       'https://images.unsplash.com/photo-1509042239860-f550ce710b93?auto=format&fit=crop&w=600&q=80',
@@ -168,6 +179,7 @@ export const SHOPS: Shop[] = [
     description: 'ジャンルを越えて選書された本と、作家イベントが充実した書店。',
     imageUrl:
       'https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&w=600&q=80',
+    placeId: DEFAULT_PLACE_ID,
     imageUrls: [
       'https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&w=600&q=80',
       'https://images.unsplash.com/photo-1524178232363-1fb2b075b655?auto=format&fit=crop&w=600&q=80',
@@ -187,6 +199,7 @@ export const SHOPS: Shop[] = [
     description: 'アロマトリートメントとフェイシャルで愛されるアーバンスパ。',
     imageUrl:
       'https://images.unsplash.com/photo-1544984243-ec57ea16fe25?auto=format&fit=crop&w=600&q=80',
+    placeId: DEFAULT_PLACE_ID,
     imageUrls: [
       'https://images.unsplash.com/photo-1544984243-ec57ea16fe25?auto=format&fit=crop&w=600&q=80',
       'https://images.unsplash.com/photo-1544984243-ec57ea16fe25?auto=format&fit=crop&w=600&q=80',
@@ -206,6 +219,7 @@ export const SHOPS: Shop[] = [
     description: '天井の高い窓と集中できる個室を備えたコワーキングスペース。',
     imageUrl:
       'https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&w=600&q=80',
+    placeId: DEFAULT_PLACE_ID,
     imageUrls: [
       'https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&w=600&q=80',
       'https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&w=600&q=80',
@@ -225,6 +239,7 @@ export const SHOPS: Shop[] = [
     description: '懐かしのゲーム機とクラフトドリンクを気軽にできるナイトスポット。',
     imageUrl:
       'https://images.unsplash.com/photo-1545239351-1141bd82e8a6?auto=format&fit=crop&w=600&q=80',
+    placeId: DEFAULT_PLACE_ID,
     imageUrls: [
       'https://images.unsplash.com/photo-1545239351-1141bd82e8a6?auto=format&fit=crop&w=600&q=80',
       'https://images.unsplash.com/photo-1545239351-1141bd82e8a6?auto=format&fit=crop&w=600&q=80',
@@ -244,6 +259,7 @@ export const SHOPS: Shop[] = [
     description: '海の幸をつかったグリル料理と景色が素晴らしいダイニング。',
     imageUrl:
       'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=600&q=80',
+    placeId: DEFAULT_PLACE_ID,
     imageUrls: [
       'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=600&q=80',
       'https://images.unsplash.com/photo-1559827260-dc66d52bef19?auto=format&fit=crop&w=600&q=80',
@@ -263,6 +279,7 @@ export const SHOPS: Shop[] = [
     description: '生演奏のジャズと季節のカクテルを楽しめる大人の社交場。',
     imageUrl:
       'https://images.unsplash.com/photo-1470337458703-46ad1756a187?auto=format&fit=crop&w=600&q=80',
+    placeId: DEFAULT_PLACE_ID,
     imageUrls: [
       'https://images.unsplash.com/photo-1470337458703-46ad1756a187?auto=format&fit=crop&w=600&q=80',
       'https://images.unsplash.com/photo-1470337458703-46ad1756a187?auto=format&fit=crop&w=600&q=80',
@@ -282,6 +299,7 @@ export const SHOPS: Shop[] = [
     description: 'クリエイター向けのツールとイベントが揃うメイカーズロフト。',
     imageUrl:
       'https://images.unsplash.com/photo-1524178232363-1fb2b075b655?auto=format&fit=crop&w=600&q=80',
+    placeId: DEFAULT_PLACE_ID,
     imageUrls: [
       'https://images.unsplash.com/photo-1524178232363-1fb2b075b655?auto=format&fit=crop&w=600&q=80',
       'https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&w=600&q=80',
@@ -301,6 +319,7 @@ export const SHOPS: Shop[] = [
     description: 'サラダボウルとコールドプレスジュースが並ぶデリスタンド。',
     imageUrl:
       'https://images.unsplash.com/photo-1504754524776-8f4f37790ca0?auto=format&fit=crop&w=600&q=80',
+    placeId: DEFAULT_PLACE_ID,
     imageUrls: [
       'https://images.unsplash.com/photo-1504754524776-8f4f37790ca0?auto=format&fit=crop&w=600&q=80',
       'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=600&q=80',

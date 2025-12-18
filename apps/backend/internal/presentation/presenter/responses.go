@@ -15,6 +15,7 @@ type StoreResponse struct {
 	Description     *string          `json:"description,omitempty"`
 	LandscapePhotos []string         `json:"landscape_photos,omitempty"`
 	Address         string           `json:"address"`
+	PlaceID         string           `json:"place_id"`
 	OpeningHours    *string          `json:"opening_hours,omitempty"`
 	Latitude        float64          `json:"latitude"`
 	Longitude       float64          `json:"longitude"`
@@ -110,6 +111,7 @@ func NewStoreResponse(store domain.Store) StoreResponse {
 		Description:     store.Description,
 		LandscapePhotos: append([]string(nil), store.LandscapePhotos...),
 		Address:         store.Address,
+		PlaceID:         store.PlaceID,
 		OpeningHours:    store.OpeningHours,
 		Latitude:        store.Latitude,
 		Longitude:       store.Longitude,
