@@ -47,7 +47,7 @@ export default function HomeScreen() {
       setIsLoadingMore(false);
       setVisibleCount(newVisibleCount);
     });
-  }, [filteredShops.length, selectedCategory]);
+  }, [filteredShops.length]);
 
   useEffect(() => {
     return () => {
