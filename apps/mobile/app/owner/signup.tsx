@@ -16,6 +16,38 @@ import { palette } from '@/constants/palette';
 
 const isLikelyEmail = (value: string) => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(value.trim());
 
+const formatDateInput = (value: string): string => {
+  const digits = value.replace(/\D/g, '');
+
+  const limitedDigits = digits.slice(0, 8);
+
+  if (limitedDigits.length <= 4) {
+    return limitedDigits;
+  } else if (limitedDigits.length < 6) {
+    return `${limitedDigits.slice(0, 4)}-${limitedDigits.slice(4)}`;
+  } else if (limitedDigits.length === 6) {
+    return `${limitedDigits.slice(0, 4)}-${limitedDigits.slice(4)}`;
+  } else {
+    return `${limitedDigits.slice(0, 4)}-${limitedDigits.slice(4, 6)}-${limitedDigits.slice(6)}`;
+  }
+};
+
+const validateDateRange = (dateString: string): string[] => {
+  const errors: string[] = [];
+  if (dateString.length !== 10) return errors;
+  const parts = dateString.split('-');
+  if (parts.length !== 3) return errors;
+  const month = parseInt(parts[1], 10);
+  const day = parseInt(parts[2], 10);
+  if (month < 1 || month > 12) {
+    errors.push('月は1〜12で入力してください');
+  }
+  if (day < 1 || day > 31) {
+    errors.push('日は1〜31で入力してください');
+  }
+  return errors;
+};
+
 export default function OwnerSignupScreen() {
   const router = useRouter();
   const navigation = useNavigation();
@@ -24,7 +56,16 @@ export default function OwnerSignupScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [phone, setPhone] = useState('');
+  const [openingDate, setOpeningDate] = useState('');
+  const [openingDateErrors, setOpeningDateErrors] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
+
+  const handleDateChange = (text: string) => {
+    const formatted = formatDateInput(text);
+    setOpeningDate(formatted);
+    const errors = validateDateRange(formatted);
+    setOpeningDateErrors(errors);
+  };
 
   useLayoutEffect(() => {
     navigation.setOptions?.({
@@ -36,8 +77,16 @@ export default function OwnerSignupScreen() {
   const onSubmit = async () => {
     const trimmedEmail = email.trim();
 
-    if (!storeName || !contactName || !trimmedEmail || !password) {
-      Alert.alert('入力不足', '必須項目（店舗名/担当者名/メール/パスワード）を入力してください');
+    if (!storeName || !contactName || !trimmedEmail || !password || !openingDate) {
+      Alert.alert(
+        '入力不足',
+        '必須項目（店舗名/担当者名/メール/パスワード/開店日）を入力してください'
+      );
+      return;
+    }
+
+    if (openingDateErrors.length > 0) {
+      Alert.alert('入力エラー', openingDateErrors.join('\n'));
       return;
     }
 
@@ -97,6 +146,22 @@ export default function OwnerSignupScreen() {
             placeholder='例）山田 太郎'
             placeholderTextColor={palette.secondaryText}
           />
+
+          <Text style={styles.label}>開店日（必須）</Text>
+          <TextInput
+            style={styles.input}
+            value={openingDate}
+            onChangeText={handleDateChange}
+            keyboardType='numeric'
+            placeholder='YYYY-MM-DD (例: 2024-01-15)'
+            placeholderTextColor={palette.secondaryText}
+            maxLength={10}
+          />
+          {openingDateErrors.map((error, index) => (
+            <Text key={index} style={styles.errorText}>
+              ※ {error}
+            </Text>
+          ))}
 
           <Text style={styles.label}>メールアドレス（必須）</Text>
           <TextInput
@@ -182,6 +247,11 @@ const styles = StyleSheet.create({
   buttonWrapper: {
     alignItems: 'center',
     marginTop: 32,
+  },
+  errorText: {
+    color: palette.dangerBorder,
+    fontSize: 12,
+    marginTop: 4,
   },
   form: {
     gap: 8,
