@@ -3,7 +3,7 @@ const { getDefaultConfig } = require('expo/metro-config');
 const { withNativeWind } = require('nativewind/metro');
 
 const projectRoot = __dirname;
-const workspaceRoot = path.resolve(__dirname, '../..');
+const workspaceRoot = path.resolve(projectRoot, '../..');
 
 const config = getDefaultConfig(projectRoot);
 
