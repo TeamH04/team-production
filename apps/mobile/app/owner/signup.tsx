@@ -17,62 +17,24 @@ import { palette } from '@/constants/palette';
 const isLikelyEmail = (value: string) => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(value.trim());
 
 const formatDateInput = (value: string): string => {
-  const digits = value.replace(/\D/g, '');
+  const digits = value.replace(/\D/g, '').slice(0, 8);
+  const y = digits.slice(0, 4);
+  const m = digits.slice(4, 6);
+  const d = digits.slice(6, 8);
 
-  const limitedDigits = digits.slice(0, 8);
-
-  if (limitedDigits.length < 4) {
-    return limitedDigits;
-  } else if (limitedDigits.length === 4) {
-    return `${limitedDigits}-`;
-  } else if (limitedDigits.length < 6) {
-    return `${limitedDigits.slice(0, 4)}-${limitedDigits.slice(4)}`;
-  } else if (limitedDigits.length === 6) {
-    return `${limitedDigits.slice(0, 4)}-${limitedDigits.slice(4)}-`;
-  } else {
-    return `${limitedDigits.slice(0, 4)}-${limitedDigits.slice(4, 6)}-${limitedDigits.slice(6)}`;
-  }
+  if (digits.length <= 4) return y + (digits.length === 4 ? '-' : '');
+  if (digits.length <= 6) return `${y}-${m}` + (digits.length === 6 ? '-' : '');
+  return `${y}-${m}-${d}`;
 };
 
-const isInvalidDate = (dateString: string): boolean => {
-  if (!dateString) return false;
-  if (dateString.length > 10) return true;
+const isValidDateYYYYMMDD = (digits8: string): boolean => {
+  if (!/^\d{8}$/.test(digits8)) return false;
+  const y = Number(digits8.slice(0, 4));
+  const m = Number(digits8.slice(4, 6));
+  const d = Number(digits8.slice(6, 8));
 
-  const parts = dateString.split('-');
-  if (parts.length > 3) return true;
-
-  const [yearStr = '', monthStr, dayStr] = parts;
-
-  if (yearStr && yearStr.length > 4) return true;
-
-  if (monthStr !== undefined) {
-    if (monthStr.length > 2) return true;
-    const m = parseInt(monthStr, 10);
-    if (!Number.isNaN(m)) {
-      if (m < 1 || m > 12) return true;
-    }
-  }
-
-  if (dayStr !== undefined) {
-    if (dayStr.length > 2) return true;
-    const d = parseInt(dayStr, 10);
-    if (!Number.isNaN(d)) {
-      if (d < 1 || d > 31) return true;
-    }
-  }
-
-  if (dateString.length === 10 && parts.length === 3) {
-    const y = parseInt(yearStr, 10);
-    const m = parseInt(monthStr ?? '', 10);
-    const d = parseInt(dayStr ?? '', 10);
-    if (Number.isNaN(y) || Number.isNaN(m) || Number.isNaN(d)) return true;
-    const date = new Date(y, m - 1, d);
-    if (date.getFullYear() !== y || date.getMonth() !== m - 1 || date.getDate() !== d) {
-      return true;
-    }
-  }
-
-  return false;
+  const date = new Date(y, m - 1, d);
+  return date.getFullYear() === y && date.getMonth() === m - 1 && date.getDate() === d;
 };
 
 export default function OwnerSignupScreen() {
@@ -88,11 +50,17 @@ export default function OwnerSignupScreen() {
   const [submitting, setSubmitting] = useState(false);
 
   const handleDateChange = (text: string) => {
-    const prevText = openingDate;
-    const isDeleting = text.length < prevText.length;
-    const nextValue = isDeleting ? text.replace(/[^0-9-]/g, '') : formatDateInput(text);
-    setOpeningDate(nextValue);
-    setOpeningDateInvalid(isInvalidDate(nextValue));
+    const prev = openingDate;
+    const isDeleting = text.length < prev.length;
+    const next = isDeleting ? text.replace(/[^0-9-]/g, '') : formatDateInput(text);
+    setOpeningDate(next);
+
+    const digits = next.replace(/\D/g, '');
+    if (digits.length === 8) {
+      setOpeningDateInvalid(!isValidDateYYYYMMDD(digits));
+    } else {
+      setOpeningDateInvalid(false);
+    }
   };
 
   useLayoutEffect(() => {
@@ -109,7 +77,9 @@ export default function OwnerSignupScreen() {
       Alert.alert('入力不足', '必須項目（店舗名/担当者名/メール/パスワード）を入力してください');
       return;
     }
-    if (!openingDate || openingDate.length !== 10 || isInvalidDate(openingDate)) {
+    // 完成形（数字8桁）のみ検証
+    const digits = openingDate.replace(/\D/g, '');
+    if (!isValidDateYYYYMMDD(digits)) {
       Alert.alert('入力エラー', '正しい日付で入力してください');
       return;
     }
