@@ -23,9 +23,7 @@ const formatDateInput = (value: string): string => {
 
   if (limitedDigits.length <= 4) {
     return limitedDigits;
-  } else if (limitedDigits.length < 6) {
-    return `${limitedDigits.slice(0, 4)}-${limitedDigits.slice(4)}`;
-  } else if (limitedDigits.length === 6) {
+  } else if (limitedDigits.length <= 6) {
     return `${limitedDigits.slice(0, 4)}-${limitedDigits.slice(4)}`;
   } else {
     return `${limitedDigits.slice(0, 4)}-${limitedDigits.slice(4, 6)}-${limitedDigits.slice(6)}`;
@@ -37,13 +35,25 @@ const validateDateRange = (dateString: string): string[] => {
   if (dateString.length !== 10) return errors;
   const parts = dateString.split('-');
   if (parts.length !== 3) return errors;
+  const year = parseInt(parts[0], 10);
   const month = parseInt(parts[1], 10);
   const day = parseInt(parts[2], 10);
+  if (Number.isNaN(year) || Number.isNaN(month) || Number.isNaN(day)) {
+    errors.push('正しい日付をYYYY-MM-DD形式で入力してください');
+    return errors;
+  }
   if (month < 1 || month > 12) {
     errors.push('月は1〜12で入力してください');
   }
   if (day < 1 || day > 31) {
     errors.push('日は1〜31で入力してください');
+  }
+  // ここまでエラーがなければ、実在する日付かどうかを確認する
+  if (errors.length === 0) {
+    const date = new Date(year, month - 1, day);
+    if (date.getFullYear() !== year || date.getMonth() !== month - 1 || date.getDate() !== day) {
+      errors.push('存在しない日付です');
+    }
   }
   return errors;
 };
@@ -77,7 +87,14 @@ export default function OwnerSignupScreen() {
   const onSubmit = async () => {
     const trimmedEmail = email.trim();
 
-    if (!storeName || !contactName || !trimmedEmail || !password || !openingDate) {
+    if (
+      !storeName ||
+      !contactName ||
+      !trimmedEmail ||
+      !password ||
+      !openingDate ||
+      openingDate.length !== 10
+    ) {
       Alert.alert(
         '入力不足',
         '必須項目（店舗名/担当者名/メール/パスワード/開店日）を入力してください'
