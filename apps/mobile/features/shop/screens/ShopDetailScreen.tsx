@@ -15,12 +15,27 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import Animated, { useAnimatedStyle, withSpring } from 'react-native-reanimated';
 
 import { Collapsible } from '@/components/Collapsible';
 import { IconSymbol } from '@/components/ui/IconSymbol';
 import { useFavorites } from '@/features/favorites/FavoritesContext';
 import { useReviews } from '@/features/reviews/ReviewsContext';
 import { SHOPS, type Shop } from '@team/shop-core';
+
+const PaginationDot = ({ active }: { active: boolean }) => {
+  const animatedStyle = useAnimatedStyle(() => {
+    return {
+      width: withSpring(active ? 24 : 8, { damping: 24, stiffness: 160 }),
+      backgroundColor: withSpring(active ? '#FFFFFF' : 'rgba(255, 255, 255, 0.4)', {
+        damping: 24,
+        stiffness: 160,
+      }),
+    };
+  });
+
+  return <Animated.View style={[styles.paginationDot, animatedStyle]} />;
+};
 
 const palette = {
   accent: '#0EA5E9',
@@ -224,12 +239,9 @@ export default function ShopDetailScreen() {
                         setCurrentImageIndex(index);
                         scrollToImage(index);
                       }}
-                      style={[
-                        styles.paginationDot,
-                        index === currentImageIndex ? styles.paginationDotActive : undefined,
-                        index === currentImageIndex ? styles.paginationDotActiveLarge : undefined,
-                      ]}
-                    />
+                    >
+                      <PaginationDot active={index === currentImageIndex} />
+                    </Pressable>
                   ))}
                 </View>
               </>
@@ -239,46 +251,34 @@ export default function ShopDetailScreen() {
           <Image source={{ uri: shop.imageUrl }} style={styles.hero} contentFit='cover' />
         )}
 
-        <View style={styles.headerActions}>
-          <Pressable
-            accessibilityLabel='このお店を共有'
-            onPress={handleShare}
-            disabled={!webBaseUrl}
-            style={({ pressed }) => [
-              styles.shareBtn,
-              pressed && styles.btnPressed,
-              !webBaseUrl && { opacity: 0.4 },
-            ]}
-          >
-            <Ionicons name='share-outline' size={22} color={palette.muted} />
-          </Pressable>
-          <View style={styles.headerActions}>
-            <Pressable
-              accessibilityLabel='このお店を共有'
-              onPress={handleShare}
-              disabled={!webBaseUrl}
-              style={({ pressed }) => [
-                styles.shareBtn,
-                pressed && styles.btnPressed,
-                !webBaseUrl && { opacity: 0.4 },
-              ]}
-            >
-              <Ionicons name='share-outline' size={22} color={palette.muted} />
-            </Pressable>
-          </View>
+        <View style={styles.container}>
           <View style={styles.headerRow}>
             <Text style={styles.title}>{shop.name}</Text>
-            <Pressable
-              accessibilityLabel='お気に入り切り替え'
-              onPress={() => toggleFavorite(shop.id)}
-              style={({ pressed }) => [styles.favBtn, pressed && styles.btnPressed]}
-            >
-              <IconSymbol
-                name={isFav ? 'heart.fill' : 'heart'}
-                size={28}
-                color={isFav ? palette.favoriteActive : palette.muted}
-              />
-            </Pressable>
+            <View style={styles.headerActions}>
+              <Pressable
+                accessibilityLabel='このお店を共有'
+                onPress={handleShare}
+                disabled={!webBaseUrl}
+                style={({ pressed }) => [
+                  styles.headerBtn,
+                  pressed && styles.btnPressed,
+                  !webBaseUrl && { opacity: 0.4 },
+                ]}
+              >
+                <Ionicons name='share-outline' size={27} color={palette.muted} />
+              </Pressable>
+              <Pressable
+                accessibilityLabel='お気に入り切り替え'
+                onPress={() => toggleFavorite(shop.id)}
+                style={({ pressed }) => [styles.headerBtn, pressed && styles.btnPressed]}
+              >
+                <IconSymbol
+                  name={isFav ? 'heart.fill' : 'heart'}
+                  size={26}
+                  color={isFav ? palette.favoriteActive : palette.muted}
+                />
+              </Pressable>
+            </View>
           </View>
 
           <Text
@@ -672,11 +672,14 @@ const styles = StyleSheet.create({
   },
   cashText: { color: palette.primary, fontSize: 13, fontWeight: '600', marginBottom: 8 },
   centered: { alignItems: 'center', justifyContent: 'center' },
+  container: {
+    paddingHorizontal: 24,
+    paddingVertical: 24,
+  },
 
   content: { paddingBottom: 40 },
   description: { color: palette.primary, lineHeight: 20, marginTop: 12 },
   errorText: { color: palette.favoriteActive, marginTop: 4 },
-  favBtn: { marginLeft: 8 },
   favoriteAction: { marginTop: 12 },
   featurePill: {
     backgroundColor: palette.secondarySurface,
@@ -699,7 +702,12 @@ const styles = StyleSheet.create({
   headerActions: {
     alignItems: 'center',
     flexDirection: 'row',
-    gap: 4,
+    gap: 12,
+  },
+  headerBtn: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 6,
   },
   headerRow: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between' },
   hero: { backgroundColor: palette.heroPlaceholder, height: 220, width: SCREEN_WIDTH },
@@ -762,14 +770,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   paginationDot: {
-    backgroundColor: palette.secondarySurface,
     borderRadius: 999,
     height: 8,
     marginHorizontal: 3,
-    width: 8,
   },
-  paginationDotActive: { backgroundColor: palette.surface },
-  paginationDotActiveLarge: { borderRadius: 8, height: 8, width: 24 },
   paginationOverlay: { bottom: 16, left: 0, position: 'absolute', right: 0 },
   paymentCategoryContainer: { marginBottom: 12 },
   paymentCategoryLabel: { color: palette.primary, fontWeight: '700', marginBottom: 6 },
@@ -831,10 +835,6 @@ const styles = StyleSheet.create({
   sectionHeader: { marginBottom: 6, marginTop: 16 },
   sectionSub: { color: palette.muted, marginBottom: 8 },
   sectionTitle: { color: palette.primary, fontSize: 16, fontWeight: '800', marginBottom: 6 },
-  shareBtn: {
-    marginLeft: 8,
-    padding: 4,
-  },
   similarCard: { marginTop: 12 },
   similarImage: { borderRadius: 12, height: 72, width: 72 },
   similarInfo: { flex: 1, gap: 4 },
