@@ -26,7 +26,7 @@ export default function MyPageScreen() {
   const router = useRouter();
   const { favorites } = useFavorites();
   const { reviewsByShop } = useReviews();
-  const { profile } = useUser();
+  const { user } = useUser();
 
   const favoriteShops = useMemo<Shop[]>(() => {
     const ids = Array.from(favorites);
@@ -55,12 +55,12 @@ export default function MyPageScreen() {
           <View style={styles.profileRow}>
             <View style={styles.avatar}>
               <Text style={styles.avatarText}>
-                {profile.name ? profile.name.slice(0, 2).toUpperCase() : ''}
+                {user?.name ? user.name.slice(0, 2).toUpperCase() : ''}
               </Text>
             </View>
             <View style={styles.profileMeta}>
-              <Text style={styles.profileName}>{profile.name}</Text>
-              <Text style={styles.profileSub}>{profile.email}</Text>
+              <Text style={styles.profileName}>{user?.name}</Text>
+              <Text style={styles.profileSub}>{user?.email}</Text>
             </View>
             <Pressable onPress={handleLogout} style={styles.logoutBtn} hitSlop={8}>
               <Text style={styles.logoutText}>ログアウト</Text>

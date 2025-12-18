@@ -1,32 +1,34 @@
-import React, { createContext, useCallback, useContext, useMemo, useState } from 'react';
+import React, { createContext, useContext, useMemo, useState } from 'react';
 
 export type UserProfile = {
   name: string;
   email: string;
+  age?: number;
+  isProfileRegistered: boolean;
 };
 
-type UserContextValue = {
-  profile: UserProfile;
-  updateProfile: (patch: Partial<UserProfile>) => void;
+type UserContextType = {
+  user: UserProfile | null;
+  isProfileComplete: boolean;
+  setUser: (u: UserProfile) => void;
+  clearUser: () => void;
 };
 
-const DEFAULT_PROFILE: UserProfile = {
-  name: 'Kyokk',
-  email: 'user@example.com',
-};
-
-const UserContext = createContext<UserContextValue | undefined>(undefined);
+const UserContext = createContext<UserContextType | undefined>(undefined);
 
 export function UserProvider({ children }: { children: React.ReactNode }) {
-  const [profile, setProfile] = useState<UserProfile>(DEFAULT_PROFILE);
+  const [user, setUserState] = useState<UserProfile | null>(null);
 
-  const updateProfile = useCallback((patch: Partial<UserProfile>) => {
-    setProfile(prev => ({ ...prev, ...patch }));
-  }, []);
+  const setUser = (profile: UserProfile) => {
+    setUserState(profile);
+    // 必要なら AsyncStorage 等に永続化する処理を追加
+  };
 
-  const value = useMemo<UserContextValue>(
-    () => ({ profile, updateProfile }),
-    [profile, updateProfile]
+  const clearUser = () => setUserState(null);
+
+  const value = useMemo<UserContextType>(
+    () => ({ user, isProfileComplete: !!user && user.isProfileRegistered, setUser, clearUser }),
+    [user]
   );
 
   return <UserContext.Provider value={value}>{children}</UserContext.Provider>;

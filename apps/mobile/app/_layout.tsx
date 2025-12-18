@@ -1,11 +1,12 @@
 import { FavoritesProvider } from '@/features/favorites/FavoritesContext';
 import { ReviewsProvider } from '@/features/reviews/ReviewsContext';
-import { UserProvider } from '@/features/user/UserContext';
+import { UserProvider, useUser } from '@/features/user/UserContext';
 import '@/global.css';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
-import { Stack, useSegments } from 'expo-router';
+import { router, Stack, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
 import 'react-native-reanimated';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -26,6 +27,14 @@ const styles = StyleSheet.create({
 
 function RootStack() {
   const insets = useSafeAreaInsets();
+  const { user, isProfileComplete } = useUser();
+
+  useEffect(() => {
+    if (user && !isProfileComplete) {
+      router.replace('/profile/register');
+    }
+  }, [user, isProfileComplete]);
+
   const segments = useSegments();
   const first = segments[0] ?? '';
   const isInsideTabs = segments.some(seg => seg === '(tabs)');
@@ -41,12 +50,25 @@ function RootStack() {
     >
       <StatusBar hidden={false} style='dark' backgroundColor='transparent' />
       <Stack>
-        <Stack.Screen name='index' options={{ headerShown: false }} />
-        <Stack.Screen name='(tabs)' options={{ headerShown: false }} />
-        <Stack.Screen name='login' options={{ title: 'ログイン', headerShown: true }} />
-        <Stack.Screen name='owner/signup' options={{ title: 'オーナー登録', headerShown: true }} />
-        <Stack.Screen name='auth/callback' options={{ title: '認証', headerShown: true }} />
-        <Stack.Screen name='+not-found' />
+        {user && !isProfileComplete ? (
+          // プロフィール未登録時は登録画面のみ表示（強制遷移）
+          <Stack.Screen
+            name='auth/register'
+            options={{ headerShown: false, animation: 'slide_from_right' }}
+          />
+        ) : (
+          <>
+            <Stack.Screen name='index' options={{ headerShown: false }} />
+            <Stack.Screen name='(tabs)' options={{ headerShown: false }} />
+            <Stack.Screen name='login' options={{ title: 'ログイン', headerShown: true }} />
+            <Stack.Screen
+              name='owner/signup'
+              options={{ title: 'オーナー登録', headerShown: true }}
+            />
+            <Stack.Screen name='auth/callback' options={{ title: '認証', headerShown: true }} />
+            <Stack.Screen name='+not-found' />
+          </>
+        )}
       </Stack>
     </View>
   );

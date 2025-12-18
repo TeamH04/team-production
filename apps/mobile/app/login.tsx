@@ -1,3 +1,4 @@
+import { useUser } from '@/features/user/UserContext';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as AppleAuthentication from 'expo-apple-authentication';
@@ -46,6 +47,7 @@ function createNonce(length = 32) {
 
 export default function LoginScreen() {
   const router = useRouter();
+  const { setUser } = useUser();
   const [loading, setLoading] = useState<null | 'google' | 'apple' | 'guest'>(null);
 
   const finishLogin = useCallback(async () => {
@@ -54,7 +56,6 @@ export default function LoginScreen() {
       'ログイン完了',
       isOwner ? 'オーナーとしてログインしました。' : '正常にログインしました。'
     );
-    router.replace((isOwner ? '/owner' : '/(tabs)') as Href);
   }, [router]);
 
   const handleOAuth = useCallback(
@@ -101,6 +102,12 @@ export default function LoginScreen() {
           } else {
             throw new Error('No tokens found in redirect URL');
           }
+          // ログイン成功後に user をセット
+          setUser({
+            name: 'Google User', // ← 仮。後で Supabase から取得
+            email: 'google@example.com',
+            isProfileRegistered: false,
+          });
 
           await finishLogin();
         } else if (result.type === 'dismiss') {
@@ -163,6 +170,13 @@ export default function LoginScreen() {
       }
 
       // TODO: Supabase 側で Apple の Services ID / Team ID / Key ID / 秘密鍵 を設定する必要があり
+      // ログイン成功後に user をセット
+      setUser({
+        name: 'Apple User', // 仮。後で Supabase から取得
+        email: 'apple@example.com',
+        isProfileRegistered: false,
+      });
+
       await finishLogin();
     } catch (e: unknown) {
       if (

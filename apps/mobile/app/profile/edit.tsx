@@ -33,11 +33,11 @@ export default function EditProfileScreen() {
   const router = useRouter();
 
   // ユーザー情報取得・更新用のコンテキスト
-  const { profile, updateProfile } = useUser();
+  const { user, setUser } = useUser();
 
   // ローカルなフォーム state（入力値を保持）
-  const [name, setName] = useState(profile.name);
-  const [email, setEmail] = useState(profile.email);
+  const [name, setName] = useState(user?.name);
+  const [email, setEmail] = useState(user?.email);
 
   // 保存ボタンを有効にするかの判定（簡易バリデーション）
   const canSave = useMemo(() => {
@@ -86,7 +86,7 @@ export default function EditProfileScreen() {
         <Pressable
           disabled={!canSave}
           onPress={() => {
-            updateProfile({ name: name.trim(), email: email.trim() });
+            setUser({ name: name?.trim(), email: email?.trim() });
             router.back();
           }}
           style={styles.primaryBtn}
