@@ -25,6 +25,8 @@ export interface Shop {
   menu?: { id: string; name: string }[];
 }
 
+// NOTE: This is a shared placeholder Google Place ID used for demo/development data.
+// In production, each shop should have its own unique and correct Google Place ID.
 const DEFAULT_PLACE_ID = 'ChIJRUjlH92OAGAR6otTD3tUcrg';
 
 export const SHOPS: Shop[] = [
