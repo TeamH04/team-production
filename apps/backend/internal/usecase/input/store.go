@@ -26,6 +26,7 @@ type CreateStoreInput struct {
 	LandscapePhotos []string
 	Latitude        float64
 	Longitude       float64
+	PlaceID         string
 }
 
 type UpdateStoreInput struct {
@@ -38,4 +39,5 @@ type UpdateStoreInput struct {
 	LandscapePhotos []string
 	Latitude        *float64
 	Longitude       *float64
+	PlaceID         *string
 }
