@@ -1,193 +1,138 @@
-import { useRouter } from 'expo-router';
-import React, { useState } from 'react';
+import { Stack, useRouter } from 'expo-router';
+import { useMemo, useState } from 'react';
 import {
-  Alert,
   KeyboardAvoidingView,
   Platform,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   View,
 } from 'react-native';
 
-import { palette } from '@/constants/palette';
+import { useUser } from '@/features/user/UserContext';
 
-export default function GenreSelectionScreen() {
+const GENRES = [
+  'カフェ',
+  '和食',
+  '居酒屋',
+  'イタリアン',
+  'フレンチ',
+  '中華',
+  'ベーカリー',
+  'バー',
+  'スイーツ',
+  'その他',
+] as const;
+
+const palette = {
+  accent: '#0EA5E9',
+  avatarBackground: '#DBEAFE',
+  avatarText: '#1D4ED8',
+  background: '#F9FAFB',
+  border: '#E5E7EB',
+  muted: '#6B7280',
+  primary: '#111827',
+  primaryOnAccent: '#FFFFFF',
+  secondarySurface: '#F3F4F6',
+  surface: '#FFFFFF',
+} as const;
+
+export default function RegisterProfileScreen() {
   const router = useRouter();
-  const [storeName, setStoreName] = useState('');
-  const [contactName, setContactName] = useState('');
-  const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
-  const [submitting, setSubmitting] = useState(false);
+  const { setUser } = useUser();
+  const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
 
-  const onSubmit = async () => {
-    if (!storeName || !contactName || !email) {
-      Alert.alert('入力不足', '必須項目（店舗名/担当者名/メール）を入力してください');
-      return;
-    }
+  const toggleGenre = (g: string) => {
+    setSelectedGenres(prev => (prev.includes(g) ? prev.filter(x => x !== g) : [...prev, g]));
+  };
 
-    try {
-      setSubmitting(true);
-      // NOTE: Backend 未実装。将来的にここで API に POST する想定。
-      await new Promise(r => setTimeout(r, 600));
-      Alert.alert('ジャンル選択完了', 'ジャンル選択が完了しました');
-      router.replace('/');
-    } catch (e: unknown) {
-      const message = e instanceof Error ? e.message : '送信に失敗しました';
-      Alert.alert('作成失敗', message);
-    } finally {
-      setSubmitting(false);
-    }
+  const canSave = useMemo(() => {
+    return selectedGenres.length > 0;
+  }, [selectedGenres]);
+
+  const onSave = () => {
+    setUser({ isProfileRegistered: true, favoriteGenres: selectedGenres });
+    router.replace('/');
   };
 
   return (
-    <KeyboardAvoidingView
-      style={styles.screen}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      keyboardVerticalOffset={16}
-    >
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        keyboardShouldPersistTaps='handled'
-        showsVerticalScrollIndicator={false}
+    <>
+      <Stack.Screen options={{ headerShown: false }} />
+      <KeyboardAvoidingView
+        behavior={Platform.select({ ios: 'padding', default: undefined })}
+        style={styles.keyboard}
       >
-        <Text style={styles.title}>好きなジャンルを選択</Text>
-        <Text style={styles.subtitle}>
-          選んだジャンルに関連する店舗がおすすめに表示されやすくなります
-        </Text>
-
-        <View style={styles.form}>
-          <Text style={styles.label}>店舗名（必須）</Text>
-          <TextInput
-            style={styles.input}
-            value={storeName}
-            onChangeText={setStoreName}
-            placeholder='例）喫茶サンプル'
-            placeholderTextColor={palette.secondaryText}
-          />
-
-          <Text style={styles.label}>担当者名（必須）</Text>
-          <TextInput
-            style={styles.input}
-            value={contactName}
-            onChangeText={setContactName}
-            placeholder='例）山田 太郎'
-            placeholderTextColor={palette.secondaryText}
-          />
-
-          <Text style={styles.label}>メールアドレス（必須）</Text>
-          <TextInput
-            style={styles.input}
-            value={email}
-            onChangeText={setEmail}
-            inputMode='email'
-            autoCapitalize='none'
-            placeholder='owner@example.com'
-            placeholderTextColor={palette.secondaryText}
-          />
-
-          <Text style={styles.label}>電話番号（任意）</Text>
-          <TextInput
-            style={styles.input}
-            value={phone}
-            onChangeText={setPhone}
-            inputMode='tel'
-            autoCapitalize='none'
-            placeholder='090-1234-5678'
-            placeholderTextColor={palette.secondaryText}
-          />
-        </View>
-
-        <View style={styles.buttonWrapper}>
-          <View style={styles.buttonContainer}>
-            <Pressable
-              onPress={onSubmit}
-              disabled={submitting}
-              style={({ pressed }) => [
-                styles.buttonPressable,
-                (pressed || submitting) && { opacity: 0.7 },
-              ]}
-            >
-              <Text style={styles.buttonText}>{submitting ? '作成中…' : '作成する'}</Text>
-            </Pressable>
+        <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
+          <Text style={[styles.label, { marginTop: 4 }]}>好きな店舗のジャンル（複数選択可）</Text>
+          <View style={styles.chipsWrap}>
+            {GENRES.map(g => {
+              const on = selectedGenres.includes(g);
+              return (
+                <Pressable
+                  key={g}
+                  onPress={() => toggleGenre(g)}
+                  style={[styles.chip, on ? styles.chipOn : styles.chipOff]}
+                >
+                  <Text style={on ? styles.chipTextOn : styles.chipTextOff}>{g}</Text>
+                </Pressable>
+              );
+            })}
           </View>
-        </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+
+          <Pressable disabled={!canSave} onPress={onSave} style={styles.primaryBtn}>
+            <Text style={styles.primaryBtnText}>登録して続行</Text>
+          </Pressable>
+
+          <Pressable onPress={onSave} style={styles.secondaryBtn}>
+            <Text style={styles.secondaryBtnText}>スキップ</Text>
+          </Pressable>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </>
   );
 }
 
 const styles = StyleSheet.create({
-  buttonContainer: {
-    backgroundColor: palette.button,
-    borderColor: palette.buttonBorder,
+  chip: {
     borderRadius: 999,
-    borderWidth: 1,
-    elevation: 4,
-    height: 44,
-    minWidth: 160,
-    overflow: 'hidden',
-    shadowColor: palette.shadowColor,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.16,
-    shadowRadius: 10,
+    marginBottom: 8,
+    marginRight: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
   },
-  buttonPressable: {
-    alignItems: 'center',
-    flex: 1,
-    justifyContent: 'center',
-    paddingHorizontal: 24,
+  chipOff: { backgroundColor: palette.secondarySurface, borderColor: palette.border },
+  chipOn: { backgroundColor: palette.accent },
+
+  chipTextOff: { color: palette.primary, fontWeight: '700' },
+
+  chipTextOn: { color: palette.primaryOnAccent, fontWeight: '700' },
+  chipsWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+
+  content: { padding: 16 },
+
+  keyboard: { flex: 1 },
+
+  label: { color: palette.primary, fontWeight: '700', marginBottom: 20 },
+
+  primaryBtn: {
+    backgroundColor: palette.accent,
+    borderRadius: 12,
+    marginTop: 28,
+    paddingVertical: 14,
   },
-  buttonText: {
-    color: palette.surface,
-    fontSize: 16,
-    fontWeight: '700',
-    marginTop: 8,
-    textAlign: 'center',
-  },
-  buttonWrapper: {
-    alignItems: 'center',
-    marginTop: 32,
-  },
-  form: {
-    gap: 8,
-  },
-  input: {
-    backgroundColor: palette.surface,
+  primaryBtnText: { color: palette.primaryOnAccent, fontWeight: '700', textAlign: 'center' },
+
+  screen: { backgroundColor: palette.surface, flex: 1 },
+
+  secondaryBtn: {
+    backgroundColor: palette.secondarySurface,
     borderColor: palette.border,
     borderRadius: 12,
     borderWidth: 1,
-    color: palette.primaryText,
+    marginTop: 18,
     paddingHorizontal: 14,
     paddingVertical: 12,
   },
-  label: {
-    color: palette.primaryText,
-    fontSize: 14,
-    fontWeight: '500',
-    marginTop: 10,
-  },
-  screen: {
-    backgroundColor: palette.background,
-    flex: 1,
-    paddingBottom: 16,
-    paddingHorizontal: 24,
-    paddingTop: 32,
-  },
-  scrollContent: {
-    flexGrow: 1,
-    paddingBottom: 24,
-  },
-  subtitle: {
-    color: palette.secondaryText,
-    marginBottom: 16,
-    marginTop: 8,
-  },
-  title: {
-    color: palette.primaryText,
-    fontSize: 24,
-    fontWeight: '700',
-  },
+  secondaryBtnText: { color: palette.primary, fontWeight: '700', textAlign: 'center' },
 });
