@@ -11,41 +11,30 @@ import {
   View,
 } from 'react-native';
 
+import { palette } from '@/constants/palette';
 import { useUser } from '@/features/user/UserContext';
 
-// カラー定義: 画面全体で使う色をまとめて管理しています
-const palette = {
-  accent: '#0EA5E9',
+// カラー定義
+const paletteSub = {
   avatarBackground: '#DBEAFE',
   avatarText: '#1D4ED8',
-  background: '#F9FAFB',
-  border: '#E5E7EB',
-  muted: '#6B7280',
-  primary: '#111827',
-  primaryOnAccent: '#FFFFFF',
-  secondarySurface: '#F3F4F6',
-  surface: '#FFFFFF',
-} as const;
+};
 
 // プロフィール編集画面コンポーネント
 export default function EditProfileScreen() {
-  // 画面遷移用フック
   const router = useRouter();
-
-  // ユーザー情報取得・更新用のコンテキスト
   const { user, setUser } = useUser();
 
-  // ローカルなフォーム state（入力値を保持）
-  const [name, setName] = useState(user?.name);
-  const [email, setEmail] = useState(user?.email);
+  // ローカルなフォーム state（表示名・メールアドレス）
+  const [name, setName] = useState(user?.name ?? '');
+  const [email, setEmail] = useState(user?.email ?? '');
 
-  // 保存ボタンを有効にするかの判定（簡易バリデーション）
+  // 保存ボタンを有効にするかの判定
   const canSave = useMemo(() => {
     const emailOk = /.+@.+\..+/.test(email.trim());
     return name.trim().length > 0 && emailOk;
   }, [name, email]);
 
-  // レンダリング
   return (
     <KeyboardAvoidingView
       behavior={Platform.select({ ios: 'padding', default: undefined })}
@@ -63,7 +52,7 @@ export default function EditProfileScreen() {
           value={name}
           onChangeText={setName}
           placeholder='例: Hanako Tanaka'
-          placeholderTextColor={palette.muted}
+          placeholderTextColor={palette.secondaryText}
           style={styles.input}
           autoCapitalize='words'
         />
@@ -74,7 +63,7 @@ export default function EditProfileScreen() {
           value={email}
           onChangeText={setEmail}
           placeholder='example@domain.com'
-          placeholderTextColor={palette.muted}
+          placeholderTextColor={palette.secondaryText}
           style={styles.input}
           autoCapitalize='none'
           keyboardType='email-address'
@@ -86,7 +75,7 @@ export default function EditProfileScreen() {
         <Pressable
           disabled={!canSave}
           onPress={() => {
-            setUser({ name: name?.trim(), email: email?.trim() });
+            setUser({ name: name.trim(), email: email.trim(), isProfileRegistered: true });
             router.back();
           }}
           style={styles.primaryBtn}
@@ -104,20 +93,19 @@ export default function EditProfileScreen() {
 }
 
 // スタイル定義（見た目の調整）
-// 各スタイルは用途ごとにコメントを付けています
 const styles = StyleSheet.create({
-  // Avatar（ユーザーアイコン）
+  // Avatar
   avatar: {
     alignItems: 'center',
     alignSelf: 'center',
-    backgroundColor: palette.avatarBackground,
+    backgroundColor: paletteSub.avatarBackground,
     borderRadius: 999,
     height: 88,
     justifyContent: 'center',
     marginBottom: 16,
     width: 88,
   },
-  avatarText: { color: palette.avatarText, fontSize: 28, fontWeight: '800' },
+  avatarText: { color: paletteSub.avatarText, fontSize: 28, fontWeight: '800' },
 
   // コンテンツの余白
   content: { padding: 16 },
@@ -128,7 +116,7 @@ const styles = StyleSheet.create({
     borderColor: palette.border,
     borderRadius: 12,
     borderWidth: 1,
-    color: palette.primary,
+    color: palette.primaryText,
     marginBottom: 16,
     paddingHorizontal: 14,
     paddingVertical: 12,
@@ -138,7 +126,7 @@ const styles = StyleSheet.create({
   keyboard: { flex: 1 },
 
   // ラベル（表示名・メールなどの見出し）
-  label: { color: palette.primary, fontWeight: '700', marginBottom: 8 },
+  label: { color: palette.primaryText, fontWeight: '700', marginBottom: 8 },
 
   // プライマリボタン（保存）
   primaryBtn: {
@@ -162,5 +150,5 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 10,
   },
-  secondaryBtnText: { color: palette.primary, fontWeight: '700', textAlign: 'center' },
+  secondaryBtnText: { color: palette.primaryText, fontWeight: '700', textAlign: 'center' },
 });

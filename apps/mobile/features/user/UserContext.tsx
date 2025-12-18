@@ -1,8 +1,8 @@
 import React, { createContext, useContext, useMemo, useState } from 'react';
 
 export type UserProfile = {
-  name?: string;
-  email?: string;
+  name: string;
+  email: string;
   age?: number;
   isProfileRegistered: boolean;
   favoriteGenres?: string[];

@@ -10,6 +10,7 @@ import {
   View,
 } from 'react-native';
 
+import { palette } from '@/constants/palette';
 import { useUser } from '@/features/user/UserContext';
 
 const GENRES = [
@@ -25,22 +26,11 @@ const GENRES = [
   'その他',
 ] as const;
 
-const palette = {
-  accent: '#0EA5E9',
-  avatarBackground: '#DBEAFE',
-  avatarText: '#1D4ED8',
-  background: '#F9FAFB',
-  border: '#E5E7EB',
-  muted: '#6B7280',
-  primary: '#111827',
-  primaryOnAccent: '#FFFFFF',
-  secondarySurface: '#F3F4F6',
-  surface: '#FFFFFF',
-} as const;
-
 export default function RegisterProfileScreen() {
   const router = useRouter();
-  const { setUser } = useUser();
+  const { user, setUser } = useUser();
+  const name = user?.name ?? '';
+  const email = user?.email ?? '';
   const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
 
   const toggleGenre = (g: string) => {
@@ -52,7 +42,12 @@ export default function RegisterProfileScreen() {
   }, [selectedGenres]);
 
   const onSave = () => {
-    setUser({ isProfileRegistered: true, favoriteGenres: selectedGenres });
+    setUser({
+      name: name,
+      email: email,
+      isProfileRegistered: true,
+      favoriteGenres: selectedGenres,
+    });
     router.replace('/');
   };
 
@@ -64,7 +59,9 @@ export default function RegisterProfileScreen() {
         style={styles.keyboard}
       >
         <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
-          <Text style={[styles.label, { marginTop: 4 }]}>好きな店舗のジャンル（複数選択可）</Text>
+          <Text style={styles.title}>ジャンル選択</Text>
+          <Text style={styles.subtitle}>自身の選んだ店舗がおすすめに表示されやすくなります</Text>
+          <Text style={styles.label}>好きな店舗のジャンル（複数選択可）</Text>
           <View style={styles.chipsWrap}>
             {GENRES.map(g => {
               const on = selectedGenres.includes(g);
@@ -85,7 +82,7 @@ export default function RegisterProfileScreen() {
           </Pressable>
 
           <Pressable onPress={onSave} style={styles.secondaryBtn}>
-            <Text style={styles.secondaryBtnText}>スキップ</Text>
+            <Text style={styles.secondaryBtnText}>登録しない</Text>
           </Pressable>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -94,6 +91,7 @@ export default function RegisterProfileScreen() {
 }
 
 const styles = StyleSheet.create({
+  // チップ（ジャンル選択）
   chip: {
     borderRadius: 999,
     marginBottom: 8,
@@ -104,7 +102,7 @@ const styles = StyleSheet.create({
   chipOff: { backgroundColor: palette.secondarySurface, borderColor: palette.border },
   chipOn: { backgroundColor: palette.accent },
 
-  chipTextOff: { color: palette.primary, fontWeight: '700' },
+  chipTextOff: { color: palette.primaryText, fontWeight: '700' },
 
   chipTextOn: { color: palette.primaryOnAccent, fontWeight: '700' },
   chipsWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
@@ -113,8 +111,9 @@ const styles = StyleSheet.create({
 
   keyboard: { flex: 1 },
 
-  label: { color: palette.primary, fontWeight: '700', marginBottom: 20 },
+  label: { color: palette.primaryText, fontWeight: '700', marginBottom: 20, marginTop: 4 },
 
+  // プライマリボタン（登録）
   primaryBtn: {
     backgroundColor: palette.accent,
     borderRadius: 12,
@@ -125,14 +124,26 @@ const styles = StyleSheet.create({
 
   screen: { backgroundColor: palette.surface, flex: 1 },
 
+  // セカンドリボタン（非登録）
   secondaryBtn: {
     backgroundColor: palette.secondarySurface,
     borderColor: palette.border,
     borderRadius: 12,
     borderWidth: 1,
-    marginTop: 18,
+    marginTop: 12,
     paddingHorizontal: 14,
     paddingVertical: 12,
   },
-  secondaryBtnText: { color: palette.primary, fontWeight: '700', textAlign: 'center' },
+  secondaryBtnText: { color: palette.primaryText, fontWeight: '700', textAlign: 'center' },
+
+  subtitle: {
+    color: palette.secondaryText,
+    marginBottom: 16,
+    marginTop: 8,
+  },
+  title: {
+    color: palette.primaryText,
+    fontSize: 24,
+    fontWeight: '700',
+  },
 });
