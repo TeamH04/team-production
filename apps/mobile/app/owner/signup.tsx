@@ -36,28 +36,28 @@ const formatDateInput = (value: string): string => {
 
 const isInvalidDate = (dateString: string): boolean => {
   if (!dateString) return false;
-  if (dateString.length > 10) return true; // 長すぎは即エラー
+  if (dateString.length > 10) return true;
 
   const parts = dateString.split('-');
-  if (parts.length > 3) return true; // 区切り過多
+  if (parts.length > 3) return true;
 
   const [yearStr = '', monthStr, dayStr] = parts;
 
-  if (yearStr && yearStr.length > 4) return true; // 年は最大4桁、それ以上はエラー
+  if (yearStr && yearStr.length > 4) return true;
 
   if (monthStr !== undefined) {
-    if (monthStr.length > 2) return true; // 桁超過
+    if (monthStr.length > 2) return true;
     const m = parseInt(monthStr, 10);
     if (!Number.isNaN(m)) {
-      if (m < 1 || m > 12) return true; // 範囲外は途中でもエラー
+      if (m < 1 || m > 12) return true;
     }
   }
 
   if (dayStr !== undefined) {
-    if (dayStr.length > 2) return true; // 桁超過
+    if (dayStr.length > 2) return true;
     const d = parseInt(dayStr, 10);
     if (!Number.isNaN(d)) {
-      if (d < 1 || d > 31) return true; // 範囲外は途中でもエラー
+      if (d < 1 || d > 31) return true;
     }
   }
 
