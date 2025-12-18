@@ -19,9 +19,6 @@ const BUDGET_LABEL: Record<Shop['budget'], string> = {
   $$$: '¥¥¥',
 };
 
-
-
-
 const TAB_BAR_SPACING = 129;
 
 const INACTIVE_COLOR = '#f0f0f0';
