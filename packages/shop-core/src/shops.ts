@@ -49,7 +49,7 @@ export interface Shop {
     cash?: boolean; // 現金対応可否
     transitAvailable?: boolean; // 交通系IC可否
     creditCard?: string[]; // クレジットカード系（VISA, MasterCard, JCB等）
-    qrCode?: string[]; // QRコード決済（PayPay等）
+    qrCode?: string[]; // バーコード決済（PayPay等）
     mobilePay?: string[]; // モバイル決済（Apple Pay, Google Pay等）
     transit?: string[]; // 交通系IC
     other?: string[]; // その他（iD, QUICPayなど）

@@ -96,6 +96,11 @@ export default function ShopDetailScreen() {
 
   const isFav = id ? isFavorite(id) : false;
   const reviews = id ? getReviews(id) : [];
+  // TODO: 二重計上（ダブルカウント）のリスクを解消する
+  // - 現状: shop.reviewCount と reviews.length を合算しているため、同期状況により重複の恐れあり。
+  // - 対応案1: データの信頼できる情報源(SSOT)を一本化（例：getReviews からのみ算出）。
+  // - 対応案2: 新規保存後に shop オブジェクトをリフレッシュし、shop.reviewCount のみを参照。
+  // - 目的: データの不整合を防止し、正確なレビュー件数を保証するため。
   const reviewCount = (shop?.reviewCount ?? 0) + reviews.length;
   const imageUrls = shop?.imageUrls;
   const flatListRef = useRef<FlatList>(null);
@@ -419,54 +424,50 @@ export default function ShopDetailScreen() {
               titleStyle={styles.sectionTitle}
               iconColor={palette.primary}
             >
-              {shop.paymentMethods.cash !== undefined && (
-                <>
-                  <View style={styles.paymentSpacer} />
-                  <View style={styles.paymentCategoryContainer}>
-                    <Text style={styles.paymentCategoryLabel}>現金</Text>
-                    <View style={styles.paymentRow}>
-                      {shop.paymentMethods.cash ? (
-                        <Text style={styles.cashText}>利用可</Text>
-                      ) : (
-                        <Text style={styles.unavailableText}>利用不可</Text>
-                      )}
-                    </View>
+              <View style={styles.paymentCategories}>
+                <View style={styles.paymentCategoryContainer}>
+                  <Text style={styles.paymentCategoryLabel}>現金</Text>
+                  <View style={styles.paymentRow}>
+                    {shop.paymentMethods.cash === true ? (
+                      <Text style={styles.cashText}>利用可</Text>
+                    ) : shop.paymentMethods.cash === false ? (
+                      <Text style={styles.unavailableText}>利用不可</Text>
+                    ) : (
+                      <Text style={styles.unavailableText}>不明</Text>
+                    )}
                   </View>
-                  <View style={styles.paymentSpacer} />
-                </>
-              )}
-              {/* クレジットカード系 */}
-              <View style={styles.paymentCategoryContainer}>
-                <Text style={styles.paymentCategoryLabel}>クレジットカード</Text>
-                <View style={styles.paymentRow}>
-                  {shop.paymentMethods.creditCard && shop.paymentMethods.creditCard.length > 0 ? (
-                    shop.paymentMethods.creditCard.map(method => (
-                      <View key={method} style={styles.paymentPill}>
-                        <Text style={styles.paymentPillText}>{method}</Text>
-                      </View>
-                    ))
-                  ) : (
-                    <Text style={styles.unavailableText}>利用不可</Text>
-                  )}
                 </View>
-              </View>
-              {/* QRコード決済 */}
-              <View style={styles.paymentCategoryContainer}>
-                <Text style={styles.paymentCategoryLabel}>バーコード決済</Text>
-                <View style={styles.paymentRow}>
-                  {shop.paymentMethods.qrCode && shop.paymentMethods.qrCode.length > 0 ? (
-                    shop.paymentMethods.qrCode.map(method => (
-                      <View key={method} style={styles.paymentPill}>
-                        <Text style={styles.paymentPillText}>{method}</Text>
-                      </View>
-                    ))
-                  ) : (
-                    <Text style={styles.unavailableText}>利用不可</Text>
-                  )}
+                {/* クレジットカード系 */}
+                <View style={styles.paymentCategoryContainer}>
+                  <Text style={styles.paymentCategoryLabel}>クレジットカード</Text>
+                  <View style={styles.paymentRow}>
+                    {shop.paymentMethods.creditCard && shop.paymentMethods.creditCard.length > 0 ? (
+                      shop.paymentMethods.creditCard.map(method => (
+                        <View key={method} style={styles.paymentPill}>
+                          <Text style={styles.paymentPillText}>{method}</Text>
+                        </View>
+                      ))
+                    ) : (
+                      <Text style={styles.unavailableText}>利用不可</Text>
+                    )}
+                  </View>
                 </View>
-              </View>
-              {/* モバイル決済 */}
-              {shop.paymentMethods && (
+                {/* QRコード決済 */}
+                <View style={styles.paymentCategoryContainer}>
+                  <Text style={styles.paymentCategoryLabel}>バーコード決済</Text>
+                  <View style={styles.paymentRow}>
+                    {shop.paymentMethods.qrCode && shop.paymentMethods.qrCode.length > 0 ? (
+                      shop.paymentMethods.qrCode.map(method => (
+                        <View key={method} style={styles.paymentPill}>
+                          <Text style={styles.paymentPillText}>{method}</Text>
+                        </View>
+                      ))
+                    ) : (
+                      <Text style={styles.unavailableText}>利用不可</Text>
+                    )}
+                  </View>
+                </View>
+                {/* モバイル決済 */}
                 <View style={styles.paymentCategoryContainer}>
                   <Text style={styles.paymentCategoryLabel}>モバイル決済</Text>
                   <View style={styles.paymentRow}>
@@ -481,9 +482,7 @@ export default function ShopDetailScreen() {
                     )}
                   </View>
                 </View>
-              )}
-              {/* その他 */}
-              {shop.paymentMethods && (
+                {/* その他 */}
                 <View style={styles.paymentCategoryContainer}>
                   <Text style={styles.paymentCategoryLabel}>電子マネー</Text>
                   <View style={styles.paymentRow}>
@@ -498,10 +497,8 @@ export default function ShopDetailScreen() {
                     )}
                   </View>
                 </View>
-              )}
-              {/* 交通系IC */}
-              {shop.paymentMethods &&
-                (() => {
+                {/* 交通系IC */}
+                {(() => {
                   const transitAvailable =
                     shop.paymentMethods.transitAvailable ??
                     (shop.paymentMethods.transit && shop.paymentMethods.transit.length > 0);
@@ -514,6 +511,7 @@ export default function ShopDetailScreen() {
                     </View>
                   );
                 })()}
+              </View>
             </Collapsible>
           ) : null}
 
@@ -775,8 +773,9 @@ const styles = StyleSheet.create({
     marginHorizontal: 3,
   },
   paginationOverlay: { bottom: 16, left: 0, position: 'absolute', right: 0 },
-  paymentCategoryContainer: { marginBottom: 12 },
-  paymentCategoryLabel: { color: palette.primary, fontWeight: '700', marginBottom: 6 },
+  paymentCategories: { gap: 12 },
+  paymentCategoryContainer: { gap: 6 },
+  paymentCategoryLabel: { color: palette.primary, fontWeight: '700' },
 
   paymentPill: {
     backgroundColor: palette.secondarySurface,
@@ -786,7 +785,6 @@ const styles = StyleSheet.create({
   },
   paymentPillText: { color: palette.primary, fontWeight: '600' },
   paymentRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  paymentSpacer: { height: 8 },
   primaryBtn: {
     alignItems: 'center',
     backgroundColor: palette.accent,
