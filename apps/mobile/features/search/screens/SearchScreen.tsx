@@ -340,57 +340,57 @@ export default function SearchScreen() {
         )}
       </View>
 
+      {/* 3. 検索結果セクション */}
       {hasSearchCriteria && (
         <View style={styles.resultsSection}>
-          <Text style={styles.resultsTitle}>{`検索結果：${searchResults.length}件`}</Text>
-
-          {/* ▼▼▼ ここから修正：横スクロールと固定ボタンのレイアウト ▼▼▼ */}
-          <View style={styles.sortRow}>
-            {/* 左側：項目選択（残りの幅いっぱいに横スクロール） */}
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              style={styles.sortOptionsScroll}
-              contentContainerStyle={styles.sortOptionsContent}
-            >
-              {SORT_OPTIONS.map(option => {
-                const isActive = sortBy === option.value;
-                return (
-                  <Pressable
-                    key={option.value}
-                    onPress={() => handleSortTypePress(option.value)}
-                    style={[
-                      styles.sortButton,
-                      isActive ? styles.sortButtonActive : styles.sortButtonInactive,
-                    ]}
-                  >
-                    <Text
-                      style={isActive ? styles.sortButtonTextActive : styles.sortButtonTextInactive}
-                    >
-                      {option.label}
-                    </Text>
-                  </Pressable>
-                );
-              })}
-            </ScrollView>
-
-            {/* 右側：順序切り替え（固定表示エリア） */}
-            {sortBy !== 'default' && (
-              <View style={styles.fixedOrderContainer}>
-                {/* 境界線 */}
-                <View style={styles.verticalDivider} />
-
-                <Pressable onPress={toggleSortOrder} style={styles.orderButton}>
-                  {/* ▼▼▼ 修正: 矢印アイコンを削除し、テキストのみにしました ▼▼▼ */}
-                  <Text style={styles.orderButtonText}>{getSortOrderLabel()}</Text>
-                </Pressable>
-              </View>
-            )}
-          </View>
-          {/* ▲▲▲ 修正ここまで ▲▲▲ */}
-
+          {/* ▼ 検索結果が1件以上ある場合のみ表示 */}
           {searchResults.length > 0 ? (
             <View>
+              {/* 件数表示（0件の時はここを通らないので表示されません） */}
+              <Text style={styles.resultsTitle}>{`検索結果：${searchResults.length}件`}</Text>
+
+              {/* ソートUI（項目選択 ＋ 昇順・降順ボタン） */}
+              <View style={styles.sortRow}>
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  style={styles.sortOptionsScroll}
+                  contentContainerStyle={styles.sortOptionsContent}
+                >
+                  {SORT_OPTIONS.map(option => {
+                    const isActive = sortBy === option.value;
+                    return (
+                      <Pressable
+                        key={option.value}
+                        onPress={() => handleSortTypePress(option.value)}
+                        style={[
+                          styles.sortButton,
+                          isActive ? styles.sortButtonActive : styles.sortButtonInactive,
+                        ]}
+                      >
+                        <Text
+                          style={
+                            isActive ? styles.sortButtonTextActive : styles.sortButtonTextInactive
+                          }
+                        >
+                          {option.label}
+                        </Text>
+                      </Pressable>
+                    );
+                  })}
+                </ScrollView>
+
+                {sortBy !== 'default' && (
+                  <View style={styles.fixedOrderContainer}>
+                    <View style={styles.verticalDivider} />
+                    <Pressable onPress={toggleSortOrder} style={styles.orderButton}>
+                      <Text style={styles.orderButtonText}>{getSortOrderLabel()}</Text>
+                    </Pressable>
+                  </View>
+                )}
+              </View>
+
+              {/* お店リスト */}
               <View style={styles.categorySection}>
                 {searchResults.map(item => (
                   <Pressable
@@ -419,8 +419,15 @@ export default function SearchScreen() {
               </View>
             </View>
           ) : (
+            /* ▼ 0件の時はここだけが表示されます */
             <View style={styles.emptyState}>
               <Text style={styles.emptyTitle}>条件に合うお店が見つかりませんでした</Text>
+
+              <Image
+                source={require('../../../assets/images/Kuguri_search-Photoroom.png')}
+                style={styles.emptyImage}
+                resizeMode='contain'
+              />
             </View>
           )}
         </View>
@@ -512,13 +519,20 @@ const styles = StyleSheet.create({
     fontSize: 16,
     paddingVertical: 20,
   },
+  // 1. emptyImage は I なので S(State) や T(Title) より上に移動
+  emptyImage: {
+    height: 200, // 2. height (h) は width (w) より先に書く
+    width: 280,
+  },
   emptyState: {
     alignItems: 'center',
-    paddingVertical: 40,
+    paddingVertical: 80,
   },
   emptyTitle: {
     color: palette.secondaryText,
-    fontSize: 14,
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 40,
   },
   fixedOrderContainer: {
     alignItems: 'center',
