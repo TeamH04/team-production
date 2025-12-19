@@ -2,7 +2,6 @@
   "extends": "../../tsconfig.json",
   "compilerOptions": {
     "composite": true,
-    "isolatedModules": true,
     "noEmit": false,
     "declaration": true,
     "emitDeclarationOnly": true,
