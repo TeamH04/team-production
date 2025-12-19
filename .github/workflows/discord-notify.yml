@@ -2,11 +2,11 @@ name: Notify Discord
 
 on:
   issues:
-    types: [assigned]           # アサインされた時/変更された時
+    types: [assigned] # アサインされた時/変更された時
   pull_request:
     types: [review_requested, ready_for_review, closed, reopened] # レビュー依頼/マージ等
   pull_request_review:
-    types: [submitted]                   # レビュー到着
+    types: [submitted] # レビュー到着
 
 permissions:
   contents: read

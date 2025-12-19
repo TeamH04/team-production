@@ -2,12 +2,12 @@ name: Mobile App - Expo Build & Deploy
 
 on:
   push:
-    branches: [main]
+    branches: [main, develop]
     paths:
       - 'apps/mobile/**'
       - '.github/workflows/expo-deploy.yml'
   pull_request:
-    branches: [main]
+    branches: [main, develop]
     paths:
       - 'apps/mobile/**'
 
@@ -44,22 +44,13 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v6
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-
-      - name: Ensure pnpm cache dirs
-        run: |
-          mkdir -p "$HOME/.pnpm-store"
-          mkdir -p "$HOME/.local/share/pnpm"
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Setup Node + pnpm
+        uses: ./.github/actions/setup-node-pnpm
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'pnpm'
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+          cache-dependency-path: '**/pnpm-lock.yaml'
+          working-directory: apps/mobile
+          install: 'true'
 
       - name: Setup Expo CLI
         uses: expo/expo-github-action@v8
@@ -72,7 +63,7 @@ jobs:
           npx expo export --platform web --output-dir dist
 
       - name: Upload web build
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: web-build
           path: apps/mobile/dist
@@ -90,22 +81,13 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v6
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-
-      - name: Ensure pnpm cache dirs
-        run: |
-          mkdir -p "$HOME/.pnpm-store"
-          mkdir -p "$HOME/.local/share/pnpm"
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Setup Node + pnpm
+        uses: ./.github/actions/setup-node-pnpm
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'pnpm'
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+          cache-dependency-path: '**/pnpm-lock.yaml'
+          working-directory: apps/mobile
+          install: 'true'
 
       - name: Setup Expo CLI
         uses: expo/expo-github-action@v8
@@ -170,22 +152,13 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v6
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-
-      - name: Ensure pnpm cache dirs
-        run: |
-          mkdir -p "$HOME/.pnpm-store"
-          mkdir -p "$HOME/.local/share/pnpm"
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Setup Node + pnpm
+        uses: ./.github/actions/setup-node-pnpm
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'pnpm'
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+          cache-dependency-path: '**/pnpm-lock.yaml'
+          working-directory: apps/mobile
+          install: 'true'
 
       - name: Setup Expo CLI
         uses: expo/expo-github-action@v8
@@ -215,22 +188,13 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v6
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-
-      - name: Ensure pnpm cache dirs
-        run: |
-          mkdir -p "$HOME/.pnpm-store"
-          mkdir -p "$HOME/.local/share/pnpm"
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Setup Node + pnpm
+        uses: ./.github/actions/setup-node-pnpm
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'pnpm'
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+          cache-dependency-path: '**/pnpm-lock.yaml'
+          working-directory: apps/mobile
+          install: 'true'
 
       - name: Setup Expo CLI
         uses: expo/expo-github-action@v8
