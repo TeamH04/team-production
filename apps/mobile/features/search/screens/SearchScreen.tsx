@@ -1,5 +1,5 @@
 import { palette } from '@/constants/palette';
-import { CATEGORIES, SHOPS, type Shop } from '@team/shop-core';
+import { CATEGORIES, SHOPS } from '@team/shop-core';
 import { useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import {
@@ -13,28 +13,19 @@ import {
   View,
 } from 'react-native';
 
-const BUDGET_LABEL: Record<Shop['budget'], string> = {
-  $: '¥',
-  $$: '¥¥',
-  $$$: '¥¥¥',
-};
-
 const TAB_BAR_SPACING = 129;
-
 const INACTIVE_COLOR = '#f0f0f0';
 
-// 'registered' を追加
 type SortType = 'default' | 'newest' | 'rating' | 'registered';
-type SortOrder = 'asc' | 'desc'; // asc: 昇順, desc: 降順
+type SortOrder = 'asc' | 'desc';
 
 const SORT_OPTIONS: { label: string; value: SortType }[] = [
   { label: 'おすすめ', value: 'default' },
   { label: '新着順', value: 'newest' },
   { label: '評価順(★)', value: 'rating' },
-  { label: '登録順', value: 'registered' }, // 追加
+  { label: '登録順', value: 'registered' },
 ];
 
-// IDから数値を抽出するヘルパー（登録順用）
 const getIdNum = (id: string) => {
   if (!id) return 0;
   const normalized = id.replace(/[０-９]/g, s => {
@@ -55,15 +46,12 @@ export default function SearchScreen() {
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [searchHistory, setSearchHistory] = useState<string[]>([]);
 
-  // ソートの種類
   const [sortBy, setSortBy] = useState<SortType>('default');
-
-  // 各ソートタイプごとに独立して順序を管理する
   const [sortOrders, setSortOrders] = useState<Record<SortType, SortOrder>>({
     default: 'desc',
-    newest: 'desc', // 日付順
-    rating: 'desc', // 評価高い順
-    registered: 'desc', // ID順（デフォルト：新しい順）
+    newest: 'desc',
+    rating: 'desc',
+    registered: 'desc',
   });
 
   const CATEGORY_OPTIONS = useMemo(() => [...CATEGORIES].sort(), []);
@@ -83,9 +71,17 @@ export default function SearchScreen() {
   const hasSearchCriteria =
     currentSearchText.length > 0 || selectedTags.length > 0 || activeCategories.length > 0;
 
+  // ★ ✕ボタン用：すべての状態をクリアして初期画面に戻る関数
+  const handleClearAll = () => {
+    setUserTypedText('');
+    setCurrentSearchText('');
+    setActiveCategories([]);
+    setSelectedTags([]);
+    setSortBy('default');
+  };
+
   const handleSearch = () => {
     setCurrentSearchText(userTypedText);
-
     const tagsText = selectedTags.join('・');
     const queryToSave = [userTypedText, tagsText].filter(Boolean).join('・');
 
@@ -95,11 +91,8 @@ export default function SearchScreen() {
       setSearchHistory([trimmedQuery, ...filtered]);
     }
 
-    setUserTypedText('');
     setSelectedTags([]);
     setActiveCategories([]);
-
-    // 検索時はデフォルトに戻す
     setSortBy('default');
     setSortOrders({
       default: 'desc',
@@ -110,9 +103,7 @@ export default function SearchScreen() {
   };
 
   const handleSortTypePress = (value: SortType) => {
-    if (sortBy !== value) {
-      setSortBy(value);
-    }
+    if (sortBy !== value) setSortBy(value);
   };
 
   const toggleSortOrder = () => {
@@ -126,14 +117,9 @@ export default function SearchScreen() {
     setSearchHistory(searchHistory.filter(h => h !== item));
   };
 
-  const handleTagPress = (tag: string) => {
-    setSelectedTags(prev => (prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]));
-  };
-
   const handleCategoryPress = (category: string) => {
     setActiveCategories(prev => {
       const isDeselecting = prev.includes(category);
-
       if (isDeselecting) {
         const tagsToRemove = TAGS_BY_CATEGORY[category] || [];
         setSelectedTags(currentTags => currentTags.filter(tag => !tagsToRemove.includes(tag)));
@@ -148,17 +134,12 @@ export default function SearchScreen() {
     router.push({ pathname: '/shop/[id]', params: { id: shopId } });
   };
 
-  // 現在の状態に応じたボタンのラベルを取得
   const getSortOrderLabel = () => {
     const currentOrder = sortOrders[sortBy];
-
     switch (sortBy) {
       case 'newest':
-        // 日付順：新しい日付が先(desc)なら「新しい順」、逆なら「古い順」
         return currentOrder === 'desc' ? '新しい順' : '古い順';
       case 'registered':
-        // ID順：数値が大きい(desc)＝最近登録されたとみなすなら「新しい順」
-        // 数値が小さい(asc)＝初期に登録されたとみなすなら「古い順」
         return currentOrder === 'desc' ? '新しい順' : '古い順';
       case 'rating':
         return currentOrder === 'desc' ? '高い順' : '低い順';
@@ -168,10 +149,7 @@ export default function SearchScreen() {
   };
 
   const searchResults = useMemo(() => {
-    if (!hasSearchCriteria) {
-      return [];
-    }
-
+    if (!hasSearchCriteria) return [];
     const q = currentSearchText.trim().toLowerCase();
     const tags = selectedTags.map(t => t.toLowerCase());
     const hasCategories = activeCategories.length > 0;
@@ -184,50 +162,34 @@ export default function SearchScreen() {
             shop.category.toLowerCase().includes(q) ||
             (shop.menu?.some(item => item.name.toLowerCase().includes(q)) ?? false)
           : true;
-
       const matchesTags =
         tags.length > 0
           ? tags.some(
               tag =>
-                shop.tags.some(shopTag => shopTag.toLowerCase().includes(tag)) ||
+                shop.tags.some(st => st.toLowerCase().includes(tag)) ||
                 shop.category.toLowerCase().includes(tag)
             )
           : true;
-
       const matchesCategory = hasCategories ? activeCategories.includes(shop.category) : true;
-
       return matchesText && matchesTags && matchesCategory;
     });
 
     return filtered.sort((a, b) => {
       let comparison = 0;
       const currentOrder = sortOrders[sortBy];
-
       switch (sortBy) {
-        case 'newest': {
-          // 【変更】新着順 → 日付順 (openedAt を使用)
-          const dateA = new Date(a.openedAt).getTime();
-          const dateB = new Date(b.openedAt).getTime();
-          comparison = dateA - dateB;
+        case 'newest':
+          comparison = new Date(a.openedAt).getTime() - new Date(b.openedAt).getTime();
           break;
-        }
-
-        case 'registered': {
-          // 【変更】登録順 → ID順 (数値として比較)
+        case 'registered':
           comparison = getIdNum(a.id) - getIdNum(b.id);
           break;
-        }
-
         case 'rating':
           comparison = a.rating - b.rating;
           break;
-
-        case 'default':
         default:
           return 0;
       }
-
-      // asc(昇順)ならそのまま、desc(降順)なら反転
       return currentOrder === 'asc' ? comparison : -comparison;
     });
   }, [currentSearchText, selectedTags, activeCategories, sortBy, sortOrders, hasSearchCriteria]);
@@ -238,11 +200,12 @@ export default function SearchScreen() {
       contentContainerStyle={styles.contentContainer}
       showsVerticalScrollIndicator={false}
     >
-      {/* タイトル */}
+      {/* 1. お店を検索（ヘッダー） */}
       <View style={styles.headerTextBlock}>
         <Text style={styles.screenTitle}>お店を検索</Text>
       </View>
 
+      {/* 2. 検索バー */}
       <View style={styles.searchBarContainer}>
         <View style={styles.searchBarRow}>
           <View style={[styles.searchWrapper, styles.shadowLight]}>
@@ -255,13 +218,13 @@ export default function SearchScreen() {
               onSubmitEditing={() => handleSearch()}
               returnKeyType='search'
             />
+            {/* ✕ボタンの動作を handleClearAll に変更 */}
             <Pressable
-              onPress={() => {
-                setUserTypedText('');
-                setSelectedTags([]);
-                setActiveCategories([]);
-              }}
-              style={[styles.clearButton, !userTypedText && styles.clearButtonHidden]}
+              onPress={handleClearAll}
+              style={[
+                styles.clearButton,
+                !userTypedText && !hasSearchCriteria && styles.clearButtonHidden,
+              ]}
             >
               <Text style={styles.clearButtonText}>✕</Text>
             </Pressable>
@@ -271,85 +234,40 @@ export default function SearchScreen() {
         {currentSearchText.length === 0 && (
           <View style={styles.tagGroupsContainer}>
             <Text style={styles.sectionLabel}>カテゴリから探す（複数選択可）</Text>
-
             <View style={styles.categoriesRow}>
-              {CATEGORY_OPTIONS.map(cat => {
-                const isActive = activeCategories.includes(cat);
-                return (
-                  <Pressable
-                    key={cat}
-                    onPress={() => handleCategoryPress(cat)}
-                    style={[
-                      styles.categoryButton,
-                      isActive ? styles.categoryButtonActive : styles.categoryButtonInactive,
-                    ]}
+              {CATEGORY_OPTIONS.map(cat => (
+                <Pressable
+                  key={cat}
+                  onPress={() => handleCategoryPress(cat)}
+                  style={[
+                    styles.categoryButton,
+                    activeCategories.includes(cat)
+                      ? styles.categoryButtonActive
+                      : styles.categoryButtonInactive,
+                  ]}
+                >
+                  <Text
+                    style={
+                      activeCategories.includes(cat)
+                        ? styles.categoryButtonTextActive
+                        : styles.categoryButtonTextInactive
+                    }
                   >
-                    <Text
-                      style={
-                        isActive
-                          ? styles.categoryButtonTextActive
-                          : styles.categoryButtonTextInactive
-                      }
-                    >
-                      {cat}
-                    </Text>
-                  </Pressable>
-                );
-              })}
+                    {cat}
+                  </Text>
+                </Pressable>
+              ))}
             </View>
-
-            {activeCategories.length > 0 && (
-              <View style={styles.subTagsContainer}>
-                {activeCategories.map((cat, index) => {
-                  const tags = TAGS_BY_CATEGORY[cat];
-                  if (!tags) return null;
-
-                  return (
-                    <View key={cat} style={index > 0 ? styles.subTagGroupMargin : undefined}>
-                      <Text style={styles.subSectionLabel}>{cat}のタグ</Text>
-                      <View style={styles.tagChipsWrapper}>
-                        {tags.map(tag => (
-                          <Pressable
-                            key={tag}
-                            onPress={() => handleTagPress(tag)}
-                            style={[
-                              styles.tagChipSmall,
-                              selectedTags.includes(tag)
-                                ? styles.tagChipSmallSelected
-                                : styles.tagChipSmallUnselected,
-                            ]}
-                          >
-                            <Text
-                              style={
-                                selectedTags.includes(tag)
-                                  ? styles.tagChipSmallTextSelected
-                                  : styles.tagChipSmallTextUnselected
-                              }
-                            >
-                              {tag}
-                            </Text>
-                          </Pressable>
-                        ))}
-                      </View>
-                    </View>
-                  );
-                })}
-              </View>
-            )}
           </View>
         )}
       </View>
 
-      {/* 3. 検索結果セクション */}
+      {/* 3. 検索結果 */}
       {hasSearchCriteria && (
         <View style={styles.resultsSection}>
-          {/* ▼ 検索結果が1件以上ある場合のみ表示 */}
           {searchResults.length > 0 ? (
             <View>
-              {/* 件数表示（0件の時はここを通らないので表示されません） */}
               <Text style={styles.resultsTitle}>{`検索結果：${searchResults.length}件`}</Text>
-
-              {/* ソートUI（項目選択 ＋ 昇順・降順ボタン） */}
               <View style={styles.sortRow}>
                 <ScrollView
                   horizontal
@@ -357,29 +275,29 @@ export default function SearchScreen() {
                   style={styles.sortOptionsScroll}
                   contentContainerStyle={styles.sortOptionsContent}
                 >
-                  {SORT_OPTIONS.map(option => {
-                    const isActive = sortBy === option.value;
-                    return (
-                      <Pressable
-                        key={option.value}
-                        onPress={() => handleSortTypePress(option.value)}
-                        style={[
-                          styles.sortButton,
-                          isActive ? styles.sortButtonActive : styles.sortButtonInactive,
-                        ]}
+                  {SORT_OPTIONS.map(option => (
+                    <Pressable
+                      key={option.value}
+                      onPress={() => handleSortTypePress(option.value)}
+                      style={[
+                        styles.sortButton,
+                        sortBy === option.value
+                          ? styles.sortButtonActive
+                          : styles.sortButtonInactive,
+                      ]}
+                    >
+                      <Text
+                        style={
+                          sortBy === option.value
+                            ? styles.sortButtonTextActive
+                            : styles.sortButtonTextInactive
+                        }
                       >
-                        <Text
-                          style={
-                            isActive ? styles.sortButtonTextActive : styles.sortButtonTextInactive
-                          }
-                        >
-                          {option.label}
-                        </Text>
-                      </Pressable>
-                    );
-                  })}
+                        {option.label}
+                      </Text>
+                    </Pressable>
+                  ))}
                 </ScrollView>
-
                 {sortBy !== 'default' && (
                   <View style={styles.fixedOrderContainer}>
                     <View style={styles.verticalDivider} />
@@ -389,8 +307,6 @@ export default function SearchScreen() {
                   </View>
                 )}
               </View>
-
-              {/* お店リスト */}
               <View style={styles.categorySection}>
                 {searchResults.map(item => (
                   <Pressable
@@ -407,8 +323,7 @@ export default function SearchScreen() {
                         </View>
                       </View>
                       <Text style={styles.shopMeta}>
-                        {item.category} • 徒歩{item.distanceMinutes}分 • 予算{' '}
-                        {BUDGET_LABEL[item.budget]}
+                        {item.category} • 徒歩{item.distanceMinutes}分
                       </Text>
                       <Text style={styles.shopDescription} numberOfLines={2}>
                         {item.description}
@@ -419,20 +334,22 @@ export default function SearchScreen() {
               </View>
             </View>
           ) : (
-            /* ▼ 0件の時はここだけが表示されます */
             <View style={styles.emptyState}>
               <Text style={styles.emptyTitle}>条件に合うお店が見つかりませんでした</Text>
-
-              <Image
-                source={require('../../../assets/images/Kuguri_search-Photoroom.png')}
-                style={styles.emptyImage}
-                resizeMode='contain'
-              />
+              <View style={styles.emptyImageContainer}>
+                <Image
+                  source={require('../../../assets/images/Kuguri_search-Photoroom.png')}
+                  style={styles.emptyImage}
+                  resizeMode='contain'
+                  onError={() => console.log('Image load error: Path might be wrong')}
+                />
+              </View>
             </View>
           )}
         </View>
       )}
 
+      {/* 4. 検索履歴 / まだ検索履歴がありません */}
       {!hasSearchCriteria && (
         <View style={styles.historySection}>
           <Text style={styles.historyTitle}>検索履歴</Text>
@@ -453,7 +370,9 @@ export default function SearchScreen() {
               )}
             />
           ) : (
-            <Text style={styles.emptyHistoryText}>まだ検索履歴がありません</Text>
+            <View style={styles.emptyHistoryBox}>
+              <Text style={styles.emptyHistoryText}>まだ検索履歴がありません</Text>
+            </View>
           )}
         </View>
       )}
@@ -466,7 +385,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
-    marginBottom: 0,
   },
   categoryButton: {
     borderRadius: 999,
@@ -492,12 +410,7 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   clearButton: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginLeft: 4,
-    marginRight: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 8,
+    padding: 8,
   },
   clearButtonHidden: {
     opacity: 0,
@@ -513,20 +426,28 @@ const styles = StyleSheet.create({
   contentContainer: {
     flexGrow: 1,
     paddingBottom: TAB_BAR_SPACING,
+    paddingHorizontal: 20,
+    paddingTop: 24,
+  },
+  emptyHistoryBox: {
+    alignItems: 'center',
+    paddingVertical: 60,
   },
   emptyHistoryText: {
     color: palette.secondaryText,
     fontSize: 16,
-    paddingVertical: 20,
   },
-  // 1. emptyImage は I なので S(State) や T(Title) より上に移動
   emptyImage: {
-    height: 200, // 2. height (h) は width (w) より先に書く
+    height: 200,
     width: 280,
+  },
+  emptyImageContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   emptyState: {
     alignItems: 'center',
-    paddingVertical: 80,
+    paddingVertical: 60,
   },
   emptyTitle: {
     color: palette.secondaryText,
@@ -541,7 +462,7 @@ const styles = StyleSheet.create({
     paddingLeft: 4,
   },
   headerTextBlock: {
-    marginBottom: 16,
+    marginBottom: 32,
   },
   historyItem: {
     alignItems: 'center',
@@ -549,11 +470,10 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingHorizontal: 0,
-    paddingVertical: 12,
+    paddingVertical: 16,
   },
   historySection: {
-    marginTop: 20,
+    marginTop: 16,
   },
   historyText: {
     color: palette.primaryText,
@@ -566,7 +486,7 @@ const styles = StyleSheet.create({
     color: palette.primaryText,
     fontSize: 20,
     fontWeight: '600',
-    marginBottom: 12,
+    marginBottom: 16,
   },
   orderButton: {
     alignItems: 'center',
@@ -574,21 +494,17 @@ const styles = StyleSheet.create({
     borderColor: palette.border,
     borderRadius: 8,
     borderWidth: 1,
-    flexDirection: 'row',
-    justifyContent: 'center',
     paddingHorizontal: 12,
     paddingVertical: 6,
   },
   orderButtonText: {
     color: palette.secondaryText,
     fontSize: 12,
-    minWidth: 50,
     textAlign: 'center',
   },
   ratingBadge: {
     backgroundColor: palette.highlight,
     borderRadius: 999,
-    marginLeft: 8,
     paddingHorizontal: 8,
     paddingVertical: 4,
   },
@@ -607,7 +523,7 @@ const styles = StyleSheet.create({
     color: palette.primaryText,
     fontSize: 14,
     fontWeight: '600',
-    marginBottom: 12,
+    marginBottom: 16,
   },
   screenTitle: {
     color: palette.primaryText,
@@ -615,13 +531,11 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   searchBarContainer: {
-    marginBottom: 24,
+    marginBottom: 16,
   },
   searchBarRow: {
-    alignItems: 'center',
     flexDirection: 'row',
-    gap: 8,
-    marginBottom: 16,
+    marginBottom: 20,
   },
   searchInput: {
     color: palette.primaryText,
@@ -635,14 +549,13 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: 'row',
     paddingHorizontal: 20,
-    paddingVertical: 8,
+    paddingVertical: 10,
   },
   sectionLabel: {
     color: palette.secondaryText,
     fontSize: 14,
     fontWeight: '600',
-    marginBottom: 12,
-    marginTop: 0,
+    marginBottom: 16,
   },
   shadowLight: {
     elevation: 3,
@@ -654,14 +567,9 @@ const styles = StyleSheet.create({
   shopCard: {
     backgroundColor: palette.surface,
     borderRadius: 12,
-    elevation: 2,
     flexDirection: 'row',
     marginBottom: 12,
     overflow: 'hidden',
-    shadowColor: palette.shadow,
-    shadowOffset: { height: 2, width: 0 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
   },
   shopDescription: {
     color: palette.secondaryText,
@@ -689,7 +597,6 @@ const styles = StyleSheet.create({
   },
   shopName: {
     color: palette.primaryText,
-    flex: 1,
     fontSize: 14,
     fontWeight: '600',
   },
@@ -728,53 +635,12 @@ const styles = StyleSheet.create({
   sortRow: {
     alignItems: 'center',
     flexDirection: 'row',
-    height: 36,
     marginBottom: 16,
-  },
-  subSectionLabel: {
-    color: palette.secondaryText,
-    fontSize: 12,
-    marginBottom: 12,
-  },
-  subTagGroupMargin: {
-    borderTopWidth: 0,
-    marginTop: 24,
-  },
-  subTagsContainer: {
-    borderTopColor: palette.border,
-    borderTopWidth: 1,
-    marginTop: 16,
-    paddingTop: 16,
-  },
-  tagChipSmall: {
-    borderRadius: 999,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-  },
-  tagChipSmallSelected: {
-    backgroundColor: palette.primaryText,
-  },
-  tagChipSmallTextSelected: {
-    color: palette.surface,
-    fontSize: 12,
-  },
-  tagChipSmallTextUnselected: {
-    color: palette.tertiaryText,
-    fontSize: 12,
-  },
-  tagChipSmallUnselected: {
-    backgroundColor: INACTIVE_COLOR,
-  },
-  tagChipsWrapper: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
   },
   tagGroupsContainer: {
     backgroundColor: palette.surface,
     borderRadius: 12,
-    marginBottom: 12,
-    padding: 16,
+    padding: 20,
   },
   verticalDivider: {
     backgroundColor: palette.border,
