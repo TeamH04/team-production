@@ -1,0 +1,35 @@
+name: 'Setup Go with cache'
+description: 'Composite action to setup Go with module cache and optional go mod download'
+author: 'TeamH04'
+runs:
+  using: 'composite'
+  steps:
+    - name: Setup Go
+      uses: actions/setup-go@v6
+      with:
+        go-version: ${{ inputs.go-version }}
+        cache-dependency-path: ${{ inputs.cache-dependency-path }}
+
+    - name: Install dependencies
+      if: inputs.install == 'true'
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: go mod download
+
+inputs:
+  go-version:
+    description: 'Go version'
+    required: false
+    default: '1.24.11'
+  cache-dependency-path:
+    description: 'Path to go.sum for cache'
+    required: false
+    default: 'apps/backend/go.sum'
+  working-directory:
+    description: 'Directory to run go commands'
+    required: false
+    default: 'apps/backend'
+  install:
+    description: 'Whether to run go mod download'
+    required: false
+    default: 'true'
