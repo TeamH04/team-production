@@ -4,6 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 
+import { colors } from '@team/theme';
 import type { Shop } from '@team/shop-core';
 
 const FAVORITE_STORAGE_KEY = 'shop-web-favorites';
@@ -24,8 +25,8 @@ function HeartIcon({ filled }: { filled: boolean }) {
       width='18'
       height='18'
       viewBox='0 0 24 24'
-      fill={filled ? '#dc2626' : 'none'}
-      stroke={filled ? '#dc2626' : '#475569'}
+      fill={filled ? colors.primary : 'none'}
+      stroke={filled ? colors.primary : colors.accent}
       strokeWidth='2'
       strokeLinecap='round'
       strokeLinejoin='round'

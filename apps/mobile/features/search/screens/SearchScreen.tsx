@@ -11,6 +11,7 @@ import {
   Text,
   TextInput,
   View,
+  type ViewStyle,
 } from 'react-native';
 
 const BUDGET_LABEL: Record<Shop['budget'], string> = {
@@ -21,8 +22,7 @@ const BUDGET_LABEL: Record<Shop['budget'], string> = {
 
 const TAB_BAR_SPACING = 129;
 
-// Lintエラー回避用：カラーコードの定数化
-const INACTIVE_COLOR = '#f0f0f0';
+const INACTIVE_COLOR = palette.secondarySurface;
 
 export default function SearchScreen() {
   const router = useRouter();
@@ -49,8 +49,8 @@ export default function SearchScreen() {
   const handleSearch = () => {
     setCurrentSearchText(userTypedText);
 
-    const tagsText = selectedTags.join('・');
-    const queryToSave = [userTypedText, tagsText].filter(Boolean).join('・');
+    const tagsText = selectedTags.join(' ');
+    const queryToSave = [userTypedText, tagsText].filter(Boolean).join(' ');
 
     if (queryToSave) {
       const trimmedQuery = queryToSave.trim();
@@ -124,8 +124,8 @@ export default function SearchScreen() {
 
   return (
     <ScrollView
-      style={styles.container}
-      contentContainerStyle={styles.contentContainer}
+      style={styles.container as ViewStyle}
+      contentContainerStyle={styles.contentContainer as ViewStyle}
       showsVerticalScrollIndicator={false}
     >
       {/* タイトル */}
@@ -138,7 +138,7 @@ export default function SearchScreen() {
           <View style={[styles.searchWrapper, styles.shadowLight]}>
             <TextInput
               style={styles.searchInput}
-              placeholder='お店名・雰囲気'
+              placeholder='店名・雰囲気・タグで検索'
               placeholderTextColor={palette.secondaryText}
               value={userTypedText}
               onChangeText={setUserTypedText}
@@ -325,12 +325,12 @@ const styles = StyleSheet.create({
     backgroundColor: INACTIVE_COLOR,
   },
   categoryButtonTextActive: {
-    color: palette.surface,
+    color: palette.textOnAccent,
     fontSize: 14,
     fontWeight: '600',
   },
   categoryButtonTextInactive: {
-    color: palette.tertiaryText,
+    color: palette.textOnSecondary,
     fontSize: 14,
   },
   categorySection: {
@@ -532,11 +532,11 @@ const styles = StyleSheet.create({
     backgroundColor: palette.primaryText,
   },
   tagChipSmallTextSelected: {
-    color: palette.surface,
+    color: palette.textOnAccent,
     fontSize: 12,
   },
   tagChipSmallTextUnselected: {
-    color: palette.tertiaryText,
+    color: palette.textOnSecondary,
     fontSize: 12,
   },
   tagChipSmallUnselected: {

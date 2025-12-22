@@ -14,26 +14,10 @@ import {
   View,
 } from 'react-native';
 
+import { palette } from '@/constants/palette';
 import { useFavorites } from '@/features/favorites/FavoritesContext';
 import { useReviews } from '@/features/reviews/ReviewsContext';
 import { SHOPS, type Shop } from '@team/shop-core';
-
-const palette = {
-  accent: '#0EA5E9',
-  arrowButtonBg: 'rgba(255, 255, 255, 0.9)',
-  background: '#F9FAFB',
-  border: '#E5E7EB',
-  favoriteActive: '#DC2626',
-  heroPlaceholder: '#E5E7EB',
-  muted: '#6B7280',
-  primary: '#111827',
-  primaryOnAccent: '#FFFFFF',
-  secondarySurface: '#F3F4F6',
-  shadow: '#0f172a',
-  surface: '#FFFFFF',
-  tagSurface: '#F3F4F6',
-  tagText: '#4B5563',
-} as const;
 
 const BUDGET_LABEL: Record<Shop['budget'], string> = {
   $: '¥',
@@ -292,7 +276,7 @@ const styles = StyleSheet.create({
     right: 12,
   },
   arrowText: {
-    color: palette.primary,
+    color: palette.textOnSecondary,
     fontSize: 32,
     fontWeight: '600',
     lineHeight: 32,
@@ -374,7 +358,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 10,
   },
-  secondaryBtnText: { color: palette.primary, fontWeight: '700' },
+  secondaryBtnText: { color: palette.textOnSecondary, fontWeight: '700' },
   sectionHeader: { marginBottom: 8, marginTop: 16 },
   sectionSub: { color: palette.muted, marginTop: 2 },
   sectionTitle: { color: palette.primary, fontSize: 18, fontWeight: '700' },

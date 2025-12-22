@@ -2,6 +2,7 @@ import React from 'react';
 import type { Metadata } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
+import { colors, textOn, withAlpha } from '@team/theme';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -23,9 +24,74 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const themeStyle: React.CSSProperties = {
+    // Expose theme colors as CSS variables for Tailwind (@theme inline) and plain CSS usage
+    '--background': colors.background,
+    '--foreground': colors.accent,
+    '--color-primary': colors.primary,
+    '--color-secondary': colors.secondary,
+    '--color-accent': colors.accent,
+    '--text-on-primary': textOn.primary,
+    '--text-on-secondary': textOn.secondary,
+    '--text-on-accent': textOn.accent,
+  } as React.CSSProperties;
+
+  const colorStyles = `
+    :root {
+      --background: ${colors.background};
+      --foreground: ${colors.accent};
+      --text-on-primary: ${textOn.primary};
+      --text-on-secondary: ${textOn.secondary};
+      --text-on-accent: ${textOn.accent};
+    }
+
+    .bg-slate-50 { background-color: ${colors.background} !important; }
+    .bg-slate-50\\/80 { background-color: ${withAlpha(colors.background, 0.8)} !important; }
+    .bg-slate-100, .bg-slate-200 { background-color: ${colors.secondary} !important; }
+    .bg-slate-800, .bg-slate-900 { background-color: ${colors.accent} !important; }
+
+    .bg-white { background-color: ${colors.secondary} !important; }
+    .bg-white\\/90 { background-color: ${withAlpha(colors.secondary, 0.9)} !important; }
+    .bg-white\\/85 { background-color: ${withAlpha(colors.secondary, 0.85)} !important; }
+    .bg-white\\/40 { background-color: ${withAlpha(colors.secondary, 0.4)} !important; }
+    .bg-white\\/15 { background-color: ${withAlpha(colors.secondary, 0.15)} !important; }
+    .bg-white\\/10 { background-color: ${withAlpha(colors.secondary, 0.1)} !important; }
+    .bg-white\\/5 { background-color: ${withAlpha(colors.secondary, 0.05)} !important; }
+
+    .bg-sky-700, .bg-sky-600, .bg-indigo-400\\/20 { background-color: ${colors.primary} !important; }
+    .bg-sky-100, .bg-sky-200 { background-color: ${withAlpha(colors.primary, 0.2)} !important; }
+
+    .bg-amber-50, .bg-amber-100 { background-color: ${withAlpha(colors.primary, 0.25)} !important; }
+    .bg-rose-100, .bg-rose-200 { background-color: ${withAlpha(colors.secondary, 0.85)} !important; }
+
+    .from-sky-700 { --tw-gradient-from: ${colors.primary} !important; }
+    .via-sky-600 { --tw-gradient-stops: var(--tw-gradient-from), ${withAlpha(colors.primary, 0.85)}, var(--tw-gradient-to, rgba(0,0,0,0)) !important; }
+    .to-indigo-700 { --tw-gradient-to: ${withAlpha(colors.accent, 0.9)} !important; }
+    .from-black\\/40 { --tw-gradient-from: ${withAlpha(colors.accent, 0.4)} !important; }
+    .from-black\\/35 { --tw-gradient-from: ${withAlpha(colors.accent, 0.35)} !important; }
+    .via-transparent { --tw-gradient-stops: var(--tw-gradient-from), transparent, var(--tw-gradient-to, transparent) !important; }
+    .via-white { --tw-gradient-stops: var(--tw-gradient-from), ${colors.secondary}, var(--tw-gradient-to, transparent) !important; }
+    .from-slate-100 { --tw-gradient-from: ${colors.secondary} !important; }
+    .to-slate-50 { --tw-gradient-to: ${colors.background} !important; }
+
+    .text-slate-900, .text-slate-800, .text-sky-900, .text-sky-800, .text-rose-700, .text-emerald-600 { color: ${colors.accent} !important; }
+    .text-slate-700, .text-slate-600, .text-slate-500, .text-slate-400, .text-sky-700 { color: ${withAlpha(colors.accent, 0.75)} !important; }
+    .text-sky-100, .text-white { color: ${colors.background} !important; }
+    .text-amber-700 { color: ${colors.accent} !important; }
+    .text-primary-on { color: var(--text-on-primary) !important; }
+    .text-secondary-on { color: var(--text-on-secondary) !important; }
+    .text-accent-on { color: var(--text-on-accent) !important; }
+  `;
+
   return (
-    <html lang='en'>
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>{children}</body>
+    <html lang='en' style={themeStyle}>
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        style={{ backgroundColor: colors.background, color: colors.accent }}
+      >
+        <style dangerouslySetInnerHTML={{ __html: colorStyles }} />
+        {children}
+      </body>
     </html>
   );
 }
