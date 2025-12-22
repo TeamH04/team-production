@@ -6,7 +6,9 @@
     "paths": {
       "@/*": ["./*"],
       "~/*": ["app/*"],
-      "@team/shop-core": ["../../packages/shop-core/src"]
+      "@team/shop-core": ["../../packages/shop-core/src"],
+      "@team/theme": ["../../packages/theme/src"],
+      "@team/theme/*": ["../../packages/theme/src/*"]
     }
   },
   "include": [

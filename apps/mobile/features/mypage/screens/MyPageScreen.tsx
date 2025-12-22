@@ -2,29 +2,12 @@
 import { useCallback, useMemo, useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
+import { palette } from '@/constants/palette';
 import { useFavorites } from '@/features/favorites/FavoritesContext';
 import { useReviews } from '@/features/reviews/ReviewsContext';
 import { useUser } from '@/features/user/UserContext';
 import { getSupabase } from '@/lib/supabase';
 import { SHOPS, type Shop } from '@team/shop-core';
-
-// 画面で使う色をまとめて管理
-const palette = {
-  accent: '#0EA5E9',
-  avatarBackground: '#DBEAFE',
-  avatarText: '#1D4ED8',
-  background: '#F9FAFB',
-  border: '#E5E7EB',
-  mutedText: '#6B7280',
-  primary: '#111827',
-  primaryOnAccent: '#FFFFFF',
-  secondarySurface: '#F3F4F6',
-  shadow: '#0f172a',
-  surface: '#FFFFFF',
-  dangerBg: '#DC2626',
-  dangerBorder: '#B91C1C',
-  dangerText: '#FFFFFF',
-} as const;
 
 const TAB_BAR_SPACING = 125;
 
@@ -289,14 +272,14 @@ const styles = StyleSheet.create({
 
   // プライマリボタン（プロフィール編集 等）
   primaryBtn: {
-    backgroundColor: palette.accent,
+    backgroundColor: palette.secondarySurface,
     borderRadius: 12,
     marginTop: 16,
     paddingHorizontal: 16,
     paddingVertical: 12,
   },
   primaryBtnText: {
-    color: palette.primaryOnAccent,
+    color: palette.textOnSecondary,
     fontSize: 16,
     fontWeight: '700',
     textAlign: 'center',
@@ -341,7 +324,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 10,
   },
-  secondaryBtnText: { color: palette.primary, fontWeight: '700' },
+  secondaryBtnText: { color: palette.textOnSecondary, fontWeight: '700' },
 
   // セクションヘッダー（タイトル＋サブ）周り
   sectionHeader: { marginBottom: 8, marginTop: 8, paddingHorizontal: 4 },

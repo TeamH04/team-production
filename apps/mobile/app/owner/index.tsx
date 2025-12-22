@@ -65,12 +65,12 @@ export default function OwnerHomeScreen() {
 
 const styles = StyleSheet.create({
   actionBtn: {
-    backgroundColor: palette.action,
+    backgroundColor: palette.secondarySurface,
     borderRadius: 10,
     paddingHorizontal: 14,
     paddingVertical: 12,
   },
-  actionText: { color: palette.surface, fontWeight: '700' },
+  actionText: { color: palette.textOnSecondary, fontWeight: '700' },
   actionsRow: { flexDirection: 'row', gap: 12 },
   card: {
     backgroundColor: palette.surface,
@@ -82,12 +82,12 @@ const styles = StyleSheet.create({
   cardTitle: { color: palette.primaryText, fontSize: 16, fontWeight: '700', marginBottom: 12 },
   center: { alignItems: 'center', flex: 1, justifyContent: 'center' },
   linkBtn: {
-    backgroundColor: palette.action,
+    backgroundColor: palette.secondarySurface,
     borderRadius: 10,
     paddingHorizontal: 16,
     paddingVertical: 10,
   },
-  linkText: { color: palette.surface, fontWeight: '700' },
+  linkText: { color: palette.textOnSecondary, fontWeight: '700' },
   screen: { backgroundColor: palette.background, flex: 1, paddingHorizontal: 24, paddingTop: 24 },
   subtitle: { color: palette.secondaryText, marginBottom: 20, marginTop: 8 },
   title: { color: palette.primaryText, fontSize: 24, fontWeight: '700' },
