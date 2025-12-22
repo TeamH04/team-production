@@ -82,6 +82,7 @@ export default function SearchScreen() {
 
   const handleSearch = () => {
     setCurrentSearchText(userTypedText);
+    setUserTypedText('');
     const tagsText = selectedTags.join('・');
     const queryToSave = [userTypedText, tagsText].filter(Boolean).join('・');
 
@@ -323,7 +324,9 @@ export default function SearchScreen() {
                         </View>
                       </View>
                       <Text style={styles.shopMeta}>
-                        {item.category} • 徒歩{item.distanceMinutes}分
+                        {item.category}
+                        {item.budget ? ` • ${item.budget}` : ''} {/* ← 予算を追加 */}
+                        {` • 徒歩${item.distanceMinutes}分`}
                       </Text>
                       <Text style={styles.shopDescription} numberOfLines={2}>
                         {item.description}
@@ -341,7 +344,7 @@ export default function SearchScreen() {
                   source={require('../../../assets/images/Kuguri_search-Photoroom.png')}
                   style={styles.emptyImage}
                   resizeMode='contain'
-                  onError={() => console.log('Image load error: Path might be wrong')}
+                  onError={() => {}}
                 />
               </View>
             </View>
