@@ -35,10 +35,13 @@ export default function HomeScreen() {
       clearTimeout(loadMoreTimeout.current);
       loadMoreTimeout.current = null;
     }
-    setIsLoadingMore(false);
-    setVisibleCount(
-      filteredShops.length === 0 ? PAGE_SIZE : Math.min(PAGE_SIZE, filteredShops.length)
-    );
+    const newVisibleCount =
+      filteredShops.length === 0 ? PAGE_SIZE : Math.min(PAGE_SIZE, filteredShops.length);
+
+    queueMicrotask(() => {
+      setIsLoadingMore(false);
+      setVisibleCount(newVisibleCount);
+    });
   }, [filteredShops.length]);
 
   useEffect(() => {

@@ -6,6 +6,7 @@ import {
   Alert,
   Dimensions,
   FlatList,
+  Linking,
   Pressable,
   ScrollView,
   Share,
@@ -56,6 +57,13 @@ export default function ShopDetailScreen() {
   const reviews = id ? getReviews(id) : [];
   const imageUrls = shop?.imageUrls;
   const flatListRef = useRef<FlatList>(null);
+  const mapOpenUrl = useMemo(
+    () =>
+      shop?.placeId
+        ? `https://www.google.com/maps/search/?api=1&query=Google&query_place_id=${shop.placeId}`
+        : null,
+    [shop?.placeId]
+  );
 
   const scrollToImage = (index: number) => {
     flatListRef.current?.scrollToIndex({ index, animated: true });
@@ -213,6 +221,19 @@ export default function ShopDetailScreen() {
           ))}
         </View>
 
+        {mapOpenUrl ? (
+          <View style={[styles.card, styles.cardShadow, styles.mapCard]}>
+            <Text style={styles.sectionTitle}>場所</Text>
+            <Pressable
+              style={styles.mapButton}
+              onPress={() => mapOpenUrl && Linking.openURL(mapOpenUrl)}
+              accessibilityLabel={`${shop.name} の場所をマップで開く`}
+            >
+              <Text style={styles.mapButtonText}>マップで開く</Text>
+            </Pressable>
+          </View>
+        ) : null}
+
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>レビュー</Text>
           <Text style={styles.sectionSub}>みんなの感想や体験談</Text>
@@ -319,6 +340,19 @@ const styles = StyleSheet.create({
   },
   hero: { backgroundColor: palette.heroPlaceholder, height: 220, width: SCREEN_WIDTH },
   heroContainer: { marginBottom: 0, position: 'relative' },
+  mapButton: {
+    alignItems: 'center',
+    backgroundColor: palette.secondarySurface,
+    borderColor: palette.border,
+    borderRadius: 12,
+    borderWidth: 1,
+    paddingVertical: 14,
+  },
+  mapButtonText: { color: palette.primary, fontWeight: '700' },
+  mapCard: {
+    marginTop: 12,
+    padding: 12,
+  },
   meta: { color: palette.muted, marginTop: 6 },
   muted: { color: palette.muted },
   paginationContainer: {

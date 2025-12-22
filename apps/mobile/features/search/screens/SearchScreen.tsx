@@ -24,6 +24,30 @@ const TAB_BAR_SPACING = 129;
 
 const INACTIVE_COLOR = palette.secondarySurface;
 
+// 'registered' を追加
+type SortType = 'default' | 'newest' | 'rating' | 'registered';
+type SortOrder = 'asc' | 'desc'; // asc: 昇順, desc: 降順
+
+const SORT_OPTIONS: { label: string; value: SortType }[] = [
+  { label: 'おすすめ', value: 'default' },
+  { label: '新着順', value: 'newest' },
+  { label: '評価順(★)', value: 'rating' },
+  { label: '登録順', value: 'registered' }, // 追加
+];
+
+// IDから数値を抽出するヘルパー（登録順用）
+const getIdNum = (id: string) => {
+  if (!id) return 0;
+  const normalized = id.replace(/[０-９]/g, s => {
+    return String.fromCharCode(s.charCodeAt(0) - 0xfee0);
+  });
+  const match = normalized.match(/(\d+)/);
+  if (match) {
+    return parseInt(match[0], 10);
+  }
+  return 0;
+};
+
 export default function SearchScreen() {
   const router = useRouter();
   const [userTypedText, setUserTypedText] = useState('');
@@ -31,6 +55,17 @@ export default function SearchScreen() {
   const [activeCategories, setActiveCategories] = useState<string[]>([]);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [searchHistory, setSearchHistory] = useState<string[]>([]);
+
+  // ソートの種類
+  const [sortBy, setSortBy] = useState<SortType>('default');
+
+  // 各ソートタイプごとに独立して順序を管理する
+  const [sortOrders, setSortOrders] = useState<Record<SortType, SortOrder>>({
+    default: 'desc',
+    newest: 'desc', // 日付順
+    rating: 'desc', // 評価高い順
+    registered: 'desc', // ID順（デフォルト：新しい順）
+  });
 
   const CATEGORY_OPTIONS = useMemo(() => [...CATEGORIES].sort(), []);
 
@@ -45,6 +80,9 @@ export default function SearchScreen() {
     Array.from(m.entries()).forEach(([cat, s]) => (out[cat] = Array.from(s).sort()));
     return out;
   }, []);
+
+  const hasSearchCriteria =
+    currentSearchText.length > 0 || selectedTags.length > 0 || activeCategories.length > 0;
 
   const handleSearch = () => {
     setCurrentSearchText(userTypedText);
@@ -61,6 +99,28 @@ export default function SearchScreen() {
     setUserTypedText('');
     setSelectedTags([]);
     setActiveCategories([]);
+
+    // 検索時はデフォルトに戻す
+    setSortBy('default');
+    setSortOrders({
+      default: 'desc',
+      newest: 'desc',
+      rating: 'desc',
+      registered: 'desc',
+    });
+  };
+
+  const handleSortTypePress = (value: SortType) => {
+    if (sortBy !== value) {
+      setSortBy(value);
+    }
+  };
+
+  const toggleSortOrder = () => {
+    setSortOrders(prev => ({
+      ...prev,
+      [sortBy]: prev[sortBy] === 'desc' ? 'asc' : 'desc',
+    }));
   };
 
   const handleRemoveHistory = (item: string) => {
@@ -89,16 +149,35 @@ export default function SearchScreen() {
     router.push({ pathname: '/shop/[id]', params: { id: shopId } });
   };
 
+  // 現在の状態に応じたボタンのラベルを取得
+  const getSortOrderLabel = () => {
+    const currentOrder = sortOrders[sortBy];
+
+    switch (sortBy) {
+      case 'newest':
+        // 日付順：新しい日付が先(desc)なら「新しい順」、逆なら「古い順」
+        return currentOrder === 'desc' ? '新しい順' : '古い順';
+      case 'registered':
+        // ID順：数値が大きい(desc)＝最近登録されたとみなすなら「新しい順」
+        // 数値が小さい(asc)＝初期に登録されたとみなすなら「古い順」
+        return currentOrder === 'desc' ? '新しい順' : '古い順';
+      case 'rating':
+        return currentOrder === 'desc' ? '高い順' : '低い順';
+      default:
+        return '';
+    }
+  };
+
   const searchResults = useMemo(() => {
+    if (!hasSearchCriteria) {
+      return [];
+    }
+
     const q = currentSearchText.trim().toLowerCase();
     const tags = selectedTags.map(t => t.toLowerCase());
     const hasCategories = activeCategories.length > 0;
 
-    if (q.length === 0 && tags.length === 0 && !hasCategories) {
-      return [];
-    }
-
-    return SHOPS.filter(shop => {
+    let filtered = SHOPS.filter(shop => {
       const matchesText =
         q.length > 0
           ? shop.name.toLowerCase().includes(q) ||
@@ -120,7 +199,39 @@ export default function SearchScreen() {
 
       return matchesText && matchesTags && matchesCategory;
     });
-  }, [currentSearchText, selectedTags, activeCategories]);
+
+    return filtered.sort((a, b) => {
+      let comparison = 0;
+      const currentOrder = sortOrders[sortBy];
+
+      switch (sortBy) {
+        case 'newest': {
+          // 【変更】新着順 → 日付順 (openedAt を使用)
+          const dateA = new Date(a.openedAt).getTime();
+          const dateB = new Date(b.openedAt).getTime();
+          comparison = dateA - dateB;
+          break;
+        }
+
+        case 'registered': {
+          // 【変更】登録順 → ID順 (数値として比較)
+          comparison = getIdNum(a.id) - getIdNum(b.id);
+          break;
+        }
+
+        case 'rating':
+          comparison = a.rating - b.rating;
+          break;
+
+        case 'default':
+        default:
+          return 0;
+      }
+
+      // asc(昇順)ならそのまま、desc(降順)なら反転
+      return currentOrder === 'asc' ? comparison : -comparison;
+    });
+  }, [currentSearchText, selectedTags, activeCategories, sortBy, sortOrders, hasSearchCriteria]);
 
   return (
     <ScrollView
@@ -230,9 +341,54 @@ export default function SearchScreen() {
         )}
       </View>
 
-      {(currentSearchText.length > 0 || selectedTags.length > 0 || activeCategories.length > 0) && (
+      {hasSearchCriteria && (
         <View style={styles.resultsSection}>
           <Text style={styles.resultsTitle}>{`検索結果：${searchResults.length}件`}</Text>
+
+          {/* ▼▼▼ ここから修正：横スクロールと固定ボタンのレイアウト ▼▼▼ */}
+          <View style={styles.sortRow}>
+            {/* 左側：項目選択（残りの幅いっぱいに横スクロール） */}
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={styles.sortOptionsScroll}
+              contentContainerStyle={styles.sortOptionsContent}
+            >
+              {SORT_OPTIONS.map(option => {
+                const isActive = sortBy === option.value;
+                return (
+                  <Pressable
+                    key={option.value}
+                    onPress={() => handleSortTypePress(option.value)}
+                    style={[
+                      styles.sortButton,
+                      isActive ? styles.sortButtonActive : styles.sortButtonInactive,
+                    ]}
+                  >
+                    <Text
+                      style={isActive ? styles.sortButtonTextActive : styles.sortButtonTextInactive}
+                    >
+                      {option.label}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </ScrollView>
+
+            {/* 右側：順序切り替え（固定表示エリア） */}
+            {sortBy !== 'default' && (
+              <View style={styles.fixedOrderContainer}>
+                {/* 境界線 */}
+                <View style={styles.verticalDivider} />
+
+                <Pressable onPress={toggleSortOrder} style={styles.orderButton}>
+                  {/* ▼▼▼ 修正: 矢印アイコンを削除し、テキストのみにしました ▼▼▼ */}
+                  <Text style={styles.orderButtonText}>{getSortOrderLabel()}</Text>
+                </Pressable>
+              </View>
+            )}
+          </View>
+          {/* ▲▲▲ 修正ここまで ▲▲▲ */}
 
           {searchResults.length > 0 ? (
             <View>
@@ -271,8 +427,7 @@ export default function SearchScreen() {
         </View>
       )}
 
-      {/* 検索履歴 */}
-      {!currentSearchText && (
+      {!hasSearchCriteria && (
         <View style={styles.historySection}>
           <Text style={styles.historyTitle}>検索履歴</Text>
           {searchHistory.length > 0 ? (
@@ -282,13 +437,7 @@ export default function SearchScreen() {
               scrollEnabled={false}
               renderItem={({ item }) => (
                 <View style={styles.historyItem}>
-                  <Pressable
-                    onPress={() => {
-                      setUserTypedText(item);
-                      setCurrentSearchText(item);
-                    }}
-                    style={styles.historyTextContainer}
-                  >
+                  <Pressable onPress={() => handleSearch()} style={styles.historyTextContainer}>
                     <Text style={styles.historyText}>{item}</Text>
                   </Pressable>
                   <Pressable onPress={() => handleRemoveHistory(item)}>
@@ -372,6 +521,12 @@ const styles = StyleSheet.create({
     color: palette.secondaryText,
     fontSize: 14,
   },
+  fixedOrderContainer: {
+    alignItems: 'center',
+    backgroundColor: palette.background,
+    flexDirection: 'row',
+    paddingLeft: 4,
+  },
   headerTextBlock: {
     marginBottom: 16,
   },
@@ -399,6 +554,23 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: '600',
     marginBottom: 12,
+  },
+  orderButton: {
+    alignItems: 'center',
+    backgroundColor: palette.background,
+    borderColor: palette.border,
+    borderRadius: 8,
+    borderWidth: 1,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
+  orderButtonText: {
+    color: palette.secondaryText,
+    fontSize: 12,
+    minWidth: 50,
+    textAlign: 'center',
   },
   ratingBadge: {
     backgroundColor: palette.highlight,
@@ -508,6 +680,44 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
   },
+  sortButton: {
+    borderRadius: 8,
+    borderWidth: 1,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
+  sortButtonActive: {
+    backgroundColor: palette.primaryText,
+    borderColor: palette.primaryText,
+  },
+  sortButtonInactive: {
+    backgroundColor: palette.background,
+    borderColor: palette.border,
+  },
+  sortButtonTextActive: {
+    color: palette.surface,
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  sortButtonTextInactive: {
+    color: palette.secondaryText,
+    fontSize: 12,
+  },
+  sortOptionsContent: {
+    alignItems: 'center',
+    gap: 8,
+    paddingRight: 8,
+  },
+  sortOptionsScroll: {
+    flex: 1,
+    marginRight: 8,
+  },
+  sortRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    height: 36,
+    marginBottom: 16,
+  },
   subSectionLabel: {
     color: palette.secondaryText,
     fontSize: 12,
@@ -552,5 +762,11 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     marginBottom: 12,
     padding: 16,
+  },
+  verticalDivider: {
+    backgroundColor: palette.border,
+    height: 18,
+    marginRight: 8,
+    width: 1,
   },
 });

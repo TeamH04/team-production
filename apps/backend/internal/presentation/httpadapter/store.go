@@ -50,6 +50,7 @@ type createStoreDTO struct {
 	LandscapePhotos []string   `json:"landscape_photos"`
 	Latitude        float64    `json:"latitude"`
 	Longitude       float64    `json:"longitude"`
+	PlaceID         string     `json:"place_id"`
 }
 
 func (dto createStoreDTO) toCommand() handlers.CreateStoreCommand {
@@ -63,6 +64,7 @@ func (dto createStoreDTO) toCommand() handlers.CreateStoreCommand {
 		LandscapePhotos: append([]string(nil), dto.LandscapePhotos...),
 		Latitude:        dto.Latitude,
 		Longitude:       dto.Longitude,
+		PlaceID:         dto.PlaceID,
 	}
 }
 
@@ -89,6 +91,7 @@ type updateStoreDTO struct {
 	LandscapePhotos []string   `json:"landscape_photos"`
 	Latitude        *float64   `json:"latitude"`
 	Longitude       *float64   `json:"longitude"`
+	PlaceID         *string    `json:"place_id"`
 }
 
 func (dto updateStoreDTO) toCommand() handlers.UpdateStoreCommand {
@@ -102,6 +105,7 @@ func (dto updateStoreDTO) toCommand() handlers.UpdateStoreCommand {
 		LandscapePhotos: append([]string(nil), dto.LandscapePhotos...),
 		Latitude:        dto.Latitude,
 		Longitude:       dto.Longitude,
+		PlaceID:         dto.PlaceID,
 	}
 }
 
