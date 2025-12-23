@@ -92,6 +92,7 @@ func TestCreateStore_Success(t *testing.T) {
 		ThumbnailURL: "https://example.com/image.jpg",
 		Latitude:     35.6812,
 		Longitude:    139.7671,
+		PlaceID:      "ChIJRUjlH92OAGAR6otTD3tUcrg",
 	}
 
 	store, err := uc.CreateStore(context.Background(), req)
@@ -125,6 +126,7 @@ func TestCreateStore_InvalidInput(t *testing.T) {
 				ThumbnailURL: "https://example.com/image.jpg",
 				Latitude:     35.6812,
 				Longitude:    139.7671,
+				PlaceID:      "ChIJRUjlH92OAGAR6otTD3tUcrg",
 			},
 			want: usecase.ErrInvalidInput,
 		},
@@ -136,8 +138,21 @@ func TestCreateStore_InvalidInput(t *testing.T) {
 				ThumbnailURL: "https://example.com/image.jpg",
 				Latitude:     0,
 				Longitude:    0,
+				PlaceID:      "ChIJRUjlH92OAGAR6otTD3tUcrg",
 			},
 			want: usecase.ErrInvalidCoordinates,
+		},
+		{
+			name: "empty place id",
+			input: input.CreateStoreInput{
+				Name:         "Test Store",
+				Address:      "Test Address",
+				ThumbnailURL: "https://example.com/image.jpg",
+				Latitude:     35.6812,
+				Longitude:    139.7671,
+				PlaceID:      "",
+			},
+			want: usecase.ErrInvalidInput,
 		},
 	}
 

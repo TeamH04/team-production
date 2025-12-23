@@ -25,10 +25,16 @@ export default [
   },
 
   {
-    files: ['**/*.{ts,tsx,js,jsx}'],
+    files: ['**/*.{ts,tsx}'],
     languageOptions: {
       parser: tsParser,
-      parserOptions: { ecmaVersion: 'latest', sourceType: 'module' }, // 型なし運用
+      parserOptions: {
+        ecmaVersion: 'latest',
+        sourceType: 'module',
+        project: path.resolve(process.cwd(), 'tsconfig.eslint.json'),
+        tsconfigRootDir: process.cwd(),
+        noWarnOnMultipleProjects: true,
+      },
       globals: { ...globals.browser, ...globals.node },
     },
     plugins: {
@@ -40,16 +46,11 @@ export default [
     settings: {
       react: { version: 'detect' },
       'import/resolver': {
+        node: { extensions: ['.ts', '.tsx', '.js', '.jsx', '.json'] },
         typescript: {
-          project: [
-            path.resolve(process.cwd(), 'tsconfig.json'),
-            path.resolve(process.cwd(), 'apps/mobile/tsconfig.json'),
-            path.resolve(process.cwd(), 'apps/web/tsconfig.json'),
-            path.resolve(process.cwd(), 'packages/shop-core/tsconfig.json'),
-          ],
+          project: [path.resolve(process.cwd(), 'tsconfig.eslint.json')],
           alwaysTryTypes: true,
         },
-        node: { extensions: ['.ts', '.tsx', '.js', '.jsx', '.json'] },
       },
     },
     rules: {
@@ -57,7 +58,19 @@ export default [
       ...tsPlugin.configs.recommended.rules,
       ...reactHooks.configs.recommended.rules,
       'react/react-in-jsx-scope': 'off',
-      'import/no-unresolved': 'error',
+      'import/no-unresolved': [
+        'error',
+        {
+          ignore: [
+            '^next/',
+            'react-native-svg',
+            '^expo',
+            '^@expo/',
+            'react-native',
+            '^react-native/',
+          ],
+        },
+      ],
       'import/extensions': [
         'error',
         'ignorePackages',
@@ -70,17 +83,45 @@ export default [
     },
   },
 
+  // JavaScript ファイル用の設定（parserOptionsなし）
+  {
+    files: ['**/*.{js,jsx}'],
+    languageOptions: {
+      ecmaVersion: 'latest',
+      sourceType: 'module',
+      globals: { ...globals.browser, ...globals.node },
+    },
+    plugins: {
+      react,
+      'react-hooks': reactHooks,
+      import: importPlugin,
+    },
+    settings: {
+      react: { version: 'detect' },
+      'import/resolver': {
+        node: { extensions: ['.js', '.jsx', '.json'] },
+      },
+    },
+    rules: {
+      ...js.configs.recommended.rules,
+      ...reactHooks.configs.recommended.rules,
+      'react/react-in-jsx-scope': 'off',
+      'import/no-unresolved': 'error',
+      ...prettierConfig.rules,
+    },
+  },
+
   // Next.js / web 用設定
   {
     files: ['apps/web/**/*.{ts,tsx,js,jsx}'],
     settings: {
       react: { version: 'detect' },
       'import/resolver': {
+        node: { extensions: ['.ts', '.tsx', '.js', '.jsx', '.json'] },
         typescript: {
           project: [path.resolve(process.cwd(), 'apps/web/tsconfig.json')],
           alwaysTryTypes: true,
         },
-        node: { extensions: ['.ts', '.tsx', '.js', '.jsx', '.json'] },
       },
     },
     rules: {
@@ -94,12 +135,12 @@ export default [
     plugins: { 'react-native': reactNative },
     settings: {
       'import/resolver': {
+        node: { extensions: ['.ts', '.tsx', '.js', '.jsx', '.json'] },
         typescript: {
           // tsconfig の paths (= @, ~) を使わせる
           project: [path.resolve(process.cwd(), 'apps/mobile/tsconfig.json')],
           alwaysTryTypes: true,
         },
-        node: { extensions: ['.ts', '.tsx', '.js', '.jsx', '.json'] },
       },
       react: { version: 'detect' },
     },

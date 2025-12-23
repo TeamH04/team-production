@@ -14,6 +14,7 @@ type Store struct {
 	Description     *string
 	LandscapePhotos []string
 	Address         string
+	PlaceID         string
 	OpeningHours    *string
 	Latitude        float64
 	Longitude       float64

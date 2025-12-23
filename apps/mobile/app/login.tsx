@@ -277,8 +277,8 @@ export default function LoginScreen() {
 
           <View style={styles.ownerBox}>
             <Text style={styles.ownerLead}>オーナーの方はこちら</Text>
-            <Pressable onPress={() => router.push('/owner/signup' as Href)}>
-              <Text style={styles.ownerLink}>オーナー用アカウントを作成</Text>
+            <Pressable onPress={() => router.push('/owner/login' as Href)}>
+              <Text style={styles.ownerLink}>オーナー用アカウントでログイン</Text>
             </Pressable>
           </View>
 

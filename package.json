@@ -1,7 +1,7 @@
 {
   "name": "team-production",
   "private": true,
-  "packageManager": "pnpm@10.25.0+sha512.5e82639027af37cf832061bcc6d639c219634488e0f2baebe785028a793de7b525ffcd3f7ff574f5e9860654e098fe852ba8ac5dd5cefe1767d23a020a92f501",
+  "packageManager": "pnpm@10.26.0",
   "engines": {
     "node": "20.x",
     "pnpm": ">=10"
@@ -24,20 +24,20 @@
     "ios": "pnpm --dir apps/mobile exec expo run:ios"
   },
   "devDependencies": {
-    "@babel/core": "^7.28.4",
-    "@eslint/js": "^9.37.0",
-    "@typescript-eslint/eslint-plugin": "^8.46.0",
-    "@typescript-eslint/parser": "^8.46.0",
-    "eslint": "^9.37.0",
+    "@babel/core": "^7.28.5",
+    "@eslint/js": "^9.39.2",
+    "@typescript-eslint/eslint-plugin": "^8.50.0",
+    "@typescript-eslint/parser": "^8.50.0",
+    "eslint": "^9.39.2",
     "eslint-config-prettier": "^10.1.8",
     "eslint-import-resolver-typescript": "^4.4.4",
     "eslint-plugin-import": "^2.32.0",
     "eslint-plugin-react": "^7.37.5",
-    "eslint-plugin-react-hooks": "^5.2.0",
+    "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-native": "^5.0.0",
-    "globals": "^16.4.0",
-    "prettier": "^3.6.2",
-    "typescript": "~5.8.3"
+    "globals": "^16.5.0",
+    "prettier": "^3.7.4",
+    "typescript": "~5.9.3"
   },
   "type": "module",
   "version": "1.0.0"

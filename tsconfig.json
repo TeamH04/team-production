@@ -1,4 +1,10 @@
 {
   "compilerOptions": {},
-  "extends": "expo/tsconfig.base"
+  "extends": "expo/tsconfig.base",
+  "references": [
+    { "path": "./apps/mobile" },
+    { "path": "./apps/web" },
+    { "path": "./packages/shop-core" },
+    { "path": "./packages/types" }
+  ]
 }
