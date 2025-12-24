@@ -28,6 +28,9 @@ export default function EditProfileScreen() {
   // ローカルなフォーム state（表示名・メールアドレス）
   const [name, setName] = useState(user?.name ?? '');
   const [email, setEmail] = useState(user?.email ?? '');
+  const [gender, setGender] = useState(user?.gender ?? '');
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
 
   // 保存ボタンを有効にするかの判定
   const canSave = useMemo(() => {
@@ -69,18 +72,66 @@ export default function EditProfileScreen() {
           keyboardType='email-address'
         />
 
+        {/* 性別ラジオボタン */}
+        <Text style={styles.label}>性別</Text>
+        <View style={styles.radioGroup}>
+          <Pressable
+            onPress={() => setGender('male')}
+            style={styles.radioOption}
+            accessibilityRole='radio'
+            accessibilityState={{ selected: gender === 'male' }}
+          >
+            <View style={[styles.radioCircle, gender === 'male' && styles.radioCircleSelected]} />
+            <Text style={styles.radioOptionText}>男</Text>
+          </Pressable>
+
+          <Pressable
+            onPress={() => setGender('female')}
+            style={styles.radioOption}
+            accessibilityRole='radio'
+            accessibilityState={{ selected: gender === 'female' }}
+          >
+            <View style={[styles.radioCircle, gender === 'female' && styles.radioCircleSelected]} />
+            <Text style={styles.radioOptionText}>女</Text>
+          </Pressable>
+
+          <Pressable
+            onPress={() => setGender('other')}
+            style={styles.radioOption}
+            accessibilityRole='radio'
+            accessibilityState={{ selected: gender === 'other' }}
+          >
+            <View style={[styles.radioCircle, gender === 'other' && styles.radioCircleSelected]} />
+            <Text style={styles.radioOptionText}>その他</Text>
+          </Pressable>
+        </View>
+
         {/* 保存ボタン
             - disabled 時は押せない
             - 押したら updateProfile を呼んで前の画面へ戻る */}
+        <Text style={styles.errorText}>{error}</Text>
+
         <Pressable
-          disabled={!canSave}
-          onPress={() => {
-            setUser({ name: name.trim(), email: email.trim(), isProfileRegistered: true });
-            router.back();
+          disabled={!canSave || saving}
+          onPress={async () => {
+            // 前バリデーションのリセット
+            setError('');
+
+            setSaving(true);
+            try {
+              // 保存処理（ここは同期の setUser だが、将来的に API 呼び出しに置き換え可能）
+              await Promise.resolve();
+              setUser({ name: name.trim(), email: email.trim(), gender, isProfileRegistered: true });
+              router.back();
+            } catch (e) {
+              setError('保存に失敗しました。もう一度お試しください。');
+            } finally {
+              setSaving(false);
+            }
           }}
           style={styles.primaryBtn}
         >
-          <Text style={styles.primaryBtnText}>保存</Text>
+          <Text style={styles.primaryBtnText}>{saving ? '保存中...' : '保存'}</Text>
         </Pressable>
 
         {/* キャンセルボタン（編集を破棄して戻る） */}
@@ -110,6 +161,8 @@ const styles = StyleSheet.create({
   // コンテンツの余白
   content: { padding: 16 },
 
+  errorText: { color: '#DC2626', marginBottom: 8 },
+  
   // 入力欄のスタイル
   input: {
     backgroundColor: palette.background,
@@ -136,6 +189,20 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   primaryBtnText: { color: palette.primaryOnAccent, fontWeight: '700', textAlign: 'center' },
+
+  // ラジオボタン
+  radioCircle: {
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    borderWidth: 2,
+    borderColor: palette.border,
+    marginRight: 8,
+  },
+  radioCircleSelected: { backgroundColor: palette.accent, borderWidth: 3.5 },
+  radioGroup: { flexDirection: 'row', gap: 12, marginBottom: 8 },
+  radioOption: { flexDirection: 'row', alignItems: 'center', marginRight: 12 },
+  radioOptionText: { color: palette.primaryText, fontWeight: '600' },
 
   // 画面背景
   screen: { backgroundColor: palette.surface, flex: 1 },

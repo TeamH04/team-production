@@ -6,6 +6,7 @@ export const palette = {
   primaryText: '#111827',
   secondaryText: '#6B7280',
   tertiaryText: '#4B5563',
+  errorText: '#DC2626',
   chipTextInactive: '#374151',
 
   // Borders & dividers
