@@ -1,7 +1,9 @@
-﻿import { useRouter } from 'expo-router';
+﻿import { Picker } from '@react-native-picker/picker';
+import { useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import {
   KeyboardAvoidingView,
+  Modal,
   Platform,
   Pressable,
   ScrollView,
@@ -11,41 +13,44 @@ import {
   View,
 } from 'react-native';
 
+import { palette } from '@/constants/palette';
 import { useUser } from '@/features/user/UserContext';
 
-// カラー定義: 画面全体で使う色をまとめて管理しています
-const palette = {
-  accent: '#0EA5E9',
+// カラー定義
+const paletteSub = {
   avatarBackground: '#DBEAFE',
   avatarText: '#1D4ED8',
-  background: '#F9FAFB',
-  border: '#E5E7EB',
-  muted: '#6B7280',
-  primary: '#111827',
-  primaryOnAccent: '#FFFFFF',
-  secondarySurface: '#F3F4F6',
-  surface: '#FFFFFF',
-} as const;
+  modalBackground: '#fff',
+  modalOverlay: '#0000004d',
+};
 
 // プロフィール編集画面コンポーネント
 export default function EditProfileScreen() {
-  // 画面遷移用フック
   const router = useRouter();
+  const { user, setUser } = useUser();
 
-  // ユーザー情報取得・更新用のコンテキスト
-  const { profile, updateProfile } = useUser();
+  // ローカルなフォーム state（表示名・メールアドレス）
+  const [name, setName] = useState(user?.name ?? '');
+  const [email, setEmail] = useState(user?.email ?? '');
+  const [gender, setGender] = useState(user?.gender ?? '');
+  const [birthYear, setBirthYear] = useState<string>(user?.birthYear ?? '');
+  const [birthMonth, setBirthMonth] = useState<string>(user?.birthMonth ?? '');
+  const [showYearPicker, setShowYearPicker] = useState(false);
+  const [showMonthPicker, setShowMonthPicker] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [errorName, setErrorName] = useState('');
+  const [errorEmail, setErrorEmail] = useState('');
+  const [errorBirth, setErrorBirth] = useState('');
+  const [errorStore, setErrorStore] = useState('');
 
-  // ローカルなフォーム state（入力値を保持）
-  const [name, setName] = useState(profile.name);
-  const [email, setEmail] = useState(profile.email);
+  const years = useMemo(() => {
+    const current = new Date().getFullYear();
+    const arr: string[] = [];
+    for (let y = current; y >= 1900; y--) arr.push(String(y));
+    return arr;
+  }, []);
+  const months = useMemo(() => Array.from({ length: 12 }, (_, i) => String(i + 1)), []);
 
-  // 保存ボタンを有効にするかの判定（簡易バリデーション）
-  const canSave = useMemo(() => {
-    const emailOk = /.+@.+\..+/.test(email.trim());
-    return name.trim().length > 0 && emailOk;
-  }, [name, email]);
-
-  // レンダリング
   return (
     <KeyboardAvoidingView
       behavior={Platform.select({ ios: 'padding', default: undefined })}
@@ -58,40 +63,195 @@ export default function EditProfileScreen() {
         </View>
 
         {/* 表示名入力 */}
-        <Text style={styles.label}>表示名</Text>
+        <View style={styles.labelContainer}>
+          <Text style={styles.label}>表示名（必須） </Text>
+          <Text style={styles.errorText}>{errorName}</Text>
+        </View>
         <TextInput
           value={name}
           onChangeText={setName}
           placeholder='例: Hanako Tanaka'
-          placeholderTextColor={palette.muted}
+          placeholderTextColor={palette.secondaryText}
           style={styles.input}
           autoCapitalize='words'
         />
 
         {/* メールアドレス入力 */}
-        <Text style={styles.label}>メールアドレス</Text>
+        <View style={styles.labelContainer}>
+          <Text style={styles.label}>メールアドレス（必須） </Text>
+          <Text style={styles.errorText}>{errorEmail}</Text>
+        </View>
         <TextInput
           value={email}
           onChangeText={setEmail}
           placeholder='example@domain.com'
-          placeholderTextColor={palette.muted}
+          placeholderTextColor={palette.secondaryText}
           style={styles.input}
           autoCapitalize='none'
           keyboardType='email-address'
         />
 
+        {/* 性別ラジオボタン */}
+        <Text style={styles.label}>性別（任意） </Text>
+        <View style={styles.radioGroup}>
+          <Pressable
+            onPress={() => setGender('male')}
+            style={styles.radioOption}
+            accessibilityRole='radio'
+            accessibilityState={{ selected: gender === 'male' }}
+          >
+            <View style={[styles.radioCircle, gender === 'male' && styles.radioCircleSelected]} />
+            <Text style={styles.radioOptionText}>男</Text>
+          </Pressable>
+
+          <Pressable
+            onPress={() => setGender('female')}
+            style={styles.radioOption}
+            accessibilityRole='radio'
+            accessibilityState={{ selected: gender === 'female' }}
+          >
+            <View style={[styles.radioCircle, gender === 'female' && styles.radioCircleSelected]} />
+            <Text style={styles.radioOptionText}>女</Text>
+          </Pressable>
+
+          <Pressable
+            onPress={() => setGender('other')}
+            style={styles.radioOption}
+            accessibilityRole='radio'
+            accessibilityState={{ selected: gender === 'other' }}
+          >
+            <View style={[styles.radioCircle, gender === 'other' && styles.radioCircleSelected]} />
+            <Text style={styles.radioOptionText}>その他</Text>
+          </Pressable>
+        </View>
+
+        {/* 生年月日（西暦・月） */}
+        <View style={styles.labelContainer}>
+          <Text style={styles.label}>生年月日（任意） </Text>
+          <Text style={styles.errorText}>{errorBirth}</Text>
+        </View>
+        <View style={styles.dobRow}>
+          <View style={styles.pickerContainer}>
+            <Pressable style={styles.pickerBox} onPress={() => setShowYearPicker(true)}>
+              <Text style={birthYear ? styles.pickerText : styles.pickerUnselectedText}>
+                {birthYear ? `${birthYear}年` : '年を選択'}
+              </Text>
+            </Pressable>
+          </View>
+
+          <View style={styles.pickerContainer}>
+            <Pressable style={styles.pickerBox} onPress={() => setShowMonthPicker(true)}>
+              <Text style={birthMonth ? styles.pickerText : styles.pickerUnselectedText}>
+                {birthMonth ? `${birthMonth}月` : '月を選択'}
+              </Text>
+            </Pressable>
+          </View>
+
+          <Modal
+            visible={showYearPicker}
+            transparent
+            animationType='slide'
+            onRequestClose={() => setShowYearPicker(false)}
+          >
+            <Pressable style={styles.modalOverlay} onPress={() => setShowYearPicker(false)} />
+            <View style={styles.modalContent}>
+              <View style={styles.modalToolbar}>
+                <Pressable onPress={() => setShowYearPicker(false)}>
+                  <Text style={styles.modalDoneText}>完了</Text>
+                </Pressable>
+              </View>
+              <Picker selectedValue={birthYear} onValueChange={v => setBirthYear(String(v))}>
+                <Picker.Item label='年を選択' value='' />
+                {years.map(y => (
+                  <Picker.Item key={y} label={`${y}年`} value={y} />
+                ))}
+              </Picker>
+            </View>
+          </Modal>
+
+          <Modal
+            visible={showMonthPicker}
+            transparent
+            animationType='slide'
+            onRequestClose={() => setShowMonthPicker(false)}
+          >
+            <Pressable style={styles.modalOverlay} onPress={() => setShowMonthPicker(false)} />
+            <View style={styles.modalContent}>
+              <View style={styles.modalToolbar}>
+                <Pressable onPress={() => setShowMonthPicker(false)}>
+                  <Text style={styles.modalDoneText}>完了</Text>
+                </Pressable>
+              </View>
+              <Picker selectedValue={birthMonth} onValueChange={v => setBirthMonth(String(v))}>
+                <Picker.Item label='月を選択' value='' />
+                {months.map(m => (
+                  <Picker.Item key={m} label={`${m}月`} value={m} />
+                ))}
+              </Picker>
+            </View>
+          </Modal>
+        </View>
+
         {/* 保存ボタン
             - disabled 時は押せない
             - 押したら updateProfile を呼んで前の画面へ戻る */}
+        <Text style={styles.errorText}>{errorStore}</Text>
+
         <Pressable
-          disabled={!canSave}
-          onPress={() => {
-            updateProfile({ name: name.trim(), email: email.trim() });
-            router.back();
+          disabled={saving}
+          onPress={async () => {
+            // 前バリデーションのリセット
+            setErrorName('');
+            setErrorEmail('');
+            setErrorBirth('');
+            setErrorStore('');
+
+            const emailOk = /.+@.+\..+/.test(email.trim());
+
+            // バリデーションチェック
+            if (name.trim().length <= 0) {
+              setErrorName('※表示名の入力は必須です');
+              return;
+            } else if (email.trim().length <= 0) {
+              setErrorEmail('※メールアドレスの入力は必須です');
+              return;
+            }
+
+            if (!emailOk) {
+              setErrorEmail('※有効なメールアドレスを入力してください');
+              return;
+            }
+
+            // 生年月日は任意だが、入力する場合は年と月の両方が必要
+            if (!!birthYear !== !!birthMonth) {
+              setErrorBirth('※生年月日は年と月の両方を選択してください');
+              return;
+            }
+
+            setSaving(true);
+            try {
+              // 保存処理（ここは同期の setUser だが、将来的に API 呼び出しに置き換え可能）
+              await Promise.resolve();
+              setUser({
+                name: name.trim(),
+                email: email.trim(),
+                gender,
+                birthYear: birthYear || undefined,
+                birthMonth: birthMonth || undefined,
+                isProfileRegistered: true,
+              });
+              router.back();
+            } catch (e) {
+              setErrorStore(
+                '保存に失敗しました。もう一度お試しください。error:' + (e as Error).message
+              );
+            } finally {
+              setSaving(false);
+            }
           }}
           style={styles.primaryBtn}
         >
-          <Text style={styles.primaryBtnText}>保存</Text>
+          <Text style={styles.primaryBtnText}>{saving ? '保存中...' : '保存'}</Text>
         </Pressable>
 
         {/* キャンセルボタン（編集を破棄して戻る） */}
@@ -104,23 +264,26 @@ export default function EditProfileScreen() {
 }
 
 // スタイル定義（見た目の調整）
-// 各スタイルは用途ごとにコメントを付けています
 const styles = StyleSheet.create({
-  // Avatar（ユーザーアイコン）
+  // Avatar
   avatar: {
     alignItems: 'center',
     alignSelf: 'center',
-    backgroundColor: palette.avatarBackground,
+    backgroundColor: paletteSub.avatarBackground,
     borderRadius: 999,
     height: 88,
     justifyContent: 'center',
     marginBottom: 16,
     width: 88,
   },
-  avatarText: { color: palette.avatarText, fontSize: 28, fontWeight: '800' },
+  avatarText: { color: paletteSub.avatarText, fontSize: 28, fontWeight: '800' },
 
   // コンテンツの余白
   content: { padding: 16 },
+
+  dobRow: { flexDirection: 'row', gap: 12, marginBottom: 4 },
+
+  errorText: { color: palette.errorText, marginBottom: 8 },
 
   // 入力欄のスタイル
   input: {
@@ -128,7 +291,7 @@ const styles = StyleSheet.create({
     borderColor: palette.border,
     borderRadius: 12,
     borderWidth: 1,
-    color: palette.primary,
+    color: palette.primaryText,
     marginBottom: 16,
     paddingHorizontal: 14,
     paddingVertical: 12,
@@ -138,7 +301,35 @@ const styles = StyleSheet.create({
   keyboard: { flex: 1 },
 
   // ラベル（表示名・メールなどの見出し）
-  label: { color: palette.primary, fontWeight: '700', marginBottom: 8 },
+  label: { color: palette.primaryText, fontWeight: '700', marginBottom: 8 },
+  labelContainer: { flexDirection: 'row' },
+
+  modalContent: {
+    backgroundColor: paletteSub.modalBackground,
+    borderTopLeftRadius: 12,
+    borderTopRightRadius: 12,
+  },
+  modalDoneText: { color: palette.accent, fontWeight: '700' },
+  modalOverlay: { backgroundColor: paletteSub.modalOverlay, flex: 1 },
+  modalToolbar: {
+    alignItems: 'flex-end',
+    borderBottomWidth: 1,
+    borderColor: palette.border,
+    padding: 12,
+  },
+
+  pickerBox: {
+    backgroundColor: palette.background,
+    borderColor: palette.border,
+    borderRadius: 12,
+    borderWidth: 1,
+    justifyContent: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+  },
+  pickerContainer: { flex: 1 },
+  pickerText: { color: palette.primaryText },
+  pickerUnselectedText: { color: palette.secondaryText },
 
   // プライマリボタン（保存）
   primaryBtn: {
@@ -149,6 +340,20 @@ const styles = StyleSheet.create({
   },
   primaryBtnText: { color: palette.primaryOnAccent, fontWeight: '700', textAlign: 'center' },
 
+  // ラジオボタン
+  radioCircle: {
+    borderColor: palette.border,
+    borderRadius: 9,
+    borderWidth: 2,
+    height: 18,
+    marginRight: 8,
+    width: 18,
+  },
+  radioCircleSelected: { backgroundColor: palette.accent, borderWidth: 3.5 },
+  radioGroup: { flexDirection: 'row', gap: 12, marginBottom: 22, marginTop: 2 },
+  radioOption: { alignItems: 'center', flexDirection: 'row', marginRight: 12 },
+  radioOptionText: { color: palette.primaryText, fontWeight: '600' },
+
   // 画面背景
   screen: { backgroundColor: palette.surface, flex: 1 },
 
@@ -158,9 +363,10 @@ const styles = StyleSheet.create({
     borderColor: palette.border,
     borderRadius: 12,
     borderWidth: 1,
+    marginBottom: 40,
     marginTop: 14,
     paddingHorizontal: 14,
     paddingVertical: 10,
   },
-  secondaryBtnText: { color: palette.primary, fontWeight: '700', textAlign: 'center' },
+  secondaryBtnText: { color: palette.primaryText, fontWeight: '700', textAlign: 'center' },
 });

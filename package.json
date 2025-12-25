@@ -40,5 +40,8 @@
     "typescript": "~5.9.3"
   },
   "type": "module",
-  "version": "1.0.0"
+  "version": "1.0.0",
+  "dependencies": {
+    "@react-native-picker/picker": "2.11.1"
+  }
 }

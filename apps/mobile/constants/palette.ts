@@ -2,9 +2,11 @@ export const palette = {
   // Base surfaces & text
   background: '#F1F5F9',
   surface: '#FFFFFF',
+  secondarySurface: '#F3F4F6',
   primaryText: '#111827',
   secondaryText: '#6B7280',
   tertiaryText: '#4B5563',
+  errorText: '#DC2626',
   chipTextInactive: '#374151',
 
   // Borders & dividers
@@ -13,6 +15,7 @@ export const palette = {
   outline: '#111827',
 
   // Accents & actions
+  primaryOnAccent: '#FFFFFF',
   accent: '#0EA5E9',
   action: '#2563EB',
   link: '#2563EB',

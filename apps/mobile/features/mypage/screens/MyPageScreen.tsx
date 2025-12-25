@@ -35,12 +35,8 @@ export default function MyPageScreen() {
 
   // お気に入り店舗IDの一覧を取得
   const { favorites } = useFavorites();
-
-  // 店舗ごとのレビュー一覧と削除関数を取得
   const { reviewsByShop, deleteReview } = useReviews();
-
-  // ユーザー情報
-  const { profile } = useUser();
+  const { user } = useUser();
 
   // お気に入り店舗の情報を配列で作る（表示用）
   const favoriteShops = useMemo<Shop[]>(() => {
@@ -76,13 +72,13 @@ export default function MyPageScreen() {
           <View style={styles.profileRow}>
             <View style={styles.avatar}>
               <Text style={styles.avatarText}>
-                {profile.name ? profile.name.slice(0, 2).toUpperCase() : ''}
+                {user?.name ? user.name.slice(0, 2).toUpperCase() : ''}
               </Text>
             </View>
 
             <View style={styles.profileMeta}>
-              <Text style={styles.profileName}>{profile.name}</Text>
-              <Text style={styles.profileSub}>{profile.email}</Text>
+              <Text style={styles.profileName}>{user?.name}</Text>
+              <Text style={styles.profileSub}>{user?.email}</Text>
             </View>
             <Pressable onPress={handleLogout} style={styles.logoutBtn} hitSlop={8}>
               <Text style={styles.logoutText}>ログアウト</Text>
