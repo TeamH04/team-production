@@ -1,7 +1,9 @@
-﻿import { useRouter } from 'expo-router';
+﻿import { Picker } from '@react-native-picker/picker';
+import { useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import {
   KeyboardAvoidingView,
+  Modal,
   Platform,
   Pressable,
   ScrollView,
@@ -18,6 +20,8 @@ import { useUser } from '@/features/user/UserContext';
 const paletteSub = {
   avatarBackground: '#DBEAFE',
   avatarText: '#1D4ED8',
+  modalBackground: '#fff',
+  modalOverlay: '#0000004d',
 };
 
 // プロフィール編集画面コンポーネント
@@ -29,14 +33,23 @@ export default function EditProfileScreen() {
   const [name, setName] = useState(user?.name ?? '');
   const [email, setEmail] = useState(user?.email ?? '');
   const [gender, setGender] = useState(user?.gender ?? '');
+  const [birthYear, setBirthYear] = useState<string>(user?.birthYear ?? '');
+  const [birthMonth, setBirthMonth] = useState<string>(user?.birthMonth ?? '');
+  const [showYearPicker, setShowYearPicker] = useState(false);
+  const [showMonthPicker, setShowMonthPicker] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState('');
+  const [errorName, setErrorName] = useState('');
+  const [errorEmail, setErrorEmail] = useState('');
+  const [errorBirth, setErrorBirth] = useState('');
+  const [errorStore, setErrorStore] = useState('');
 
-  // 保存ボタンを有効にするかの判定
-  const canSave = useMemo(() => {
-    const emailOk = /.+@.+\..+/.test(email.trim());
-    return name.trim().length > 0 && emailOk;
-  }, [name, email]);
+  const years = useMemo(() => {
+    const current = new Date().getFullYear();
+    const arr: string[] = [];
+    for (let y = current; y >= 1900; y--) arr.push(String(y));
+    return arr;
+  }, []);
+  const months = useMemo(() => Array.from({ length: 12 }, (_, i) => String(i + 1)), []);
 
   return (
     <KeyboardAvoidingView
@@ -50,7 +63,10 @@ export default function EditProfileScreen() {
         </View>
 
         {/* 表示名入力 */}
-        <Text style={styles.label}>表示名</Text>
+        <View style={styles.labelContainer}>
+          <Text style={styles.label}>表示名（必須） </Text>
+          <Text style={styles.errorText}>{errorName}</Text>
+        </View>
         <TextInput
           value={name}
           onChangeText={setName}
@@ -61,7 +77,10 @@ export default function EditProfileScreen() {
         />
 
         {/* メールアドレス入力 */}
-        <Text style={styles.label}>メールアドレス</Text>
+        <View style={styles.labelContainer}>
+          <Text style={styles.label}>メールアドレス（必須） </Text>
+          <Text style={styles.errorText}>{errorEmail}</Text>
+        </View>
         <TextInput
           value={email}
           onChangeText={setEmail}
@@ -73,7 +92,7 @@ export default function EditProfileScreen() {
         />
 
         {/* 性別ラジオボタン */}
-        <Text style={styles.label}>性別</Text>
+        <Text style={styles.label}>性別（任意） </Text>
         <View style={styles.radioGroup}>
           <Pressable
             onPress={() => setGender('male')}
@@ -106,25 +125,126 @@ export default function EditProfileScreen() {
           </Pressable>
         </View>
 
+        {/* 生年月日（西暦・月） */}
+        <View style={styles.labelContainer}>
+          <Text style={styles.label}>生年月日（任意） </Text>
+          <Text style={styles.errorText}>{errorBirth}</Text>
+        </View>
+        <View style={styles.dobRow}>
+          <View style={styles.pickerContainer}>
+            <Pressable style={styles.pickerBox} onPress={() => setShowYearPicker(true)}>
+              <Text style={birthYear ? styles.pickerText : styles.pickerUnselectedText}>
+                {birthYear ? `${birthYear}年` : '年を選択'}
+              </Text>
+            </Pressable>
+          </View>
+
+          <View style={styles.pickerContainer}>
+            <Pressable style={styles.pickerBox} onPress={() => setShowMonthPicker(true)}>
+              <Text style={birthMonth ? styles.pickerText : styles.pickerUnselectedText}>
+                {birthMonth ? `${birthMonth}月` : '月を選択'}
+              </Text>
+            </Pressable>
+          </View>
+
+          <Modal
+            visible={showYearPicker}
+            transparent
+            animationType='slide'
+            onRequestClose={() => setShowYearPicker(false)}
+          >
+            <Pressable style={styles.modalOverlay} onPress={() => setShowYearPicker(false)} />
+            <View style={styles.modalContent}>
+              <View style={styles.modalToolbar}>
+                <Pressable onPress={() => setShowYearPicker(false)}>
+                  <Text style={styles.modalDoneText}>完了</Text>
+                </Pressable>
+              </View>
+              <Picker selectedValue={birthYear} onValueChange={v => setBirthYear(String(v))}>
+                <Picker.Item label='年を選択' value='' />
+                {years.map(y => (
+                  <Picker.Item key={y} label={`${y}年`} value={y} />
+                ))}
+              </Picker>
+            </View>
+          </Modal>
+
+          <Modal
+            visible={showMonthPicker}
+            transparent
+            animationType='slide'
+            onRequestClose={() => setShowMonthPicker(false)}
+          >
+            <Pressable style={styles.modalOverlay} onPress={() => setShowMonthPicker(false)} />
+            <View style={styles.modalContent}>
+              <View style={styles.modalToolbar}>
+                <Pressable onPress={() => setShowMonthPicker(false)}>
+                  <Text style={styles.modalDoneText}>完了</Text>
+                </Pressable>
+              </View>
+              <Picker selectedValue={birthMonth} onValueChange={v => setBirthMonth(String(v))}>
+                <Picker.Item label='月を選択' value='' />
+                {months.map(m => (
+                  <Picker.Item key={m} label={`${m}月`} value={m} />
+                ))}
+              </Picker>
+            </View>
+          </Modal>
+        </View>
+
         {/* 保存ボタン
             - disabled 時は押せない
             - 押したら updateProfile を呼んで前の画面へ戻る */}
-        <Text style={styles.errorText}>{error}</Text>
+        <Text style={styles.errorText}>{errorStore}</Text>
 
         <Pressable
-          disabled={!canSave || saving}
+          disabled={saving}
           onPress={async () => {
             // 前バリデーションのリセット
-            setError('');
+            setErrorName('');
+            setErrorEmail('');
+            setErrorBirth('');
+            setErrorStore('');
+
+            const emailOk = /.+@.+\..+/.test(email.trim());
+
+            // バリデーションチェック
+            if (name.trim().length <= 0) {
+              setErrorName('※表示名の入力は必須です');
+              return;
+            } else if (email.trim().length <= 0) {
+              setErrorEmail('※メールアドレスの入力は必須です');
+              return;
+            }
+
+            if (!emailOk) {
+              setErrorEmail('※有効なメールアドレスを入力してください');
+              return;
+            }
+
+            // 生年月日は任意だが、入力する場合は年と月の両方が必要
+            if (!!birthYear !== !!birthMonth) {
+              setErrorBirth('※生年月日は年と月の両方を選択してください');
+              return;
+            }
 
             setSaving(true);
             try {
               // 保存処理（ここは同期の setUser だが、将来的に API 呼び出しに置き換え可能）
               await Promise.resolve();
-              setUser({ name: name.trim(), email: email.trim(), gender, isProfileRegistered: true });
+              setUser({
+                name: name.trim(),
+                email: email.trim(),
+                gender,
+                birthYear: birthYear || undefined,
+                birthMonth: birthMonth || undefined,
+                isProfileRegistered: true,
+              });
               router.back();
             } catch (e) {
-              setError('保存に失敗しました。もう一度お試しください。');
+              setErrorStore(
+                '保存に失敗しました。もう一度お試しください。error:' + (e as Error).message
+              );
             } finally {
               setSaving(false);
             }
@@ -161,8 +281,10 @@ const styles = StyleSheet.create({
   // コンテンツの余白
   content: { padding: 16 },
 
-  errorText: { color: '#DC2626', marginBottom: 8 },
-  
+  dobRow: { flexDirection: 'row', gap: 12, marginBottom: 4 },
+
+  errorText: { color: palette.errorText, marginBottom: 8 },
+
   // 入力欄のスタイル
   input: {
     backgroundColor: palette.background,
@@ -180,6 +302,34 @@ const styles = StyleSheet.create({
 
   // ラベル（表示名・メールなどの見出し）
   label: { color: palette.primaryText, fontWeight: '700', marginBottom: 8 },
+  labelContainer: { flexDirection: 'row' },
+
+  modalContent: {
+    backgroundColor: paletteSub.modalBackground,
+    borderTopLeftRadius: 12,
+    borderTopRightRadius: 12,
+  },
+  modalDoneText: { color: palette.accent, fontWeight: '700' },
+  modalOverlay: { backgroundColor: paletteSub.modalOverlay, flex: 1 },
+  modalToolbar: {
+    alignItems: 'flex-end',
+    borderBottomWidth: 1,
+    borderColor: palette.border,
+    padding: 12,
+  },
+
+  pickerBox: {
+    backgroundColor: palette.background,
+    borderColor: palette.border,
+    borderRadius: 12,
+    borderWidth: 1,
+    justifyContent: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+  },
+  pickerContainer: { flex: 1 },
+  pickerText: { color: palette.primaryText },
+  pickerUnselectedText: { color: palette.secondaryText },
 
   // プライマリボタン（保存）
   primaryBtn: {
@@ -192,16 +342,16 @@ const styles = StyleSheet.create({
 
   // ラジオボタン
   radioCircle: {
-    width: 18,
-    height: 18,
+    borderColor: palette.border,
     borderRadius: 9,
     borderWidth: 2,
-    borderColor: palette.border,
+    height: 18,
     marginRight: 8,
+    width: 18,
   },
   radioCircleSelected: { backgroundColor: palette.accent, borderWidth: 3.5 },
-  radioGroup: { flexDirection: 'row', gap: 12, marginBottom: 8 },
-  radioOption: { flexDirection: 'row', alignItems: 'center', marginRight: 12 },
+  radioGroup: { flexDirection: 'row', gap: 12, marginBottom: 22, marginTop: 2 },
+  radioOption: { alignItems: 'center', flexDirection: 'row', marginRight: 12 },
   radioOptionText: { color: palette.primaryText, fontWeight: '600' },
 
   // 画面背景
@@ -213,6 +363,7 @@ const styles = StyleSheet.create({
     borderColor: palette.border,
     borderRadius: 12,
     borderWidth: 1,
+    marginBottom: 40,
     marginTop: 14,
     paddingHorizontal: 14,
     paddingVertical: 10,
