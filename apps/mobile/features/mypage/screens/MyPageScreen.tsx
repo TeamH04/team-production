@@ -29,7 +29,13 @@ const palette = {
 const TAB_BAR_SPACING = 125;
 
 // マイページ画面のコンポーネント
-export default function MyPageScreen({ resetCount = 0, setWasDetailScreen }: { resetCount?: number; setWasDetailScreen?: (val: boolean) => void }) {
+export default function MyPageScreen({
+  resetCount = 0,
+  setWasDetailScreen,
+}: {
+  resetCount?: number;
+  setWasDetailScreen?: (val: boolean) => void;
+}) {
   // 画面遷移用
   const router = useRouter();
 
@@ -153,7 +159,14 @@ export default function MyPageScreen({ resetCount = 0, setWasDetailScreen }: { r
         >
           {/* レビュー履歴ヘッダー */}
           <View style={styles.headerContainer}>
-            <Pressable onPress={() => { setShowReviewHistory(false); setShowSettings(false); setShowNotifications(false); }} style={styles.backButton}>
+            <Pressable
+              onPress={() => {
+                setShowReviewHistory(false);
+                setShowSettings(false);
+                setShowNotifications(false);
+              }}
+              style={styles.backButton}
+            >
               <Text style={styles.backButtonText}>←</Text>
             </Pressable>
             <Text style={styles.headerTitle}>レビュー履歴</Text>
@@ -169,18 +182,15 @@ export default function MyPageScreen({ resetCount = 0, setWasDetailScreen }: { r
               {reviews.map(review => {
                 const shop = SHOPS.find(s => s.id === review.shopId);
                 return (
-                  <Pressable 
-                    key={review.id} 
+                  <Pressable
+                    key={review.id}
                     style={styles.cardShadow}
                     onPress={() => router.push(`/shop/${review.shopId}`)}
                   >
                     <View style={styles.card}>
                       <View style={styles.reviewCardContent}>
                         {shop?.imageUrl && (
-                          <Image
-                            source={{ uri: shop.imageUrl }}
-                            style={styles.reviewImage}
-                          />
+                          <Image source={{ uri: shop.imageUrl }} style={styles.reviewImage} />
                         )}
                         <View style={styles.reviewTextContainer}>
                           <View style={styles.reviewHeader}>
@@ -223,7 +233,14 @@ export default function MyPageScreen({ resetCount = 0, setWasDetailScreen }: { r
         >
           {/* お知らせヘッダー */}
           <View style={styles.headerContainer}>
-            <Pressable onPress={() => { setShowReviewHistory(false); setShowSettings(false); setShowNotifications(false); }} style={styles.backButton}>
+            <Pressable
+              onPress={() => {
+                setShowReviewHistory(false);
+                setShowSettings(false);
+                setShowNotifications(false);
+              }}
+              style={styles.backButton}
+            >
               <Text style={styles.backButtonText}>←</Text>
             </Pressable>
             <Text style={styles.headerTitle}>お知らせ</Text>
@@ -244,7 +261,14 @@ export default function MyPageScreen({ resetCount = 0, setWasDetailScreen }: { r
         >
           {/* 設定ヘッダー */}
           <View style={styles.headerContainer}>
-            <Pressable onPress={() => { setShowReviewHistory(false); setShowSettings(false); setShowNotifications(false); }} style={styles.backButton}>
+            <Pressable
+              onPress={() => {
+                setShowReviewHistory(false);
+                setShowSettings(false);
+                setShowNotifications(false);
+              }}
+              style={styles.backButton}
+            >
               <Text style={styles.backButtonText}>←</Text>
             </Pressable>
             <Text style={styles.headerTitle}>設定</Text>
