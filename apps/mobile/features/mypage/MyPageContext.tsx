@@ -1,12 +1,11 @@
+import type { ReactNode } from 'react';
 import { createContext, useContext } from 'react';
 
-export interface MyPageContextType {
-  // コンテキスト型の定義
-}
+export type MyPageContextType = object;
 
 const MyPageContext = createContext<MyPageContextType | undefined>(undefined);
 
-export function MyPageProvider({ children }: { children: React.ReactNode }) {
+export function MyPageProvider({ children }: { children: ReactNode }) {
   return <MyPageContext.Provider value={{}}>{children}</MyPageContext.Provider>;
 }
 

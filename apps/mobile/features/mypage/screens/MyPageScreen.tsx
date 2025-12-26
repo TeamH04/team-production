@@ -2,7 +2,6 @@
 import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Alert, Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { useFavorites } from '@/features/favorites/FavoritesContext';
 import { useReviews } from '@/features/reviews/ReviewsContext';
 import { useUser } from '@/features/user/UserContext';
 import { getSupabase } from '@/lib/supabase';
@@ -29,12 +28,15 @@ const palette = {
 const TAB_BAR_SPACING = 125;
 
 // マイページ画面のコンポーネント
-export default function MyPageScreen({ resetCount = 0, setWasDetailScreen }: { resetCount?: number; setWasDetailScreen?: (val: boolean) => void }) {
+export default function MyPageScreen({
+  resetCount = 0,
+  setWasDetailScreen,
+}: {
+  resetCount?: number;
+  setWasDetailScreen?: (val: boolean) => void;
+}) {
   // 画面遷移用
   const router = useRouter();
-
-  // お気に入り店舗IDの一覧を取得
-  const { favorites } = useFavorites();
 
   // 店舗ごとのレビュー一覧と削除関数を取得
   const { reviewsByShop } = useReviews();
@@ -47,9 +49,6 @@ export default function MyPageScreen({ resetCount = 0, setWasDetailScreen }: { r
     const all = Object.values(reviewsByShop).flat();
     return all.sort((a, b) => b.createdAt.localeCompare(a.createdAt)).slice(0, 20);
   }, [reviewsByShop]);
-
-  // お気に入り店舗の数
-  const favoritesCount = favorites.size;
 
   // ScrollView の参照
   const scrollRef = useRef<ScrollView>(null);
@@ -69,19 +68,19 @@ export default function MyPageScreen({ resetCount = 0, setWasDetailScreen }: { r
   const [showNotifications, setShowNotifications] = useState(false);
 
   // スクロール位置の変更を記録
-  const handleScroll = (event: any) => {
+  const handleScroll = (event: { nativeEvent: { contentOffset: { y: number } } }) => {
     setScrollPosition(event.nativeEvent.contentOffset.y);
   };
 
-  const handleReviewHistoryScroll = (event: any) => {
+  const handleReviewHistoryScroll = (event: { nativeEvent: { contentOffset: { y: number } } }) => {
     setReviewHistoryScrollPosition(event.nativeEvent.contentOffset.y);
   };
 
-  const handleSettingsScroll = (event: any) => {
+  const handleSettingsScroll = (event: { nativeEvent: { contentOffset: { y: number } } }) => {
     setSettingsScrollPosition(event.nativeEvent.contentOffset.y);
   };
 
-  const handleNotificationsScroll = (event: any) => {
+  const handleNotificationsScroll = (event: { nativeEvent: { contentOffset: { y: number } } }) => {
     setNotificationsScrollPosition(event.nativeEvent.contentOffset.y);
   };
 
@@ -90,28 +89,28 @@ export default function MyPageScreen({ resetCount = 0, setWasDetailScreen }: { r
     if (!showReviewHistory && !showSettings && !showNotifications && scrollRef.current) {
       scrollRef.current.scrollTo({ y: scrollPosition, animated: false });
     }
-  }, [showReviewHistory, showSettings, showNotifications]);
+  }, [showReviewHistory, showSettings, showNotifications, scrollPosition]);
 
   // レビュー履歴を表示するときにスクロール位置を復元
   useLayoutEffect(() => {
     if (showReviewHistory && reviewHistoryScrollRef.current) {
       reviewHistoryScrollRef.current.scrollTo({ y: reviewHistoryScrollPosition, animated: false });
     }
-  }, [showReviewHistory]);
+  }, [showReviewHistory, reviewHistoryScrollPosition]);
 
   // 設定を表示するときにスクロール位置を復元
   useLayoutEffect(() => {
     if (showSettings && settingsScrollRef.current) {
       settingsScrollRef.current.scrollTo({ y: settingsScrollPosition, animated: false });
     }
-  }, [showSettings]);
+  }, [showSettings, settingsScrollPosition]);
 
   // お知らせを表示するときにスクロール位置を復元
   useLayoutEffect(() => {
     if (showNotifications && notificationsScrollRef.current) {
       notificationsScrollRef.current.scrollTo({ y: notificationsScrollPosition, animated: false });
     }
-  }, [showNotifications]);
+  }, [showNotifications, notificationsScrollPosition]);
 
   // 詳細画面が表示されたことを通知
   useLayoutEffect(() => {
@@ -120,9 +119,9 @@ export default function MyPageScreen({ resetCount = 0, setWasDetailScreen }: { r
     }
   }, [showReviewHistory, showSettings, showNotifications, setWasDetailScreen]);
 
-  // マイページタブが再度押下されたときに状態をリセット（resetCountの監視）
   useLayoutEffect(() => {
     if (resetCount > 0) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setShowReviewHistory(false);
       setShowSettings(false);
       setShowNotifications(false);
@@ -153,11 +152,18 @@ export default function MyPageScreen({ resetCount = 0, setWasDetailScreen }: { r
         >
           {/* レビュー履歴ヘッダー */}
           <View style={styles.headerContainer}>
-            <Pressable onPress={() => { setShowReviewHistory(false); setShowSettings(false); setShowNotifications(false); }} style={styles.backButton}>
+            <Pressable
+              onPress={() => {
+                setShowReviewHistory(false);
+                setShowSettings(false);
+                setShowNotifications(false);
+              }}
+              style={styles.backButton}
+            >
               <Text style={styles.backButtonText}>←</Text>
             </Pressable>
             <Text style={styles.headerTitle}>レビュー履歴</Text>
-            <View style={{ width: 40 }} />
+            <View style={styles.spacer} />
           </View>
 
           {reviews.length === 0 ? (
@@ -169,18 +175,15 @@ export default function MyPageScreen({ resetCount = 0, setWasDetailScreen }: { r
               {reviews.map(review => {
                 const shop = SHOPS.find(s => s.id === review.shopId);
                 return (
-                  <Pressable 
-                    key={review.id} 
+                  <Pressable
+                    key={review.id}
                     style={styles.cardShadow}
                     onPress={() => router.push(`/shop/${review.shopId}`)}
                   >
                     <View style={styles.card}>
                       <View style={styles.reviewCardContent}>
                         {shop?.imageUrl && (
-                          <Image
-                            source={{ uri: shop.imageUrl }}
-                            style={styles.reviewImage}
-                          />
+                          <Image source={{ uri: shop.imageUrl }} style={styles.reviewImage} />
                         )}
                         <View style={styles.reviewTextContainer}>
                           <View style={styles.reviewHeader}>
@@ -223,11 +226,18 @@ export default function MyPageScreen({ resetCount = 0, setWasDetailScreen }: { r
         >
           {/* お知らせヘッダー */}
           <View style={styles.headerContainer}>
-            <Pressable onPress={() => { setShowReviewHistory(false); setShowSettings(false); setShowNotifications(false); }} style={styles.backButton}>
+            <Pressable
+              onPress={() => {
+                setShowReviewHistory(false);
+                setShowSettings(false);
+                setShowNotifications(false);
+              }}
+              style={styles.backButton}
+            >
               <Text style={styles.backButtonText}>←</Text>
             </Pressable>
             <Text style={styles.headerTitle}>お知らせ</Text>
-            <View style={{ width: 40 }} />
+            <View style={styles.spacer} />
           </View>
 
           <View style={styles.emptyContainer}>
@@ -244,11 +254,18 @@ export default function MyPageScreen({ resetCount = 0, setWasDetailScreen }: { r
         >
           {/* 設定ヘッダー */}
           <View style={styles.headerContainer}>
-            <Pressable onPress={() => { setShowReviewHistory(false); setShowSettings(false); setShowNotifications(false); }} style={styles.backButton}>
+            <Pressable
+              onPress={() => {
+                setShowReviewHistory(false);
+                setShowSettings(false);
+                setShowNotifications(false);
+              }}
+              style={styles.backButton}
+            >
               <Text style={styles.backButtonText}>←</Text>
             </Pressable>
             <Text style={styles.headerTitle}>設定</Text>
-            <View style={{ width: 40 }} />
+            <View style={styles.spacer} />
           </View>
 
           <View style={styles.emptyContainer}>
@@ -346,11 +363,16 @@ const styles = StyleSheet.create({
     width: 64,
   },
   avatarText: { color: palette.avatarText, fontSize: 22, fontWeight: '800' },
-
-  // 押下時の共通フィードバック
-  btnPressed: { opacity: 0.9 },
-
-  // カード全般の見た目（白背景・角丸・余白）
+  backButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    width: 50,
+  },
+  backButtonText: {
+    color: palette.accent,
+    fontSize: 28,
+    fontWeight: '700',
+  },
   card: { backgroundColor: palette.surface, borderRadius: 20, padding: 12 },
   cardShadow: {
     elevation: 4,
@@ -360,92 +382,22 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.06,
     shadowRadius: 12,
   },
-
-  // 共通ボタンの基本スタイル（編集・削除 等で共用）
-  commonBtn: {
-    borderRadius: 10,
-    borderWidth: 1,
-    flex: 1,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
+  comment: {
+    color: palette.primary,
+    fontSize: 12,
+    lineHeight: 18,
+    marginTop: 4,
   },
-  commonBtnText: { fontWeight: '700', textAlign: 'center' },
-
   content: { padding: 16, paddingBottom: TAB_BAR_SPACING },
-
-  // 削除ボタン固有の色など
-  deleteBtn: {
-    backgroundColor: palette.dangerBg,
-    borderColor: palette.dangerBorder,
+  date: {
+    color: palette.mutedText,
+    fontSize: 11,
   },
-  deleteBtnText: { color: palette.dangerText },
-
-  // 空状態表示（お気に入りやレビューが無い時）
-  emptyBox: {
+  emptyContainer: {
     alignItems: 'center',
-    backgroundColor: palette.surface,
-    borderRadius: 16,
-    paddingHorizontal: 16,
-    paddingVertical: 24,
+    marginTop: 60,
   },
   emptyText: { color: palette.mutedText },
-
-  // ログアウトボタン
-  logoutBtn: {
-    alignSelf: 'flex-start',
-    marginLeft: 'auto',
-    marginTop: 6,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-  },
-  logoutText: { color: palette.accent, fontSize: 14, fontWeight: '600' },
-
-  // プライマリボタン（プロフィール編集 等）
-  primaryBtn: {
-    backgroundColor: palette.accent,
-    borderRadius: 12,
-    marginTop: 16,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-  },
-  primaryBtnText: {
-    color: palette.primaryOnAccent,
-    fontSize: 16,
-    fontWeight: '700',
-    textAlign: 'center',
-  },
-
-  // セクションコンテナ
-  sectionContainer: {
-    marginTop: 24,
-  },
-
-  // セクションタイトル
-  sectionTitle: {
-    color: palette.primary,
-    fontSize: 16,
-    fontWeight: '700',
-    marginBottom: 16,
-    textAlign: 'center',
-  },
-
-  // グリッドコンテナ（2列レイアウト）
-  gridContainer: {
-    display: 'flex',
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-  },
-
-  // グリッドコンテナ（中央配置）
-  centerGridContainer: {
-    display: 'flex',
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-  },
-
-  // グリッドカード
   gridCard: {
     alignItems: 'center',
     backgroundColor: palette.surface,
@@ -460,31 +412,21 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     width: '48%',
   },
-
-  // グリッドカードのアイコン
   gridCardIcon: {
     fontSize: 32,
     marginBottom: 8,
   },
-
-  // グリッドカードのラベル
   gridCardLabel: {
     color: palette.primary,
     fontSize: 13,
     fontWeight: '600',
     textAlign: 'center',
   },
-
-  // レビュー履歴用スタイル
-  backButton: {
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    width: 50,
-  },
-  backButtonText: {
-    color: palette.accent,
-    fontSize: 28,
-    fontWeight: '700',
+  gridContainer: {
+    display: 'flex',
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
   },
   headerContainer: {
     alignItems: 'center',
@@ -497,9 +439,44 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '700',
   },
-  emptyContainer: {
-    alignItems: 'center',
-    marginTop: 60,
+  logoutBtn: {
+    alignSelf: 'flex-start',
+    marginLeft: 'auto',
+    marginTop: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  logoutText: { color: palette.accent, fontSize: 14, fontWeight: '600' },
+  menuItem: {
+    color: palette.mutedText,
+    fontSize: 11,
+    marginTop: 4,
+  },
+  primaryBtn: {
+    backgroundColor: palette.accent,
+    borderRadius: 12,
+    marginTop: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
+  primaryBtnText: {
+    color: palette.primaryOnAccent,
+    fontSize: 16,
+    fontWeight: '700',
+    textAlign: 'center',
+  },
+  profileMeta: { flex: 1, marginLeft: 14 },
+  profileName: { color: palette.primary, fontSize: 18, fontWeight: '700' },
+  profileRow: { alignItems: 'center', flexDirection: 'row' },
+  profileSub: { color: palette.mutedText, marginTop: 4 },
+  rating: {
+    color: palette.primary,
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  reviewCardContent: {
+    flexDirection: 'row',
+    gap: 10,
   },
   reviewHeader: {
     marginBottom: 4,
@@ -510,12 +487,29 @@ const styles = StyleSheet.create({
     marginRight: 12,
     width: 100,
   },
-  reviewCardContent: {
+  reviewMeta: {
     flexDirection: 'row',
-    gap: 10,
+    gap: 8,
+    marginBottom: 2,
   },
   reviewTextContainer: {
     flex: 1,
+  },
+  screen: { backgroundColor: palette.background, flex: 1 },
+  sectionContainer: {
+    marginTop: 24,
+  },
+  sectionTitle: {
+    color: palette.primary,
+    fontSize: 16,
+    fontWeight: '700',
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  shopCategory: {
+    color: palette.mutedText,
+    fontSize: 11,
+    marginTop: 2,
   },
   shopInfo: {
     flex: 1,
@@ -525,43 +519,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '700',
   },
-  shopCategory: {
-    color: palette.mutedText,
-    fontSize: 11,
-    marginTop: 2,
+  spacer: {
+    width: 40,
   },
-  reviewMeta: {
-    flexDirection: 'row',
-    gap: 8,
-    marginBottom: 2,
-  },
-  rating: {
-    color: palette.primary,
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  date: {
-    color: palette.mutedText,
-    fontSize: 11,
-  },
-  menuItem: {
-    color: palette.mutedText,
-    fontSize: 11,
-    marginTop: 4,
-  },
-  comment: {
-    color: palette.primary,
-    fontSize: 12,
-    lineHeight: 18,
-    marginTop: 4,
-  },
-
-  // プロフィール領域のレイアウト
-  profileMeta: { flex: 1, marginLeft: 14 },
-  profileName: { color: palette.primary, fontSize: 18, fontWeight: '700' },
-  profileRow: { alignItems: 'center', flexDirection: 'row' },
-  profileSub: { color: palette.mutedText, marginTop: 4 },
-
-  // スクリーン全体の背景
-  screen: { backgroundColor: palette.background, flex: 1 },
 });

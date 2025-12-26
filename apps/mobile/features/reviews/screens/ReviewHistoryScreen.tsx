@@ -1,12 +1,5 @@
-import { useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
-import {
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    View,
-} from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { useFavorites } from '@/features/favorites/FavoritesContext';
 import { useReviews } from '@/features/reviews/ReviewsContext';
@@ -28,7 +21,6 @@ const TAB_BAR_SPACING = 125;
 type TabType = 'favorites' | 'history' | 'likes' | 'preferences';
 
 export default function ReviewHistoryScreen() {
-  const router = useRouter();
   const { favorites } = useFavorites();
   const { reviewsByShop } = useReviews();
   const [activeTab, setActiveTab] = useState<TabType>('history');
@@ -111,16 +103,10 @@ export default function ReviewHistoryScreen() {
       <View style={styles.tabContainer}>
         <Pressable
           onPress={() => setActiveTab('favorites')}
-          style={[
-            styles.tabButton,
-            activeTab === 'favorites' && styles.tabButtonActive,
-          ]}
+          style={[styles.tabButton, activeTab === 'favorites' && styles.tabButtonActive]}
         >
           <Text
-            style={[
-              styles.tabButtonText,
-              activeTab === 'favorites' && styles.tabButtonTextActive,
-            ]}
+            style={[styles.tabButtonText, activeTab === 'favorites' && styles.tabButtonTextActive]}
           >
             ❤️ お気に入り
           </Text>
@@ -128,16 +114,10 @@ export default function ReviewHistoryScreen() {
 
         <Pressable
           onPress={() => setActiveTab('history')}
-          style={[
-            styles.tabButton,
-            activeTab === 'history' && styles.tabButtonActive,
-          ]}
+          style={[styles.tabButton, activeTab === 'history' && styles.tabButtonActive]}
         >
           <Text
-            style={[
-              styles.tabButtonText,
-              activeTab === 'history' && styles.tabButtonTextActive,
-            ]}
+            style={[styles.tabButtonText, activeTab === 'history' && styles.tabButtonTextActive]}
           >
             ✏️ レビュー履歴
           </Text>
@@ -145,27 +125,16 @@ export default function ReviewHistoryScreen() {
 
         <Pressable
           onPress={() => setActiveTab('likes')}
-          style={[
-            styles.tabButton,
-            activeTab === 'likes' && styles.tabButtonActive,
-          ]}
+          style={[styles.tabButton, activeTab === 'likes' && styles.tabButtonActive]}
         >
-          <Text
-            style={[
-              styles.tabButtonText,
-              activeTab === 'likes' && styles.tabButtonTextActive,
-            ]}
-          >
+          <Text style={[styles.tabButtonText, activeTab === 'likes' && styles.tabButtonTextActive]}>
             👍 いいね
           </Text>
         </Pressable>
 
         <Pressable
           onPress={() => setActiveTab('preferences')}
-          style={[
-            styles.tabButton,
-            activeTab === 'preferences' && styles.tabButtonActive,
-          ]}
+          style={[styles.tabButton, activeTab === 'preferences' && styles.tabButtonActive]}
         >
           <Text
             style={[
