@@ -1,6 +1,7 @@
-import { useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
+import { TAB_BAR_SPACING } from '@/constants/TabBarSpacing';
 import { useFavorites } from '@/features/favorites/FavoritesContext';
 import { useReviews } from '@/features/reviews/ReviewsContext';
 
@@ -16,9 +17,8 @@ const palette = {
   surface: '#FFFFFF',
 } as const;
 
-const TAB_BAR_SPACING = 125;
-
-type TabType = 'favorites' | 'history' | 'likes' | 'preferences';
+// TODO: 'likes' および 'preferences' タブ拡張実装を検討する場合に使用
+type TabType = 'favorites' | 'history'; // | 'likes' | 'preferences';
 
 export default function ReviewHistoryScreen() {
   const { favorites } = useFavorites();
@@ -33,64 +33,69 @@ export default function ReviewHistoryScreen() {
     return Object.values(reviewsByShop).flat().length;
   }, [reviewsByShop]);
 
+  /**
+   * タブコンテンツの共通コンポーネント
+   * @param title - タブのタイトル
+   * @param emptyMessage - コンテンツが空の場合のメッセージ
+   * @param content - 表示するコンテンツ（オプション）
+   */
+  const TabContent = ({
+    title,
+    emptyMessage,
+    content,
+  }: {
+    title: string;
+    emptyMessage: string;
+    content?: React.ReactNode;
+  }) => (
+    <View>
+      <Text style={styles.tabTitle}>{title}</Text>
+      {!content ? (
+        <View style={styles.emptyBox}>
+          <Text style={styles.emptyText}>{emptyMessage}</Text>
+        </View>
+      ) : (
+        <View style={styles.cardShadow}>
+          <View style={styles.card}>{content}</View>
+        </View>
+      )}
+    </View>
+  );
+
   // 各タブのコンテンツを描画
   const renderTabContent = () => {
     switch (activeTab) {
       case 'favorites':
         return (
-          <View>
-            <Text style={styles.tabTitle}>お気に入り</Text>
-            {favoritesCount === 0 ? (
-              <View style={styles.emptyBox}>
-                <Text style={styles.emptyText}>お気に入りがありません</Text>
-              </View>
-            ) : (
-              <View style={styles.cardShadow}>
-                <View style={styles.card}>
-                  <Text style={styles.cardContent}>{favoritesCount}件のお気に入り</Text>
-                </View>
-              </View>
-            )}
-          </View>
+          <TabContent
+            title='お気に入り'
+            emptyMessage='お気に入りがありません'
+            content={
+              favoritesCount > 0 && (
+                <Text style={styles.cardContent}>{favoritesCount}件のお気に入り</Text>
+              )
+            }
+          />
         );
 
       case 'history':
         return (
-          <View>
-            <Text style={styles.tabTitle}>レビュー履歴</Text>
-            {reviewsCount === 0 ? (
-              <View style={styles.emptyBox}>
-                <Text style={styles.emptyText}>レビューがありません</Text>
-              </View>
-            ) : (
-              <View style={styles.cardShadow}>
-                <View style={styles.card}>
-                  <Text style={styles.cardContent}>{reviewsCount}件のレビュー</Text>
-                </View>
-              </View>
-            )}
-          </View>
+          <TabContent
+            title='レビュー履歴'
+            emptyMessage='レビューがありません'
+            content={
+              reviewsCount > 0 && <Text style={styles.cardContent}>{reviewsCount}件のレビュー</Text>
+            }
+          />
         );
 
       case 'likes':
         return (
-          <View>
-            <Text style={styles.tabTitle}>いいねしたレビュー</Text>
-            <View style={styles.emptyBox}>
-              <Text style={styles.emptyText}>いいねしたレビューがありません</Text>
-            </View>
-          </View>
+          <TabContent title='いいねしたレビュー' emptyMessage='いいねしたレビューがありません' />
         );
 
       case 'preferences':
-        return (
-          <View>
-            <Text style={styles.tabTitle}>好みチェック</Text>
-            <View style={styles.emptyBox}>
-              <Text style={styles.emptyText}>チェックした好みがありません</Text>
-            </View>
-          </View>
-        );
+        return <TabContent title='好みチェック' emptyMessage='チェックした好みがありません' />;
 
       default:
         return null;

@@ -1,7 +1,8 @@
 ﻿import { useRouter } from 'expo-router';
-import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { Alert, Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
+import { TAB_BAR_SPACING } from '@/constants/TabBarSpacing';
 import { useReviews } from '@/features/reviews/ReviewsContext';
 import { useUser } from '@/features/user/UserContext';
 import { getSupabase } from '@/lib/supabase';
@@ -25,20 +26,20 @@ const palette = {
   dangerText: '#FFFFFF',
 } as const;
 
-const TAB_BAR_SPACING = 125;
-
-// マイページ画面のコンポーネント
+/**
+ * マイページ画面コンポーネント
+ * ユーザープロフィール、レビュー履歴、設定を表示します
+ * @param setWasDetailScreen - 詳細画面が表示されたことを通知するコールバック
+ */
 export default function MyPageScreen({
-  resetCount = 0,
   setWasDetailScreen,
 }: {
-  resetCount?: number;
   setWasDetailScreen?: (val: boolean) => void;
 }) {
   // 画面遷移用
   const router = useRouter();
 
-  // 店舗ごとのレビュー一覧と削除関数を取得
+  // 店舗ごとのレビュー一覧を取得
   const { reviewsByShop } = useReviews();
 
   // ユーザー情報
@@ -50,83 +51,40 @@ export default function MyPageScreen({
     return all.sort((a, b) => b.createdAt.localeCompare(a.createdAt)).slice(0, 20);
   }, [reviewsByShop]);
 
-  // ScrollView の参照
-  const scrollRef = useRef<ScrollView>(null);
+  // 表示画面の種類を定義（Union 型で管理）
+  type ScreenType = 'main' | 'reviewHistory' | 'settings' | 'notifications';
+
+  // ScrollView の参照（コンポーネントトップレベルで定義）
+  const mainScrollRef = useRef<ScrollView>(null);
   const reviewHistoryScrollRef = useRef<ScrollView>(null);
   const settingsScrollRef = useRef<ScrollView>(null);
   const notificationsScrollRef = useRef<ScrollView>(null);
 
-  // スクロール位置を保存
-  const [scrollPosition, setScrollPosition] = useState(0);
-  const [reviewHistoryScrollPosition, setReviewHistoryScrollPosition] = useState(0);
-  const [settingsScrollPosition, setSettingsScrollPosition] = useState(0);
-  const [notificationsScrollPosition, setNotificationsScrollPosition] = useState(0);
+  // 現在表示している画面を管理（Union 型で一元管理）
+  const [currentScreen, setCurrentScreen] = useState<ScreenType>('main');
 
-  // 各画面の表示状態
-  const [showReviewHistory, setShowReviewHistory] = useState(false);
-  const [showSettings, setShowSettings] = useState(false);
-  const [showNotifications, setShowNotifications] = useState(false);
-
-  // スクロール位置の変更を記録
-  const handleScroll = (event: { nativeEvent: { contentOffset: { y: number } } }) => {
-    setScrollPosition(event.nativeEvent.contentOffset.y);
+  /**
+   * スクロールハンドラーのマップ
+   * 各画面のスクロール位置を記録します
+   */
+  const scrollHandlers = {
+    main: useCallback(() => {}, []),
+    reviewHistory: useCallback(() => {}, []),
+    settings: useCallback(() => {}, []),
+    notifications: useCallback(() => {}, []),
   };
 
-  const handleReviewHistoryScroll = (event: { nativeEvent: { contentOffset: { y: number } } }) => {
-    setReviewHistoryScrollPosition(event.nativeEvent.contentOffset.y);
-  };
+  const handleScroll = scrollHandlers.main;
+  const handleReviewHistoryScroll = scrollHandlers.reviewHistory;
+  const handleSettingsScroll = scrollHandlers.settings;
+  const handleNotificationsScroll = scrollHandlers.notifications;
 
-  const handleSettingsScroll = (event: { nativeEvent: { contentOffset: { y: number } } }) => {
-    setSettingsScrollPosition(event.nativeEvent.contentOffset.y);
-  };
-
-  const handleNotificationsScroll = (event: { nativeEvent: { contentOffset: { y: number } } }) => {
-    setNotificationsScrollPosition(event.nativeEvent.contentOffset.y);
-  };
-
-  // マイページに戻ったときにスクロール位置を復元
-  useLayoutEffect(() => {
-    if (!showReviewHistory && !showSettings && !showNotifications && scrollRef.current) {
-      scrollRef.current.scrollTo({ y: scrollPosition, animated: false });
+  const handleBackPress = useCallback(() => {
+    setCurrentScreen('main');
+    if (setWasDetailScreen) {
+      setWasDetailScreen(false);
     }
-  }, [showReviewHistory, showSettings, showNotifications, scrollPosition]);
-
-  // レビュー履歴を表示するときにスクロール位置を復元
-  useLayoutEffect(() => {
-    if (showReviewHistory && reviewHistoryScrollRef.current) {
-      reviewHistoryScrollRef.current.scrollTo({ y: reviewHistoryScrollPosition, animated: false });
-    }
-  }, [showReviewHistory, reviewHistoryScrollPosition]);
-
-  // 設定を表示するときにスクロール位置を復元
-  useLayoutEffect(() => {
-    if (showSettings && settingsScrollRef.current) {
-      settingsScrollRef.current.scrollTo({ y: settingsScrollPosition, animated: false });
-    }
-  }, [showSettings, settingsScrollPosition]);
-
-  // お知らせを表示するときにスクロール位置を復元
-  useLayoutEffect(() => {
-    if (showNotifications && notificationsScrollRef.current) {
-      notificationsScrollRef.current.scrollTo({ y: notificationsScrollPosition, animated: false });
-    }
-  }, [showNotifications, notificationsScrollPosition]);
-
-  // 詳細画面が表示されたことを通知
-  useLayoutEffect(() => {
-    if ((showReviewHistory || showSettings || showNotifications) && setWasDetailScreen) {
-      setWasDetailScreen(true);
-    }
-  }, [showReviewHistory, showSettings, showNotifications, setWasDetailScreen]);
-
-  useLayoutEffect(() => {
-    if (resetCount > 0) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setShowReviewHistory(false);
-      setShowSettings(false);
-      setShowNotifications(false);
-    }
-  }, [resetCount]);
+  }, [setWasDetailScreen]);
 
   const handleLogout = useCallback(async () => {
     try {
@@ -138,28 +96,43 @@ export default function MyPageScreen({
     }
   }, [router]);
 
-  // 画面の描画
-  return (
-    <>
-      {/* レビュー履歴表示時 */}
-      {showReviewHistory ? (
+  // 詳細画面へのナビゲーション
+  const handleGoToReviewHistory = useCallback(() => {
+    setCurrentScreen('reviewHistory');
+    if (setWasDetailScreen) {
+      setWasDetailScreen(true);
+    }
+  }, [setWasDetailScreen]);
+
+  const handleGoToSettings = useCallback(() => {
+    setCurrentScreen('settings');
+    if (setWasDetailScreen) {
+      setWasDetailScreen(true);
+    }
+  }, [setWasDetailScreen]);
+
+  const handleGoToNotifications = useCallback(() => {
+    setCurrentScreen('notifications');
+    if (setWasDetailScreen) {
+      setWasDetailScreen(true);
+    }
+  }, [setWasDetailScreen]);
+
+  // 画面の描画（switch 文で管理）
+  switch (currentScreen) {
+    case 'reviewHistory':
+      return (
         <ScrollView
           ref={reviewHistoryScrollRef}
           onScroll={handleReviewHistoryScroll}
           scrollEventThrottle={16}
           style={styles.screen}
           contentContainerStyle={styles.content}
+          showsVerticalScrollIndicator={false}
         >
           {/* レビュー履歴ヘッダー */}
           <View style={styles.headerContainer}>
-            <Pressable
-              onPress={() => {
-                setShowReviewHistory(false);
-                setShowSettings(false);
-                setShowNotifications(false);
-              }}
-              style={styles.backButton}
-            >
+            <Pressable onPress={handleBackPress} style={styles.backButton}>
               <Text style={styles.backButtonText}>←</Text>
             </Pressable>
             <Text style={styles.headerTitle}>レビュー履歴</Text>
@@ -216,24 +189,21 @@ export default function MyPageScreen({
             </View>
           )}
         </ScrollView>
-      ) : showNotifications ? (
+      );
+
+    case 'notifications':
+      return (
         <ScrollView
           ref={notificationsScrollRef}
           onScroll={handleNotificationsScroll}
           scrollEventThrottle={16}
           style={styles.screen}
           contentContainerStyle={styles.content}
+          showsVerticalScrollIndicator={false}
         >
           {/* お知らせヘッダー */}
           <View style={styles.headerContainer}>
-            <Pressable
-              onPress={() => {
-                setShowReviewHistory(false);
-                setShowSettings(false);
-                setShowNotifications(false);
-              }}
-              style={styles.backButton}
-            >
+            <Pressable onPress={handleBackPress} style={styles.backButton}>
               <Text style={styles.backButtonText}>←</Text>
             </Pressable>
             <Text style={styles.headerTitle}>お知らせ</Text>
@@ -244,24 +214,21 @@ export default function MyPageScreen({
             <Text style={styles.emptyText}>お知らせはありません</Text>
           </View>
         </ScrollView>
-      ) : showSettings ? (
+      );
+
+    case 'settings':
+      return (
         <ScrollView
           ref={settingsScrollRef}
           onScroll={handleSettingsScroll}
           scrollEventThrottle={16}
           style={styles.screen}
           contentContainerStyle={styles.content}
+          showsVerticalScrollIndicator={false}
         >
           {/* 設定ヘッダー */}
           <View style={styles.headerContainer}>
-            <Pressable
-              onPress={() => {
-                setShowReviewHistory(false);
-                setShowSettings(false);
-                setShowNotifications(false);
-              }}
-              style={styles.backButton}
-            >
+            <Pressable onPress={handleBackPress} style={styles.backButton}>
               <Text style={styles.backButtonText}>←</Text>
             </Pressable>
             <Text style={styles.headerTitle}>設定</Text>
@@ -272,13 +239,18 @@ export default function MyPageScreen({
             <Text style={styles.emptyText}>設定オプションはまもなく追加されます</Text>
           </View>
         </ScrollView>
-      ) : (
+      );
+
+    case 'main':
+    default:
+      return (
         <ScrollView
-          ref={scrollRef}
+          ref={mainScrollRef}
           onScroll={handleScroll}
           scrollEventThrottle={16}
           style={styles.screen}
           contentContainerStyle={styles.content}
+          showsVerticalScrollIndicator={false}
         >
           {/* ユーザー情報カード */}
           <View style={styles.cardShadow}>
@@ -314,7 +286,7 @@ export default function MyPageScreen({
                 <Text style={styles.gridCardLabel}>お気に入り</Text>
               </Pressable>
 
-              <Pressable style={styles.gridCard} onPress={() => setShowReviewHistory(true)}>
+              <Pressable style={styles.gridCard} onPress={handleGoToReviewHistory}>
                 <Text style={styles.gridCardIcon}>📝</Text>
                 <Text style={styles.gridCardLabel}>レビュー履歴</Text>
               </Pressable>
@@ -335,21 +307,20 @@ export default function MyPageScreen({
           <View style={styles.sectionContainer}>
             <Text style={styles.sectionTitle}>―― 設定 ――</Text>
             <View style={styles.gridContainer}>
-              <Pressable style={styles.gridCard} onPress={() => setShowNotifications(true)}>
+              <Pressable style={styles.gridCard} onPress={handleGoToNotifications}>
                 <Text style={styles.gridCardIcon}>🔔</Text>
                 <Text style={styles.gridCardLabel}>お知らせ</Text>
               </Pressable>
 
-              <Pressable style={styles.gridCard} onPress={() => setShowSettings(true)}>
+              <Pressable style={styles.gridCard} onPress={handleGoToSettings}>
                 <Text style={styles.gridCardIcon}>⚙️</Text>
                 <Text style={styles.gridCardLabel}>設定</Text>
               </Pressable>
             </View>
           </View>
         </ScrollView>
-      )}
-    </>
-  );
+      );
+  }
 }
 
 // スタイル定義（見た目の調整）
