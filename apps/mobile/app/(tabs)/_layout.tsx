@@ -1,9 +1,9 @@
-import HeroTitle from '@/assets/icons/hero-title.svg';
+import KuguriTitle from '@/assets/icons/kaguri.svg';
 import { palette } from '@/constants/palette';
 import { Tabs } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
 import React from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
-import { StatusBar } from 'expo-status-bar';
 
 import { HapticTab } from '@/components/HapticTab';
 import { IconSymbol } from '@/components/ui/IconSymbol';
@@ -11,8 +11,8 @@ import { IconSymbol } from '@/components/ui/IconSymbol';
 export default function TabLayout() {
   const headerLogo = (
     <View style={styles.logoWrap}>
-      <HeroTitle
-        width='42%'
+      <KuguriTitle
+        width='32%'
         height='100%'
         preserveAspectRatio='xMidYMid meet'
         accessibilityLabel='Kuguriロゴ'
@@ -92,7 +92,7 @@ const styles = StyleSheet.create({
   logoWrap: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingBottom: 6,
+    paddingBottom: 20,
     paddingTop: 10,
   },
   tabBackground: {

@@ -1,4 +1,4 @@
-import HeroTitle from '@/assets/icons/hero-title.svg';
+import HeroTitle from '@/assets/icons/kaguri.svg';
 import { palette } from '@/constants/palette';
 import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, View } from 'react-native';
