@@ -21,7 +21,7 @@ const BUDGET_LABEL: Record<Shop['budget'], string> = {
 
 const TAB_BAR_SPACING = 129;
 
-const INACTIVE_COLOR = '#f0f0f0';
+const INACTIVE_COLOR = palette.secondarySurface;
 
 // 'registered' を追加
 type SortType = 'default' | 'newest' | 'rating' | 'registered';
@@ -86,8 +86,8 @@ export default function SearchScreen() {
   const handleSearch = () => {
     setCurrentSearchText(userTypedText);
 
-    const tagsText = selectedTags.join('・');
-    const queryToSave = [userTypedText, tagsText].filter(Boolean).join('・');
+    const tagsText = selectedTags.join(' ');
+    const queryToSave = [userTypedText, tagsText].filter(Boolean).join(' ');
 
     if (queryToSave) {
       const trimmedQuery = queryToSave.trim();
@@ -473,12 +473,12 @@ const styles = StyleSheet.create({
     backgroundColor: INACTIVE_COLOR,
   },
   categoryButtonTextActive: {
-    color: palette.surface,
+    color: palette.textOnAccent,
     fontSize: 14,
     fontWeight: '600',
   },
   categoryButtonTextInactive: {
-    color: palette.tertiaryText,
+    color: palette.textOnSecondary,
     fontSize: 14,
   },
   categorySection: {
@@ -741,11 +741,11 @@ const styles = StyleSheet.create({
     backgroundColor: palette.primaryText,
   },
   tagChipSmallTextSelected: {
-    color: palette.surface,
+    color: palette.textOnAccent,
     fontSize: 12,
   },
   tagChipSmallTextUnselected: {
-    color: palette.tertiaryText,
+    color: palette.textOnSecondary,
     fontSize: 12,
   },
   tagChipSmallUnselected: {

@@ -176,12 +176,13 @@ const styles = StyleSheet.create({
     color: palette.surface,
     fontSize: 16,
     fontWeight: '700',
-    marginTop: 8,
+    height: 44,
+    lineHeight: 44,
     textAlign: 'center',
   },
   buttonWrapper: {
     alignItems: 'center',
-    marginTop: 32,
+    marginTop: 24,
   },
   form: {
     gap: 8,
