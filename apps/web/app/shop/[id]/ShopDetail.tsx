@@ -4,8 +4,8 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 
-import { colors } from '@team/theme';
 import type { Shop } from '@team/shop-core';
+import { colors } from '@team/theme';
 
 const FAVORITE_STORAGE_KEY = 'shop-web-favorites';
 

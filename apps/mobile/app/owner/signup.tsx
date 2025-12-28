@@ -153,8 +153,8 @@ export default function OwnerSignupScreen() {
 
 const styles = StyleSheet.create({
   buttonContainer: {
-    backgroundColor: palette.secondarySurface,
-    borderColor: palette.border,
+    backgroundColor: palette.button,
+    borderColor: palette.buttonBorder,
     borderRadius: 999,
     borderWidth: 1,
     elevation: 4,
@@ -173,15 +173,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
   },
   buttonText: {
-    color: palette.textOnSecondary,
+    color: palette.surface,
     fontSize: 16,
     fontWeight: '700',
-    marginTop: 8,
+    height: 44,
+    lineHeight: 44,
     textAlign: 'center',
   },
   buttonWrapper: {
     alignItems: 'center',
-    marginTop: 32,
+    marginTop: 24,
   },
   form: {
     gap: 8,

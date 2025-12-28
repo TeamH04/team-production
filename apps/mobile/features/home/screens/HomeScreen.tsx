@@ -81,7 +81,7 @@ export default function HomeScreen() {
       return (
         <View style={styles.cardShadow}>
           <Pressable
-            accessibilityLabel='次に通いたくなるお店を見つけよう'
+            accessibilityLabel={`${item.name}の詳細を開く`}
             onPress={() => router.push({ pathname: '/shop/[id]', params: { id: item.id } })}
             style={styles.cardContainer}
           >

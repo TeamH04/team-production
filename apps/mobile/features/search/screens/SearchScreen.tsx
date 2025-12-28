@@ -11,7 +11,6 @@ import {
   Text,
   TextInput,
   View,
-  type ViewStyle,
 } from 'react-native';
 
 const BUDGET_LABEL: Record<Shop['budget'], string> = {
@@ -235,8 +234,8 @@ export default function SearchScreen() {
 
   return (
     <ScrollView
-      style={styles.container as ViewStyle}
-      contentContainerStyle={styles.contentContainer as ViewStyle}
+      style={styles.container}
+      contentContainerStyle={styles.contentContainer}
       showsVerticalScrollIndicator={false}
     >
       {/* タイトル */}
@@ -249,7 +248,7 @@ export default function SearchScreen() {
           <View style={[styles.searchWrapper, styles.shadowLight]}>
             <TextInput
               style={styles.searchInput}
-              placeholder='店名・雰囲気・タグで検索'
+              placeholder='お店名・雰囲気'
               placeholderTextColor={palette.secondaryText}
               value={userTypedText}
               onChangeText={setUserTypedText}

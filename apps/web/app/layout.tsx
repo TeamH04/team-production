@@ -1,8 +1,8 @@
-import React from 'react';
+import { colors, textOn, withAlpha } from '@team/theme';
 import type { Metadata } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
+import React from 'react';
 import './globals.css';
-import { colors, textOn, withAlpha } from '@team/theme';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -37,14 +37,6 @@ export default function RootLayout({
   } as React.CSSProperties;
 
   const colorStyles = `
-    :root {
-      --background: ${colors.background};
-      --foreground: ${colors.accent};
-      --text-on-primary: ${textOn.primary};
-      --text-on-secondary: ${textOn.secondary};
-      --text-on-accent: ${textOn.accent};
-    }
-
     .bg-slate-50 { background-color: ${colors.background} !important; }
     .bg-slate-50\\/80 { background-color: ${withAlpha(colors.background, 0.8)} !important; }
     .bg-slate-100, .bg-slate-200 { background-color: ${colors.secondary} !important; }
@@ -77,18 +69,23 @@ export default function RootLayout({
     .text-slate-900, .text-slate-800, .text-sky-900, .text-sky-800, .text-rose-700, .text-emerald-600 { color: ${colors.accent} !important; }
     .text-slate-700, .text-slate-600, .text-slate-500, .text-slate-400, .text-sky-700 { color: ${withAlpha(colors.accent, 0.75)} !important; }
     .text-sky-100, .text-white { color: ${colors.background} !important; }
-    .text-amber-700 { color: ${colors.accent} !important; }
-    .text-primary-on { color: var(--text-on-primary) !important; }
-    .text-secondary-on { color: var(--text-on-secondary) !important; }
-    .text-accent-on { color: var(--text-on-accent) !important; }
+    .via-transparent { --tw-gradient-stops: var(--tw-gradient-from), transparent, var(--tw-gradient-to, transparent); }
+    .via-white { --tw-gradient-stops: var(--tw-gradient-from), ${colors.secondary}, var(--tw-gradient-to, transparent); }
+    .from-slate-100 { --tw-gradient-from: ${colors.secondary}; }
+    .to-slate-50 { --tw-gradient-to: ${colors.background}; }
+
+    .text-slate-900, .text-slate-800, .text-sky-900, .text-sky-800, .text-rose-700, .text-emerald-600 { color: ${colors.accent}; }
+    .text-slate-700, .text-slate-600, .text-slate-500, .text-slate-400, .text-sky-700 { color: ${withAlpha(colors.accent, 0.75)}; }
+    .text-sky-100, .text-white { color: ${colors.background}; }
+    .text-amber-700 { color: ${colors.accent}; }
+    .text-primary-on { color: var(--text-on-primary); }
+    .text-secondary-on { color: var(--text-on-secondary); }
+    .text-accent-on { color: var(--text-on-accent); }
   `;
 
   return (
     <html lang='en' style={themeStyle}>
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-        style={{ backgroundColor: colors.background, color: colors.accent }}
-      >
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <style dangerouslySetInnerHTML={{ __html: colorStyles }} />
         {children}
       </body>

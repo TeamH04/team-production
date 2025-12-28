@@ -4,69 +4,69 @@ const { primary, secondary, background } = colors;
 const textOnBackground = textOn.background;
 
 export const palette = {
-  // Base surfaces & text
+  // 基本のサーフェスとテキスト
   background,
-  surface: '#FFFFFF', // Fix: Changed from secondary (green) to White for better readability
+  surface: background, // 可読性と一貫性のためにテーマの背景を使用
   primaryText: textOnBackground,
   secondaryText: withAlpha(textOnBackground, 0.7),
   tertiaryText: withAlpha(textOnBackground, 0.5),
   chipTextInactive: withAlpha(textOnBackground, 0.5),
   mutedText: withAlpha(textOnBackground, 0.5),
 
-  // Borders & dividers
+  // ボーダーと区切り線
   border: withAlpha(primary, 0.15),
   divider: withAlpha(primary, 0.1),
   outline: withAlpha(primary, 0.2),
 
-  // Accents & actions
-  accent: secondary, // Using Secondary (Green) as UI accent
+  // アクセントとアクション
+  accent: secondary, // UIのアクセントとしてセカンダリ（グリーン）を使用
   action: primary,
   link: primary,
   button: primary,
   buttonBorder: primary,
 
-  // Danger & alerts
+  // 警告とアラート
   dangerBg: '#FEE2E2',
   dangerBorder: '#FECACA',
   dangerText: '#EF4444',
   error: '#EF4444',
 
-  // Status / semantic
+  // ステータス / セマンティック
   highlight: withAlpha(secondary, 0.15),
-  ratingText: '#F59E0B', // Standard Gold for stars
+  ratingText: '#F59E0B', // スター評価用の標準ゴールド
 
-  // Brand / providers
+  // ブランド / プロバイダ
   google: '#DB4437',
   apple: '#000000',
 
-  // Shadows
+  // 影
   shadow: '#000000',
   shadowColor: '#000000',
 
-  // Surfaces
+  // サーフェス
   tagSurface: withAlpha(secondary, 0.1),
   tagText: secondary,
 
-  // Avatars
+  // アバター
   avatarBackground: withAlpha(primary, 0.1),
   avatarText: primary,
 
-  // Action buttons
+  // アクションボタン
   primary: primary,
   primaryOnAccent: textOn.primary,
-  secondarySurface: withAlpha(secondary, 0.1), // Light green tint for secondary buttons
+  secondarySurface: withAlpha(secondary, 0.1), // セカンダリボタン用の淡いグリーン
   textOnPrimary: textOn.primary,
-  textOnSecondary: secondary, // Text on secondary buttons should be green
+  textOnSecondary: secondary, // セカンダリボタン上のテキストはグリーン
   textOnAccent: textOn.primary,
 
-  // Stars / ratings
+  // スター / レーティング
   starInactive: withAlpha(textOnBackground, 0.2),
   starHighlight: '#F59E0B',
 
-  // Favorites
+  // お気に入り
   favoriteActive: '#EF4444',
 
-  // Misc UI
+  // その他のUI
   arrowButtonBg: withAlpha(textOnBackground, 0.05),
   heroPlaceholder: withAlpha(textOnBackground, 0.1),
   menuBackground: background,

@@ -129,7 +129,7 @@ const styles = StyleSheet.create({
 
   // プライマリボタン（保存）
   primaryBtn: {
-    backgroundColor: palette.button,
+    backgroundColor: palette.accent,
     borderRadius: 12,
     marginTop: 28,
     paddingVertical: 12,

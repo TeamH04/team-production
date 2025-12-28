@@ -1,4 +1,4 @@
-import HeroTitle from '@/assets/icons/kaguri.svg';
+import KuguriTitle from '@/assets/icons/kaguri.svg';
 import { palette } from '@/constants/palette';
 import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, View } from 'react-native';
@@ -7,13 +7,12 @@ export function AppHeader() {
   return (
     <View style={styles.container}>
       <StatusBar style='light' backgroundColor={palette.accent} />
-      <HeroTitle
+      <KuguriTitle
         width='64%'
         height='100%'
         preserveAspectRatio='xMidYMid meet'
         accessibilityLabel='Kuguriロゴ'
-        // 色を白いロゴにする
-        fill={palette.primaryOnAccent}
+        fill={palette.textOnAccent}
       />
     </View>
   );
