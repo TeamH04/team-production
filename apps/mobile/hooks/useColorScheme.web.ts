@@ -8,7 +8,9 @@ export function useColorScheme() {
   const [hasHydrated, setHasHydrated] = useState(false);
 
   useEffect(() => {
-    setHasHydrated(true);
+    queueMicrotask(() => {
+      setHasHydrated(true);
+    });
   }, []);
 
   const colorScheme = useRNColorScheme();

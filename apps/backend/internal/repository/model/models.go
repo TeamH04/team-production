@@ -16,6 +16,7 @@ type Store struct {
 	Description     *string        `gorm:"column:description"`
 	LandscapePhotos pq.StringArray `gorm:"type:text[];column:landscape_photos"`
 	Address         string         `gorm:"column:address"`
+	PlaceID         string         `gorm:"column:place_id"`
 	OpeningHours    *string        `gorm:"column:opening_hours"`
 	Latitude        float64        `gorm:"column:latitude"`
 	Longitude       float64        `gorm:"column:longitude"`
@@ -100,6 +101,7 @@ func StoreModelFromDomain(store *domain.Store) *Store {
 		Description:     store.Description,
 		LandscapePhotos: pq.StringArray(store.LandscapePhotos),
 		Address:         store.Address,
+		PlaceID:         store.PlaceID,
 		OpeningHours:    store.OpeningHours,
 		Latitude:        store.Latitude,
 		Longitude:       store.Longitude,
@@ -119,6 +121,7 @@ func StoreModelToDomain(m Store) domain.Store {
 		Description:     m.Description,
 		LandscapePhotos: append([]string(nil), []string(m.LandscapePhotos)...),
 		Address:         m.Address,
+		PlaceID:         m.PlaceID,
 		OpeningHours:    m.OpeningHours,
 		Latitude:        m.Latitude,
 		Longitude:       m.Longitude,

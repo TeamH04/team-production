@@ -14,7 +14,8 @@ import {
 } from 'react-native';
 
 const TAB_BAR_SPACING = 129;
-const INACTIVE_COLOR = '#f0f0f0';
+
+const INACTIVE_COLOR = palette.secondarySurface;
 
 type SortType = 'default' | 'newest' | 'rating' | 'registered';
 type SortOrder = 'asc' | 'desc';
@@ -401,12 +402,12 @@ const styles = StyleSheet.create({
     backgroundColor: INACTIVE_COLOR,
   },
   categoryButtonTextActive: {
-    color: palette.surface,
+    color: palette.textOnAccent,
     fontSize: 14,
     fontWeight: '600',
   },
   categoryButtonTextInactive: {
-    color: palette.tertiaryText,
+    color: palette.textOnSecondary,
     fontSize: 14,
   },
   categorySection: {

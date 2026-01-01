@@ -6,6 +6,7 @@ import {
   Alert,
   Dimensions,
   FlatList,
+  Linking,
   Pressable,
   ScrollView,
   Share,
@@ -14,26 +15,10 @@ import {
   View,
 } from 'react-native';
 
+import { palette } from '@/constants/palette';
 import { useFavorites } from '@/features/favorites/FavoritesContext';
 import { useReviews } from '@/features/reviews/ReviewsContext';
 import { SHOPS, type Shop } from '@team/shop-core';
-
-const palette = {
-  accent: '#0EA5E9',
-  arrowButtonBg: 'rgba(255, 255, 255, 0.9)',
-  background: '#F9FAFB',
-  border: '#E5E7EB',
-  favoriteActive: '#DC2626',
-  heroPlaceholder: '#E5E7EB',
-  muted: '#6B7280',
-  primary: '#111827',
-  primaryOnAccent: '#FFFFFF',
-  secondarySurface: '#F3F4F6',
-  shadow: '#0f172a',
-  surface: '#FFFFFF',
-  tagSurface: '#F3F4F6',
-  tagText: '#4B5563',
-} as const;
 
 const BUDGET_LABEL: Record<Shop['budget'], string> = {
   $: '¥',
@@ -72,6 +57,13 @@ export default function ShopDetailScreen() {
   const reviews = id ? getReviews(id) : [];
   const imageUrls = shop?.imageUrls;
   const flatListRef = useRef<FlatList>(null);
+  const mapOpenUrl = useMemo(
+    () =>
+      shop?.placeId
+        ? `https://www.google.com/maps/search/?api=1&query=Google&query_place_id=${shop.placeId}`
+        : null,
+    [shop?.placeId]
+  );
 
   const scrollToImage = (index: number) => {
     flatListRef.current?.scrollToIndex({ index, animated: true });
@@ -229,6 +221,19 @@ export default function ShopDetailScreen() {
           ))}
         </View>
 
+        {mapOpenUrl ? (
+          <View style={[styles.card, styles.cardShadow, styles.mapCard]}>
+            <Text style={styles.sectionTitle}>場所</Text>
+            <Pressable
+              style={styles.mapButton}
+              onPress={() => mapOpenUrl && Linking.openURL(mapOpenUrl)}
+              accessibilityLabel={`${shop.name} の場所をマップで開く`}
+            >
+              <Text style={styles.mapButtonText}>マップで開く</Text>
+            </Pressable>
+          </View>
+        ) : null}
+
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>レビュー</Text>
           <Text style={styles.sectionSub}>みんなの感想や体験談</Text>
@@ -292,7 +297,7 @@ const styles = StyleSheet.create({
     right: 12,
   },
   arrowText: {
-    color: palette.primary,
+    color: palette.textOnSecondary,
     fontSize: 32,
     fontWeight: '600',
     lineHeight: 32,
@@ -335,6 +340,19 @@ const styles = StyleSheet.create({
   },
   hero: { backgroundColor: palette.heroPlaceholder, height: 220, width: SCREEN_WIDTH },
   heroContainer: { marginBottom: 0, position: 'relative' },
+  mapButton: {
+    alignItems: 'center',
+    backgroundColor: palette.secondarySurface,
+    borderColor: palette.border,
+    borderRadius: 12,
+    borderWidth: 1,
+    paddingVertical: 14,
+  },
+  mapButtonText: { color: palette.primary, fontWeight: '700' },
+  mapCard: {
+    marginTop: 12,
+    padding: 12,
+  },
   meta: { color: palette.muted, marginTop: 6 },
   muted: { color: palette.muted },
   paginationContainer: {
@@ -374,7 +392,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 10,
   },
-  secondaryBtnText: { color: palette.primary, fontWeight: '700' },
+  secondaryBtnText: { color: palette.textOnSecondary, fontWeight: '700' },
   sectionHeader: { marginBottom: 8, marginTop: 16 },
   sectionSub: { color: palette.muted, marginTop: 2 },
   sectionTitle: { color: palette.primary, fontSize: 18, fontWeight: '700' },

@@ -24,6 +24,7 @@ type CreateStoreCommand struct {
 	LandscapePhotos []string
 	Latitude        float64
 	Longitude       float64
+	PlaceID         string
 }
 
 func (c CreateStoreCommand) toInput() input.CreateStoreInput {
@@ -37,6 +38,7 @@ func (c CreateStoreCommand) toInput() input.CreateStoreInput {
 		LandscapePhotos: append([]string(nil), c.LandscapePhotos...),
 		Latitude:        c.Latitude,
 		Longitude:       c.Longitude,
+		PlaceID:         c.PlaceID,
 	}
 }
 
@@ -50,6 +52,7 @@ type UpdateStoreCommand struct {
 	LandscapePhotos []string
 	Latitude        *float64
 	Longitude       *float64
+	PlaceID         *string
 }
 
 func (c UpdateStoreCommand) toInput() input.UpdateStoreInput {
@@ -63,6 +66,7 @@ func (c UpdateStoreCommand) toInput() input.UpdateStoreInput {
 		LandscapePhotos: append([]string(nil), c.LandscapePhotos...),
 		Latitude:        c.Latitude,
 		Longitude:       c.Longitude,
+		PlaceID:         c.PlaceID,
 	}
 }
 

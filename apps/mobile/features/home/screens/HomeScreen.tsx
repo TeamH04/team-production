@@ -1,13 +1,11 @@
+import { palette } from '@/constants/palette';
+import { SHOPS, type Shop } from '@team/shop-core';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { FlatList } from 'react-native';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, { useAnimatedRef } from 'react-native-reanimated';
-
-import HeroTitle from '@/assets/icons/hero-title.svg';
-import { palette } from '@/constants/palette';
-import { SHOPS, type Shop } from '@team/shop-core';
 
 const PAGE_SIZE = 10;
 // Categories removed from Home screen; use Search screen for category/tag browsing
@@ -20,9 +18,6 @@ const BUDGET_LABEL: Record<Shop['budget'], string> = {
 
 const KEY_EXTRACTOR = (item: Shop) => item.id;
 
-// Hero title SVG viewBox dimensions (from hero-title.svg viewBox="160 330 780 270")
-const HERO_TITLE_VIEWBOX_WIDTH = 780;
-const HERO_TITLE_VIEWBOX_HEIGHT = 270;
 const TAB_BAR_SPACING = 107;
 
 export default function HomeScreen() {
@@ -40,10 +35,13 @@ export default function HomeScreen() {
       clearTimeout(loadMoreTimeout.current);
       loadMoreTimeout.current = null;
     }
-    setIsLoadingMore(false);
-    setVisibleCount(
-      filteredShops.length === 0 ? PAGE_SIZE : Math.min(PAGE_SIZE, filteredShops.length)
-    );
+    const newVisibleCount =
+      filteredShops.length === 0 ? PAGE_SIZE : Math.min(PAGE_SIZE, filteredShops.length);
+
+    queueMicrotask(() => {
+      setIsLoadingMore(false);
+      setVisibleCount(newVisibleCount);
+    });
   }, [filteredShops.length]);
 
   useEffect(() => {
@@ -78,14 +76,12 @@ export default function HomeScreen() {
     }, 350);
   }, [filteredShops.length, hasMoreResults, isLoadingMore]);
 
-  // handleCategoryPress removed; categories shown on Search screen
-
   const renderShop = useCallback(
     ({ item }: { item: Shop }) => {
       return (
         <View style={styles.cardShadow}>
           <Pressable
-            accessibilityLabel={`${item.name} の詳細へ`}
+            accessibilityLabel={`${item.name}の詳細を開く`}
             onPress={() => router.push({ pathname: '/shop/[id]', params: { id: item.id } })}
             style={styles.cardContainer}
           >
@@ -114,27 +110,7 @@ export default function HomeScreen() {
     [router]
   );
 
-  const renderListHeader = useMemo(
-    () => (
-      <View style={styles.headerContainer}>
-        <View style={styles.headerTextBlock}>
-          <View style={styles.heroTitleWrap}>
-            <HeroTitle
-              width='100%'
-              height='100%'
-              preserveAspectRatio='xMinYMin meet'
-              accessibilityLabel='次に通いたくなるお店を見つけよう'
-            />
-          </View>
-          <Text style={styles.screenSubtitle}>
-            あなたの行きつけになりそうなお店を見つけましょう。
-          </Text>
-        </View>
-        {/* Categories removed from Home screen; use Search screen */}
-      </View>
-    ),
-    []
-  );
+  const renderListHeader = useMemo(() => <View style={styles.headerContainer}></View>, []);
 
   const renderEmptyState = useMemo(
     () => (
@@ -161,7 +137,7 @@ export default function HomeScreen() {
         ListFooterComponent={
           isLoadingMore ? (
             <View style={styles.footerLoader}>
-              <ActivityIndicator color='#0EA5E9' />
+              <ActivityIndicator color={palette.accent} />
             </View>
           ) : null
         }
@@ -242,16 +218,6 @@ const styles = StyleSheet.create({
   headerContainer: {
     marginBottom: 24,
   },
-  headerTextBlock: {
-    marginBottom: 16,
-  },
-  heroTitleWrap: {
-    alignSelf: 'center',
-    aspectRatio: HERO_TITLE_VIEWBOX_WIDTH / HERO_TITLE_VIEWBOX_HEIGHT,
-    marginBottom: 6,
-    marginTop: 12,
-    width: '70%',
-  },
   metaRow: {
     alignItems: 'center',
     flexDirection: 'row',
@@ -281,10 +247,5 @@ const styles = StyleSheet.create({
   screen: {
     backgroundColor: palette.background,
     flex: 1,
-  },
-  screenSubtitle: {
-    color: palette.secondaryText,
-    fontSize: 16,
-    marginTop: 6,
   },
 });

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 
 import type { Shop } from '@team/shop-core';
+import { colors } from '@team/theme';
 
 const FAVORITE_STORAGE_KEY = 'shop-web-favorites';
 
@@ -24,8 +25,8 @@ function HeartIcon({ filled }: { filled: boolean }) {
       width='18'
       height='18'
       viewBox='0 0 24 24'
-      fill={filled ? '#dc2626' : 'none'}
-      stroke={filled ? '#dc2626' : '#475569'}
+      fill={filled ? colors.primary : 'none'}
+      stroke={filled ? colors.primary : colors.accent}
       strokeWidth='2'
       strokeLinecap='round'
       strokeLinejoin='round'
@@ -45,6 +46,11 @@ export default function ShopDetail({ shop }: ShopDetailProps) {
   const images = useMemo(
     () => (shop.imageUrls?.length ? shop.imageUrls : [shop.imageUrl]),
     [shop.imageUrl, shop.imageUrls]
+  );
+
+  const mapOpenUrl = useMemo(
+    () => `https://www.google.com/maps/search/?api=1&query=Google&query_place_id=${shop.placeId}`,
+    [shop.placeId]
   );
 
   useEffect(() => {
@@ -262,6 +268,19 @@ export default function ShopDetail({ shop }: ShopDetailProps) {
             <dd className='text-base font-semibold text-slate-900'>{BUDGET_LABEL[shop.budget]}</dd>
           </div>
         </dl>
+
+        <div className='space-y-2 rounded-2xl bg-slate-50 p-4 ring-1 ring-slate-100'>
+          <p className='text-sm font-semibold text-slate-900'>場所</p>
+          <p className='text-xs text-slate-600'>Google Maps で位置を確認できます。</p>
+          <a
+            href={mapOpenUrl}
+            target='_blank'
+            rel='noreferrer'
+            className='block w-full rounded-2xl bg-slate-900 px-4 py-3 text-center text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-slate-800'
+          >
+            マップで開く
+          </a>
+        </div>
 
         <div className='space-y-2 rounded-2xl bg-slate-50 p-4 ring-1 ring-slate-100'>
           <div className='flex items-center justify-between'>

@@ -53,10 +53,14 @@ func (uc *storeUseCase) CreateStore(ctx context.Context, in input.CreateStoreInp
 	if in.Latitude == 0.0 || in.Longitude == 0.0 {
 		return nil, ErrInvalidCoordinates
 	}
+	if in.PlaceID == "" {
+		return nil, ErrInvalidInput
+	}
 
 	store := &domain.Store{
 		Name:            in.Name,
 		Address:         in.Address,
+		PlaceID:         in.PlaceID,
 		ThumbnailURL:    in.ThumbnailURL,
 		OpenedAt:        in.OpenedAt,
 		Description:     in.Description,
@@ -111,6 +115,12 @@ func (uc *storeUseCase) UpdateStore(ctx context.Context, id int64, in input.Upda
 	}
 	if in.Longitude != nil {
 		store.Longitude = *in.Longitude
+	}
+	if in.PlaceID != nil {
+		if *in.PlaceID == "" {
+			return nil, ErrInvalidInput
+		}
+		store.PlaceID = *in.PlaceID
 	}
 	store.UpdatedAt = time.Now()
 
