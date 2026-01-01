@@ -2,6 +2,8 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { Alert, Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
+import Ionicons from '@expo/vector-icons/Ionicons';
+
 import { palette } from '@/constants/palette';
 import { TAB_BAR_SPACING } from '@/constants/TabBarSpacing';
 import { useReviews } from '@/features/reviews/ReviewsContext';
@@ -261,42 +263,82 @@ export default function MyPageScreen({
           </View>
 
           {/* あなたの記録セクション */}
-          <View style={styles.sectionContainer}>
-            <Text style={styles.sectionTitle}>―― あなたの記録 ――</Text>
+          <View style={styles.sectionCard}>
+            <View style={styles.sectionHeaderRow}>
+              <View style={styles.sectionIconBadge}>
+                <Ionicons
+                  name='sparkles'
+                  size={18}
+                  color={palette.accent}
+                  style={styles.sectionIcon}
+                />
+              </View>
+              <View style={styles.sectionTextContainer}>
+                <Text style={styles.sectionTitle}>あなたの記録</Text>
+                <Text style={styles.sectionSub}>お気に入りやレビューをまとめてチェック</Text>
+              </View>
+            </View>
+
             <View style={styles.gridContainer}>
               <Pressable style={styles.gridCard} onPress={() => router.push('/(tabs)/favorites')}>
-                <Text style={styles.gridCardIcon}>❤️</Text>
+                <View style={styles.gridIconBadge}>
+                  <Ionicons name='heart' size={24} color={palette.primary} />
+                </View>
                 <Text style={styles.gridCardLabel}>お気に入り</Text>
               </Pressable>
 
               <Pressable style={styles.gridCard} onPress={handleGoToReviewHistory}>
-                <Text style={styles.gridCardIcon}>📝</Text>
+                <View style={styles.gridIconBadge}>
+                  <Ionicons name='document-text' size={24} color={palette.primary} />
+                </View>
                 <Text style={styles.gridCardLabel}>レビュー履歴</Text>
               </Pressable>
 
               <Pressable style={styles.gridCard}>
-                <Text style={styles.gridCardIcon}>👍</Text>
+                <View style={styles.gridIconBadge}>
+                  <Ionicons name='thumbs-up' size={24} color={palette.primary} />
+                </View>
                 <Text style={styles.gridCardLabel}>いいねしたレビュー</Text>
               </Pressable>
 
               <Pressable style={styles.gridCard}>
-                <Text style={styles.gridCardIcon}>✓</Text>
+                <View style={styles.gridIconBadge}>
+                  <Ionicons name='checkmark-done' size={24} color={palette.primary} />
+                </View>
                 <Text style={styles.gridCardLabel}>好みチェック</Text>
               </Pressable>
             </View>
           </View>
 
           {/* 設定セクション */}
-          <View style={styles.sectionContainer}>
-            <Text style={styles.sectionTitle}>―― 設定 ――</Text>
+          <View style={styles.sectionCard}>
+            <View style={styles.sectionHeaderRow}>
+              <View style={styles.sectionIconBadge}>
+                <Ionicons
+                  name='options'
+                  size={18}
+                  color={palette.accent}
+                  style={styles.sectionIcon}
+                />
+              </View>
+              <View style={styles.sectionTextContainer}>
+                <Text style={styles.sectionTitle}>設定</Text>
+                <Text style={styles.sectionSub}>通知やアカウントの管理はこちらから</Text>
+              </View>
+            </View>
+
             <View style={styles.gridContainer}>
               <Pressable style={styles.gridCard} onPress={handleGoToNotifications}>
-                <Text style={styles.gridCardIcon}>🔔</Text>
+                <View style={styles.gridIconBadge}>
+                  <Ionicons name='notifications' size={24} color={palette.primary} />
+                </View>
                 <Text style={styles.gridCardLabel}>お知らせ</Text>
               </Pressable>
 
               <Pressable style={styles.gridCard} onPress={handleGoToSettings}>
-                <Text style={styles.gridCardIcon}>⚙️</Text>
+                <View style={styles.gridIconBadge}>
+                  <Ionicons name='settings' size={24} color={palette.primary} />
+                </View>
                 <Text style={styles.gridCardLabel}>設定</Text>
               </Pressable>
             </View>
@@ -366,10 +408,6 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     width: '48%',
   },
-  gridCardIcon: {
-    fontSize: 32,
-    marginBottom: 8,
-  },
   gridCardLabel: {
     color: palette.primary,
     fontSize: 13,
@@ -381,6 +419,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
+  },
+  gridIconBadge: {
+    alignItems: 'center',
+    backgroundColor: palette.secondarySurface,
+    borderRadius: 12,
+    height: 44,
+    justifyContent: 'center',
+    marginBottom: 10,
+    width: 44,
   },
   headerContainer: {
     alignItems: 'center',
@@ -450,8 +497,50 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   screen: { backgroundColor: palette.background, flex: 1 },
-
-  sectionTitle: { color: palette.primary, fontSize: 18, fontWeight: '700' },
+  sectionCard: {
+    backgroundColor: palette.surface,
+    borderRadius: 18,
+    elevation: 3,
+    marginBottom: 16,
+    padding: 16,
+    shadowColor: palette.shadow,
+    shadowOffset: { height: 4, width: 0 },
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+  },
+  sectionHeaderRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+    marginBottom: 12,
+  },
+  sectionIcon: { alignSelf: 'center' },
+  sectionIconBadge: {
+    alignItems: 'center',
+    backgroundColor: palette.secondarySurface,
+    borderRadius: 14,
+    height: 40,
+    justifyContent: 'center',
+    marginRight: 12,
+    padding: 8,
+    width: 40,
+  },
+  sectionSub: { color: palette.mutedText, fontSize: 12, marginTop: 2 },
+  sectionTextContainer: { flex: 1 },
+  sectionTitle: { color: palette.primary, fontSize: 16, fontWeight: '700' },
+  shopCategory: {
+    color: palette.mutedText,
+    fontSize: 11,
+    marginTop: 2,
+  },
+  shopInfo: {
+    flex: 1,
+  },
+  shopName: {
+    color: palette.primary,
+    fontSize: 14,
+    fontWeight: '600',
+  },
   spacer: {
     width: 50,
   },
