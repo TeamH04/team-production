@@ -28,7 +28,7 @@ export default function TabLayout() {
         screenOptions={{
           tabBarActiveTintColor: palette.textOnAccent,
           tabBarInactiveTintColor: palette.textOnAccent,
-          headerStyle: { backgroundColor: palette.accent, height: 100 },
+          headerStyle: styles.header,
           headerTitleAlign: 'center',
           headerShadowVisible: false,
           headerTitle: () => headerLogo,
@@ -85,6 +85,10 @@ const styles = StyleSheet.create({
   container: {
     backgroundColor: palette.background,
     flex: 1,
+  },
+  header: {
+    backgroundColor: palette.accent,
+    height: 100,
   },
   headerTitleContainer: {
     width: '100%',
