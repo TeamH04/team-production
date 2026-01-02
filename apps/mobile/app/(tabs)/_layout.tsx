@@ -28,7 +28,7 @@ export default function TabLayout() {
         screenOptions={{
           tabBarActiveTintColor: palette.textOnAccent,
           tabBarInactiveTintColor: palette.textOnAccent,
-          headerStyle: { backgroundColor: palette.accent, height: 120 },
+          headerStyle: { backgroundColor: palette.accent, height: 100 },
           headerTitleAlign: 'center',
           headerShadowVisible: false,
           headerTitle: () => headerLogo,
@@ -92,7 +92,7 @@ const styles = StyleSheet.create({
   logoWrap: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingBottom: 20,
+    paddingBottom: 0,
     paddingTop: 10,
   },
   tabBackground: {
