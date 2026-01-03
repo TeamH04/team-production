@@ -194,7 +194,7 @@ export default function EditProfileScreen() {
 
         {/* 保存ボタン
             - disabled 時は押せない
-            - 押したら updateProfile を呼んで前の画面へ戻る */}
+            - 押したら setUser を呼んで前の画面へ戻る */}
         <Text style={styles.errorText}>{errorStore}</Text>
 
         <Pressable
