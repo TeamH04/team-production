@@ -53,7 +53,7 @@ function RootStack() {
         {user && !isProfileComplete ? (
           // プロフィール未登録時は登録画面のみ表示（強制遷移）
           <Stack.Screen
-            name='auth/register'
+            name='profile/register'
             options={{ headerShown: false, animation: 'slide_from_right' }}
           />
         ) : (
