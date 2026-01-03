@@ -231,7 +231,6 @@ export default function EditProfileScreen() {
             setSaving(true);
             try {
               // 保存処理（ここは同期の setUser だが、将来的に API 呼び出しに置き換え可能）
-              await Promise.resolve();
               setUser({
                 name: name.trim(),
                 email: email.trim(),
