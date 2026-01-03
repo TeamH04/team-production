@@ -56,7 +56,7 @@ export default function LoginScreen() {
       'ログイン完了',
       isOwner ? 'オーナーとしてログインしました。' : '正常にログインしました。'
     );
-  }, [router]);
+  }, []);
 
   const handleOAuth = useCallback(
     async (provider: 'google' | 'apple') => {
