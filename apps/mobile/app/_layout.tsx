@@ -28,14 +28,14 @@ const styles = StyleSheet.create({
 function RootStack() {
   const insets = useSafeAreaInsets();
   const { user, isProfileComplete } = useUser();
+  const segments = useSegments();
 
   useEffect(() => {
-    if (user && !isProfileComplete) {
+    const currentPath = `/${segments.join('/')}`;
+    if (user && !isProfileComplete && currentPath !== '/profile/register') {
       router.replace('/profile/register');
     }
-  }, [user, isProfileComplete]);
-
-  const segments = useSegments();
+  }, [user, isProfileComplete, segments]);
   const first = segments[0] ?? '';
   const isInsideTabs = segments.some(seg => seg === '(tabs)');
   const padTop = !isInsideTabs && first !== 'shop' && first !== 'profile' ? insets.top : 0;
