@@ -24,13 +24,47 @@ import {
 
 import { palette } from '@/constants/palette';
 
+type ItemWithId = { id: string; value: string };
+
+type StepBase = {
+  key: string;
+  title: string;
+  description: string;
+  required: boolean;
+  keyboardType: 'default' | 'number-pad';
+};
+
+type SingleValueStep = StepBase & {
+  value: string;
+  onChange: (text: string) => void;
+  placeholder: string;
+};
+
+type MultiValueStep = StepBase & {
+  value: ItemWithId[];
+  onChange: (items: ItemWithId[]) => void;
+  placeholder: string;
+  isMultiple: true;
+};
+
+type BudgetRangeStep = StepBase & {
+  value: { min: string; max: string };
+  onChange: { min: (text: string) => void; max: (text: string) => void };
+  placeholder: { min: string; max: string };
+  isBudgetRange: true;
+};
+
+type Step = SingleValueStep | MultiValueStep | BudgetRangeStep;
+
 export default function RegisterShopScreen() {
   const router = useRouter();
   const navigation = useNavigation();
   const [storeName, setStoreName] = useState('');
-  const [menuItems, setMenuItems] = useState<string[]>(['']);
+  const [menuItems, setMenuItems] = useState<ItemWithId[]>([
+    { id: `menu-${Date.now()}`, value: '' },
+  ]);
   const [minutesFromStation, setMinutesFromStation] = useState('');
-  const [tagItems, setTagItems] = useState<string[]>(['']);
+  const [tagItems, setTagItems] = useState<ItemWithId[]>([{ id: `tag-${Date.now()}`, value: '' }]);
   const [address, setAddress] = useState('');
   const [minBudget, setMinBudget] = useState('');
   const [maxBudget, setMaxBudget] = useState('');
@@ -85,7 +119,7 @@ export default function RegisterShopScreen() {
   const handleSubmit = useCallback(async () => {
     if (loading) return;
 
-    const hasTag = tagItems.some(tag => tag.trim().length > 0);
+    const hasTag = tagItems.some(tag => tag.value.trim().length > 0);
     if (!storeName.trim() || !hasTag || !address.trim()) {
       Alert.alert('入力不足', '店舗名・タグ・住所は必須です');
       return;
@@ -102,9 +136,27 @@ export default function RegisterShopScreen() {
       return;
     }
 
+    // 空の項目をフィルタリング
+    const filteredMenuItems = menuItems
+      .filter(item => item.value.trim().length > 0)
+      .map(item => item.value);
+    const filteredTagItems = tagItems
+      .filter(tag => tag.value.trim().length > 0)
+      .map(tag => tag.value);
+
     try {
       setLoading(true);
       // TODO: Backend エンドポイントに置き換え予定。現在はモック送信。
+      // 実際のペイロード: { storeName, menuItems: filteredMenuItems, minutesFromStation: parsedMinutes, tags: filteredTagItems, address, minBudget, maxBudget }
+      console.log('Prepared payload:', {
+        storeName,
+        menuItems: filteredMenuItems,
+        minutesFromStation: parsedMinutes,
+        tags: filteredTagItems,
+        address,
+        minBudget,
+        maxBudget,
+      });
       await new Promise(resolve => setTimeout(resolve, 700));
       Alert.alert('送信完了', '店舗登録リクエストを受け付けました');
       router.replace('/owner' as Href);
@@ -114,9 +166,19 @@ export default function RegisterShopScreen() {
     } finally {
       setLoading(false);
     }
-  }, [address, loading, minutesFromStation, router, storeName, tagItems]);
+  }, [
+    address,
+    loading,
+    maxBudget,
+    menuItems,
+    minBudget,
+    minutesFromStation,
+    router,
+    storeName,
+    tagItems,
+  ]);
 
-  const steps = useMemo(
+  const steps = useMemo<Step[]>(
     () => [
       {
         key: 'storeName',
@@ -191,14 +253,18 @@ export default function RegisterShopScreen() {
   const validateCurrent = useCallback(() => {
     if (currentStep.required) {
       if (Array.isArray(currentStep.value)) {
-        const hasValue = currentStep.value.some((v: string) => v.trim().length > 0);
+        const hasValue = (currentStep.value as ItemWithId[]).some(
+          (v: ItemWithId) => v.value.trim().length > 0
+        );
         if (!hasValue) {
           Alert.alert('入力不足', `${currentStep.title} は必須です`);
           return false;
         }
-      } else if (!(currentStep.value as string).trim()) {
-        Alert.alert('入力不足', `${currentStep.title} は必須です`);
-        return false;
+      } else if (currentStep.key !== 'budget' && typeof currentStep.value === 'string') {
+        if (!currentStep.value.trim()) {
+          Alert.alert('入力不足', `${currentStep.title} は必須です`);
+          return false;
+        }
       }
     }
 
@@ -215,6 +281,48 @@ export default function RegisterShopScreen() {
         }
       }
     }
+
+    if (currentStep.key === 'budget') {
+      const budgetValue = currentStep.value as { min: string; max: string };
+      const minVal = budgetValue.min.trim();
+      const maxVal = budgetValue.max.trim();
+
+      // 少なくとも片方が入力されている場合は検証
+      if (minVal || maxVal) {
+        // 最小値の検証
+        if (minVal) {
+          if (!/^\d+$/.test(minVal)) {
+            Alert.alert('入力エラー', '最小値は半角数字のみで入力してください');
+            return false;
+          }
+          if (Number(minVal) <= 0) {
+            Alert.alert('入力エラー', '最小値は1以上で入力してください');
+            return false;
+          }
+        }
+
+        // 最大値の検証
+        if (maxVal) {
+          if (!/^\d+$/.test(maxVal)) {
+            Alert.alert('入力エラー', '最大値は半角数字のみで入力してください');
+            return false;
+          }
+          if (Number(maxVal) <= 0) {
+            Alert.alert('入力エラー', '最大値は1以上で入力してください');
+            return false;
+          }
+        }
+
+        // 最小値と最大値の大小関係の検証
+        if (minVal && maxVal) {
+          if (Number(minVal) > Number(maxVal)) {
+            Alert.alert('入力エラー', '最小値は最大値以下で入力してください');
+            return false;
+          }
+        }
+      }
+    }
+
     return true;
   }, [currentStep]);
 
@@ -263,14 +371,14 @@ export default function RegisterShopScreen() {
 
           {currentStep.key === 'menu' || currentStep.key === 'tags' ? (
             <View style={styles.menuContainer}>
-              {(currentStep.value as string[]).map((item, idx) => (
+              {(currentStep.value as ItemWithId[]).map((item, idx) => (
                 <TextInput
-                  key={idx}
-                  value={item}
+                  key={item.id}
+                  value={item.value}
                   onChangeText={text => {
-                    const newItems = [...(currentStep.value as string[])];
-                    newItems[idx] = text;
-                    (currentStep.onChange as (items: string[]) => void)(newItems);
+                    const newItems = [...(currentStep.value as ItemWithId[])];
+                    newItems[idx] = { ...newItems[idx], value: text };
+                    (currentStep.onChange as (items: ItemWithId[]) => void)(newItems);
                   }}
                   style={styles.input}
                   placeholder={`${currentStep.placeholder}${idx > 0 ? ` ${idx + 1}` : ''}`}
@@ -280,8 +388,12 @@ export default function RegisterShopScreen() {
               ))}
               <Pressable
                 onPress={() => {
-                  const newItems = [...(currentStep.value as string[]), ''];
-                  (currentStep.onChange as (items: string[]) => void)(newItems);
+                  const prefix = currentStep.key === 'menu' ? 'menu' : 'tag';
+                  const newItems = [
+                    ...(currentStep.value as ItemWithId[]),
+                    { id: `${prefix}-${Date.now()}-${Math.random()}`, value: '' },
+                  ];
+                  (currentStep.onChange as (items: ItemWithId[]) => void)(newItems);
                 }}
                 style={styles.addMenuBtn}
               >
