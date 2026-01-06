@@ -63,20 +63,18 @@ export function VisitedProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
-  const isVisited = useCallback((shopId: string) => visited.has(shopId), [visited]);
-
   // ---------------------------------------------
   // Context に渡す値をメモ化して無駄な再レンダリングを防ぐ
   // ---------------------------------------------
   const value = useMemo<VisitedContextValue>(
     () => ({
       visited,
-      isVisited,
+      isVisited: (shopId: string) => visited.has(shopId),
       toggleVisited,
       addVisited,
       removeVisited,
     }),
-    [visited, isVisited, addVisited, removeVisited, toggleVisited]
+    [visited, addVisited, removeVisited, toggleVisited]
   );
 
   // Provider でラップして子コンポーネントが利用できるようにする

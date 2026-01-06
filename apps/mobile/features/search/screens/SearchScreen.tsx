@@ -322,6 +322,7 @@ export default function SearchScreen() {
               return (
                 <Pressable
                   key={option.value}
+                  accessibilityLabel={`訪問済みフィルター: ${option.label}`}
                   onPress={() => setFilterVisited(option.value)}
                   style={[
                     styles.visitedFilterButton,
