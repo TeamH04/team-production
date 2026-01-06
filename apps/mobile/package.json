@@ -12,7 +12,7 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "lint": "expo lint",
-    "test": "node --test --import tsx features/visited/__tests__/VisitedContext.test.tsx"
+    "test": "node --test --import tsx \"features/**/__tests__/**/*.test.tsx\""
   },
   "dependencies": {
     "@expo/metro-runtime": "^6.1.2",
