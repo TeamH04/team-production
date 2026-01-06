@@ -274,7 +274,7 @@ export default function ShopDetailScreen() {
                     <Ionicons
                       name={isLiked ? 'heart' : 'heart-outline'}
                       size={20}
-                      color={isLiked ? palette.favoriteActive : palette.muted}
+                      color={isLiked ? palette.accent : palette.muted}
                     />
                   </Pressable>
                 </View>
