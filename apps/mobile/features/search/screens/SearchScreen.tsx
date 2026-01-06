@@ -103,7 +103,9 @@ export default function SearchScreen() {
     });
 
     setCurrentSearchText(trimmedText);
-    setUserTypedText(''); // 入力欄をクリア
+    if (textToSearch === undefined) {
+      setUserTypedText('');
+    }
   };
 
   const handleSortTypePress = (value: SortType) => {
@@ -218,7 +220,7 @@ export default function SearchScreen() {
               placeholderTextColor={palette.secondaryText}
               value={userTypedText}
               onChangeText={setUserTypedText}
-              onSubmitEditing={() => handleSearch()} // 修正：現在の入力値で検索
+              onSubmitEditing={() => handleSearch()}
               returnKeyType='search'
             />
             <Pressable
