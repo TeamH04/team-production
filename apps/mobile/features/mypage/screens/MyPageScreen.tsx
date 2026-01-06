@@ -103,6 +103,14 @@ export default function MyPageScreen({
     }
   }, [setWasDetailScreen]);
 
+  const handleGoToShopRegister = useCallback(() => {
+    router.push('/owner/register-shop');
+  }, [router]);
+
+  const handleGoToShopEdit = useCallback(() => {
+    Alert.alert('未実装', 'まだ未実装です');
+  }, []);
+
   // 画面の描画（switch 文で管理）
   switch (currentScreen) {
     case 'reviewHistory':
@@ -258,6 +266,40 @@ export default function MyPageScreen({
 
               <Pressable onPress={() => router.push('/profile/edit')} style={styles.primaryBtn}>
                 <Text style={styles.primaryBtnText}>プロフィールを編集</Text>
+              </Pressable>
+            </View>
+          </View>
+
+          {/* 店舗登録・編集 */}
+          <View style={styles.sectionCard}>
+            <View style={styles.sectionHeaderRow}>
+              <View style={styles.sectionIconBadge}>
+                <Ionicons
+                  name='storefront'
+                  size={18}
+                  color={palette.accent}
+                  style={styles.sectionIcon}
+                />
+              </View>
+              <View style={styles.sectionTextContainer}>
+                <Text style={styles.sectionTitle}>店舗登録</Text>
+                <Text style={styles.sectionSub}>オーナー用の店舗登録・編集はこちら</Text>
+              </View>
+            </View>
+
+            <View style={styles.gridContainer}>
+              <Pressable style={styles.gridCard} onPress={handleGoToShopRegister}>
+                <View style={styles.gridIconBadge}>
+                  <Ionicons name='add-circle' size={24} color={palette.primary} />
+                </View>
+                <Text style={styles.gridCardLabel}>登録</Text>
+              </Pressable>
+
+              <Pressable style={styles.gridCard} onPress={handleGoToShopEdit}>
+                <View style={styles.gridIconBadge}>
+                  <Ionicons name='create' size={24} color={palette.primary} />
+                </View>
+                <Text style={styles.gridCardLabel}>編集</Text>
               </Pressable>
             </View>
           </View>
