@@ -1,4 +1,5 @@
 import { palette } from '@/constants/palette';
+import { useVisited } from '@/features/visited/VisitedContext';
 import { CATEGORIES, SHOPS } from '@team/shop-core';
 import { useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
@@ -45,11 +46,13 @@ const getIdNum = (id: string) => {
 
 export default function SearchScreen() {
   const router = useRouter();
+  const { isVisited } = useVisited();
   const [userTypedText, setUserTypedText] = useState('');
   const [currentSearchText, setCurrentSearchText] = useState('');
   const [activeCategories, setActiveCategories] = useState<string[]>([]);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [searchHistory, setSearchHistory] = useState<string[]>([]);
+  const [filterVisited, setFilterVisited] = useState<'all' | 'visited' | 'not_visited'>('all');
 
   const [sortBy, setSortBy] = useState<SortType>('default');
   const [sortOrders, setSortOrders] = useState<Record<SortType, SortOrder>>({
@@ -84,6 +87,7 @@ export default function SearchScreen() {
     setActiveCategories([]);
     setSelectedTags([]);
     setSortBy('default');
+    setFilterVisited('all');
   };
 
   const handleSearch = () => {
@@ -161,7 +165,13 @@ export default function SearchScreen() {
           ? tags.some(tag => shop.tags.some(st => st.toLowerCase().includes(tag)))
           : true;
       const matchesCategory = hasCategories ? activeCategories.includes(shop.category) : true;
-      return matchesText && matchesTags && matchesCategory;
+      const matchesVisited =
+        filterVisited === 'all'
+          ? true
+          : filterVisited === 'visited'
+            ? isVisited(shop.id)
+            : !isVisited(shop.id);
+      return matchesText && matchesTags && matchesCategory && matchesVisited;
     });
 
     return filtered.sort((a, b) => {
@@ -182,7 +192,7 @@ export default function SearchScreen() {
       }
       return currentOrder === 'asc' ? comparison : -comparison;
     });
-  }, [currentSearchText, selectedTags, activeCategories, sortBy, sortOrders, hasSearchCriteria]);
+  }, [currentSearchText, selectedTags, activeCategories, sortBy, sortOrders, hasSearchCriteria, filterVisited, isVisited]);
 
   return (
     <ScrollView
@@ -288,10 +298,70 @@ export default function SearchScreen() {
 
       {hasSearchCriteria && (
         <View style={styles.resultsSection}>
+          <Text style={styles.resultsTitle}>{`検索結果：${searchResults.length}件`}</Text>
+
+          <View style={styles.visitedFilterRow}>
+            <Pressable
+              onPress={() => setFilterVisited('all')}
+              style={[
+                styles.visitedFilterButton,
+                filterVisited === 'all'
+                  ? styles.visitedFilterButtonActive
+                  : styles.visitedFilterButtonInactive,
+              ]}
+            >
+              <Text
+                style={
+                  filterVisited === 'all'
+                    ? styles.visitedFilterButtonTextActive
+                    : styles.visitedFilterButtonTextInactive
+                }
+              >
+                すべて
+              </Text>
+            </Pressable>
+            <Pressable
+              onPress={() => setFilterVisited('visited')}
+              style={[
+                styles.visitedFilterButton,
+                filterVisited === 'visited'
+                  ? styles.visitedFilterButtonActive
+                  : styles.visitedFilterButtonInactive,
+              ]}
+            >
+              <Text
+                style={
+                  filterVisited === 'visited'
+                    ? styles.visitedFilterButtonTextActive
+                    : styles.visitedFilterButtonTextInactive
+                }
+              >
+                訪問済み
+              </Text>
+            </Pressable>
+            <Pressable
+              onPress={() => setFilterVisited('not_visited')}
+              style={[
+                styles.visitedFilterButton,
+                filterVisited === 'not_visited'
+                  ? styles.visitedFilterButtonActive
+                  : styles.visitedFilterButtonInactive,
+              ]}
+            >
+              <Text
+                style={
+                  filterVisited === 'not_visited'
+                    ? styles.visitedFilterButtonTextActive
+                    : styles.visitedFilterButtonTextInactive
+                }
+              >
+                未訪問
+              </Text>
+            </Pressable>
+          </View>
+
           {searchResults.length > 0 ? (
             <View>
-              <Text style={styles.resultsTitle}>{`検索結果：${searchResults.length}件`}</Text>
-
               <View style={styles.sortRow}>
                 <ScrollView
                   horizontal
@@ -712,5 +782,33 @@ const styles = StyleSheet.create({
     height: 18,
     marginRight: 8,
     width: 1,
+  },
+  visitedFilterButton: {
+    borderRadius: 8,
+    borderWidth: 1,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+  },
+  visitedFilterButtonActive: {
+    backgroundColor: palette.primary,
+    borderColor: palette.primary,
+  },
+  visitedFilterButtonInactive: {
+    backgroundColor: palette.background,
+    borderColor: palette.border,
+  },
+  visitedFilterButtonTextActive: {
+    color: COLOR_WHITE,
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  visitedFilterButtonTextInactive: {
+    color: palette.secondaryText,
+    fontSize: 13,
+  },
+  visitedFilterRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 12,
   },
 });

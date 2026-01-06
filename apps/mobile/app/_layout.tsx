@@ -1,6 +1,7 @@
 import { FavoritesProvider } from '@/features/favorites/FavoritesContext';
 import { ReviewsProvider } from '@/features/reviews/ReviewsContext';
 import { UserProvider } from '@/features/user/UserContext';
+import { VisitedProvider } from '@/features/visited/VisitedContext';
 import '@/global.css';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
@@ -72,9 +73,11 @@ export default function RootLayout() {
       <SafeAreaProvider>
         <UserProvider>
           <FavoritesProvider>
-            <ReviewsProvider>
-              <RootStack />
-            </ReviewsProvider>
+            <VisitedProvider>
+              <ReviewsProvider>
+                <RootStack />
+              </ReviewsProvider>
+            </VisitedProvider>
           </FavoritesProvider>
         </UserProvider>
       </SafeAreaProvider>

@@ -18,6 +18,7 @@ import {
 import { palette } from '@/constants/palette';
 import { useFavorites } from '@/features/favorites/FavoritesContext';
 import { useReviews } from '@/features/reviews/ReviewsContext';
+import { useVisited } from '@/features/visited/VisitedContext';
 import { SHOPS, type Shop } from '@team/shop-core';
 
 const BUDGET_LABEL: Record<Shop['budget'], string> = {
@@ -35,6 +36,7 @@ export default function ShopDetailScreen() {
   const navigation = useNavigation();
   const { isFavorite, toggleFavorite } = useFavorites();
   const { getReviews } = useReviews();
+  const { isVisited, toggleVisited } = useVisited();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   const shop = useMemo(() => SHOPS.find(s => s.id === id), [id]);
@@ -54,6 +56,7 @@ export default function ShopDetailScreen() {
   );
 
   const isFav = id ? isFavorite(id) : false;
+  const isVis = id ? isVisited(id) : false;
   const reviews = id ? getReviews(id) : [];
   const imageUrls = shop?.imageUrls;
   const flatListRef = useRef<FlatList>(null);
@@ -183,6 +186,18 @@ export default function ShopDetailScreen() {
               ]}
             >
               <Ionicons name='share-outline' size={22} color={palette.muted} />
+            </Pressable>
+
+            <Pressable
+              accessibilityLabel='訪問済み切り替え'
+              onPress={() => toggleVisited(shop.id)}
+              style={({ pressed }) => [styles.visitedBtn, pressed && styles.btnPressed]}
+            >
+              <Ionicons
+                name={isVis ? 'checkmark-circle' : 'checkmark-circle-outline'}
+                size={24}
+                color={isVis ? palette.visitedActive : palette.muted}
+              />
             </Pressable>
 
             <Pressable
@@ -327,7 +342,7 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     marginTop: 12,
   },
-  favBtn: { marginLeft: 12 },
+  favBtn: { marginLeft: 8 },
   headerActions: {
     alignItems: 'center',
     flexDirection: 'row',
@@ -411,4 +426,5 @@ const styles = StyleSheet.create({
   tagRow: { flexDirection: 'row', flexWrap: 'wrap', marginTop: 12 },
   tagText: { color: palette.tagText, fontSize: 12, fontWeight: '600' },
   title: { color: palette.primary, fontSize: 22, fontWeight: '800' },
+  visitedBtn: { marginLeft: 8 },
 });
