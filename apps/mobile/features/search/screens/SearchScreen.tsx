@@ -192,7 +192,16 @@ export default function SearchScreen() {
       }
       return currentOrder === 'asc' ? comparison : -comparison;
     });
-  }, [currentSearchText, selectedTags, activeCategories, sortBy, sortOrders, hasSearchCriteria, filterVisited, isVisited]);
+  }, [
+    currentSearchText,
+    selectedTags,
+    activeCategories,
+    sortBy,
+    sortOrders,
+    hasSearchCriteria,
+    filterVisited,
+    isVisited,
+  ]);
 
   return (
     <ScrollView
