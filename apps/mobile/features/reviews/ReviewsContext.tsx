@@ -9,6 +9,7 @@ export type Review = {
   createdAt: string; // 作成日時（ISO文字列）
   menuItemId?: string; // メニューID（任意）
   menuItemName?: string; // メニュー名（任意）
+  likedBy?: Set<string>; // いいねしたユーザーIDの集合（オプション）
 };
 
 // 店舗ごとのレビュー一覧（shopIdごとに配列で管理）
