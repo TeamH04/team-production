@@ -17,6 +17,7 @@ export default function TabLayout() {
         preserveAspectRatio='xMidYMid meet'
         accessibilityLabel='Kuguriロゴ'
         fill={palette.textOnAccent}
+        style={{ transform: [{ translateY: -5 }] }}
       />
     </View>
   );
