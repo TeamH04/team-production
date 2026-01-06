@@ -24,12 +24,19 @@ const COLOR_TAG_BG = '#F0F2F5';
 
 type SortType = 'default' | 'newest' | 'rating' | 'registered';
 type SortOrder = 'asc' | 'desc';
+type VisitedFilter = 'all' | 'visited' | 'not_visited';
 
 const SORT_OPTIONS: { label: string; value: SortType }[] = [
   { label: 'おすすめ', value: 'default' },
   { label: '新着順', value: 'newest' },
   { label: '評価順(★)', value: 'rating' },
   { label: '登録順', value: 'registered' },
+];
+
+const VISITED_FILTER_OPTIONS: { label: string; value: VisitedFilter }[] = [
+  { label: 'すべて', value: 'all' },
+  { label: '訪問済み', value: 'visited' },
+  { label: '未訪問', value: 'not_visited' },
 ];
 
 const getIdNum = (id: string) => {
@@ -52,7 +59,7 @@ export default function SearchScreen() {
   const [activeCategories, setActiveCategories] = useState<string[]>([]);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [searchHistory, setSearchHistory] = useState<string[]>([]);
-  const [filterVisited, setFilterVisited] = useState<'all' | 'visited' | 'not_visited'>('all');
+  const [filterVisited, setFilterVisited] = useState<VisitedFilter>('all');
 
   const [sortBy, setSortBy] = useState<SortType>('default');
   const [sortOrders, setSortOrders] = useState<Record<SortType, SortOrder>>({
@@ -310,63 +317,31 @@ export default function SearchScreen() {
           <Text style={styles.resultsTitle}>{`検索結果：${searchResults.length}件`}</Text>
 
           <View style={styles.visitedFilterRow}>
-            <Pressable
-              onPress={() => setFilterVisited('all')}
-              style={[
-                styles.visitedFilterButton,
-                filterVisited === 'all'
-                  ? styles.visitedFilterButtonActive
-                  : styles.visitedFilterButtonInactive,
-              ]}
-            >
-              <Text
-                style={
-                  filterVisited === 'all'
-                    ? styles.visitedFilterButtonTextActive
-                    : styles.visitedFilterButtonTextInactive
-                }
-              >
-                すべて
-              </Text>
-            </Pressable>
-            <Pressable
-              onPress={() => setFilterVisited('visited')}
-              style={[
-                styles.visitedFilterButton,
-                filterVisited === 'visited'
-                  ? styles.visitedFilterButtonActive
-                  : styles.visitedFilterButtonInactive,
-              ]}
-            >
-              <Text
-                style={
-                  filterVisited === 'visited'
-                    ? styles.visitedFilterButtonTextActive
-                    : styles.visitedFilterButtonTextInactive
-                }
-              >
-                訪問済み
-              </Text>
-            </Pressable>
-            <Pressable
-              onPress={() => setFilterVisited('not_visited')}
-              style={[
-                styles.visitedFilterButton,
-                filterVisited === 'not_visited'
-                  ? styles.visitedFilterButtonActive
-                  : styles.visitedFilterButtonInactive,
-              ]}
-            >
-              <Text
-                style={
-                  filterVisited === 'not_visited'
-                    ? styles.visitedFilterButtonTextActive
-                    : styles.visitedFilterButtonTextInactive
-                }
-              >
-                未訪問
-              </Text>
-            </Pressable>
+            {VISITED_FILTER_OPTIONS.map(option => {
+              const isActive = filterVisited === option.value;
+              return (
+                <Pressable
+                  key={option.value}
+                  onPress={() => setFilterVisited(option.value)}
+                  style={[
+                    styles.visitedFilterButton,
+                    isActive
+                      ? styles.visitedFilterButtonActive
+                      : styles.visitedFilterButtonInactive,
+                  ]}
+                >
+                  <Text
+                    style={
+                      isActive
+                        ? styles.visitedFilterButtonTextActive
+                        : styles.visitedFilterButtonTextInactive
+                    }
+                  >
+                    {option.label}
+                  </Text>
+                </Pressable>
+              );
+            })}
           </View>
 
           {searchResults.length > 0 ? (
