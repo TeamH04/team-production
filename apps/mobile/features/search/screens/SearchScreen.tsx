@@ -14,8 +14,12 @@ import {
 } from 'react-native';
 
 const TAB_BAR_SPACING = 129;
-
 const INACTIVE_COLOR = palette.secondarySurface;
+
+// Lint対策: カラーリテラルの定数化
+const COLOR_WHITE = '#FFFFFF';
+const COLOR_ACTIVE_NAVY = '#1A2533';
+const COLOR_TAG_BG = '#F0F2F5';
 
 type SortType = 'default' | 'newest' | 'rating' | 'registered';
 type SortOrder = 'asc' | 'desc';
@@ -65,14 +69,15 @@ export default function SearchScreen() {
       shop.tags.forEach(t => m.get(cat)!.add(t));
     });
     const out: Record<string, string[]> = {};
-    Array.from(m.entries()).forEach(([cat, s]) => (out[cat] = Array.from(s).sort()));
+    Array.from(m.entries()).forEach(([cat, s]) => {
+      out[cat] = Array.from(s).sort();
+    });
     return out;
   }, []);
 
   const hasSearchCriteria =
     currentSearchText.length > 0 || selectedTags.length > 0 || activeCategories.length > 0;
 
-  // ★ ✕ボタン用：すべての状態をクリアして初期画面に戻る関数
   const handleClearAll = () => {
     setUserTypedText('');
     setCurrentSearchText('');
@@ -84,24 +89,6 @@ export default function SearchScreen() {
   const handleSearch = () => {
     setCurrentSearchText(userTypedText);
     setUserTypedText('');
-    const tagsText = selectedTags.join('・');
-    const queryToSave = [userTypedText, tagsText].filter(Boolean).join('・');
-
-    if (queryToSave) {
-      const trimmedQuery = queryToSave.trim();
-      const filtered = searchHistory.filter(h => h !== trimmedQuery);
-      setSearchHistory([trimmedQuery, ...filtered]);
-    }
-
-    setSelectedTags([]);
-    setActiveCategories([]);
-    setSortBy('default');
-    setSortOrders({
-      default: 'desc',
-      newest: 'desc',
-      rating: 'desc',
-      registered: 'desc',
-    });
   };
 
   const handleSortTypePress = (value: SortType) => {
@@ -132,15 +119,21 @@ export default function SearchScreen() {
     });
   };
 
+  const handleTagPress = (tag: string) => {
+    setSelectedTags(prev => (prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]));
+  };
+
   const handleShopPress = (shopId: string) => {
-    router.push({ pathname: '/shop/[id]', params: { id: shopId } });
+    router.push({
+      pathname: '/shop/[id]',
+      params: { id: shopId },
+    });
   };
 
   const getSortOrderLabel = () => {
     const currentOrder = sortOrders[sortBy];
     switch (sortBy) {
       case 'newest':
-        return currentOrder === 'desc' ? '新しい順' : '古い順';
       case 'registered':
         return currentOrder === 'desc' ? '新しい順' : '古い順';
       case 'rating':
@@ -161,16 +154,11 @@ export default function SearchScreen() {
         q.length > 0
           ? shop.name.toLowerCase().includes(q) ||
             shop.description.toLowerCase().includes(q) ||
-            shop.category.toLowerCase().includes(q) ||
-            (shop.menu?.some(item => item.name.toLowerCase().includes(q)) ?? false)
+            shop.category.toLowerCase().includes(q)
           : true;
       const matchesTags =
         tags.length > 0
-          ? tags.some(
-              tag =>
-                shop.tags.some(st => st.toLowerCase().includes(tag)) ||
-                shop.category.toLowerCase().includes(tag)
-            )
+          ? tags.some(tag => shop.tags.some(st => st.toLowerCase().includes(tag)))
           : true;
       const matchesCategory = hasCategories ? activeCategories.includes(shop.category) : true;
       return matchesText && matchesTags && matchesCategory;
@@ -202,12 +190,10 @@ export default function SearchScreen() {
       contentContainerStyle={styles.contentContainer}
       showsVerticalScrollIndicator={false}
     >
-      {/* 1. お店を検索（ヘッダー） */}
       <View style={styles.headerTextBlock}>
         <Text style={styles.screenTitle}>お店を検索</Text>
       </View>
 
-      {/* 2. 検索バー */}
       <View style={styles.searchBarContainer}>
         <View style={styles.searchBarRow}>
           <View style={[styles.searchWrapper, styles.shadowLight]}>
@@ -220,7 +206,6 @@ export default function SearchScreen() {
               onSubmitEditing={() => handleSearch()}
               returnKeyType='search'
             />
-            {/* ✕ボタンの動作を handleClearAll に変更 */}
             <Pressable
               onPress={handleClearAll}
               style={[
@@ -260,16 +245,53 @@ export default function SearchScreen() {
                 </Pressable>
               ))}
             </View>
+
+            {activeCategories.length > 0 && (
+              <View style={styles.subTagSection}>
+                {/* メインとサブの間の線（1回のみ表示） */}
+                <View style={styles.divider} />
+
+                {activeCategories.map(cat => (
+                  <View key={`tags-${cat}`} style={styles.tagGroup}>
+                    <Text style={styles.subSectionLabel}>{`${cat}のタグ`}</Text>
+                    <View style={styles.tagsRow}>
+                      {(TAGS_BY_CATEGORY[cat] || []).map(tag => (
+                        <Pressable
+                          key={tag}
+                          onPress={() => handleTagPress(tag)}
+                          style={[
+                            styles.tagButton,
+                            selectedTags.includes(tag)
+                              ? styles.tagButtonActive
+                              : styles.tagButtonInactive,
+                          ]}
+                        >
+                          <Text
+                            style={
+                              selectedTags.includes(tag)
+                                ? styles.tagButtonTextActive
+                                : styles.tagButtonTextInactive
+                            }
+                          >
+                            {tag}
+                          </Text>
+                        </Pressable>
+                      ))}
+                    </View>
+                  </View>
+                ))}
+              </View>
+            )}
           </View>
         )}
       </View>
 
-      {/* 3. 検索結果 */}
       {hasSearchCriteria && (
         <View style={styles.resultsSection}>
           {searchResults.length > 0 ? (
             <View>
               <Text style={styles.resultsTitle}>{`検索結果：${searchResults.length}件`}</Text>
+
               <View style={styles.sortRow}>
                 <ScrollView
                   horizontal
@@ -309,6 +331,7 @@ export default function SearchScreen() {
                   </View>
                 )}
               </View>
+
               <View style={styles.categorySection}>
                 {searchResults.map(item => (
                   <Pressable
@@ -326,7 +349,7 @@ export default function SearchScreen() {
                       </View>
                       <Text style={styles.shopMeta}>
                         {item.category}
-                        {item.budget ? ` • ${item.budget}` : ''} {/* ← 予算を追加 */}
+                        {item.budget ? ` • ${item.budget}` : ''}
                         {` • 徒歩${item.distanceMinutes}分`}
                       </Text>
                       <Text style={styles.shopDescription} numberOfLines={2}>
@@ -340,20 +363,16 @@ export default function SearchScreen() {
           ) : (
             <View style={styles.emptyState}>
               <Text style={styles.emptyTitle}>条件に合うお店が見つかりませんでした</Text>
-              <View style={styles.emptyImageContainer}>
-                <Image
-                  source={require('../../../assets/images/Kuguri_search-Photoroom.png')}
-                  style={styles.emptyImage}
-                  resizeMode='contain'
-                  onError={() => {}}
-                />
-              </View>
+              <Image
+                source={require('../../../assets/images/Kuguri_search-Photoroom.png')}
+                style={styles.emptyImage}
+                resizeMode='contain'
+              />
             </View>
           )}
         </View>
       )}
 
-      {/* 4. 検索履歴 / まだ検索履歴がありません */}
       {!hasSearchCriteria && (
         <View style={styles.historySection}>
           <Text style={styles.historyTitle}>検索履歴</Text>
@@ -392,17 +411,17 @@ const styles = StyleSheet.create({
   },
   categoryButton: {
     borderRadius: 999,
-    paddingHorizontal: 12,
+    paddingHorizontal: 16,
     paddingVertical: 8,
   },
   categoryButtonActive: {
-    backgroundColor: palette.primaryText,
+    backgroundColor: COLOR_ACTIVE_NAVY,
   },
   categoryButtonInactive: {
     backgroundColor: INACTIVE_COLOR,
   },
   categoryButtonTextActive: {
-    color: palette.textOnAccent,
+    color: COLOR_WHITE,
     fontSize: 14,
     fontWeight: '600',
   },
@@ -433,6 +452,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 24,
   },
+  divider: {
+    backgroundColor: palette.border,
+    height: 1,
+    marginBottom: 8,
+    marginTop: 20,
+    opacity: 0.5,
+  },
   emptyHistoryBox: {
     alignItems: 'center',
     paddingVertical: 60,
@@ -444,10 +470,6 @@ const styles = StyleSheet.create({
   emptyImage: {
     height: 200,
     width: 280,
-  },
-  emptyImageContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   emptyState: {
     alignItems: 'center',
@@ -564,7 +586,10 @@ const styles = StyleSheet.create({
   shadowLight: {
     elevation: 3,
     shadowColor: palette.shadow,
-    shadowOffset: { height: 6, width: 0 },
+    shadowOffset: {
+      height: 6,
+      width: 0,
+    },
     shadowOpacity: 0.05,
     shadowRadius: 10,
   },
@@ -641,10 +666,46 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     marginBottom: 16,
   },
+  subSectionLabel: {
+    color: palette.secondaryText,
+    fontSize: 13,
+    fontWeight: '600',
+    marginBottom: 12,
+  },
+  subTagSection: {
+    marginTop: 0,
+  },
+  tagButton: {
+    borderRadius: 999,
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+  },
+  tagButtonActive: {
+    backgroundColor: COLOR_ACTIVE_NAVY,
+  },
+  tagButtonInactive: {
+    backgroundColor: COLOR_TAG_BG,
+  },
+  tagButtonTextActive: {
+    color: COLOR_WHITE,
+    fontSize: 13,
+  },
+  tagButtonTextInactive: {
+    color: palette.secondaryText,
+    fontSize: 13,
+  },
+  tagGroup: {
+    marginTop: 16,
+  },
   tagGroupsContainer: {
     backgroundColor: palette.surface,
     borderRadius: 12,
     padding: 20,
+  },
+  tagsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
   },
   verticalDivider: {
     backgroundColor: palette.border,
