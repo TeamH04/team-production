@@ -68,6 +68,17 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Ensure Go cache directories exist
+        run: |
+          mkdir -p $HOME/go/pkg/mod
+          mkdir -p $HOME/.cache/go-build
+
+      - name: Debug Go cache paths
+        run: |
+          echo "Ensuring Go cache directories are present"
+          ls -la $HOME/go || true
+          ls -la $HOME/.cache || true
+
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
@@ -109,6 +120,17 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Ensure Go cache directories exist
+        run: |
+          mkdir -p $HOME/go/pkg/mod
+          mkdir -p $HOME/.cache/go-build
+
+      - name: Debug Go cache paths
+        run: |
+          echo "Ensuring Go cache directories are present"
+          ls -la $HOME/go || true
+          ls -la $HOME/.cache || true
 
       - name: Setup Go
         uses: actions/setup-go@v5
@@ -221,6 +243,17 @@ jobs:
         run: |
           pnpm audit --dev --audit-level moderate
 
+      - name: Ensure Go cache directories exist
+        run: |
+          mkdir -p $HOME/go/pkg/mod
+          mkdir -p $HOME/.cache/go-build
+
+      - name: Debug Go cache paths
+        run: |
+          echo "Ensuring Go cache directories are present"
+          ls -la $HOME/go || true
+          ls -la $HOME/.cache || true
+
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
@@ -267,7 +300,7 @@ jobs:
             echo "Building Docker image..."
             # docker build -t team-production-backend apps/backend
             # docker tag team-production-backend ${{ secrets.DOCKER_REGISTRY }}/team-production-backend:${{ github.sha }}
-            # docker push ${{ secrets.DOCKER_REGISTRY }}/team-production-backend:${{ github.sha }}
+            # docker push team-production-backend:${{ github.sha }}
           else
             echo "No Dockerfile found. Skipping Docker build."
           fi
