@@ -1,4 +1,11 @@
-import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react';
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useMemo,
+  useState,
+  type ReactNode,
+} from 'react';
 
 // ---------------------------------------------
 // 型定義
@@ -56,18 +63,20 @@ export function VisitedProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
+  const isVisited = useCallback((shopId: string) => visited.has(shopId), [visited]);
+
   // ---------------------------------------------
   // Context に渡す値をメモ化して無駄な再レンダリングを防ぐ
   // ---------------------------------------------
   const value = useMemo<VisitedContextValue>(
     () => ({
       visited,
-      isVisited: (id: string) => visited.has(id),
+      isVisited,
       toggleVisited,
       addVisited,
       removeVisited,
     }),
-    [visited, addVisited, removeVisited, toggleVisited]
+    [visited, isVisited, addVisited, removeVisited, toggleVisited]
   );
 
   // Provider でラップして子コンポーネントが利用できるようにする

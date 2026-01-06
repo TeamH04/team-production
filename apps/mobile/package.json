@@ -11,7 +11,8 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
-    "lint": "expo lint"
+    "lint": "expo lint",
+    "test": "node --test --import tsx features/visited/__tests__/VisitedContext.test.tsx"
   },
   "dependencies": {
     "@expo/metro-runtime": "^6.1.2",
@@ -54,7 +55,9 @@
   },
   "devDependencies": {
     "@babel/core": "^7.28.5",
+    "@types/node": "^24.0.0",
     "@types/react": "~19.1.17",
+    "@types/react-test-renderer": "^19.1.0",
     "autoprefixer": "^10.4.23",
     "babel-plugin-module-resolver": "^5.0.2",
     "eslint": "^9.39.2",
@@ -66,7 +69,9 @@
     "postcss": "^8.5.6",
     "react-native-svg-transformer": "^1.5.2",
     "react-native-worklets": "^0.5.1",
+    "react-test-renderer": "19.1.0",
     "tailwindcss": "^3.4.19",
+    "tsx": "^4.20.0",
     "typescript": "~5.9.3"
   },
   "private": true,
