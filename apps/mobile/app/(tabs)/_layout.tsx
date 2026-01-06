@@ -17,6 +17,7 @@ export default function TabLayout() {
         preserveAspectRatio='xMidYMid meet'
         accessibilityLabel='Kuguriロゴ'
         fill={palette.textOnAccent}
+        style={{ transform: [{ translateY: -5 }] }}
       />
     </View>
   );
@@ -28,7 +29,7 @@ export default function TabLayout() {
         screenOptions={{
           tabBarActiveTintColor: palette.textOnAccent,
           tabBarInactiveTintColor: palette.textOnAccent,
-          headerStyle: { backgroundColor: palette.accent, height: 120 },
+          headerStyle: styles.header,
           headerTitleAlign: 'center',
           headerShadowVisible: false,
           headerTitle: () => headerLogo,
@@ -86,13 +87,17 @@ const styles = StyleSheet.create({
     backgroundColor: palette.background,
     flex: 1,
   },
+  header: {
+    backgroundColor: palette.accent,
+    height: 100,
+  },
   headerTitleContainer: {
     width: '100%',
   },
   logoWrap: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingBottom: 20,
+    paddingBottom: 0,
     paddingTop: 10,
   },
   tabBackground: {
