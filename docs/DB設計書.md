@@ -8,7 +8,7 @@
 - **編集者:**
 - **ステータス:** draft
 - **最終更新日:** 2026/01/02
-- **メモ:** DB設計を変更した場合、SQLも変更すること
+- **メモ:** DB設計を変更した場合、SQLも変更すること。中間テーブル（review_menus / review_files / store_files / review_likes）はORMモデルにも含める。
 
 ---
 

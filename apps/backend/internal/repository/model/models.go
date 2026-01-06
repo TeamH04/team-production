@@ -38,8 +38,8 @@ type Review struct {
 	Rating    int       `gorm:"column:rating"`
 	Content   *string   `gorm:"column:content"`
 	CreatedAt time.Time `gorm:"column:created_at"`
-	Menus     []Menu    `gorm:"many2many:review_menus;joinForeignKey:ReviewID;JoinReferences:MenuID"`
-	Files     []File    `gorm:"many2many:review_files;joinForeignKey:ReviewID;JoinReferences:FileID"`
+	Menus     []Menu    `gorm:"many2many:review_menus;joinForeignKey:ReviewID;joinReferences:MenuID"`
+	Files     []File    `gorm:"many2many:review_files;joinForeignKey:ReviewID;joinReferences:FileID"`
 }
 
 type File struct {
@@ -59,6 +59,24 @@ type StoreFile struct {
 	FileID    string    `gorm:"column:file_id;primaryKey;type:uuid"`
 	CreatedAt time.Time `gorm:"column:created_at"`
 }
+
+func (StoreFile) TableName() string { return "store_files" }
+
+type ReviewMenu struct {
+	ReviewID  string    `gorm:"column:review_id;primaryKey;type:uuid"`
+	MenuID    string    `gorm:"column:menu_id;primaryKey;type:uuid"`
+	CreatedAt time.Time `gorm:"column:created_at"`
+}
+
+func (ReviewMenu) TableName() string { return "review_menus" }
+
+type ReviewFile struct {
+	ReviewID  string    `gorm:"column:review_id;primaryKey;type:uuid"`
+	FileID    string    `gorm:"column:file_id;primaryKey;type:uuid"`
+	CreatedAt time.Time `gorm:"column:created_at"`
+}
+
+func (ReviewFile) TableName() string { return "review_files" }
 
 type User struct {
 	UserID     string     `gorm:"column:user_id;primaryKey;type:uuid"`
@@ -97,3 +115,5 @@ type ReviewLike struct {
 	UserID    string    `gorm:"column:user_id;primaryKey;type:uuid"`
 	CreatedAt time.Time `gorm:"column:created_at"`
 }
+
+func (ReviewLike) TableName() string { return "review_likes" }

@@ -99,7 +99,7 @@ func setupStoreRoutes(api *echo.Group, deps *Dependencies) {
 	api.POST("/stores/:id/menus", deps.MenuHandler.CreateMenu, mw.NewAuthMiddleware(deps.userUC).JWTAuth(deps.TokenVerifier), mw.NewAuthMiddleware(deps.userUC).RequireRole("owner", "admin"))
 	// レビューエンドポイント
 	api.GET("/stores/:id/reviews", deps.ReviewHandler.GetReviewsByStoreID)
-	api.POST("/stores/:id/reviews", deps.ReviewHandler.CreateReview, mw.NewAuthMiddleware(deps.userUC).JWTAuth(deps.TokenVerifier))
+	api.POST("/stores/:id/reviews", deps.ReviewHandler.Create, mw.NewAuthMiddleware(deps.userUC).JWTAuth(deps.TokenVerifier))
 
 	// レビューいいねエンドポイント
 	api.POST("/reviews/:id/likes", deps.ReviewHandler.LikeReview, mw.NewAuthMiddleware(deps.userUC).JWTAuth(deps.TokenVerifier))

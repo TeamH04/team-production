@@ -48,7 +48,7 @@ func (h *ReviewHandler) GetReviewsByStoreID(c echo.Context) error {
 	return c.JSON(http.StatusOK, presenter.NewReviewResponses(reviews))
 }
 
-func (h *ReviewHandler) CreateReview(c echo.Context) error {
+func (h *ReviewHandler) Create(c echo.Context) error {
 	user, err := requestcontext.GetUserFromContext(c.Request().Context())
 	if err != nil {
 		return usecase.ErrUnauthorized
@@ -64,12 +64,10 @@ func (h *ReviewHandler) CreateReview(c echo.Context) error {
 		return presentation.NewBadRequest("invalid JSON")
 	}
 
-	review, err := h.reviewUseCase.CreateReview(c.Request().Context(), storeID, user.UserID, input)
-	if err != nil {
+	if err := h.reviewUseCase.Create(c.Request().Context(), storeID, user.UserID, input); err != nil {
 		return err
 	}
-	resp := presenter.NewReviewResponse(*review)
-	return c.JSON(http.StatusCreated, resp)
+	return c.NoContent(http.StatusCreated)
 }
 
 func (h *ReviewHandler) LikeReview(c echo.Context) error {

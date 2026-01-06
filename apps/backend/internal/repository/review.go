@@ -73,34 +73,49 @@ func (r *reviewRepository) FindByID(ctx context.Context, reviewID string) (*enti
 	return &entityReview, nil
 }
 
-func (r *reviewRepository) Create(ctx context.Context, review *entity.Review) error {
-	record := model.Review{
-		ReviewID: review.ReviewID,
-		StoreID:  review.StoreID,
-		UserID:   review.UserID,
-		Rating:   review.Rating,
-		Content:  review.Content,
-		Menus:    buildMenuRefs(review.Menus),
-		Files:    buildFileRefs(review.Files),
+func (r *reviewRepository) CreateInTx(ctx context.Context, tx interface{}, review output.CreateReview) error {
+	txAsserted, ok := tx.(*gorm.DB)
+	if !ok {
+		return output.ErrInvalidTransaction
 	}
-	return mapDBError(r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-		if err := tx.Create(&record).Error; err != nil {
-			return err
+	record := model.Review{
+		StoreID: review.StoreID,
+		UserID:  review.UserID,
+		Rating:  review.Rating,
+		Content: review.Content,
+	}
+
+	if err := txAsserted.WithContext(ctx).Create(&record).Error; err != nil {
+		return mapDBError(err)
+	}
+
+	if len(review.MenuIDs) > 0 {
+		rows := make([]model.ReviewMenu, 0, len(review.MenuIDs))
+		for _, menuID := range review.MenuIDs {
+			rows = append(rows, model.ReviewMenu{
+				ReviewID: record.ReviewID,
+				MenuID:   menuID,
+			})
 		}
-		if len(record.Menus) > 0 {
-			if err := tx.Model(&record).Association("Menus").Replace(record.Menus); err != nil {
-				return err
-			}
+		if err := txAsserted.WithContext(ctx).Create(&rows).Error; err != nil {
+			return mapDBError(err)
 		}
-		if len(record.Files) > 0 {
-			if err := tx.Model(&record).Association("Files").Replace(record.Files); err != nil {
-				return err
-			}
+	}
+
+	if len(review.FileIDs) > 0 {
+		rows := make([]model.ReviewFile, 0, len(review.FileIDs))
+		for _, fileID := range review.FileIDs {
+			rows = append(rows, model.ReviewFile{
+				ReviewID: record.ReviewID,
+				FileID:   fileID,
+			})
 		}
-		review.ReviewID = record.ReviewID
-		review.CreatedAt = record.CreatedAt
-		return nil
-	}))
+		if err := txAsserted.WithContext(ctx).Create(&rows).Error; err != nil {
+			return mapDBError(err)
+		}
+	}
+
+	return nil
 }
 
 func (r *reviewRepository) AddLike(ctx context.Context, reviewID string, userID string) error {
@@ -203,7 +218,7 @@ func fetchReviewFiles(ctx context.Context, db *gorm.DB, reviewIDs []string) (map
 
 func buildMenuRefs(menus []entity.Menu) []model.Menu {
 	if len(menus) == 0 {
-		return nil
+		return []model.Menu{}
 	}
 	records := make([]model.Menu, len(menus))
 	for i, menu := range menus {
@@ -214,7 +229,7 @@ func buildMenuRefs(menus []entity.Menu) []model.Menu {
 
 func buildFileRefs(files []entity.File) []model.File {
 	if len(files) == 0 {
-		return nil
+		return []model.File{}
 	}
 	records := make([]model.File, len(files))
 	for i, file := range files {

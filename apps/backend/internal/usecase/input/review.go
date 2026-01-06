@@ -9,7 +9,7 @@ import (
 // ReviewUseCase defines inbound port for review operations.
 type ReviewUseCase interface {
 	GetReviewsByStoreID(ctx context.Context, storeID string, sort string, viewerID string) ([]entity.Review, error)
-	CreateReview(ctx context.Context, storeID string, userID string, input CreateReview) (*entity.Review, error)
+	Create(ctx context.Context, storeID string, userID string, input CreateReview) error
 	LikeReview(ctx context.Context, reviewID string, userID string) error
 	UnlikeReview(ctx context.Context, reviewID string, userID string) error
 }
