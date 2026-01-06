@@ -11,21 +11,8 @@ import {
   View,
 } from 'react-native';
 
+import { palette } from '@/constants/palette';
 import { useUser } from '@/features/user/UserContext';
-
-// カラー定義: 画面全体で使う色をまとめて管理しています
-const palette = {
-  accent: '#0EA5E9',
-  avatarBackground: '#DBEAFE',
-  avatarText: '#1D4ED8',
-  background: '#F9FAFB',
-  border: '#E5E7EB',
-  muted: '#6B7280',
-  primary: '#111827',
-  primaryOnAccent: '#FFFFFF',
-  secondarySurface: '#F3F4F6',
-  surface: '#FFFFFF',
-} as const;
 
 // プロフィール編集画面コンポーネント
 export default function EditProfileScreen() {
@@ -128,7 +115,7 @@ const styles = StyleSheet.create({
     borderColor: palette.border,
     borderRadius: 12,
     borderWidth: 1,
-    color: palette.primary,
+    color: palette.primaryText,
     marginBottom: 16,
     paddingHorizontal: 14,
     paddingVertical: 12,
@@ -138,7 +125,7 @@ const styles = StyleSheet.create({
   keyboard: { flex: 1 },
 
   // ラベル（表示名・メールなどの見出し）
-  label: { color: palette.primary, fontWeight: '700', marginBottom: 8 },
+  label: { color: palette.primaryText, fontWeight: '700', marginBottom: 8 },
 
   // プライマリボタン（保存）
   primaryBtn: {
@@ -147,7 +134,7 @@ const styles = StyleSheet.create({
     marginTop: 28,
     paddingVertical: 12,
   },
-  primaryBtnText: { color: palette.primaryOnAccent, fontWeight: '700', textAlign: 'center' },
+  primaryBtnText: { color: palette.textOnPrimary, fontWeight: '700', textAlign: 'center' },
 
   // 画面背景
   screen: { backgroundColor: palette.surface, flex: 1 },
@@ -162,5 +149,5 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 10,
   },
-  secondaryBtnText: { color: palette.primary, fontWeight: '700', textAlign: 'center' },
+  secondaryBtnText: { color: palette.textOnSecondary, fontWeight: '700', textAlign: 'center' },
 });

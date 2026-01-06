@@ -11,7 +11,12 @@
     "resolveJsonModule": true,
     "moduleResolution": "node"
   },
-  "include": ["apps/mobile/**/*", "apps/web/**/*", "packages/shop-core/**/*"],
+  "include": [
+    "apps/mobile/**/*",
+    "apps/web/**/*",
+    "packages/shop-core/**/*",
+    "packages/theme/**/*"
+  ],
   "exclude": [
     "node_modules",
     "**/dist/**",
