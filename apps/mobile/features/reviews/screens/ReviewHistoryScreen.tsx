@@ -34,9 +34,7 @@ export default function ReviewHistoryScreen() {
   }, [reviewsByShop]);
 
   // いいねしたレビューの数
-  const likedReviewsCount = useMemo(() => {
-    return getLikedReviews().length;
-  }, [getLikedReviews]);
+  const likedReviewsCount = getLikedReviews().length;
 
   /**
    * タブコンテンツの共通コンポーネント

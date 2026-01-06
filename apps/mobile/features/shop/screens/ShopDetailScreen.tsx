@@ -256,35 +256,42 @@ export default function ShopDetailScreen() {
             </Text>
           </View>
         ) : (
-          reviews.map(review => {
-            const isLiked = isReviewLiked(review.id);
-            return (
-              <View key={review.id} style={[styles.card, styles.cardShadow]}>
-                <View style={styles.reviewHeader}>
-                  <View style={styles.reviewLeft}>
-                    <Text style={styles.reviewTitle}>
-                      ★ {review.rating} ・ {new Date(review.createdAt).toLocaleDateString('ja-JP')}
-                    </Text>
-                  </View>
-                  <Pressable
-                    onPress={() => toggleReviewLike(review.id)}
-                    style={({ pressed }) => [styles.reviewLikeBtn, pressed && styles.btnPressed]}
-                    accessibilityLabel='レビューをいいね'
-                  >
-                    <Ionicons
-                      name={isLiked ? 'heart' : 'heart-outline'}
-                      size={20}
-                      color={isLiked ? palette.accent : palette.muted}
-                    />
-                  </Pressable>
-                </View>
-                {review.menuItemName ? (
-                  <Text style={styles.muted}>メニュー: {review.menuItemName}</Text>
-                ) : null}
-                {review.comment ? <Text style={styles.reviewBody}>{review.comment}</Text> : null}
-              </View>
+          (() => {
+            // isReviewLiked の呼び出しをメモ化してパフォーマンス改善
+            const likedReviewsMap = new Map(
+              reviews.map(review => [review.id, isReviewLiked(review.id)])
             );
-          })
+            return reviews.map(review => {
+              const isLiked = likedReviewsMap.get(review.id) ?? false;
+              return (
+                <View key={review.id} style={[styles.card, styles.cardShadow]}>
+                  <View style={styles.reviewHeader}>
+                    <View style={styles.reviewLeft}>
+                      <Text style={styles.reviewTitle}>
+                        ★ {review.rating} ・{' '}
+                        {new Date(review.createdAt).toLocaleDateString('ja-JP')}
+                      </Text>
+                    </View>
+                    <Pressable
+                      onPress={() => toggleReviewLike(review.id)}
+                      style={({ pressed }) => [styles.reviewLikeBtn, pressed && styles.btnPressed]}
+                      accessibilityLabel='レビューをいいね'
+                    >
+                      <Ionicons
+                        name={isLiked ? 'heart' : 'heart-outline'}
+                        size={20}
+                        color={isLiked ? palette.accent : palette.muted}
+                      />
+                    </Pressable>
+                  </View>
+                  {review.menuItemName ? (
+                    <Text style={styles.muted}>メニュー: {review.menuItemName}</Text>
+                  ) : null}
+                  {review.comment ? <Text style={styles.reviewBody}>{review.comment}</Text> : null}
+                </View>
+              );
+            });
+          })()
         )}
       </View>
     </ScrollView>

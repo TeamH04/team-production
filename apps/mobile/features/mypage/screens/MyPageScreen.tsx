@@ -42,6 +42,7 @@ export default function MyPageScreen({
   // ScrollView の参照（コンポーネントトップレベルで定義）
   const mainScrollRef = useRef<ScrollView>(null);
   const reviewHistoryScrollRef = useRef<ScrollView>(null);
+  const likedReviewsScrollRef = useRef<ScrollView>(null);
   const settingsScrollRef = useRef<ScrollView>(null);
   const notificationsScrollRef = useRef<ScrollView>(null);
 
@@ -62,6 +63,7 @@ export default function MyPageScreen({
 
   const handleScroll = scrollHandlers.main;
   const handleReviewHistoryScroll = scrollHandlers.reviewHistory;
+  const handleLikedReviewsScroll = scrollHandlers.likedReviews;
   const handleSettingsScroll = scrollHandlers.settings;
   const handleNotificationsScroll = scrollHandlers.notifications;
 
@@ -117,8 +119,8 @@ export default function MyPageScreen({
       const likedReviews = getLikedReviews();
       return (
         <ScrollView
-          ref={reviewHistoryScrollRef}
-          onScroll={handleReviewHistoryScroll}
+          ref={likedReviewsScrollRef}
+          onScroll={handleLikedReviewsScroll}
           scrollEventThrottle={16}
           style={styles.screen}
           contentContainerStyle={styles.content}

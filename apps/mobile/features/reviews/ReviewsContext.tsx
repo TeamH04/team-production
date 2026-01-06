@@ -9,7 +9,6 @@ export type Review = {
   createdAt: string; // 作成日時（ISO文字列）
   menuItemId?: string; // メニューID（任意）
   menuItemName?: string; // メニュー名（任意）
-  likedBy?: Set<string>; // いいねしたユーザーのセット（任意）
 };
 
 // 店舗ごとのレビュー一覧（shopIdごとに配列で管理）
@@ -60,7 +59,6 @@ export function ReviewsProvider({ children }: { children: React.ReactNode }) {
           createdAt: new Date().toISOString(), // 現在日時
           menuItemId: input.menuItemId,
           menuItemName: input.menuItemName,
-          likedBy: new Set(), // 初期状態は空のセット
         };
         // 新しいレビューを先頭に追加
         next[shopId] = [entry, ...(prev[shopId] ?? [])];
@@ -87,6 +85,10 @@ export function ReviewsProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   // レビューのいいねをトグルする関数
+  /**
+   * レビューのいいね状態をトグルします
+   * @param reviewId - トグルするレビューのID
+   */
   const toggleReviewLike = useCallback((reviewId: string) => {
     setLikedReviewIds(prev => {
       const next = new Set(prev);
@@ -100,21 +102,41 @@ export function ReviewsProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   // レビューのいいね状態を確認する関数
+  /**
+   * レビューのいいね状態を確認します
+   * @param reviewId - 確認するレビューのID
+   * @returns レビューが「いいね」されている場合はtrue
+   */
   const isReviewLiked = useCallback(
     (reviewId: string) => likedReviewIds.has(reviewId),
     [likedReviewIds]
   );
 
   // レビューのいいね数を取得する関数
+  /**
+   * レビューのいいね数を取得します
+   * @param reviewId - いいね数を取得するレビューのID
+   * @returns いいね数（0または1）
+   */
   const getReviewLikesCount = useCallback(
     (reviewId: string) => {
-      // いいね数を数える（簡略版：いいねしたユーザー数 = 1）
+      // レビューを検索して likedBy があれば、そのサイズをいいね数として返す
+      const allReviews = Object.values(reviewsByShop).flat();
+      const review = allReviews.find(r => r.id === reviewId);
+      if (review && review.likedBy instanceof Set) {
+        return review.likedBy.size;
+      }
+      // likedBy が未使用の場合は、従来どおり reviewId がいいねされているかで 0/1 を返す
       return isReviewLiked(reviewId) ? 1 : 0;
     },
-    [isReviewLiked]
+    [reviewsByShop, isReviewLiked]
   );
 
   // いいねしたレビューを全て取得する関数
+  /**
+   * いいねしたレビューを全て取得します
+   * @returns いいねしたレビューの配列
+   */
   const getLikedReviews = useCallback(() => {
     const allReviews = Object.values(reviewsByShop).flat();
     return allReviews.filter(review => likedReviewIds.has(review.id));
