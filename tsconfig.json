@@ -1,13 +1,4 @@
 {
-  "extends": "expo/tsconfig.base",
-  "compilerOptions": {
-    "composite": true,
-    "declaration": true,
-    "emitDeclarationOnly": true,
-    "declarationMap": true,
-    "outDir": "dist-types",
-    "noEmit": false
-  },
-  "include": ["**/*.ts", "**/*.tsx"],
-  "exclude": ["node_modules", "dist-types"]
+  "compilerOptions": {},
+  "extends": "expo/tsconfig.base"
 }
