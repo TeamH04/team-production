@@ -111,6 +111,10 @@ export default function MyPageScreen({
     Alert.alert('未実装', 'まだ未実装です');
   }, []);
 
+  const handleGoToLikedReviews = useCallback(() => {
+    Alert.alert('未実装', 'まだ未実装です');
+  }, []);
+
   // 画面の描画（switch 文で管理）
   switch (currentScreen) {
     case 'reviewHistory':
@@ -336,7 +340,7 @@ export default function MyPageScreen({
                 <Text style={styles.gridCardLabel}>レビュー履歴</Text>
               </Pressable>
 
-              <Pressable style={styles.gridCard}>
+              <Pressable style={styles.gridCard} onPress={handleGoToLikedReviews}>
                 <View style={styles.gridIconBadge}>
                   <Ionicons name='thumbs-up' size={24} color={palette.primary} />
                 </View>
