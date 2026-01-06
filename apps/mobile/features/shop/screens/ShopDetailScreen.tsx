@@ -6,6 +6,7 @@ import {
   Alert,
   Dimensions,
   FlatList,
+  Linking,
   Pressable,
   ScrollView,
   Share,
@@ -88,6 +89,26 @@ export default function ShopDetailScreen() {
   const isReviewsLoading = id ? loadingByShop[id] : false;
   const imageUrls = shop?.imageUrls;
   const flatListRef = useRef<FlatList>(null);
+  const mapOpenUrl = useMemo(
+    () =>
+      shop?.placeId
+        ? `https://www.google.com/maps/search/?api=1&query=Google&query_place_id=${shop.placeId}`
+        : null,
+    [shop?.placeId]
+  );
+
+  const resolveMenuName = useCallback(
+    (review: { menuItemId?: string; menuItemName?: string }) => {
+      if (review.menuItemName) {
+        return review.menuItemName;
+      }
+      if (!review.menuItemId || !shop?.menu) {
+        return undefined;
+      }
+      return shop.menu.find(item => item.id === review.menuItemId)?.name;
+    },
+    [shop]
+  );
 
   const handleToggleLike = useCallback(
     async (reviewId: string) => {
@@ -181,7 +202,7 @@ export default function ShopDetailScreen() {
                   onPress={() => scrollToImage(currentImageIndex - 1)}
                   accessibilityLabel='前の画像'
                 >
-                  <Text style={styles.arrowText}>‹</Text>
+                  <Ionicons name='chevron-back' size={22} color={palette.primary} />
                 </Pressable>
               )}
               {currentImageIndex < imageUrls.length - 1 && (
@@ -190,7 +211,7 @@ export default function ShopDetailScreen() {
                   onPress={() => scrollToImage(currentImageIndex + 1)}
                   accessibilityLabel='次の画像'
                 >
-                  <Text style={styles.arrowText}>›</Text>
+                  <Ionicons name='chevron-forward' size={22} color={palette.primary} />
                 </Pressable>
               )}
               <View style={styles.paginationContainer}>
@@ -265,6 +286,19 @@ export default function ShopDetailScreen() {
           ))}
         </View>
 
+        {mapOpenUrl ? (
+          <View style={[styles.card, styles.cardShadow, styles.mapCard]}>
+            <Text style={styles.sectionTitle}>場所</Text>
+            <Pressable
+              style={styles.mapButton}
+              onPress={() => mapOpenUrl && Linking.openURL(mapOpenUrl)}
+              accessibilityLabel={`${shop.name} の場所をマップで開く`}
+            >
+              <Text style={styles.mapButtonText}>マップで開く</Text>
+            </Pressable>
+          </View>
+        ) : null}
+
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>レビュー</Text>
           <Text style={styles.sectionSub}>みんなの感想や体験談</Text>
@@ -325,6 +359,11 @@ export default function ShopDetailScreen() {
                   </Text>
                 </Pressable>
               </View>
+              {(() => {
+                const menuName = resolveMenuName(review);
+                if (!menuName) return null;
+                return <Text style={styles.reviewMenu}>メニュー: {menuName}</Text>;
+              })()}
               {review.comment ? <Text style={styles.reviewBody}>{review.comment}</Text> : null}
               {review.files.length > 0 && (
                 <ScrollView
@@ -376,12 +415,6 @@ const styles = StyleSheet.create({
   },
   arrowButtonRight: {
     right: 12,
-  },
-  arrowText: {
-    color: palette.primary,
-    fontSize: 32,
-    fontWeight: '600',
-    lineHeight: 32,
   },
   btnPressed: { opacity: 0.9 },
   card: {
@@ -475,6 +508,7 @@ const styles = StyleSheet.create({
     marginRight: 10,
     width: 88,
   },
+  reviewMenu: { color: palette.muted, marginTop: 6 },
   reviewTitle: { color: palette.primary, fontWeight: '700' },
   screen: { backgroundColor: palette.background, flex: 1 },
   secondaryBtn: {

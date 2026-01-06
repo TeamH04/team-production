@@ -221,7 +221,7 @@
 **処理の流れ**
 
 1. JSON本文を受け取る
-2. 必須項目チェック（名前など）
+2. 必須項目チェック（name, address, place_id, thumbnail_file_id）
 3. DBへ保存
 4. 保存結果を返す
 

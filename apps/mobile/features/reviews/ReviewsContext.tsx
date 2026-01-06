@@ -27,6 +27,8 @@ export type Review = {
   rating: number;
   comment?: string;
   createdAt: string;
+  menuItemId?: string;
+  menuItemName?: string;
   likesCount: number;
   likedByMe: boolean;
   files: ReviewFile[];
@@ -43,14 +45,20 @@ type ReviewsState = Record<string, Review[]>;
 
 type ReviewsContextValue = {
   reviewsByShop: ReviewsState;
+  userReviews: Review[];
   loadingByShop: Record<string, boolean>;
   getReviews: (shopId: string) => Review[];
   loadReviews: (shopId: string, sort: ReviewSort) => Promise<void>;
   addReview: (
     shopId: string,
-    input: { rating: number; comment?: string },
+    input: { rating: number; comment?: string; menuItemId?: string; menuItemName?: string },
     assets: ReviewAsset[]
   ) => Promise<void>;
+  deleteReview: (reviewId: string) => void;
+  toggleReviewLike: (reviewId: string) => Promise<void>;
+  isReviewLiked: (reviewId: string) => boolean;
+  getReviewLikesCount: (reviewId: string) => number;
+  getLikedReviews: () => Review[];
   toggleLike: (shopId: string, reviewId: string) => Promise<void>;
   loadUserReviews: () => Promise<void>;
 };
@@ -60,6 +68,10 @@ const ReviewsContext = createContext<ReviewsContextValue | undefined>(undefined)
 const AUTH_REQUIRED = 'auth_required';
 
 function mapApiReview(review: ApiReview): Review {
+  const menus = review.menus ?? [];
+  const menuItemId = menus[0]?.menu_id ?? review.menu_ids?.[0];
+  const menuItemName = menus.length > 0 ? menus.map(menu => menu.name).join(' / ') : undefined;
+
   return {
     id: review.review_id,
     shopId: review.store_id,
@@ -67,6 +79,8 @@ function mapApiReview(review: ApiReview): Review {
     rating: review.rating,
     comment: review.content ?? undefined,
     createdAt: review.created_at,
+    menuItemId,
+    menuItemName,
     likesCount: review.likes_count ?? 0,
     likedByMe: review.liked_by_me ?? false,
     files: (review.files ?? []).map(file => ({
@@ -95,6 +109,7 @@ async function uploadToSignedUrl(uploadUrl: string, asset: ReviewAsset) {
 
 export function ReviewsProvider({ children }: { children: React.ReactNode }) {
   const [reviewsByShop, setReviewsByShop] = useState<ReviewsState>({});
+  const [userReviews, setUserReviews] = useState<Review[]>([]);
   const [loadingByShop, setLoadingByShop] = useState<Record<string, boolean>>({});
 
   const getReviews = useCallback((shopId: string) => reviewsByShop[shopId] ?? [], [reviewsByShop]);
@@ -111,7 +126,11 @@ export function ReviewsProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const addReview = useCallback(
-    async (shopId: string, input: { rating: number; comment?: string }, assets: ReviewAsset[]) => {
+    async (
+      shopId: string,
+      input: { rating: number; comment?: string; menuItemId?: string; menuItemName?: string },
+      assets: ReviewAsset[]
+    ) => {
       const token = await getAccessToken();
       if (!token) {
         throw new Error(AUTH_REQUIRED);
@@ -141,6 +160,7 @@ export function ReviewsProvider({ children }: { children: React.ReactNode }) {
           rating: input.rating,
           content: input.comment ?? null,
           file_ids: fileIDs,
+          menu_ids: input.menuItemId ? [input.menuItemId] : [],
         },
         token
       );
@@ -194,6 +214,57 @@ export function ReviewsProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  const deleteReview = useCallback((reviewId: string) => {
+    setReviewsByShop(prev => {
+      const next: ReviewsState = {};
+      Object.entries(prev).forEach(([shopId, reviews]) => {
+        const filtered = reviews.filter(review => review.id !== reviewId);
+        next[shopId] = filtered;
+      });
+      return next;
+    });
+    setUserReviews(prev => prev.filter(review => review.id !== reviewId));
+  }, []);
+
+  const toggleReviewLike = useCallback(
+    async (reviewId: string) => {
+      let targetShopId: string | null = null;
+      Object.entries(reviewsByShop).some(([shopId, reviews]) => {
+        if (reviews.some(review => review.id === reviewId)) {
+          targetShopId = shopId;
+          return true;
+        }
+        return false;
+      });
+      if (!targetShopId) return;
+      await toggleLike(targetShopId, reviewId);
+    },
+    [reviewsByShop, toggleLike]
+  );
+
+  const isReviewLiked = useCallback(
+    (reviewId: string) => {
+      const all = Object.values(reviewsByShop).flat();
+      const review = all.find(item => item.id === reviewId);
+      return review?.likedByMe ?? false;
+    },
+    [reviewsByShop]
+  );
+
+  const getReviewLikesCount = useCallback(
+    (reviewId: string) => {
+      const all = Object.values(reviewsByShop).flat();
+      const review = all.find(item => item.id === reviewId);
+      return review?.likesCount ?? 0;
+    },
+    [reviewsByShop]
+  );
+
+  const getLikedReviews = useCallback(() => {
+    const all = Object.values(reviewsByShop).flat();
+    return all.filter(review => review.likedByMe);
+  }, [reviewsByShop]);
+
   const loadUserReviews = useCallback(async () => {
     const user = await getCurrentUser();
     if (!user) {
@@ -204,27 +275,42 @@ export function ReviewsProvider({ children }: { children: React.ReactNode }) {
       throw new Error(AUTH_REQUIRED);
     }
     const reviews = await fetchUserReviews(user.id, token);
-    const grouped: ReviewsState = {};
-    reviews.map(mapApiReview).forEach(review => {
-      if (!grouped[review.shopId]) {
-        grouped[review.shopId] = [];
-      }
-      grouped[review.shopId].push(review);
-    });
-    setReviewsByShop(prev => ({ ...prev, ...grouped }));
+    const mapped = reviews.map(mapApiReview);
+    mapped.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+    setUserReviews(mapped);
   }, []);
 
   const value = useMemo<ReviewsContextValue>(
     () => ({
       reviewsByShop,
+      userReviews,
       loadingByShop,
       getReviews,
       loadReviews,
       addReview,
+      deleteReview,
+      toggleReviewLike,
+      isReviewLiked,
+      getReviewLikesCount,
+      getLikedReviews,
       toggleLike,
       loadUserReviews,
     }),
-    [reviewsByShop, loadingByShop, getReviews, loadReviews, addReview, toggleLike, loadUserReviews]
+    [
+      reviewsByShop,
+      userReviews,
+      loadingByShop,
+      getReviews,
+      loadReviews,
+      addReview,
+      deleteReview,
+      toggleReviewLike,
+      isReviewLiked,
+      getReviewLikesCount,
+      getLikedReviews,
+      toggleLike,
+      loadUserReviews,
+    ]
   );
 
   return <ReviewsContext.Provider value={value}>{children}</ReviewsContext.Provider>;

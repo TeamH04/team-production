@@ -3,7 +3,8 @@ const { getDefaultConfig } = require('expo/metro-config');
 const { withNativeWind } = require('nativewind/metro');
 
 const projectRoot = __dirname;
-const workspaceRoot = path.resolve(__dirname, '../..');
+const workspaceRoot = path.resolve(projectRoot, '../..');
+const workspaceSvg = path.resolve(workspaceRoot, 'node_modules/react-native-svg');
 
 const config = getDefaultConfig(projectRoot);
 
@@ -18,6 +19,10 @@ config.transformer = {
 
 config.resolver = {
   ...config.resolver,
+  extraNodeModules: {
+    ...config.resolver?.extraNodeModules,
+    'react-native-svg': workspaceSvg,
+  },
   assetExts: assetExts.filter(ext => ext !== 'svg'),
   sourceExts: [...sourceExts, 'svg'],
   nodeModulesPaths: [

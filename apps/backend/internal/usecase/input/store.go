@@ -26,6 +26,7 @@ type CreateStoreInput struct {
 	Latitude        float64
 	Longitude       float64
 	GoogleMapURL    *string
+	PlaceID         string
 }
 
 type UpdateStoreInput struct {
@@ -38,4 +39,5 @@ type UpdateStoreInput struct {
 	Latitude        *float64
 	Longitude       *float64
 	GoogleMapURL    *string
+	PlaceID         *string
 }

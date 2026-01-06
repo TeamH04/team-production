@@ -14,6 +14,7 @@ type StoreResponse struct {
 	OpenedAt        *time.Time       `json:"opened_at,omitempty"`
 	Description     *string          `json:"description,omitempty"`
 	Address         string           `json:"address"`
+	PlaceID         string           `json:"place_id"`
 	OpeningHours    *string          `json:"opening_hours,omitempty"`
 	Latitude        float64          `json:"latitude"`
 	Longitude       float64          `json:"longitude"`
@@ -124,6 +125,7 @@ func NewStoreResponse(store entity.Store) StoreResponse {
 		OpenedAt:        store.OpenedAt,
 		Description:     store.Description,
 		Address:         store.Address,
+		PlaceID:         store.PlaceID,
 		OpeningHours:    store.OpeningHours,
 		Latitude:        store.Latitude,
 		Longitude:       store.Longitude,

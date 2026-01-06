@@ -25,6 +25,7 @@ type CreateStoreCommand struct {
 	Latitude        float64
 	Longitude       float64
 	GoogleMapURL    *string
+	PlaceID         string
 }
 
 func (c CreateStoreCommand) toInput() input.CreateStoreInput {
@@ -38,6 +39,7 @@ func (c CreateStoreCommand) toInput() input.CreateStoreInput {
 		Latitude:        c.Latitude,
 		Longitude:       c.Longitude,
 		GoogleMapURL:    c.GoogleMapURL,
+		PlaceID:         c.PlaceID,
 	}
 }
 
@@ -51,6 +53,7 @@ type UpdateStoreCommand struct {
 	Latitude        *float64
 	Longitude       *float64
 	GoogleMapURL    *string
+	PlaceID         *string
 }
 
 func (c UpdateStoreCommand) toInput() input.UpdateStoreInput {
@@ -64,6 +67,7 @@ func (c UpdateStoreCommand) toInput() input.UpdateStoreInput {
 		Latitude:        c.Latitude,
 		Longitude:       c.Longitude,
 		GoogleMapURL:    c.GoogleMapURL,
+		PlaceID:         c.PlaceID,
 	}
 }
 
@@ -145,6 +149,7 @@ type createStoreDTO struct {
 	Latitude        float64    `json:"latitude"`
 	Longitude       float64    `json:"longitude"`
 	GoogleMapURL    *string    `json:"google_map_url"`
+	PlaceID         string     `json:"place_id"`
 }
 
 func (dto createStoreDTO) toCommand() CreateStoreCommand {
@@ -158,6 +163,7 @@ func (dto createStoreDTO) toCommand() CreateStoreCommand {
 		Latitude:        dto.Latitude,
 		Longitude:       dto.Longitude,
 		GoogleMapURL:    dto.GoogleMapURL,
+		PlaceID:         dto.PlaceID,
 	}
 }
 
@@ -171,6 +177,7 @@ type updateStoreDTO struct {
 	Latitude        *float64   `json:"latitude"`
 	Longitude       *float64   `json:"longitude"`
 	GoogleMapURL    *string    `json:"google_map_url"`
+	PlaceID         *string    `json:"place_id"`
 }
 
 func (dto updateStoreDTO) toCommand() UpdateStoreCommand {
@@ -184,5 +191,6 @@ func (dto updateStoreDTO) toCommand() UpdateStoreCommand {
 		Latitude:        dto.Latitude,
 		Longitude:       dto.Longitude,
 		GoogleMapURL:    dto.GoogleMapURL,
+		PlaceID:         dto.PlaceID,
 	}
 }

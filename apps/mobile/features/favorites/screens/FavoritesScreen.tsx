@@ -1,4 +1,5 @@
 import { palette } from '@/constants/palette';
+import { TAB_BAR_SPACING } from '@/constants/TabBarSpacing';
 import { useFavorites } from '@/features/favorites/FavoritesContext';
 import { SHOPS, type Shop } from '@team/shop-core';
 import { useRouter } from 'expo-router';
@@ -8,8 +9,6 @@ const BUDGET_LABEL: Record<Shop['budget'], string> = {
   $$: '¥¥',
   $$$: '¥¥¥',
 };
-
-const TAB_BAR_SPACING = 113;
 
 export default function FavoritesScreen() {
   const router = useRouter();

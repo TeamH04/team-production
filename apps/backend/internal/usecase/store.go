@@ -50,6 +50,15 @@ func (uc *storeUseCase) CreateStore(ctx context.Context, in input.CreateStoreInp
 	if in.Name == "" || in.Address == "" {
 		return nil, ErrInvalidInput
 	}
+	if in.PlaceID == "" {
+		return nil, ErrInvalidInput
+	}
+	if in.Latitude == 0.0 || in.Longitude == 0.0 {
+		return nil, ErrInvalidCoordinates
+	}
+	if in.ThumbnailFileID == nil {
+		return nil, ErrInvalidInput
+	}
 
 	store := &entity.Store{
 		Name:            in.Name,
@@ -61,6 +70,7 @@ func (uc *storeUseCase) CreateStore(ctx context.Context, in input.CreateStoreInp
 		Latitude:        in.Latitude,
 		Longitude:       in.Longitude,
 		GoogleMapURL:    in.GoogleMapURL,
+		PlaceID:         in.PlaceID,
 		IsApproved:      false,
 	}
 
@@ -108,6 +118,12 @@ func (uc *storeUseCase) UpdateStore(ctx context.Context, id string, in input.Upd
 	}
 	if in.GoogleMapURL != nil {
 		store.GoogleMapURL = in.GoogleMapURL
+	}
+	if in.PlaceID != nil {
+		if *in.PlaceID == "" {
+			return nil, ErrInvalidInput
+		}
+		store.PlaceID = *in.PlaceID
 	}
 	store.UpdatedAt = time.Now()
 

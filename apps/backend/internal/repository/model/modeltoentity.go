@@ -22,6 +22,7 @@ func (s Store) Entity() entity.Store {
 		OpenedAt:        s.OpenedAt,
 		Description:     s.Description,
 		Address:         s.Address,
+		PlaceID:         s.PlaceID,
 		OpeningHours:    s.OpeningHours,
 		Latitude:        s.Latitude,
 		Longitude:       s.Longitude,

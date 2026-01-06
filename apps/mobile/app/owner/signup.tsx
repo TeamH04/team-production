@@ -16,6 +16,27 @@ import { palette } from '@/constants/palette';
 
 const isLikelyEmail = (value: string) => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(value.trim());
 
+const formatDateInput = (value: string): string => {
+  const digits = value.replace(/\D/g, '').slice(0, 8);
+  const y = digits.slice(0, 4);
+  const m = digits.slice(4, 6);
+  const d = digits.slice(6, 8);
+
+  if (digits.length <= 4) return y + (digits.length === 4 ? '-' : '');
+  if (digits.length <= 6) return `${y}-${m}` + (digits.length === 6 ? '-' : '');
+  return `${y}-${m}-${d}`;
+};
+
+const isValidDateYYYYMMDD = (digits8: string): boolean => {
+  if (!/^\d{8}$/.test(digits8)) return false;
+  const y = Number(digits8.slice(0, 4));
+  const m = Number(digits8.slice(4, 6));
+  const d = Number(digits8.slice(6, 8));
+
+  const date = new Date(y, m - 1, d);
+  return date.getFullYear() === y && date.getMonth() === m - 1 && date.getDate() === d;
+};
+
 export default function OwnerSignupScreen() {
   const router = useRouter();
   const navigation = useNavigation();
@@ -24,7 +45,23 @@ export default function OwnerSignupScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [phone, setPhone] = useState('');
+  const [openingDate, setOpeningDate] = useState('');
+  const [openingDateInvalid, setOpeningDateInvalid] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+
+  const handleDateChange = (text: string) => {
+    const prev = openingDate;
+    const isDeleting = text.length < prev.length;
+    const next = isDeleting ? text.replace(/[^0-9-]/g, '') : formatDateInput(text);
+    setOpeningDate(next);
+
+    const digits = next.replace(/\D/g, '');
+    if (digits.length === 8) {
+      setOpeningDateInvalid(!isValidDateYYYYMMDD(digits));
+    } else {
+      setOpeningDateInvalid(false);
+    }
+  };
 
   useLayoutEffect(() => {
     navigation.setOptions?.({
@@ -38,6 +75,12 @@ export default function OwnerSignupScreen() {
 
     if (!storeName || !contactName || !trimmedEmail || !password) {
       Alert.alert('入力不足', '必須項目（店舗名/担当者名/メール/パスワード）を入力してください');
+      return;
+    }
+    // 完成形（数字8桁）のみ検証
+    const digits = openingDate.replace(/\D/g, '');
+    if (!isValidDateYYYYMMDD(digits)) {
+      Alert.alert('入力エラー', '正しい日付で入力してください');
       return;
     }
 
@@ -97,6 +140,20 @@ export default function OwnerSignupScreen() {
             placeholder='例）山田 太郎'
             placeholderTextColor={palette.secondaryText}
           />
+
+          <Text style={styles.label}>開店日（必須）</Text>
+          <TextInput
+            style={styles.input}
+            value={openingDate}
+            onChangeText={handleDateChange}
+            keyboardType='numeric'
+            placeholder='YYYYMMDD (例: 20240115)'
+            placeholderTextColor={palette.secondaryText}
+            maxLength={10}
+          />
+          {openingDateInvalid && (
+            <Text style={styles.errorText}>※ 正しい日付で入力してください</Text>
+          )}
 
           <Text style={styles.label}>メールアドレス（必須）</Text>
           <TextInput
@@ -176,12 +233,18 @@ const styles = StyleSheet.create({
     color: palette.surface,
     fontSize: 16,
     fontWeight: '700',
-    marginTop: 8,
+    height: 44,
+    lineHeight: 44,
     textAlign: 'center',
   },
   buttonWrapper: {
     alignItems: 'center',
-    marginTop: 32,
+    marginTop: 24,
+  },
+  errorText: {
+    color: palette.dangerBorder,
+    fontSize: 12,
+    marginTop: 4,
   },
   form: {
     gap: 8,

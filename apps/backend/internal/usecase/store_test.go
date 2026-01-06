@@ -88,8 +88,15 @@ func TestCreateStore_Success(t *testing.T) {
 	uc := usecase.NewStoreUseCase(mockRepo)
 
 	req := input.CreateStoreInput{
-		Name:    "Test Store",
-		Address: "Test Address",
+		Name:      "Test Store",
+		Address:   "Test Address",
+		ThumbnailFileID: func() *string {
+			id := "file-1"
+			return &id
+		}(),
+		Latitude:  35.6812,
+		Longitude: 139.7671,
+		PlaceID:   "ChIJRUjlH92OAGAR6otTD3tUcrg",
 	}
 
 	store, err := uc.CreateStore(context.Background(), req)
@@ -119,8 +126,56 @@ func TestCreateStore_InvalidInput(t *testing.T) {
 		{
 			name: "empty name",
 			input: input.CreateStoreInput{
-				Address: "Test Address",
+				Address:   "Test Address",
+				Latitude:  35.6812,
+				Longitude: 139.7671,
+				PlaceID:   "ChIJRUjlH92OAGAR6otTD3tUcrg",
 			},
+			want: usecase.ErrInvalidInput,
+		},
+		{
+			name: "missing thumbnail",
+			input: input.CreateStoreInput{
+				Name:      "Test Store",
+				Address:   "Test Address",
+				Latitude:  35.6812,
+				Longitude: 139.7671,
+				PlaceID:   "ChIJRUjlH92OAGAR6otTD3tUcrg",
+			},
+			want: usecase.ErrInvalidInput,
+		},
+		{
+			name: "invalid coordinates",
+			input: func() input.CreateStoreInput {
+				return input.CreateStoreInput{
+					Name:         "Test Store",
+					Address:      "Test Address",
+					ThumbnailFileID: func() *string {
+						id := "file-1"
+						return &id
+					}(),
+					Latitude:     0,
+					Longitude:    0,
+					PlaceID:      "ChIJRUjlH92OAGAR6otTD3tUcrg",
+				}
+			}(),
+			want: usecase.ErrInvalidCoordinates,
+		},
+		{
+			name: "empty place id",
+			input: func() input.CreateStoreInput {
+				return input.CreateStoreInput{
+					Name:         "Test Store",
+					Address:      "Test Address",
+					ThumbnailFileID: func() *string {
+						id := "file-1"
+						return &id
+					}(),
+					Latitude:     35.6812,
+					Longitude:    139.7671,
+					PlaceID:      "",
+				}
+			}(),
 			want: usecase.ErrInvalidInput,
 		},
 	}

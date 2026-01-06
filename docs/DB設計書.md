@@ -46,6 +46,7 @@
 | latitude          | double precision | 緯度                        |
 | longitude         | double precision | 経度                        |
 | google_map_url    | string           | Google Maps URL             |
+| place_id          | string           | Google Place ID             |
 | is_approved       | boolean          | 承認済みかどうか            |
 | created_at        | timestamp        | 作成日時                    |
 | updated_at        | time.Time        | 更新日時                    |
@@ -199,6 +200,7 @@ erDiagram
         date opened_at
         string description
         string address
+        string place_id
         string opening_hours
         double_precision latitude
         double_precision longitude

@@ -1,25 +1,24 @@
 package model
 
-import (
-	"time"
-)
+import "time"
 
 type Store struct {
-	StoreID         string     `gorm:"column:store_id;primaryKey;type:uuid;default:gen_random_uuid()"`
-	ThumbnailFileID *string    `gorm:"column:thumbnail_file_id;type:uuid"`
-	Name            string     `gorm:"column:name"`
-	OpenedAt        *time.Time `gorm:"column:opened_at"`
-	Description     *string    `gorm:"column:description"`
-	Address         string     `gorm:"column:address"`
-	OpeningHours    *string    `gorm:"column:opening_hours"`
-	Latitude        float64    `gorm:"column:latitude"`
-	Longitude       float64    `gorm:"column:longitude"`
-	GoogleMapURL    *string    `gorm:"column:google_map_url"`
-	IsApproved      bool       `gorm:"column:is_approved;default:false"`
-	CreatedAt       time.Time  `gorm:"column:created_at"`
-	UpdatedAt       time.Time  `gorm:"column:updated_at"`
-	Menus           []Menu     `gorm:"foreignKey:StoreID;references:StoreID"`
-	Reviews         []Review   `gorm:"foreignKey:StoreID;references:StoreID"`
+	StoreID         string         `gorm:"column:store_id;primaryKey;type:uuid;default:gen_random_uuid()"`
+	ThumbnailFileID *string        `gorm:"column:thumbnail_file_id;type:uuid"`
+	Name            string         `gorm:"column:name"`
+	OpenedAt        *time.Time     `gorm:"column:opened_at"`
+	Description     *string        `gorm:"column:description"`
+	Address         string         `gorm:"column:address"`
+	OpeningHours    *string        `gorm:"column:opening_hours"`
+	Latitude        float64        `gorm:"column:latitude"`
+	Longitude       float64        `gorm:"column:longitude"`
+	GoogleMapURL    *string        `gorm:"column:google_map_url"`
+	PlaceID         string         `gorm:"column:place_id"`
+	IsApproved      bool           `gorm:"column:is_approved;default:false"`
+	CreatedAt       time.Time      `gorm:"column:created_at"`
+	UpdatedAt       time.Time      `gorm:"column:updated_at"`
+	Menus           []Menu         `gorm:"foreignKey:StoreID;references:StoreID"`
+	Reviews         []Review       `gorm:"foreignKey:StoreID;references:StoreID"`
 }
 
 type Menu struct {

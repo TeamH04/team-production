@@ -87,7 +87,7 @@ export default function HomePageClient() {
               次に通いたくなるお店を見つけよう
             </h1>
             <p className='text-lg text-sky-100'>
-              カフェからワークスペースまで、カテゴリとキーワードで探せます。気になるお店をクリックすると詳細ページへ移動します。
+              カフェからレストラン、バーまで、カテゴリとキーワードで探せます。気になるお店をクリックすると詳細ページへ移動します。
             </p>
             <div className='flex flex-wrap gap-3 text-sm font-semibold'>
               <span className='rounded-full bg-white/15 px-4 py-2'>全 {SHOPS.length} 件</span>

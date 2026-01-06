@@ -10,6 +10,13 @@ export type ApiFile = {
   content_type?: string | null;
 };
 
+export type ApiMenu = {
+  menu_id: string;
+  name: string;
+  price?: number | null;
+  description?: string | null;
+};
+
 export type ApiReview = {
   review_id: string;
   store_id: string;
@@ -19,6 +26,8 @@ export type ApiReview = {
   created_at: string;
   likes_count?: number;
   liked_by_me?: boolean;
+  menus?: ApiMenu[];
+  menu_ids?: string[];
   files?: ApiFile[];
 };
 
@@ -107,7 +116,7 @@ export async function fetchUserReviews(userId: string, accessToken?: string) {
 
 export async function createReview(
   storeId: string,
-  input: { rating: number; content?: string | null; file_ids?: string[] },
+  input: { rating: number; content?: string | null; file_ids?: string[]; menu_ids?: string[] },
   accessToken: string
 ) {
   return request<ApiReview>(`/stores/${storeId}/reviews`, {
@@ -117,6 +126,7 @@ export async function createReview(
       rating: input.rating,
       content: input.content ?? null,
       file_ids: input.file_ids ?? [],
+      menu_ids: input.menu_ids ?? [],
     }),
   });
 }

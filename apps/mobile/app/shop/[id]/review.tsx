@@ -4,23 +4,9 @@ import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 
+import { palette } from '@/constants/palette';
 import { useReviews } from '@/features/reviews/ReviewsContext';
 import { SHOPS } from '@team/shop-core';
-
-// カラー定義（画面の配色をまとめて管理）
-const palette = {
-  accent: '#0EA5E9',
-  background: '#F9FAFB',
-  border: '#E5E7EB',
-  error: '#DC2626',
-  muted: '#6B7280',
-  primary: '#111827',
-  primaryOnAccent: '#FFFFFF',
-  secondarySurface: '#F3F4F6',
-  starHighlight: '#F59E0B',
-  starInactive: '#9CA3AF',
-  surface: '#FFFFFF',
-} as const;
 
 // レビュー投稿画面のコンポーネント
 export default function ReviewModalScreen() {
@@ -32,6 +18,7 @@ export default function ReviewModalScreen() {
 
   // 店舗情報を取得
   const shop = useMemo(() => SHOPS.find(s => s.id === id), [id]);
+  const menu = shop?.menu ?? [];
 
   // ヘッダータイトルを設定
   useLayoutEffect(() => {
@@ -45,6 +32,7 @@ export default function ReviewModalScreen() {
   const [rating, setRating] = useState(0); // 評価（初期値0）
   const [comment, setComment] = useState(''); // コメント
   const [ratingError, setRatingError] = useState(false); // 評価エラー表示
+  const [selectedMenuId, setSelectedMenuId] = useState<string | undefined>(undefined); // メニュー選択
   const [assets, setAssets] = useState<ImagePicker.ImagePickerAsset[]>([]); // 添付画像
   const [submitting, setSubmitting] = useState(false);
 
@@ -69,9 +57,15 @@ export default function ReviewModalScreen() {
 
     setSubmitting(true);
     try {
+      const selectedMenu = menu.find(item => item.id === selectedMenuId);
       await addReview(
         shop.id,
-        { rating, comment: comment.trim() },
+        {
+          rating,
+          comment: comment.trim(),
+          menuItemId: selectedMenu?.id,
+          menuItemName: selectedMenu?.name,
+        },
         assets.map((asset, index) => ({
           uri: asset.uri,
           fileName: asset.fileName ?? `review-${Date.now()}-${index}.jpg`,
@@ -140,6 +134,30 @@ export default function ReviewModalScreen() {
         style={styles.input}
       />
 
+      {/* メニュー選択（店舗にメニューがある場合のみ表示） */}
+      {menu.length > 0 ? (
+        <View style={styles.menuSection}>
+          <Text style={styles.sectionLabel}>メニュー</Text>
+          <View style={styles.menuList}>
+            {menu.map(item => {
+              const selected = selectedMenuId === item.id;
+              return (
+                <Pressable
+                  key={item.id}
+                  onPress={() => setSelectedMenuId(selected ? undefined : item.id)}
+                  style={[styles.menuItem, selected && styles.menuItemSelected]}
+                >
+                  <Text style={[styles.menuItemText, selected && styles.menuItemTextSelected]}>
+                    {item.name}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
+          <Text style={styles.muted}>メニューは任意です。該当が無ければ未選択でOK。</Text>
+        </View>
+      ) : null}
+
       {/* 画像アップロード */}
       <Text style={styles.sectionLabel}>写真（任意）</Text>
       <Pressable style={styles.secondaryBtn} onPress={handlePickImages} disabled={submitting}>
@@ -198,8 +216,27 @@ const styles = StyleSheet.create({
     minHeight: 100,
     padding: 12,
   },
+  menuItem: {
+    backgroundColor: palette.menuBackground,
+    borderColor: palette.border,
+    borderRadius: 999,
+    borderWidth: 1,
+    marginRight: 8,
+    marginTop: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  menuItemSelected: {
+    backgroundColor: palette.menuSelectedBackground,
+    borderColor: palette.menuSelectedBorder,
+  },
+  menuItemText: { color: palette.primary, fontWeight: '600' },
+  menuItemTextSelected: { color: palette.menuSelectedText },
+  menuList: { flexDirection: 'row', flexWrap: 'wrap' },
+  menuSection: { marginTop: 12 },
+  muted: { color: palette.muted, marginTop: 6 },
   primaryBtn: {
-    backgroundColor: palette.accent,
+    backgroundColor: palette.secondarySurface,
     borderRadius: 12,
     marginTop: 18,
     paddingVertical: 12,

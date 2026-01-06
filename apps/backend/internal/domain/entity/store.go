@@ -11,6 +11,7 @@ type Store struct {
 	OpenedAt        *time.Time
 	Description     *string
 	Address         string
+	PlaceID         string
 	OpeningHours    *string
 	Latitude        float64
 	Longitude       float64

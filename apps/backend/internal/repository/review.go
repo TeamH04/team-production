@@ -47,7 +47,7 @@ func (r *reviewRepository) FindByStoreID(ctx context.Context, storeID string, so
 		return nil, mapDBError(err)
 	}
 
-	return r.attachReviewFiles(ctx, rows)
+	return r.attachReviewRelations(ctx, rows)
 }
 
 func (r *reviewRepository) FindByUserID(ctx context.Context, userID string) ([]entity.Review, error) {
@@ -61,7 +61,7 @@ func (r *reviewRepository) FindByUserID(ctx context.Context, userID string) ([]e
 		return nil, mapDBError(err)
 	}
 
-	return r.attachReviewFiles(ctx, rows)
+	return r.attachReviewRelations(ctx, rows)
 }
 
 func (r *reviewRepository) FindByID(ctx context.Context, reviewID string) (*entity.Review, error) {
@@ -151,7 +151,7 @@ func (r *reviewRepository) baseReviewQuery(ctx context.Context, viewerID string)
 	return query
 }
 
-func (r *reviewRepository) attachReviewFiles(ctx context.Context, rows []reviewRow) ([]entity.Review, error) {
+func (r *reviewRepository) attachReviewRelations(ctx context.Context, rows []reviewRow) ([]entity.Review, error) {
 	if len(rows) == 0 {
 		return nil, nil
 	}
@@ -162,6 +162,10 @@ func (r *reviewRepository) attachReviewFiles(ctx context.Context, rows []reviewR
 	}
 
 	filesByReview, err := fetchReviewFiles(ctx, r.db, reviewIDs)
+	if err != nil {
+		return nil, err
+	}
+	menusByReview, err := fetchReviewMenus(ctx, r.db, reviewIDs)
 	if err != nil {
 		return nil, err
 	}
@@ -181,7 +185,39 @@ func (r *reviewRepository) attachReviewFiles(ctx context.Context, rows []reviewR
 		if files, ok := filesByReview[row.ReviewID]; ok {
 			review.Files = files
 		}
+		if menus, ok := menusByReview[row.ReviewID]; ok {
+			review.Menus = menus
+		}
 		result[i] = review
+	}
+
+	return result, nil
+}
+
+type reviewMenuRow struct {
+	ReviewID string
+	model.Menu
+}
+
+func fetchReviewMenus(ctx context.Context, db *gorm.DB, reviewIDs []string) (map[string][]entity.Menu, error) {
+	if len(reviewIDs) == 0 {
+		return nil, nil
+	}
+
+	var rows []reviewMenuRow
+	if err := db.WithContext(ctx).
+		Table("review_menus rm").
+		Select(`rm.review_id, m.menu_id, m.store_id, m.name, m.price, m.description, m.created_at`).
+		Joins("JOIN menus m ON m.menu_id = rm.menu_id").
+		Where("rm.review_id IN ?", reviewIDs).
+		Order("rm.review_id asc, m.menu_id asc").
+		Scan(&rows).Error; err != nil {
+		return nil, mapDBError(err)
+	}
+
+	result := make(map[string][]entity.Menu, len(rows))
+	for _, row := range rows {
+		result[row.ReviewID] = append(result[row.ReviewID], row.Menu.Entity())
 	}
 
 	return result, nil
