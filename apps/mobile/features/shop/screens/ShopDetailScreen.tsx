@@ -346,6 +346,7 @@ const styles = StyleSheet.create({
     borderColor: palette.border,
     borderRadius: 12,
     borderWidth: 1,
+    marginTop: 12,
     paddingVertical: 14,
   },
   mapButtonText: { color: palette.primary, fontWeight: '700' },
