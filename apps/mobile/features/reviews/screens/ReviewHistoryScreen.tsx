@@ -17,12 +17,12 @@ const palette = {
   surface: '#FFFFFF',
 } as const;
 
-// TODO: 'likes' および 'preferences' タブ拡張実装を検討する場合に使用
-type TabType = 'favorites' | 'history'; // | 'likes' | 'preferences';
+// TODO: 'preferences' タブ拡張実装を検討する場合に使用
+type TabType = 'favorites' | 'history' | 'likes'; // | 'preferences';
 
 export default function ReviewHistoryScreen() {
   const { favorites } = useFavorites();
-  const { reviewsByShop } = useReviews();
+  const { reviewsByShop, getLikedReviews } = useReviews();
   const [activeTab, setActiveTab] = useState<TabType>('history');
 
   // お気に入り店舗の数
@@ -32,6 +32,9 @@ export default function ReviewHistoryScreen() {
   const reviewsCount = useMemo(() => {
     return Object.values(reviewsByShop).flat().length;
   }, [reviewsByShop]);
+
+  // いいねしたレビューの数
+  const likedReviewsCount = getLikedReviews().length;
 
   /**
    * タブコンテンツの共通コンポーネント
@@ -91,11 +94,16 @@ export default function ReviewHistoryScreen() {
 
       case 'likes':
         return (
-          <TabContent title='いいねしたレビュー' emptyMessage='いいねしたレビューがありません' />
+          <TabContent
+            title='いいねしたレビュー'
+            emptyMessage='いいねしたレビューがありません'
+            content={
+              likedReviewsCount > 0 && (
+                <Text style={styles.cardContent}>{likedReviewsCount}件のいいね</Text>
+              )
+            }
+          />
         );
-
-      case 'preferences':
-        return <TabContent title='好みチェック' emptyMessage='チェックした好みがありません' />;
 
       default:
         return null;
@@ -134,20 +142,6 @@ export default function ReviewHistoryScreen() {
         >
           <Text style={[styles.tabButtonText, activeTab === 'likes' && styles.tabButtonTextActive]}>
             👍 いいね
-          </Text>
-        </Pressable>
-
-        <Pressable
-          onPress={() => setActiveTab('preferences')}
-          style={[styles.tabButton, activeTab === 'preferences' && styles.tabButtonActive]}
-        >
-          <Text
-            style={[
-              styles.tabButtonText,
-              activeTab === 'preferences' && styles.tabButtonTextActive,
-            ]}
-          >
-            ✓ 好み
           </Text>
         </Pressable>
       </View>
