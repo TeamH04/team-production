@@ -5,18 +5,18 @@ import (
 	"time"
 
 	"github.com/TeamH04/team-production/apps/backend/internal/apperr"
-	"github.com/TeamH04/team-production/apps/backend/internal/domain"
+	"github.com/TeamH04/team-production/apps/backend/internal/domain/entity"
 	"github.com/TeamH04/team-production/apps/backend/internal/usecase/input"
 	"github.com/TeamH04/team-production/apps/backend/internal/usecase/output"
 )
 
 // StoreUseCase はストアに関するビジネスロジックを提供します
 type StoreUseCase interface {
-	GetAllStores(ctx context.Context) ([]domain.Store, error)
-	GetStoreByID(ctx context.Context, id int64) (*domain.Store, error)
-	CreateStore(ctx context.Context, input input.CreateStoreInput) (*domain.Store, error)
-	UpdateStore(ctx context.Context, id int64, input input.UpdateStoreInput) (*domain.Store, error)
-	DeleteStore(ctx context.Context, id int64) error
+	GetAllStores(ctx context.Context) ([]entity.Store, error)
+	GetStoreByID(ctx context.Context, id string) (*entity.Store, error)
+	CreateStore(ctx context.Context, input input.CreateStoreInput) (*entity.Store, error)
+	UpdateStore(ctx context.Context, id string, input input.UpdateStoreInput) (*entity.Store, error)
+	DeleteStore(ctx context.Context, id string) error
 }
 
 type storeUseCase struct {
@@ -30,11 +30,11 @@ func NewStoreUseCase(storeRepo output.StoreRepository) StoreUseCase {
 	}
 }
 
-func (uc *storeUseCase) GetAllStores(ctx context.Context) ([]domain.Store, error) {
+func (uc *storeUseCase) GetAllStores(ctx context.Context) ([]entity.Store, error) {
 	return uc.storeRepo.FindAll(ctx)
 }
 
-func (uc *storeUseCase) GetStoreByID(ctx context.Context, id int64) (*domain.Store, error) {
+func (uc *storeUseCase) GetStoreByID(ctx context.Context, id string) (*entity.Store, error) {
 	store, err := uc.storeRepo.FindByID(ctx, id)
 	if err != nil {
 		if apperr.IsCode(err, apperr.CodeNotFound) {
@@ -45,25 +45,22 @@ func (uc *storeUseCase) GetStoreByID(ctx context.Context, id int64) (*domain.Sto
 	return store, nil
 }
 
-func (uc *storeUseCase) CreateStore(ctx context.Context, in input.CreateStoreInput) (*domain.Store, error) {
+func (uc *storeUseCase) CreateStore(ctx context.Context, in input.CreateStoreInput) (*entity.Store, error) {
 	// バリデーション
-	if in.Name == "" || in.Address == "" || in.ThumbnailURL == "" {
+	if in.Name == "" || in.Address == "" {
 		return nil, ErrInvalidInput
 	}
-	if in.Latitude == 0.0 || in.Longitude == 0.0 {
-		return nil, ErrInvalidCoordinates
-	}
 
-	store := &domain.Store{
+	store := &entity.Store{
 		Name:            in.Name,
 		Address:         in.Address,
-		ThumbnailURL:    in.ThumbnailURL,
+		ThumbnailFileID: in.ThumbnailFileID,
 		OpenedAt:        in.OpenedAt,
 		Description:     in.Description,
-		LandscapePhotos: append([]string(nil), in.LandscapePhotos...),
 		OpeningHours:    in.OpeningHours,
 		Latitude:        in.Latitude,
 		Longitude:       in.Longitude,
+		GoogleMapURL:    in.GoogleMapURL,
 		IsApproved:      false,
 	}
 
@@ -74,7 +71,7 @@ func (uc *storeUseCase) CreateStore(ctx context.Context, in input.CreateStoreInp
 	return store, nil
 }
 
-func (uc *storeUseCase) UpdateStore(ctx context.Context, id int64, in input.UpdateStoreInput) (*domain.Store, error) {
+func (uc *storeUseCase) UpdateStore(ctx context.Context, id string, in input.UpdateStoreInput) (*entity.Store, error) {
 	// 既存のストアを取得
 	store, err := uc.storeRepo.FindByID(ctx, id)
 	if err != nil {
@@ -91,8 +88,8 @@ func (uc *storeUseCase) UpdateStore(ctx context.Context, id int64, in input.Upda
 	if in.Address != nil {
 		store.Address = *in.Address
 	}
-	if in.ThumbnailURL != nil {
-		store.ThumbnailURL = *in.ThumbnailURL
+	if in.ThumbnailFileID != nil {
+		store.ThumbnailFileID = in.ThumbnailFileID
 	}
 	if in.OpenedAt != nil {
 		store.OpenedAt = in.OpenedAt
@@ -103,14 +100,14 @@ func (uc *storeUseCase) UpdateStore(ctx context.Context, id int64, in input.Upda
 	if in.OpeningHours != nil {
 		store.OpeningHours = in.OpeningHours
 	}
-	if len(in.LandscapePhotos) > 0 {
-		store.LandscapePhotos = append([]string(nil), in.LandscapePhotos...)
-	}
 	if in.Latitude != nil {
 		store.Latitude = *in.Latitude
 	}
 	if in.Longitude != nil {
 		store.Longitude = *in.Longitude
+	}
+	if in.GoogleMapURL != nil {
+		store.GoogleMapURL = in.GoogleMapURL
 	}
 	store.UpdatedAt = time.Now()
 
@@ -122,7 +119,7 @@ func (uc *storeUseCase) UpdateStore(ctx context.Context, id int64, in input.Upda
 	return uc.storeRepo.FindByID(ctx, id)
 }
 
-func (uc *storeUseCase) DeleteStore(ctx context.Context, id int64) error {
+func (uc *storeUseCase) DeleteStore(ctx context.Context, id string) error {
 	// 存在確認
 	if _, err := uc.storeRepo.FindByID(ctx, id); err != nil {
 		if apperr.IsCode(err, apperr.CodeNotFound) {

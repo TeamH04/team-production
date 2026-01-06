@@ -2,9 +2,16 @@
 
 BEGIN;
 
+DROP TABLE IF EXISTS public.review_likes CASCADE;
+DROP TABLE IF EXISTS public.review_menu_files CASCADE;
+DROP TABLE IF EXISTS public.review_files CASCADE;
+DROP TABLE IF EXISTS public.review_menus CASCADE;
+DROP TABLE IF EXISTS public.store_files CASCADE;
+DROP TABLE IF EXISTS public.reports CASCADE;
 DROP TABLE IF EXISTS public.reviews CASCADE;
 DROP TABLE IF EXISTS public.favorites CASCADE;
 DROP TABLE IF EXISTS public.menus CASCADE;
+DROP TABLE IF EXISTS public.files CASCADE;
 DROP TABLE IF EXISTS public.stores CASCADE;
 DROP TABLE IF EXISTS public.users CASCADE;
 

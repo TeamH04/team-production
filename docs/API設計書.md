@@ -33,7 +33,7 @@
 | `GET`    | `/api/users/:id/favorites`           | お気に入り店舗一覧を取得             | 進行中 |
 | `POST`   | `/api/users/:id/favorites`           | 店舗をお気に入り登録                 | 進行中 |
 | `DELETE` | `/api/users/:id/favorites/:store_id` | お気に入り解除                       | 進行中 |
-| `GET`    | `/api/users/:id/reviews`             | ユーザーのレビュー一覧を取得         | 未作成 |
+| `GET`    | `/api/users/:id/reviews`             | ユーザーのレビュー一覧を取得         | 完了   |
 
 ---
 
@@ -50,6 +50,8 @@
 | `POST`   | `/api/stores/:id/menus`   | メニュー登録（オーナー用）               | 完了 |
 | `GET`    | `/api/stores/:id/reviews` | 店舗のレビュー一覧取得                   | 完了 |
 | `POST`   | `/api/stores/:id/reviews` | レビュー投稿（ユーザー）                 | 完了 |
+| `POST`   | `/api/reviews/:id/likes`  | レビューへのいいね                       | 完了 |
+| `DELETE` | `/api/reviews/:id/likes`  | レビューのいいね解除                     | 完了 |
 
 ---
 
@@ -77,7 +79,7 @@
 
 | Method | Endpoint            | 概要                                                             | 作成   |
 | :----- | :------------------ | :--------------------------------------------------------------- | :----- |
-| `POST` | `/api/media/upload` | 署名付きURLを発行して、クライアントから直接Storageにアップロード | 未作成 |
+| `POST` | `/api/media/upload` | 署名付きURLを発行して、クライアントから直接Storageにアップロード | 完了   |
 | `GET`  | `/api/media/:id`    | メディア情報（URL, metadata等）を取得                            | 未作成 |
 
 ---
@@ -169,7 +171,7 @@
 **処理の流れ**
 
 1. URLパラメータからユーザーID取得
-2. JSON本文から更新内容（`name`, `gender`, `birthday`, `icon_url`など）を受け取る
+2. JSON本文から更新内容（`name`, `gender`, `birthday`, `icon_url`, `icon_file_id`など）を受け取る
 3. 認証情報を確認（本人チェック）
 4. DBで情報更新
 5. 更新結果をJSONで返す
@@ -277,8 +279,8 @@
 
 1. 店舗ID取得
 2. IDチェック
-3. ページネーション設定
-4. レビュー取得・平均計算
+3. `sort` クエリで並び順を決定（`new` / `liked`）
+4. レビュー取得
 5. JSON返却
 
 ---
@@ -291,9 +293,50 @@
 **処理の流れ**
 
 1. 店舗ID取得
-2. JSON本文受け取り
+2. JSON本文受け取り（`rating`, `content`, `file_ids`）
 3. DB保存
 4. 保存結果を返却
+
+---
+
+#### POST `/api/reviews/:id/likes`
+
+**何をしているAPIか？**  
+レビューにいいねを付けるAPI。
+
+**処理の流れ**
+
+1. レビューID取得
+2. 認証情報からユーザーID取得
+3. 既存のいいねがなければ作成
+4. `204 No Content` を返却
+
+---
+
+#### DELETE `/api/reviews/:id/likes`
+
+**何をしているAPIか？**  
+レビューのいいねを解除するAPI。
+
+**処理の流れ**
+
+1. レビューID取得
+2. 認証情報からユーザーID取得
+3. いいねを削除
+4. `204 No Content` を返却
+
+---
+
+#### POST `/api/media/upload`
+
+**何をしているAPIか？**  
+レビュー画像のアップロード用に署名付きURLを発行するAPI。
+
+**処理の流れ**
+
+1. JSON本文で `store_id` と `files` を受け取る
+2. 署名付きURLを生成
+3. `files` 配列に `file_id` と `upload_url` を返却
 
 ---
 

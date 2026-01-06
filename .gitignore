@@ -67,3 +67,4 @@ app-example
 # ---- Other ----
 reports/
 docs/ESLint_Report.md
+.wtp.yml

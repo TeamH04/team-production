@@ -31,6 +31,9 @@ var (
 	// ErrFavoriteNotFound はお気に入りが見つからない場合のエラー
 	ErrFavoriteNotFound = apperr.New(apperr.CodeNotFound, errors.New("favorite not found"))
 
+	// ErrReviewNotFound はレビューが見つからない場合のエラー
+	ErrReviewNotFound = apperr.New(apperr.CodeNotFound, errors.New("review not found"))
+
 	// ErrReportNotFound は通報が見つからない場合のエラー
 	ErrReportNotFound = apperr.New(apperr.CodeNotFound, errors.New("report not found"))
 

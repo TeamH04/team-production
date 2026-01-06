@@ -3,7 +3,7 @@ package repository
 import (
 	"context"
 
-	"github.com/TeamH04/team-production/apps/backend/internal/domain"
+	"github.com/TeamH04/team-production/apps/backend/internal/domain/entity"
 	"github.com/TeamH04/team-production/apps/backend/internal/repository/model"
 	"github.com/TeamH04/team-production/apps/backend/internal/usecase/output"
 	"gorm.io/gorm"
@@ -18,24 +18,21 @@ func NewStoreRepository(db *gorm.DB) output.StoreRepository {
 	return &storeRepository{db: db}
 }
 
-func (r *storeRepository) FindAll(ctx context.Context) ([]domain.Store, error) {
+func (r *storeRepository) FindAll(ctx context.Context) ([]entity.Store, error) {
 	var stores []model.Store
 	if err := r.db.WithContext(ctx).
 		Preload("Menus").
-		Preload("Reviews").
+		Preload("Reviews.Menus").
+		Preload("Reviews.Files").
 		Order("created_at desc").
 		Find(&stores).Error; err != nil {
 		return nil, mapDBError(err)
 	}
 
-	result := make([]domain.Store, len(stores))
-	for i, s := range stores {
-		result[i] = model.StoreModelToDomain(s)
-	}
-	return result, nil
+	return model.ToEntities[entity.Store, model.Store](stores), nil
 }
 
-func (r *storeRepository) FindPending(ctx context.Context) ([]domain.Store, error) {
+func (r *storeRepository) FindPending(ctx context.Context) ([]entity.Store, error) {
 	var stores []model.Store
 	if err := r.db.WithContext(ctx).
 		Where("is_approved = ?", false).
@@ -44,27 +41,29 @@ func (r *storeRepository) FindPending(ctx context.Context) ([]domain.Store, erro
 		return nil, mapDBError(err)
 	}
 
-	result := make([]domain.Store, len(stores))
-	for i, s := range stores {
-		result[i] = model.StoreModelToDomain(s)
-	}
-	return result, nil
+	return model.ToEntities[entity.Store, model.Store](stores), nil
 }
 
-func (r *storeRepository) FindByID(ctx context.Context, id int64) (*domain.Store, error) {
+func (r *storeRepository) FindByID(ctx context.Context, id string) (*entity.Store, error) {
 	var store model.Store
 	if err := r.db.WithContext(ctx).
 		Preload("Menus").
-		Preload("Reviews").
+		Preload("Reviews.Menus").
+		Preload("Reviews.Files").
 		First(&store, "store_id = ?", id).Error; err != nil {
 		return nil, mapDBError(err)
 	}
-	domainStore := model.StoreModelToDomain(store)
+	domainStore := store.Entity()
 	return &domainStore, nil
 }
 
-func (r *storeRepository) Create(ctx context.Context, store *domain.Store) error {
-	record := model.StoreModelFromDomain(store)
+func (r *storeRepository) Create(ctx context.Context, store *entity.Store) error {
+	record := model.Store{
+		Name:        store.Name,
+		Description: store.Description,
+		Address:     store.Address,
+		IsApproved:  store.IsApproved,
+	}
 	if err := r.db.WithContext(ctx).Create(record).Error; err != nil {
 		return mapDBError(err)
 	}
@@ -74,11 +73,17 @@ func (r *storeRepository) Create(ctx context.Context, store *domain.Store) error
 	return nil
 }
 
-func (r *storeRepository) Update(ctx context.Context, store *domain.Store) error {
-	record := model.StoreModelFromDomain(store)
+func (r *storeRepository) Update(ctx context.Context, store *entity.Store) error {
+	record := model.Store{
+		StoreID:     store.StoreID,
+		Name:        store.Name,
+		Description: store.Description,
+		Address:     store.Address,
+		IsApproved:  store.IsApproved,
+	}
 	return mapDBError(r.db.WithContext(ctx).Model(&model.Store{StoreID: store.StoreID}).Updates(record).Error)
 }
 
-func (r *storeRepository) Delete(ctx context.Context, id int64) error {
+func (r *storeRepository) Delete(ctx context.Context, id string) error {
 	return mapDBError(r.db.WithContext(ctx).Delete(&model.Store{}, id).Error)
 }

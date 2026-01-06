@@ -1,10 +1,13 @@
 package handlers
 
 import (
-	"context"
-	"fmt"
+	"net/http"
 
-	"github.com/TeamH04/team-production/apps/backend/internal/domain"
+	"github.com/labstack/echo/v4"
+
+	"github.com/TeamH04/team-production/apps/backend/internal/presentation"
+	"github.com/TeamH04/team-production/apps/backend/internal/presentation/presenter"
+	"github.com/TeamH04/team-production/apps/backend/internal/presentation/requestcontext"
 	"github.com/TeamH04/team-production/apps/backend/internal/usecase"
 	"github.com/TeamH04/team-production/apps/backend/internal/usecase/input"
 )
@@ -13,8 +16,6 @@ type AuthHandler struct {
 	authUseCase input.AuthUseCase
 	userUseCase input.UserUseCase
 }
-
-var _ AuthController = (*AuthHandler)(nil)
 
 type SignupCommand struct {
 	Email    string
@@ -54,26 +55,93 @@ func NewAuthHandler(authUseCase input.AuthUseCase, userUseCase input.UserUseCase
 	}
 }
 
-func (h *AuthHandler) GetMe(ctx context.Context, userID string) (*domain.User, error) {
-	if userID == "" {
-		return nil, fmt.Errorf("%w: user_id is required", usecase.ErrInvalidInput)
-	}
-
-	return h.userUseCase.GetUserByID(ctx, userID)
-}
-
-func (h *AuthHandler) UpdateRole(ctx context.Context, userID string, cmd UpdateRoleCommand) error {
-	if userID == "" {
+func (h *AuthHandler) GetMe(c echo.Context) error {
+	userFromCtx, err := requestcontext.GetUserFromContext(c.Request().Context())
+	if err != nil {
 		return usecase.ErrUnauthorized
 	}
 
-	return h.userUseCase.UpdateUserRole(ctx, userID, cmd.Role)
+	user, err := h.userUseCase.FindByID(c.Request().Context(), userFromCtx.UserID)
+	if err != nil {
+		return err
+	}
+	resp := presenter.NewUserResponse(user)
+	return c.JSON(http.StatusOK, resp)
 }
 
-func (h *AuthHandler) Signup(ctx context.Context, cmd SignupCommand) (*domain.User, error) {
-	return h.authUseCase.Signup(ctx, cmd.toInput())
+func (h *AuthHandler) UpdateRole(c echo.Context) error {
+	user, err := requestcontext.GetUserFromContext(c.Request().Context())
+	if err != nil {
+		return usecase.ErrUnauthorized
+	}
+
+	var dto updateRoleDTO
+	if err := c.Bind(&dto); err != nil {
+		return presentation.NewBadRequest("invalid JSON")
+	}
+
+	if err := h.userUseCase.UpdateUserRole(c.Request().Context(), user.UserID, dto.toCommand().Role); err != nil {
+		return err
+	}
+	return c.JSON(http.StatusOK, presentation.NewMessageResponse("role updated successfully"))
 }
 
-func (h *AuthHandler) Login(ctx context.Context, cmd LoginCommand) (*input.AuthSession, error) {
-	return h.authUseCase.Login(ctx, cmd.toInput())
+func (h *AuthHandler) Signup(c echo.Context) error {
+	var dto signupDTO
+	if err := c.Bind(&dto); err != nil {
+		return presentation.NewBadRequest("invalid JSON")
+	}
+
+	user, err := h.authUseCase.Signup(c.Request().Context(), dto.toCommand().toInput())
+	if err != nil {
+		return err
+	}
+	resp := presenter.NewUserResponse(*user)
+	return c.JSON(http.StatusCreated, resp)
+}
+
+func (h *AuthHandler) Login(c echo.Context) error {
+	var dto loginDTO
+	if err := c.Bind(&dto); err != nil {
+		return presentation.NewBadRequest("invalid JSON")
+	}
+	session, err := h.authUseCase.Login(c.Request().Context(), dto.toCommand().toInput())
+	if err != nil {
+		return err
+	}
+	return c.JSON(http.StatusOK, presenter.NewAuthSessionResponse(session))
+}
+
+type signupDTO struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
+	Name     string `json:"name"`
+}
+
+func (dto signupDTO) toCommand() SignupCommand {
+	return SignupCommand{
+		Email:    dto.Email,
+		Password: dto.Password,
+		Name:     dto.Name,
+	}
+}
+
+type loginDTO struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
+}
+
+func (dto loginDTO) toCommand() LoginCommand {
+	return LoginCommand{
+		Email:    dto.Email,
+		Password: dto.Password,
+	}
+}
+
+type updateRoleDTO struct {
+	Role string `json:"role"`
+}
+
+func (dto updateRoleDTO) toCommand() UpdateRoleCommand {
+	return UpdateRoleCommand{Role: dto.Role}
 }

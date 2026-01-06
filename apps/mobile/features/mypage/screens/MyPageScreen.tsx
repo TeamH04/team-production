@@ -1,11 +1,14 @@
-﻿import { useRouter } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Image } from 'expo-image';
 
 import { useFavorites } from '@/features/favorites/FavoritesContext';
 import { useReviews } from '@/features/reviews/ReviewsContext';
 import { useUser } from '@/features/user/UserContext';
+import { getCurrentUser } from '@/lib/auth';
 import { getSupabase } from '@/lib/supabase';
+import { getPublicStorageUrl } from '@/lib/storage';
 import { SHOPS, type Shop } from '@team/shop-core';
 
 // 画面で使う色をまとめて管理
@@ -21,9 +24,6 @@ const palette = {
   secondarySurface: '#F3F4F6',
   shadow: '#0f172a',
   surface: '#FFFFFF',
-  dangerBg: '#DC2626',
-  dangerBorder: '#B91C1C',
-  dangerText: '#FFFFFF',
 } as const;
 
 const TAB_BAR_SPACING = 125;
@@ -36,11 +36,37 @@ export default function MyPageScreen() {
   // お気に入り店舗IDの一覧を取得
   const { favorites } = useFavorites();
 
-  // 店舗ごとのレビュー一覧と削除関数を取得
-  const { reviewsByShop, deleteReview } = useReviews();
+  // 店舗ごとのレビュー一覧と取得関数を取得
+  const { reviewsByShop, loadUserReviews } = useReviews();
 
   // ユーザー情報
   const { profile } = useUser();
+
+  const [reviewLoading, setReviewLoading] = useState(false);
+  const [reviewAuthRequired, setReviewAuthRequired] = useState(false);
+
+  useFocusEffect(
+    useCallback(() => {
+      let active = true;
+      setReviewLoading(true);
+      setReviewAuthRequired(false);
+
+      loadUserReviews()
+        .catch(err => {
+          const message = err instanceof Error ? err.message : 'Unknown error';
+          if (message === 'auth_required' && active) {
+            setReviewAuthRequired(true);
+          }
+        })
+        .finally(() => {
+          if (active) setReviewLoading(false);
+        });
+
+      return () => {
+        active = false;
+      };
+    }, [loadUserReviews])
+  );
 
   // お気に入り店舗の情報を配列で作る（表示用）
   const favoriteShops = useMemo<Shop[]>(() => {
@@ -64,8 +90,12 @@ export default function MyPageScreen() {
     }
   }, [router]);
 
-  // どのレビューが展開（編集/削除ボタンが見える状態）か管理する
-  const [expandedReviewId, setExpandedReviewId] = useState<string | null>(null);
+  const handleReviewLogin = useCallback(async () => {
+    const user = await getCurrentUser();
+    if (!user) {
+      router.push('/login');
+    }
+  }, [router]);
 
   // 画面の描画
   return (
@@ -137,7 +167,18 @@ export default function MyPageScreen() {
         <Text style={styles.sectionSub}>最近投稿したレビュー</Text>
       </View>
 
-      {reviews.length === 0 ? (
+      {reviewAuthRequired ? (
+        <View style={styles.emptyBox}>
+          <Text style={styles.emptyText}>レビュー履歴を見るにはログインが必要です</Text>
+          <Pressable style={styles.secondaryBtn} onPress={handleReviewLogin}>
+            <Text style={styles.secondaryBtnText}>ログイン</Text>
+          </Pressable>
+        </View>
+      ) : reviewLoading ? (
+        <View style={styles.emptyBox}>
+          <Text style={styles.emptyText}>レビューを読み込み中...</Text>
+        </View>
+      ) : reviews.length === 0 ? (
         // レビューが無い場合
         <View style={styles.emptyBox}>
           <Text style={styles.emptyText}>まだレビューがありません</Text>
@@ -147,21 +188,16 @@ export default function MyPageScreen() {
         <View>
           {reviews.map(review => {
             const shop = SHOPS.find(s => s.id === review.shopId); // レビューの店舗情報取得
-            const isExpanded = expandedReviewId === review.id; // このレビューが展開中かどうか
 
             return (
               <View key={review.id} style={styles.cardShadow}>
                 <View style={styles.card}>
-                  {/* レビューヘッダー（店舗名 ＋ メニューボタン） */}
+                  {/* レビューヘッダー */}
                   <View style={styles.reviewHeader}>
                     <Text style={styles.rowCardTitle}>{shop?.name ?? '不明な店舗'}</Text>
-
-                    <Pressable
-                      onPress={() => setExpandedReviewId(isExpanded ? null : review.id)}
-                      style={styles.menuBtn}
-                    >
-                      <Text style={styles.menuBtnText}>･･･</Text>
-                    </Pressable>
+                    <View style={styles.likePill}>
+                      <Text style={styles.likeText}>いいね {review.likesCount}</Text>
+                    </View>
                   </View>
 
                   {/* レビューのメタ情報（評価・日付）と本文 */}
@@ -169,45 +205,24 @@ export default function MyPageScreen() {
                     ★ {review.rating} │ {new Date(review.createdAt).toLocaleDateString('ja-JP')}
                   </Text>
 
-                  {review.menuItemName ? (
-                    <Text style={styles.rowCardSub}>メニュー: {review.menuItemName}</Text>
-                  ) : null}
-
                   {review.comment ? <Text style={styles.reviewText}>{review.comment}</Text> : null}
 
-                  {/* レビューフッター（編集・削除のアクション：展開時のみ表示） */}
-                  {isExpanded ? (
-                    <View style={styles.reviewFooter}>
-                      <Pressable
-                        onPress={() => {
-                          // 編集機能は未実装のため、"coming soon" メッセージを表示
-                          Alert.alert('編集中', '編集機能は近日公開予定です');
-                        }}
-                        style={[styles.primaryBtn, styles.reviewFooterPrimaryBtn]}
-                      >
-                        <Text style={styles.primaryBtnText}>編集</Text>
-                      </Pressable>
-
-                      <Pressable
-                        onPress={() =>
-                          Alert.alert('削除の確認', 'このレビューを削除してもよいですか？', [
-                            { text: 'キャンセル', style: 'cancel' },
-                            {
-                              text: '削除',
-                              style: 'destructive',
-                              onPress: () => {
-                                deleteReview(review.id);
-                                setExpandedReviewId(null);
-                              },
-                            },
-                          ])
-                        }
-                        style={[styles.commonBtn, styles.deleteBtn]}
-                      >
-                        <Text style={[styles.commonBtnText, styles.deleteBtnText]}>削除</Text>
-                      </Pressable>
+                  {review.files.length > 0 && (
+                    <View style={styles.reviewImages}>
+                      {review.files.map(file => {
+                        const url = getPublicStorageUrl(file.objectKey);
+                        if (!url) return null;
+                        return (
+                          <Image
+                            key={file.id}
+                            source={{ uri: url }}
+                            style={styles.reviewImage}
+                            contentFit='cover'
+                          />
+                        );
+                      })}
                     </View>
-                  ) : null}
+                  )}
                 </View>
               </View>
             );
@@ -244,24 +259,7 @@ const styles = StyleSheet.create({
     shadowRadius: 12,
   },
 
-  // 共通ボタンの基本スタイル（編集・削除 等で共用）
-  commonBtn: {
-    borderRadius: 10,
-    borderWidth: 1,
-    flex: 1,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-  },
-  commonBtnText: { fontWeight: '700', textAlign: 'center' },
-
   content: { padding: 16, paddingBottom: TAB_BAR_SPACING },
-
-  // 削除ボタン固有の色など
-  deleteBtn: {
-    backgroundColor: palette.dangerBg,
-    borderColor: palette.dangerBorder,
-  },
-  deleteBtnText: { color: palette.dangerText },
 
   // 空状態表示（お気に入りやレビューが無い時）
   emptyBox: {
@@ -271,7 +269,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 24,
   },
-  emptyText: { color: palette.mutedText },
+  emptyText: { color: palette.mutedText, textAlign: 'center' },
+
+  likePill: {
+    backgroundColor: palette.secondarySurface,
+    borderColor: palette.border,
+    borderRadius: 999,
+    borderWidth: 1,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
+  likeText: { color: palette.mutedText, fontSize: 12, fontWeight: '700' },
 
   // ログアウトボタン
   logoutBtn: {
@@ -282,10 +290,6 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
   },
   logoutText: { color: palette.accent, fontSize: 14, fontWeight: '600' },
-
-  // 小さなメニューボタン（レビュー右上の「･･･」）
-  menuBtn: { paddingHorizontal: 8, paddingVertical: 4 },
-  menuBtnText: { color: palette.mutedText, fontSize: 18, fontWeight: '700' },
 
   // プライマリボタン（プロフィール編集 等）
   primaryBtn: {
@@ -308,17 +312,16 @@ const styles = StyleSheet.create({
   profileRow: { alignItems: 'center', flexDirection: 'row' },
   profileSub: { color: palette.mutedText, marginTop: 4 },
 
-  // レビューフッター（編集・削除ボタンを横並びで配置）
-  reviewFooter: { alignItems: 'center', flexDirection: 'row', marginTop: 12 },
-  reviewFooterPrimaryBtn: { flex: 1, marginRight: 12, marginTop: 0 },
-
-  // レビューヘッダー（店舗名＋メニューボタンの横並び）
+  // レビューヘッダー（店舗名＋いいねの横並び）
   reviewHeader: {
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginBottom: 4,
   },
+
+  reviewImage: { borderRadius: 12, height: 88, width: 88 },
+  reviewImages: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: 12 },
 
   // レビュー本文まわり
   reviewText: { color: palette.primary, marginTop: 8 },
@@ -341,7 +344,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 10,
   },
-  secondaryBtnText: { color: palette.primary, fontWeight: '700' },
+  secondaryBtnText: { color: palette.primary, fontWeight: '700', textAlign: 'center' },
 
   // セクションヘッダー（タイトル＋サブ）周り
   sectionHeader: { marginBottom: 8, marginTop: 8, paddingHorizontal: 4 },

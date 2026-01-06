@@ -1,9 +1,13 @@
 package handlers
 
 import (
-	"context"
+	"net/http"
 
-	"github.com/TeamH04/team-production/apps/backend/internal/domain"
+	"github.com/labstack/echo/v4"
+
+	"github.com/TeamH04/team-production/apps/backend/internal/presentation"
+	"github.com/TeamH04/team-production/apps/backend/internal/presentation/presenter"
+	"github.com/TeamH04/team-production/apps/backend/internal/presentation/requestcontext"
 	"github.com/TeamH04/team-production/apps/backend/internal/usecase"
 	"github.com/TeamH04/team-production/apps/backend/internal/usecase/input"
 )
@@ -12,10 +16,8 @@ type FavoriteHandler struct {
 	favoriteUseCase input.FavoriteUseCase
 }
 
-var _ FavoriteController = (*FavoriteHandler)(nil)
-
 type AddFavoriteCommand struct {
-	StoreID int64
+	StoreID string
 }
 
 func NewFavoriteHandler(favoriteUseCase input.FavoriteUseCase) *FavoriteHandler {
@@ -24,21 +26,50 @@ func NewFavoriteHandler(favoriteUseCase input.FavoriteUseCase) *FavoriteHandler 
 	}
 }
 
-func (h *FavoriteHandler) GetUserFavorites(ctx context.Context, userID string) ([]domain.Favorite, error) {
-	return h.favoriteUseCase.GetUserFavorites(ctx, userID)
+func (h *FavoriteHandler) GetUserFavorites(c echo.Context) error {
+	favorites, err := h.favoriteUseCase.GetUserFavorites(c.Request().Context(), c.Param("id"))
+	if err != nil {
+		return err
+	}
+	return c.JSON(http.StatusOK, presenter.NewFavoriteResponses(favorites))
 }
 
-func (h *FavoriteHandler) AddFavorite(ctx context.Context, userID, requesterID string, cmd AddFavoriteCommand) (*domain.Favorite, error) {
-	if userID != requesterID {
-		return nil, usecase.ErrForbidden
+func (h *FavoriteHandler) AddFavorite(c echo.Context) error {
+	user, err := requestcontext.GetUserFromContext(c.Request().Context())
+	if err != nil {
+		return usecase.ErrUnauthorized
 	}
 
-	return h.favoriteUseCase.AddFavorite(ctx, userID, cmd.StoreID)
+	var dto addFavoriteDTO
+	if err := c.Bind(&dto); err != nil {
+		return presentation.NewBadRequest("invalid JSON")
+	}
+
+	favorite, err := h.favoriteUseCase.AddFavorite(c.Request().Context(), user.UserID, dto.StoreID)
+	if err != nil {
+		return err
+	}
+	resp := presenter.NewFavoriteResponse(*favorite)
+	return c.JSON(http.StatusCreated, resp)
 }
 
-func (h *FavoriteHandler) RemoveFavorite(ctx context.Context, userID, requesterID string, storeID int64) error {
-	if userID != requesterID {
-		return usecase.ErrForbidden
+func (h *FavoriteHandler) RemoveFavorite(c echo.Context) error {
+	user, err := requestcontext.GetUserFromContext(c.Request().Context())
+	if err != nil {
+		return usecase.ErrUnauthorized
 	}
-	return h.favoriteUseCase.RemoveFavorite(ctx, userID, storeID)
+
+	storeID, err := parseUUIDParam(c, "store_id", "invalid store_id")
+	if err != nil {
+		return err
+	}
+
+	if err := h.favoriteUseCase.RemoveFavorite(c.Request().Context(), user.UserID, storeID); err != nil {
+		return err
+	}
+	return c.NoContent(http.StatusNoContent)
+}
+
+type addFavoriteDTO struct {
+	StoreID string `json:"store_id"`
 }

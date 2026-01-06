@@ -16,6 +16,8 @@ import {
 
 import { useFavorites } from '@/features/favorites/FavoritesContext';
 import { useReviews } from '@/features/reviews/ReviewsContext';
+import { type ReviewSort } from '@/lib/api';
+import { getPublicStorageUrl } from '@/lib/storage';
 import { SHOPS, type Shop } from '@team/shop-core';
 
 const palette = {
@@ -25,6 +27,9 @@ const palette = {
   border: '#E5E7EB',
   favoriteActive: '#DC2626',
   heroPlaceholder: '#E5E7EB',
+  likeActiveBg: '#DBEAFE',
+  likeActiveBorder: '#93C5FD',
+  likeActiveText: '#1D4ED8',
   muted: '#6B7280',
   primary: '#111827',
   primaryOnAccent: '#FFFFFF',
@@ -49,8 +54,9 @@ export default function ShopDetailScreen() {
   const router = useRouter();
   const navigation = useNavigation();
   const { isFavorite, toggleFavorite } = useFavorites();
-  const { getReviews } = useReviews();
+  const { getReviews, loadReviews, toggleLike, loadingByShop } = useReviews();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [reviewSort, setReviewSort] = useState<ReviewSort>('new');
 
   const shop = useMemo(() => SHOPS.find(s => s.id === id), [id]);
 
@@ -68,10 +74,40 @@ export default function ShopDetailScreen() {
     }, [navigation])
   );
 
+  useFocusEffect(
+    useCallback(() => {
+      if (!id) return;
+      loadReviews(id, reviewSort).catch(err => {
+        console.warn('Failed to load reviews', err);
+      });
+    }, [id, loadReviews, reviewSort])
+  );
+
   const isFav = id ? isFavorite(id) : false;
   const reviews = id ? getReviews(id) : [];
+  const isReviewsLoading = id ? loadingByShop[id] : false;
   const imageUrls = shop?.imageUrls;
   const flatListRef = useRef<FlatList>(null);
+
+  const handleToggleLike = useCallback(
+    async (reviewId: string) => {
+      if (!shop) return;
+      try {
+        await toggleLike(shop.id, reviewId);
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Unknown error';
+        if (message === 'auth_required') {
+          Alert.alert('ログインが必要です', 'いいねにはログインが必要です。', [
+            { text: 'キャンセル', style: 'cancel' },
+            { text: 'ログイン', onPress: () => router.push('/login') },
+          ]);
+          return;
+        }
+        Alert.alert('いいねに失敗しました', message);
+      }
+    },
+    [router, shop, toggleLike]
+  );
 
   const scrollToImage = (index: number) => {
     flatListRef.current?.scrollToIndex({ index, animated: true });
@@ -187,7 +223,7 @@ export default function ShopDetailScreen() {
               style={({ pressed }) => [
                 styles.shareBtn,
                 pressed && styles.btnPressed,
-                !webBaseUrl && { opacity: 0.4 },
+                !webBaseUrl && styles.shareBtnDisabled,
               ]}
             >
               <Ionicons name='share-outline' size={22} color={palette.muted} />
@@ -234,6 +270,25 @@ export default function ShopDetailScreen() {
           <Text style={styles.sectionSub}>みんなの感想や体験談</Text>
         </View>
 
+        <View style={styles.sortRow}>
+          <Pressable
+            onPress={() => setReviewSort('new')}
+            style={[styles.sortPill, reviewSort === 'new' && styles.sortPillActive]}
+          >
+            <Text style={[styles.sortText, reviewSort === 'new' && styles.sortTextActive]}>
+              新しい順
+            </Text>
+          </Pressable>
+          <Pressable
+            onPress={() => setReviewSort('liked')}
+            style={[styles.sortPill, reviewSort === 'liked' && styles.sortPillActive]}
+          >
+            <Text style={[styles.sortText, reviewSort === 'liked' && styles.sortTextActive]}>
+              高評価順
+            </Text>
+          </Pressable>
+        </View>
+
         <Pressable
           style={styles.primaryBtn}
           onPress={() => {
@@ -244,7 +299,11 @@ export default function ShopDetailScreen() {
           <Text style={styles.primaryBtnText}>レビューを書く</Text>
         </Pressable>
 
-        {reviews.length === 0 ? (
+        {isReviewsLoading ? (
+          <View style={[styles.card, styles.cardShadow]}>
+            <Text style={styles.muted}>レビューを読み込み中...</Text>
+          </View>
+        ) : reviews.length === 0 ? (
           <View style={[styles.card, styles.cardShadow]}>
             <Text style={styles.muted}>
               まだレビューがありません。最初のレビューを投稿しましょう！
@@ -253,13 +312,40 @@ export default function ShopDetailScreen() {
         ) : (
           reviews.map(review => (
             <View key={review.id} style={[styles.card, styles.cardShadow]}>
-              <Text style={styles.reviewTitle}>
-                ★ {review.rating} ・ {new Date(review.createdAt).toLocaleDateString('ja-JP')}
-              </Text>
-              {review.menuItemName ? (
-                <Text style={styles.muted}>メニュー: {review.menuItemName}</Text>
-              ) : null}
+              <View style={styles.reviewHeaderRow}>
+                <Text style={styles.reviewTitle}>
+                  ★ {review.rating} ・ {new Date(review.createdAt).toLocaleDateString('ja-JP')}
+                </Text>
+                <Pressable
+                  onPress={() => handleToggleLike(review.id)}
+                  style={[styles.likeButton, review.likedByMe && styles.likeButtonActive]}
+                >
+                  <Text style={[styles.likeText, review.likedByMe && styles.likeTextActive]}>
+                    いいね {review.likesCount}
+                  </Text>
+                </Pressable>
+              </View>
               {review.comment ? <Text style={styles.reviewBody}>{review.comment}</Text> : null}
+              {review.files.length > 0 && (
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  style={styles.reviewFiles}
+                >
+                  {review.files.map(file => {
+                    const url = getPublicStorageUrl(file.objectKey);
+                    if (!url) return null;
+                    return (
+                      <Image
+                        key={file.id}
+                        source={{ uri: url }}
+                        style={styles.reviewImage}
+                        contentFit='cover'
+                      />
+                    );
+                  })}
+                </ScrollView>
+              )}
             </View>
           ))
         )}
@@ -335,6 +421,20 @@ const styles = StyleSheet.create({
   },
   hero: { backgroundColor: palette.heroPlaceholder, height: 220, width: SCREEN_WIDTH },
   heroContainer: { marginBottom: 0, position: 'relative' },
+  likeButton: {
+    backgroundColor: palette.secondarySurface,
+    borderColor: palette.border,
+    borderRadius: 999,
+    borderWidth: 1,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
+  likeButtonActive: {
+    backgroundColor: palette.likeActiveBg,
+    borderColor: palette.likeActiveBorder,
+  },
+  likeText: { color: palette.muted, fontSize: 12, fontWeight: '600' },
+  likeTextActive: { color: palette.likeActiveText },
   meta: { color: palette.muted, marginTop: 6 },
   muted: { color: palette.muted },
   paginationContainer: {
@@ -363,6 +463,18 @@ const styles = StyleSheet.create({
   },
   primaryBtnText: { color: palette.primaryOnAccent, fontWeight: '700', textAlign: 'center' },
   reviewBody: { color: palette.primary, marginTop: 8 },
+  reviewFiles: { marginTop: 12 },
+  reviewHeaderRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  reviewImage: {
+    borderRadius: 12,
+    height: 88,
+    marginRight: 10,
+    width: 88,
+  },
   reviewTitle: { color: palette.primary, fontWeight: '700' },
   screen: { backgroundColor: palette.background, flex: 1 },
   secondaryBtn: {
@@ -382,6 +494,23 @@ const styles = StyleSheet.create({
     marginLeft: 8,
     padding: 4,
   },
+  shareBtnDisabled: { opacity: 0.4 },
+  sortPill: {
+    backgroundColor: palette.secondarySurface,
+    borderColor: palette.border,
+    borderRadius: 999,
+    borderWidth: 1,
+    marginRight: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
+  sortPillActive: {
+    backgroundColor: palette.accent,
+    borderColor: palette.accent,
+  },
+  sortRow: { flexDirection: 'row', marginBottom: 8 },
+  sortText: { color: palette.muted, fontSize: 12, fontWeight: '600' },
+  sortTextActive: { color: palette.primaryOnAccent },
   tagPill: {
     backgroundColor: palette.tagSurface,
     borderRadius: 999,

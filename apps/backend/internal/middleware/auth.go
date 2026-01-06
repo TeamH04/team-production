@@ -8,10 +8,19 @@ import (
 	"github.com/TeamH04/team-production/apps/backend/internal/presentation"
 	"github.com/TeamH04/team-production/apps/backend/internal/presentation/requestcontext"
 	"github.com/TeamH04/team-production/apps/backend/internal/security"
+	"github.com/TeamH04/team-production/apps/backend/internal/usecase/input"
 )
 
+type AuthMiddleware struct {
+	userUC input.UserUseCase
+}
+
+func NewAuthMiddleware(userUC input.UserUseCase) *AuthMiddleware {
+	return &AuthMiddleware{userUC}
+}
+
 // JWTAuth はJWT認証を行うミドルウェア
-func JWTAuth(verifier security.TokenVerifier) echo.MiddlewareFunc {
+func (m *AuthMiddleware) JWTAuth(verifier security.TokenVerifier) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
 			// Authorizationヘッダーを取得
@@ -33,7 +42,12 @@ func JWTAuth(verifier security.TokenVerifier) echo.MiddlewareFunc {
 				return presentation.NewUnauthorized(err.Error())
 			}
 
-			requestcontext.SetUser(c, claims.UserID, claims.Role)
+			user, err := m.userUC.FindByID(c.Request().Context(), claims.UserID)
+			if err != nil {
+				return presentation.NewUnauthorized("user not found")
+			}
+
+			requestcontext.SetToContext(c, user, claims.Role)
 
 			return next(c)
 		}
@@ -41,12 +55,12 @@ func JWTAuth(verifier security.TokenVerifier) echo.MiddlewareFunc {
 }
 
 // RequireRole は指定されたロールを持つユーザーのみアクセスを許可するミドルウェア
-func RequireRole(roles ...string) echo.MiddlewareFunc {
+func (m *AuthMiddleware) RequireRole(roles ...string) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
 			// コンテキストからロールを取得
-			userRole := requestcontext.UserRole(c)
-			if userRole == "" {
+			userRole, err := requestcontext.GetUserRoleFromContext(c.Request().Context())
+			if err != nil {
 				return presentation.NewForbidden("role information not found")
 			}
 
@@ -70,7 +84,7 @@ func RequireRole(roles ...string) echo.MiddlewareFunc {
 
 // OptionalAuth は認証をオプションにするミドルウェア
 // 認証情報があれば設定し、なければスキップ
-func OptionalAuth(verifier security.TokenVerifier) echo.MiddlewareFunc {
+func (m *AuthMiddleware) OptionalAuth(verifier security.TokenVerifier) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
 			auth := c.Request().Header.Get("Authorization")
@@ -80,7 +94,10 @@ func OptionalAuth(verifier security.TokenVerifier) echo.MiddlewareFunc {
 					token := parts[1]
 					if verifier != nil {
 						if claims, err := verifier.Verify(token); err == nil {
-							requestcontext.SetUser(c, claims.UserID, claims.Role)
+							user, err := m.userUC.FindByID(c.Request().Context(), claims.UserID)
+							if err == nil {
+								requestcontext.SetToContext(c, user, claims.Role)
+							}
 						}
 					}
 				}

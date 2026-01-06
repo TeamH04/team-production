@@ -1,9 +1,13 @@
 package handlers
 
 import (
-	"context"
+	"net/http"
 
-	"github.com/TeamH04/team-production/apps/backend/internal/domain"
+	"github.com/labstack/echo/v4"
+
+	"github.com/TeamH04/team-production/apps/backend/internal/presentation"
+	"github.com/TeamH04/team-production/apps/backend/internal/presentation/presenter"
+	"github.com/TeamH04/team-production/apps/backend/internal/presentation/requestcontext"
 	"github.com/TeamH04/team-production/apps/backend/internal/usecase"
 	"github.com/TeamH04/team-production/apps/backend/internal/usecase/input"
 )
@@ -11,8 +15,6 @@ import (
 type ReportHandler struct {
 	reportUseCase input.ReportUseCase
 }
-
-var _ ReportController = (*ReportHandler)(nil)
 
 type CreateReportCommand struct {
 	TargetType string
@@ -35,10 +37,35 @@ func NewReportHandler(reportUseCase input.ReportUseCase) *ReportHandler {
 	}
 }
 
-func (h *ReportHandler) CreateReport(ctx context.Context, userID string, cmd CreateReportCommand) (*domain.Report, error) {
-	if userID == "" {
-		return nil, usecase.ErrUnauthorized
+func (h *ReportHandler) CreateReport(c echo.Context) error {
+	user, err := requestcontext.GetUserFromContext(c.Request().Context())
+	if err != nil {
+		return usecase.ErrUnauthorized
 	}
 
-	return h.reportUseCase.CreateReport(ctx, cmd.toInput(userID))
+	var dto createReportDTO
+	if err := c.Bind(&dto); err != nil {
+		return presentation.NewBadRequest("invalid JSON")
+	}
+
+	report, err := h.reportUseCase.CreateReport(c.Request().Context(), dto.toCommand().toInput(user.UserID))
+	if err != nil {
+		return err
+	}
+	resp := presenter.NewReportResponse(*report)
+	return c.JSON(http.StatusCreated, resp)
+}
+
+type createReportDTO struct {
+	TargetType string `json:"target_type"`
+	TargetID   int64  `json:"target_id"`
+	Reason     string `json:"reason"`
+}
+
+func (dto createReportDTO) toCommand() CreateReportCommand {
+	return CreateReportCommand{
+		TargetType: dto.TargetType,
+		TargetID:   dto.TargetID,
+		Reason:     dto.Reason,
+	}
 }

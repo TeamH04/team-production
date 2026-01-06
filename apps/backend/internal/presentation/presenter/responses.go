@@ -3,21 +3,21 @@ package presenter
 import (
 	"time"
 
-	"github.com/TeamH04/team-production/apps/backend/internal/domain"
+	"github.com/TeamH04/team-production/apps/backend/internal/domain/entity"
 	"github.com/TeamH04/team-production/apps/backend/internal/usecase/input"
 )
 
 type StoreResponse struct {
-	StoreID         int64            `json:"store_id"`
-	ThumbnailURL    string           `json:"thumbnail_url"`
+	StoreID         string           `json:"store_id"`
+	ThumbnailFileID *string          `json:"thumbnail_file_id,omitempty"`
 	Name            string           `json:"name"`
 	OpenedAt        *time.Time       `json:"opened_at,omitempty"`
 	Description     *string          `json:"description,omitempty"`
-	LandscapePhotos []string         `json:"landscape_photos,omitempty"`
 	Address         string           `json:"address"`
 	OpeningHours    *string          `json:"opening_hours,omitempty"`
 	Latitude        float64          `json:"latitude"`
 	Longitude       float64          `json:"longitude"`
+	GoogleMapURL    *string          `json:"google_map_url,omitempty"`
 	IsApproved      bool             `json:"is_approved"`
 	CreatedAt       time.Time        `json:"created_at"`
 	UpdatedAt       time.Time        `json:"updated_at"`
@@ -26,45 +26,48 @@ type StoreResponse struct {
 }
 
 type MenuResponse struct {
-	MenuID      int64     `json:"menu_id"`
-	StoreID     int64     `json:"store_id"`
+	MenuID      string    `json:"menu_id"`
+	StoreID     string    `json:"store_id"`
 	Name        string    `json:"name"`
 	Price       *int      `json:"price,omitempty"`
-	ImageURL    *string   `json:"image_url,omitempty"`
 	Description *string   `json:"description,omitempty"`
 	CreatedAt   time.Time `json:"created_at"`
 }
 
 type ReviewResponse struct {
-	ReviewID  int64     `json:"review_id"`
-	StoreID   int64     `json:"store_id"`
-	UserID    string    `json:"user_id"`
-	MenuID    int64     `json:"menu_id"`
-	Rating    int       `json:"rating"`
-	Content   *string   `json:"content,omitempty"`
-	ImageURLs []string  `json:"image_urls,omitempty"`
-	PostedAt  time.Time `json:"posted_at"`
-	CreatedAt time.Time `json:"created_at"`
+	ReviewID   string         `json:"review_id"`
+	StoreID    string         `json:"store_id"`
+	UserID     string         `json:"user_id"`
+	Rating     int            `json:"rating"`
+	Content    *string        `json:"content,omitempty"`
+	MenuIDs    []string       `json:"menu_ids,omitempty"`
+	Menus      []MenuResponse `json:"menus,omitempty"`
+	FileIDs    []string       `json:"file_ids,omitempty"`
+	Files      []FileResponse `json:"files,omitempty"`
+	LikesCount int            `json:"likes_count"`
+	LikedByMe  bool           `json:"liked_by_me"`
+	CreatedAt  time.Time      `json:"created_at"`
 }
 
 type UserResponse struct {
-	UserID    string     `json:"user_id"`
-	Name      string     `json:"name"`
-	Email     string     `json:"email"`
-	IconURL   *string    `json:"icon_url,omitempty"`
-	Gender    *string    `json:"gender,omitempty"`
-	Birthday  *time.Time `json:"birthday,omitempty"`
-	Role      string     `json:"role"`
-	CreatedAt time.Time  `json:"created_at"`
-	UpdatedAt time.Time  `json:"updated_at"`
+	UserID     string     `json:"user_id"`
+	Name       string     `json:"name"`
+	Email      string     `json:"email"`
+	IconFileID *string    `json:"icon_file_id,omitempty"`
+	IconURL    *string    `json:"icon_url,omitempty"`
+	Provider   string     `json:"provider"`
+	Gender     *string    `json:"gender,omitempty"`
+	Birthday   *time.Time `json:"birthday,omitempty"`
+	Role       string     `json:"role"`
+	CreatedAt  time.Time  `json:"created_at"`
+	UpdatedAt  time.Time  `json:"updated_at"`
 }
 
 type FavoriteResponse struct {
-	FavoriteID int64          `json:"favorite_id"`
-	UserID     string         `json:"user_id"`
-	StoreID    int64          `json:"store_id"`
-	CreatedAt  time.Time      `json:"created_at"`
-	Store      *StoreResponse `json:"store,omitempty"`
+	UserID    string         `json:"user_id"`
+	StoreID   string         `json:"store_id"`
+	CreatedAt time.Time      `json:"created_at"`
+	Store     *StoreResponse `json:"store,omitempty"`
 }
 
 type ReportResponse struct {
@@ -87,6 +90,18 @@ type MediaResponse struct {
 	CreatedAt time.Time `json:"created_at"`
 }
 
+type FileResponse struct {
+	FileID      string    `json:"file_id"`
+	FileKind    string    `json:"file_kind"`
+	FileName    string    `json:"file_name"`
+	FileSize    *int64    `json:"file_size,omitempty"`
+	ObjectKey   string    `json:"object_key"`
+	ContentType *string   `json:"content_type,omitempty"`
+	IsDeleted   bool      `json:"is_deleted"`
+	CreatedAt   time.Time `json:"created_at"`
+	CreatedBy   *string   `json:"created_by,omitempty"`
+}
+
 type AuthSessionResponse struct {
 	AccessToken  string           `json:"access_token"`
 	RefreshToken string           `json:"refresh_token"`
@@ -101,18 +116,18 @@ type AuthUserResponse struct {
 	Role  string `json:"role"`
 }
 
-func NewStoreResponse(store domain.Store) StoreResponse {
+func NewStoreResponse(store entity.Store) StoreResponse {
 	resp := StoreResponse{
 		StoreID:         store.StoreID,
-		ThumbnailURL:    store.ThumbnailURL,
+		ThumbnailFileID: store.ThumbnailFileID,
 		Name:            store.Name,
 		OpenedAt:        store.OpenedAt,
 		Description:     store.Description,
-		LandscapePhotos: append([]string(nil), store.LandscapePhotos...),
 		Address:         store.Address,
 		OpeningHours:    store.OpeningHours,
 		Latitude:        store.Latitude,
 		Longitude:       store.Longitude,
+		GoogleMapURL:    store.GoogleMapURL,
 		IsApproved:      store.IsApproved,
 		CreatedAt:       store.CreatedAt,
 		UpdatedAt:       store.UpdatedAt,
@@ -126,7 +141,7 @@ func NewStoreResponse(store domain.Store) StoreResponse {
 	return resp
 }
 
-func NewStoreResponses(stores []domain.Store) []StoreResponse {
+func NewStoreResponses(stores []entity.Store) []StoreResponse {
 	if len(stores) == 0 {
 		return nil
 	}
@@ -137,19 +152,18 @@ func NewStoreResponses(stores []domain.Store) []StoreResponse {
 	return resp
 }
 
-func NewMenuResponse(menu domain.Menu) MenuResponse {
+func NewMenuResponse(menu entity.Menu) MenuResponse {
 	return MenuResponse{
 		MenuID:      menu.MenuID,
 		StoreID:     menu.StoreID,
 		Name:        menu.Name,
 		Price:       menu.Price,
-		ImageURL:    menu.ImageURL,
 		Description: menu.Description,
 		CreatedAt:   menu.CreatedAt,
 	}
 }
 
-func NewMenuResponses(menus []domain.Menu) []MenuResponse {
+func NewMenuResponses(menus []entity.Menu) []MenuResponse {
 	if len(menus) == 0 {
 		return nil
 	}
@@ -160,21 +174,29 @@ func NewMenuResponses(menus []domain.Menu) []MenuResponse {
 	return resp
 }
 
-func NewReviewResponse(review domain.Review) ReviewResponse {
-	return ReviewResponse{
-		ReviewID:  review.ReviewID,
-		StoreID:   review.StoreID,
-		UserID:    review.UserID,
-		MenuID:    review.MenuID,
-		Rating:    review.Rating,
-		Content:   review.Content,
-		ImageURLs: append([]string(nil), review.ImageURLs...),
-		PostedAt:  review.PostedAt,
-		CreatedAt: review.CreatedAt,
+func NewReviewResponse(review entity.Review) ReviewResponse {
+	resp := ReviewResponse{
+		ReviewID:   review.ReviewID,
+		StoreID:    review.StoreID,
+		UserID:     review.UserID,
+		Rating:     review.Rating,
+		Content:    review.Content,
+		LikesCount: review.LikesCount,
+		LikedByMe:  review.LikedByMe,
+		CreatedAt:  review.CreatedAt,
 	}
+	if len(review.Menus) > 0 {
+		resp.Menus = NewMenuResponses(review.Menus)
+		resp.MenuIDs = collectMenuIDs(review.Menus)
+	}
+	if len(review.Files) > 0 {
+		resp.Files = NewFileResponses(review.Files)
+		resp.FileIDs = collectFileIDs(review.Files)
+	}
+	return resp
 }
 
-func NewReviewResponses(reviews []domain.Review) []ReviewResponse {
+func NewReviewResponses(reviews []entity.Review) []ReviewResponse {
 	if len(reviews) == 0 {
 		return nil
 	}
@@ -185,30 +207,31 @@ func NewReviewResponses(reviews []domain.Review) []ReviewResponse {
 	return resp
 }
 
-func NewUserResponse(user domain.User) UserResponse {
+func NewUserResponse(user entity.User) UserResponse {
 	return UserResponse{
-		UserID:    user.UserID,
-		Name:      user.Name,
-		Email:     user.Email,
-		IconURL:   user.IconURL,
-		Gender:    user.Gender,
-		Birthday:  user.Birthday,
-		Role:      user.Role,
-		CreatedAt: user.CreatedAt,
-		UpdatedAt: user.UpdatedAt,
+		UserID:     user.UserID,
+		Name:       user.Name,
+		Email:      user.Email,
+		IconFileID: user.IconFileID,
+		IconURL:    user.IconURL,
+		Provider:   user.Provider,
+		Gender:     user.Gender,
+		Birthday:   user.Birthday,
+		Role:       user.Role,
+		CreatedAt:  user.CreatedAt,
+		UpdatedAt:  user.UpdatedAt,
 	}
 }
 
-func NewFavoriteResponse(f domain.Favorite) FavoriteResponse {
+func NewFavoriteResponse(f entity.Favorite) FavoriteResponse {
 	return FavoriteResponse{
-		FavoriteID: f.FavoriteID,
-		UserID:     f.UserID,
-		StoreID:    f.StoreID,
-		CreatedAt:  f.CreatedAt,
+		UserID:    f.UserID,
+		StoreID:   f.StoreID,
+		CreatedAt: f.CreatedAt,
 	}
 }
 
-func NewFavoriteResponses(favorites []domain.Favorite) []FavoriteResponse {
+func NewFavoriteResponses(favorites []entity.Favorite) []FavoriteResponse {
 	if len(favorites) == 0 {
 		return nil
 	}
@@ -217,6 +240,47 @@ func NewFavoriteResponses(favorites []domain.Favorite) []FavoriteResponse {
 		resp[i] = NewFavoriteResponse(favorite)
 	}
 	return resp
+}
+
+func NewFileResponse(file entity.File) FileResponse {
+	return FileResponse{
+		FileID:      file.FileID,
+		FileKind:    file.FileKind,
+		FileName:    file.FileName,
+		FileSize:    file.FileSize,
+		ObjectKey:   file.ObjectKey,
+		ContentType: file.ContentType,
+		IsDeleted:   file.IsDeleted,
+		CreatedAt:   file.CreatedAt,
+		CreatedBy:   file.CreatedBy,
+	}
+}
+
+func NewFileResponses(files []entity.File) []FileResponse {
+	if len(files) == 0 {
+		return nil
+	}
+	resp := make([]FileResponse, len(files))
+	for i, file := range files {
+		resp[i] = NewFileResponse(file)
+	}
+	return resp
+}
+
+func collectMenuIDs(menus []entity.Menu) []string {
+	ids := make([]string, len(menus))
+	for i, menu := range menus {
+		ids[i] = menu.MenuID
+	}
+	return ids
+}
+
+func collectFileIDs(files []entity.File) []string {
+	ids := make([]string, len(files))
+	for i, file := range files {
+		ids[i] = file.FileID
+	}
+	return ids
 }
 
 func NewAuthSessionResponse(session *input.AuthSession) AuthSessionResponse {
@@ -240,7 +304,7 @@ func NewAuthUserResponse(user input.AuthUser) AuthUserResponse {
 	}
 }
 
-func NewReportResponse(report domain.Report) ReportResponse {
+func NewReportResponse(report entity.Report) ReportResponse {
 	return ReportResponse{
 		ReportID:   report.ReportID,
 		UserID:     report.UserID,
@@ -253,7 +317,7 @@ func NewReportResponse(report domain.Report) ReportResponse {
 	}
 }
 
-func NewReportResponses(reports []domain.Report) []ReportResponse {
+func NewReportResponses(reports []entity.Report) []ReportResponse {
 	if len(reports) == 0 {
 		return nil
 	}
@@ -262,15 +326,4 @@ func NewReportResponses(reports []domain.Report) []ReportResponse {
 		resp[i] = NewReportResponse(report)
 	}
 	return resp
-}
-
-func NewMediaResponse(media domain.Media) MediaResponse {
-	return MediaResponse{
-		MediaID:   media.MediaID,
-		UserID:    media.UserID,
-		URL:       media.URL,
-		FileType:  media.FileType,
-		FileSize:  media.FileSize,
-		CreatedAt: media.CreatedAt,
-	}
 }

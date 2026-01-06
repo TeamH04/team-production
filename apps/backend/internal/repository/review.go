@@ -2,11 +2,13 @@ package repository
 
 import (
 	"context"
+	"time"
 
-	"github.com/TeamH04/team-production/apps/backend/internal/domain"
+	"github.com/TeamH04/team-production/apps/backend/internal/domain/entity"
 	"github.com/TeamH04/team-production/apps/backend/internal/repository/model"
 	"github.com/TeamH04/team-production/apps/backend/internal/usecase/output"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type reviewRepository struct {
@@ -18,44 +20,205 @@ func NewReviewRepository(db *gorm.DB) output.ReviewRepository {
 	return &reviewRepository{db: db}
 }
 
-func (r *reviewRepository) FindByStoreID(ctx context.Context, storeID int64) ([]domain.Review, error) {
-	var reviews []model.Review
-	if err := r.db.WithContext(ctx).
-		Where("store_id = ?", storeID).
-		Order("posted_at desc").
-		Find(&reviews).Error; err != nil {
-		return nil, mapDBError(err)
-	}
-	result := make([]domain.Review, len(reviews))
-	for i, review := range reviews {
-		result[i] = model.ReviewModelToDomain(review)
-	}
-	return result, nil
+type reviewRow struct {
+	ReviewID   string    `gorm:"column:review_id"`
+	StoreID    string    `gorm:"column:store_id"`
+	UserID     string    `gorm:"column:user_id"`
+	Rating     int       `gorm:"column:rating"`
+	Content    *string   `gorm:"column:content"`
+	CreatedAt  time.Time `gorm:"column:created_at"`
+	LikesCount int64     `gorm:"column:likes_count"`
+	LikedByMe  bool      `gorm:"column:liked_by_me"`
 }
 
-func (r *reviewRepository) Create(ctx context.Context, review *domain.Review) error {
-	record := model.ReviewModelFromDomain(review)
-	if err := r.db.WithContext(ctx).Create(record).Error; err != nil {
-		return mapDBError(err)
-	}
-	review.ReviewID = record.ReviewID
-	review.PostedAt = record.PostedAt
-	review.CreatedAt = record.CreatedAt
-	return nil
-}
+func (r *reviewRepository) FindByStoreID(ctx context.Context, storeID string, sort string, viewerID string) ([]entity.Review, error) {
+	var rows []reviewRow
+	query := r.baseReviewQuery(ctx, viewerID).
+		Where("r.store_id = ?", storeID).
+		Group("r.review_id")
 
-func (r *reviewRepository) FindByUserID(ctx context.Context, userID string) ([]domain.Review, error) {
-	var reviews []model.Review
-	if err := r.db.WithContext(ctx).
-		Where("user_id = ?", userID).
-		Order("posted_at desc").
-		Find(&reviews).Error; err != nil {
+	if sort == "liked" {
+		query = query.Order("likes_count desc").Order("r.created_at desc")
+	} else {
+		query = query.Order("r.created_at desc")
+	}
+
+	if err := query.Scan(&rows).Error; err != nil {
 		return nil, mapDBError(err)
 	}
 
-	result := make([]domain.Review, len(reviews))
-	for i, review := range reviews {
-		result[i] = model.ReviewModelToDomain(review)
+	return r.attachReviewFiles(ctx, rows)
+}
+
+func (r *reviewRepository) FindByUserID(ctx context.Context, userID string) ([]entity.Review, error) {
+	var rows []reviewRow
+	query := r.baseReviewQuery(ctx, "").
+		Where("r.user_id = ?", userID).
+		Group("r.review_id").
+		Order("r.created_at desc")
+
+	if err := query.Scan(&rows).Error; err != nil {
+		return nil, mapDBError(err)
 	}
+
+	return r.attachReviewFiles(ctx, rows)
+}
+
+func (r *reviewRepository) FindByID(ctx context.Context, reviewID string) (*entity.Review, error) {
+	var review model.Review
+	if err := r.db.WithContext(ctx).First(&review, "review_id = ?", reviewID).Error; err != nil {
+		return nil, mapDBError(err)
+	}
+	entityReview := review.Entity()
+	return &entityReview, nil
+}
+
+func (r *reviewRepository) Create(ctx context.Context, review *entity.Review) error {
+	record := model.Review{
+		ReviewID: review.ReviewID,
+		StoreID:  review.StoreID,
+		UserID:   review.UserID,
+		Rating:   review.Rating,
+		Content:  review.Content,
+		Menus:    buildMenuRefs(review.Menus),
+		Files:    buildFileRefs(review.Files),
+	}
+	return mapDBError(r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		if err := tx.Create(&record).Error; err != nil {
+			return err
+		}
+		if len(record.Menus) > 0 {
+			if err := tx.Model(&record).Association("Menus").Replace(record.Menus); err != nil {
+				return err
+			}
+		}
+		if len(record.Files) > 0 {
+			if err := tx.Model(&record).Association("Files").Replace(record.Files); err != nil {
+				return err
+			}
+		}
+		review.ReviewID = record.ReviewID
+		review.CreatedAt = record.CreatedAt
+		return nil
+	}))
+}
+
+func (r *reviewRepository) AddLike(ctx context.Context, reviewID string, userID string) error {
+	record := model.ReviewLike{ReviewID: reviewID, UserID: userID}
+	return mapDBError(r.db.WithContext(ctx).
+		Clauses(clause.OnConflict{DoNothing: true}).
+		Create(&record).Error)
+}
+
+func (r *reviewRepository) RemoveLike(ctx context.Context, reviewID string, userID string) error {
+	return mapDBError(r.db.WithContext(ctx).
+		Where("review_id = ? AND user_id = ?", reviewID, userID).
+		Delete(&model.ReviewLike{}).Error)
+}
+
+func (r *reviewRepository) baseReviewQuery(ctx context.Context, viewerID string) *gorm.DB {
+	query := r.db.WithContext(ctx).
+		Table("reviews r").
+		Select("r.review_id, r.store_id, r.user_id, r.rating, r.content, r.created_at, COUNT(rl.review_id) AS likes_count").
+		Joins("LEFT JOIN review_likes rl ON rl.review_id = r.review_id")
+
+	if viewerID != "" {
+		query = query.Select(
+			"r.review_id, r.store_id, r.user_id, r.rating, r.content, r.created_at, COUNT(rl.review_id) AS likes_count, EXISTS(SELECT 1 FROM review_likes rl2 WHERE rl2.review_id = r.review_id AND rl2.user_id = ?) AS liked_by_me",
+			viewerID,
+		)
+	} else {
+		query = query.Select(
+			"r.review_id, r.store_id, r.user_id, r.rating, r.content, r.created_at, COUNT(rl.review_id) AS likes_count, FALSE AS liked_by_me",
+		)
+	}
+
+	return query
+}
+
+func (r *reviewRepository) attachReviewFiles(ctx context.Context, rows []reviewRow) ([]entity.Review, error) {
+	if len(rows) == 0 {
+		return nil, nil
+	}
+
+	reviewIDs := make([]string, len(rows))
+	for i, row := range rows {
+		reviewIDs[i] = row.ReviewID
+	}
+
+	filesByReview, err := fetchReviewFiles(ctx, r.db, reviewIDs)
+	if err != nil {
+		return nil, err
+	}
+
+	result := make([]entity.Review, len(rows))
+	for i, row := range rows {
+		review := entity.Review{
+			ReviewID:   row.ReviewID,
+			StoreID:    row.StoreID,
+			UserID:     row.UserID,
+			Rating:     row.Rating,
+			Content:    row.Content,
+			CreatedAt:  row.CreatedAt,
+			LikesCount: int(row.LikesCount),
+			LikedByMe:  row.LikedByMe,
+		}
+		if files, ok := filesByReview[row.ReviewID]; ok {
+			review.Files = files
+		}
+		result[i] = review
+	}
+
 	return result, nil
+}
+
+type reviewFileRow struct {
+	ReviewID string
+	model.File
+}
+
+func fetchReviewFiles(ctx context.Context, db *gorm.DB, reviewIDs []string) (map[string][]entity.File, error) {
+	if len(reviewIDs) == 0 {
+		return nil, nil
+	}
+
+	var rows []reviewFileRow
+	if err := db.WithContext(ctx).
+		Table("review_files rf").
+		Select(`rf.review_id, f.file_id, f.file_kind, f.file_name, f.file_size, f.object_key, f.content_type, f.is_deleted, f.created_at, f.created_by`).
+		Joins("JOIN files f ON f.file_id = rf.file_id").
+		Where("rf.review_id IN ?", reviewIDs).
+		Order("rf.review_id asc, f.file_id asc").
+		Scan(&rows).Error; err != nil {
+		return nil, mapDBError(err)
+	}
+
+	result := make(map[string][]entity.File, len(rows))
+	for _, row := range rows {
+		result[row.ReviewID] = append(result[row.ReviewID], row.File.Entity())
+	}
+
+	return result, nil
+}
+
+func buildMenuRefs(menus []entity.Menu) []model.Menu {
+	if len(menus) == 0 {
+		return nil
+	}
+	records := make([]model.Menu, len(menus))
+	for i, menu := range menus {
+		records[i] = model.Menu{MenuID: menu.MenuID}
+	}
+	return records
+}
+
+func buildFileRefs(files []entity.File) []model.File {
+	if len(files) == 0 {
+		return nil
+	}
+	records := make([]model.File, len(files))
+	for i, file := range files {
+		records[i] = model.File{FileID: file.FileID}
+	}
+	return records
 }

@@ -1,6 +1,8 @@
-﻿import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
+import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
 import { useLayoutEffect, useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Image } from 'expo-image';
+import * as ImagePicker from 'expo-image-picker';
 
 import { useReviews } from '@/features/reviews/ReviewsContext';
 import { SHOPS } from '@team/shop-core';
@@ -11,10 +13,6 @@ const palette = {
   background: '#F9FAFB',
   border: '#E5E7EB',
   error: '#DC2626',
-  menuBackground: '#F9FAFB',
-  menuSelectedBackground: '#DBEAFE',
-  menuSelectedBorder: '#93C5FD',
-  menuSelectedText: '#1D4ED8',
   muted: '#6B7280',
   primary: '#111827',
   primaryOnAccent: '#FFFFFF',
@@ -34,7 +32,6 @@ export default function ReviewModalScreen() {
 
   // 店舗情報を取得
   const shop = useMemo(() => SHOPS.find(s => s.id === id), [id]);
-  const menu = shop?.menu ?? [];
 
   // ヘッダータイトルを設定
   useLayoutEffect(() => {
@@ -47,8 +44,56 @@ export default function ReviewModalScreen() {
   // ユーザー入力用のstate
   const [rating, setRating] = useState(0); // 評価（初期値0）
   const [comment, setComment] = useState(''); // コメント
-  const [selectedMenuId, setSelectedMenuId] = useState<string | undefined>(undefined); // メニュー選択
   const [ratingError, setRatingError] = useState(false); // 評価エラー表示
+  const [assets, setAssets] = useState<ImagePicker.ImagePickerAsset[]>([]); // 添付画像
+  const [submitting, setSubmitting] = useState(false);
+
+  const handlePickImages = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsMultipleSelection: true,
+      selectionLimit: 6,
+      quality: 0.8,
+    });
+    if (!result.canceled) {
+      setAssets(result.assets);
+    }
+  };
+
+  const handleSubmit = async () => {
+    if (rating === 0) {
+      setRatingError(true);
+      return;
+    }
+    if (!shop) return;
+
+    setSubmitting(true);
+    try {
+      await addReview(
+        shop.id,
+        { rating, comment: comment.trim() },
+        assets.map((asset, index) => ({
+          uri: asset.uri,
+          fileName: asset.fileName ?? `review-${Date.now()}-${index}.jpg`,
+          contentType: asset.mimeType ?? 'image/jpeg',
+          fileSize: asset.fileSize ?? undefined,
+        }))
+      );
+      router.back();
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Unknown error';
+      if (message === 'auth_required') {
+        Alert.alert('ログインが必要です', 'レビュー投稿にはログインが必要です。', [
+          { text: 'キャンセル', style: 'cancel' },
+          { text: 'ログイン', onPress: () => router.push('/login') },
+        ]);
+      } else {
+        Alert.alert('投稿に失敗しました', message);
+      }
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   // 店舗が見つからない場合の表示
   if (!shop) {
@@ -84,30 +129,6 @@ export default function ReviewModalScreen() {
       </View>
       {ratingError && <Text style={styles.errorText}>※ 評価を選択してください</Text>}
 
-      {/* メニュー選択（店舗にメニューがある場合のみ表示） */}
-      {menu.length > 0 ? (
-        <View style={styles.menuSection}>
-          <Text style={styles.sectionLabel}>メニュー</Text>
-          <View style={styles.menuList}>
-            {menu.map(m => {
-              const selected = selectedMenuId === m.id;
-              return (
-                <Pressable
-                  key={m.id}
-                  onPress={() => setSelectedMenuId(selected ? undefined : m.id)}
-                  style={[styles.menuItem, selected && styles.menuItemSelected]}
-                >
-                  <Text style={[styles.menuItemText, selected && styles.menuItemTextSelected]}>
-                    {m.name}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </View>
-          <Text style={styles.muted}>メニューは任意です。該当が無ければ未選択でOK。</Text>
-        </View>
-      ) : null}
-
       {/* コメント入力欄 */}
       <Text style={styles.sectionLabel}>コメント</Text>
       <TextInput
@@ -119,30 +140,35 @@ export default function ReviewModalScreen() {
         style={styles.input}
       />
 
+      {/* 画像アップロード */}
+      <Text style={styles.sectionLabel}>写真（任意）</Text>
+      <Pressable style={styles.secondaryBtn} onPress={handlePickImages} disabled={submitting}>
+        <Text style={styles.secondaryBtnText}>写真を選択</Text>
+      </Pressable>
+      {assets.length > 0 && (
+        <View style={styles.imageGrid}>
+          {assets.map(asset => (
+            <View key={asset.uri} style={styles.imageWrapper}>
+              <Image source={{ uri: asset.uri }} style={styles.imageThumb} contentFit='cover' />
+              <Pressable
+                style={styles.removeImageBtn}
+                onPress={() => setAssets(prev => prev.filter(item => item.uri !== asset.uri))}
+                disabled={submitting}
+              >
+                <Text style={styles.removeImageText}>×</Text>
+              </Pressable>
+            </View>
+          ))}
+        </View>
+      )}
+
       {/* 投稿ボタン */}
-      <Pressable
-        style={styles.primaryBtn}
-        onPress={() => {
-          // バリデーション
-          if (rating === 0) {
-            setRatingError(true);
-            return;
-          }
-          const selected = menu.find(m => m.id === selectedMenuId);
-          addReview(shop.id, {
-            rating,
-            comment,
-            menuItemId: selected?.id,
-            menuItemName: selected?.name,
-          });
-          router.back(); // 投稿後に前の画面に戻る
-        }}
-      >
-        <Text style={styles.primaryBtnText}>投稿する</Text>
+      <Pressable style={styles.primaryBtn} onPress={handleSubmit} disabled={submitting}>
+        <Text style={styles.primaryBtnText}>{submitting ? '投稿中…' : '投稿する'}</Text>
       </Pressable>
 
       {/* キャンセルボタン */}
-      <Pressable style={styles.secondaryBtn} onPress={() => router.back()}>
+      <Pressable style={styles.secondaryBtn} onPress={() => router.back()} disabled={submitting}>
         <Text style={styles.secondaryBtnText}>キャンセル</Text>
       </Pressable>
     </ScrollView>
@@ -155,6 +181,14 @@ const styles = StyleSheet.create({
   content: { padding: 16 }, // 画面内余白
   errorText: { color: palette.error, fontSize: 14, marginTop: 4 }, // エラーメッセージ
   heading: { color: palette.primary, fontSize: 18, fontWeight: '800', marginBottom: 8 }, // 店舗名
+  imageGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+    marginTop: 12,
+  },
+  imageThumb: { borderRadius: 12, height: 88, width: 88 },
+  imageWrapper: { position: 'relative' },
   input: {
     backgroundColor: palette.background,
     borderColor: palette.border,
@@ -164,25 +198,6 @@ const styles = StyleSheet.create({
     minHeight: 100,
     padding: 12,
   },
-  menuItem: {
-    backgroundColor: palette.menuBackground,
-    borderColor: palette.border,
-    borderRadius: 999,
-    borderWidth: 1,
-    marginRight: 8,
-    marginTop: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-  },
-  menuItemSelected: {
-    backgroundColor: palette.menuSelectedBackground,
-    borderColor: palette.menuSelectedBorder,
-  },
-  menuItemText: { color: palette.primary, fontWeight: '600' },
-  menuItemTextSelected: { color: palette.menuSelectedText },
-  menuList: { flexDirection: 'row', flexWrap: 'wrap' },
-  menuSection: { marginTop: 12 },
-  muted: { color: palette.muted, marginTop: 6 },
   primaryBtn: {
     backgroundColor: palette.accent,
     borderRadius: 12,
@@ -190,6 +205,16 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   primaryBtnText: { color: palette.primaryOnAccent, fontWeight: '700', textAlign: 'center' },
+  removeImageBtn: {
+    backgroundColor: palette.primary,
+    borderRadius: 10,
+    height: 20,
+    position: 'absolute',
+    right: -6,
+    top: -6,
+    width: 20,
+  },
+  removeImageText: { color: palette.primaryOnAccent, fontSize: 12, textAlign: 'center' },
   screen: { backgroundColor: palette.surface, flex: 1 },
   secondaryBtn: {
     backgroundColor: palette.secondarySurface,

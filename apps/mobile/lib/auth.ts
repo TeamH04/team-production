@@ -46,6 +46,19 @@ export async function getCurrentUser(): Promise<User | null> {
   }
 }
 
+export async function getAccessToken(): Promise<string | null> {
+  try {
+    const { data, error } = await getSupabase().auth.getSession();
+    if (error) {
+      return null;
+    }
+    return data.session?.access_token ?? null;
+  } catch (err) {
+    console.warn('[auth] failed to fetch session', err);
+    return null;
+  }
+}
+
 export async function checkIsOwner(): Promise<OwnerCheck> {
   const user = await getCurrentUser();
   return { isOwner: isOwnerFromUser(user), user };

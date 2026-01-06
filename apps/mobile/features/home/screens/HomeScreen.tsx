@@ -36,17 +36,6 @@ export default function HomeScreen() {
   const filteredShops = useMemo(() => SHOPS, []);
 
   useEffect(() => {
-    if (loadMoreTimeout.current) {
-      clearTimeout(loadMoreTimeout.current);
-      loadMoreTimeout.current = null;
-    }
-    setIsLoadingMore(false);
-    setVisibleCount(
-      filteredShops.length === 0 ? PAGE_SIZE : Math.min(PAGE_SIZE, filteredShops.length)
-    );
-  }, [filteredShops.length]);
-
-  useEffect(() => {
     return () => {
       if (loadMoreTimeout.current) {
         clearTimeout(loadMoreTimeout.current);

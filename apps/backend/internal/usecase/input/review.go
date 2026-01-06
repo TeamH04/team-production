@@ -3,19 +3,20 @@ package input
 import (
 	"context"
 
-	"github.com/TeamH04/team-production/apps/backend/internal/domain"
+	"github.com/TeamH04/team-production/apps/backend/internal/domain/entity"
 )
 
 // ReviewUseCase defines inbound port for review operations.
 type ReviewUseCase interface {
-	GetReviewsByStoreID(ctx context.Context, storeID int64) ([]domain.Review, error)
-	CreateReview(ctx context.Context, storeID int64, userID string, input CreateReviewInput) (*domain.Review, error)
+	GetReviewsByStoreID(ctx context.Context, storeID string, sort string, viewerID string) ([]entity.Review, error)
+	CreateReview(ctx context.Context, storeID string, userID string, input CreateReview) (*entity.Review, error)
+	LikeReview(ctx context.Context, reviewID string, userID string) error
+	UnlikeReview(ctx context.Context, reviewID string, userID string) error
 }
 
-type CreateReviewInput struct {
-	UserID    string
-	MenuID    int64
-	Rating    int
-	Content   *string
-	ImageURLs []string
+type CreateReview struct {
+	MenuIDs []string
+	Rating  int
+	Content *string
+	FileIDs []string
 }

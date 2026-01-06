@@ -6,7 +6,7 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/TeamH04/team-production/apps/backend/internal/apperr"
-	"github.com/TeamH04/team-production/apps/backend/internal/domain"
+	"github.com/TeamH04/team-production/apps/backend/internal/domain/entity"
 )
 
 // mapDBError normalizes gorm errors into domain-level errors.
@@ -15,7 +15,7 @@ func mapDBError(err error) error {
 		return nil
 	}
 	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return apperr.New(apperr.CodeNotFound, domain.ErrNotFound)
+		return apperr.New(apperr.CodeNotFound, entity.ErrNotFound)
 	}
 	return err
 }

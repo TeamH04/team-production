@@ -4,15 +4,15 @@ import (
 	"context"
 
 	"github.com/TeamH04/team-production/apps/backend/internal/apperr"
-	"github.com/TeamH04/team-production/apps/backend/internal/domain"
+	"github.com/TeamH04/team-production/apps/backend/internal/domain/entity"
 	"github.com/TeamH04/team-production/apps/backend/internal/usecase/output"
 )
 
 // FavoriteUseCase はお気に入りに関するビジネスロジックを提供します
 type FavoriteUseCase interface {
-	GetUserFavorites(ctx context.Context, userID string) ([]domain.Favorite, error)
-	AddFavorite(ctx context.Context, userID string, storeID int64) (*domain.Favorite, error)
-	RemoveFavorite(ctx context.Context, userID string, storeID int64) error
+	GetUserFavorites(ctx context.Context, userID string) ([]entity.Favorite, error)
+	AddFavorite(ctx context.Context, userID string, storeID string) (*entity.Favorite, error)
+	RemoveFavorite(ctx context.Context, userID string, storeID string) error
 }
 
 type favoriteUseCase struct {
@@ -34,7 +34,7 @@ func NewFavoriteUseCase(
 	}
 }
 
-func (uc *favoriteUseCase) GetUserFavorites(ctx context.Context, userID string) ([]domain.Favorite, error) {
+func (uc *favoriteUseCase) GetUserFavorites(ctx context.Context, userID string) ([]entity.Favorite, error) {
 	// ユーザーの存在確認
 	if _, err := uc.userRepo.FindByID(ctx, userID); err != nil {
 		if apperr.IsCode(err, apperr.CodeNotFound) {
@@ -46,8 +46,8 @@ func (uc *favoriteUseCase) GetUserFavorites(ctx context.Context, userID string) 
 	return uc.favoriteRepo.FindByUserID(ctx, userID)
 }
 
-func (uc *favoriteUseCase) AddFavorite(ctx context.Context, userID string, storeID int64) (*domain.Favorite, error) {
-	if storeID <= 0 {
+func (uc *favoriteUseCase) AddFavorite(ctx context.Context, userID string, storeID string) (*entity.Favorite, error) {
+	if storeID == "" {
 		return nil, ErrInvalidInput
 	}
 	// ユーザーの存在確認
@@ -75,7 +75,7 @@ func (uc *favoriteUseCase) AddFavorite(ctx context.Context, userID string, store
 		return nil, err
 	}
 
-	favorite := &domain.Favorite{
+	favorite := &entity.Favorite{
 		UserID:  userID,
 		StoreID: storeID,
 	}
@@ -87,7 +87,7 @@ func (uc *favoriteUseCase) AddFavorite(ctx context.Context, userID string, store
 	return favorite, nil
 }
 
-func (uc *favoriteUseCase) RemoveFavorite(ctx context.Context, userID string, storeID int64) error {
+func (uc *favoriteUseCase) RemoveFavorite(ctx context.Context, userID string, storeID string) error {
 	// お気に入りの存在確認
 	if _, err := uc.favoriteRepo.FindByUserAndStore(ctx, userID, storeID); err != nil {
 		if apperr.IsCode(err, apperr.CodeNotFound) {
