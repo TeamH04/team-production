@@ -1,10 +1,9 @@
 import React, { createContext, useContext, useMemo, useState } from 'react';
 
-type Gender = 'male' | 'female' | 'other';
 export type UserProfile = {
   name: string;
   email: string;
-  gender?: Gender;
+  gender?: string;
   birthYear?: string;
   birthMonth?: string;
   isProfileRegistered: boolean;

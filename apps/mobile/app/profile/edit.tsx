@@ -18,8 +18,6 @@ import { useUser } from '@/features/user/UserContext';
 
 // カラー定義
 const paletteSub = {
-  avatarBackground: '#DBEAFE',
-  avatarText: '#1D4ED8',
   modalBackground: '#fff',
   modalOverlay: '#0000004d',
 };
@@ -269,14 +267,14 @@ const styles = StyleSheet.create({
   avatar: {
     alignItems: 'center',
     alignSelf: 'center',
-    backgroundColor: paletteSub.avatarBackground,
+    backgroundColor: palette.avatarBackground,
     borderRadius: 999,
     height: 88,
     justifyContent: 'center',
     marginBottom: 16,
     width: 88,
   },
-  avatarText: { color: paletteSub.avatarText, fontSize: 28, fontWeight: '800' },
+  avatarText: { color: palette.avatarText, fontSize: 28, fontWeight: '800' },
 
   // コンテンツの余白
   content: { padding: 16 },

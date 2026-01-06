@@ -2,27 +2,9 @@
 import { useLayoutEffect, useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
+import { palette } from '@/constants/palette';
 import { useReviews } from '@/features/reviews/ReviewsContext';
 import { SHOPS } from '@team/shop-core';
-
-// カラー定義（画面の配色をまとめて管理）
-const palette = {
-  accent: '#0EA5E9',
-  background: '#F9FAFB',
-  border: '#E5E7EB',
-  error: '#DC2626',
-  menuBackground: '#F9FAFB',
-  menuSelectedBackground: '#DBEAFE',
-  menuSelectedBorder: '#93C5FD',
-  menuSelectedText: '#1D4ED8',
-  muted: '#6B7280',
-  primary: '#111827',
-  primaryOnAccent: '#FFFFFF',
-  secondarySurface: '#F3F4F6',
-  starHighlight: '#F59E0B',
-  starInactive: '#9CA3AF',
-  surface: '#FFFFFF',
-} as const;
 
 // レビュー投稿画面のコンポーネント
 export default function ReviewModalScreen() {
@@ -153,7 +135,7 @@ export default function ReviewModalScreen() {
 const styles = StyleSheet.create({
   centered: { alignItems: 'center', justifyContent: 'center' }, // 中央寄せ
   content: { padding: 16 }, // 画面内余白
-  errorText: { color: palette.error, fontSize: 14, marginTop: 4 }, // エラーメッセージ
+  errorText: { color: palette.errorText, fontSize: 14, marginTop: 4 }, // エラーメッセージ
   heading: { color: palette.primary, fontSize: 18, fontWeight: '800', marginBottom: 8 }, // 店舗名
   input: {
     backgroundColor: palette.background,
@@ -184,12 +166,12 @@ const styles = StyleSheet.create({
   menuSection: { marginTop: 12 },
   muted: { color: palette.muted, marginTop: 6 },
   primaryBtn: {
-    backgroundColor: palette.accent,
+    backgroundColor: palette.secondarySurface,
     borderRadius: 12,
     marginTop: 18,
     paddingVertical: 12,
   },
-  primaryBtnText: { color: palette.primaryOnAccent, fontWeight: '700', textAlign: 'center' },
+  primaryBtnText: { color: palette.textOnSecondary, fontWeight: '700', textAlign: 'center' },
   screen: { backgroundColor: palette.surface, flex: 1 },
   secondaryBtn: {
     backgroundColor: palette.secondarySurface,
@@ -200,7 +182,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 10,
   },
-  secondaryBtnText: { color: palette.primary, fontWeight: '700', textAlign: 'center' },
+  secondaryBtnText: { color: palette.textOnSecondary, fontWeight: '700', textAlign: 'center' },
   sectionLabel: { color: palette.primary, fontWeight: '700', marginBottom: 8, marginTop: 12 },
   star: { color: palette.starInactive, fontSize: 22, marginRight: 4 },
   starActive: { color: palette.starHighlight },

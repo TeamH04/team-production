@@ -1,26 +1,41 @@
-﻿import { palette } from '@/constants/palette';
+import KuguriTitle from '@/assets/icons/kaguri.svg';
+import { palette } from '@/constants/palette';
 import { Tabs } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
 import React from 'react';
-import { Platform, StyleSheet } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { Platform, StyleSheet, View } from 'react-native';
 
 import { HapticTab } from '@/components/HapticTab';
 import { IconSymbol } from '@/components/ui/IconSymbol';
-import TabBarBackground from '@/components/ui/TabBarBackground';
-import { Colors } from '@/constants/Colors';
-import { useColorScheme } from '@/hooks/useColorScheme';
 
 export default function TabLayout() {
-  const colorScheme = useColorScheme();
+  const headerLogo = (
+    <View style={styles.logoWrap}>
+      <KuguriTitle
+        width='32%'
+        height='100%'
+        preserveAspectRatio='xMidYMid meet'
+        accessibilityLabel='Kuguriロゴ'
+        fill={palette.textOnAccent}
+        style={{ transform: [{ translateY: -5 }] }}
+      />
+    </View>
+  );
 
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+    <View style={styles.container}>
+      <StatusBar style='light' backgroundColor={palette.accent} />
       <Tabs
         screenOptions={{
-          tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
-          headerShown: false,
+          tabBarActiveTintColor: palette.textOnAccent,
+          tabBarInactiveTintColor: palette.textOnAccent,
+          headerStyle: styles.header,
+          headerTitleAlign: 'center',
+          headerShadowVisible: false,
+          headerTitle: () => headerLogo,
+          headerTitleContainerStyle: styles.headerTitleContainer,
           tabBarButton: HapticTab,
-          tabBarBackground: TabBarBackground,
+          tabBarBackground: () => <View style={styles.tabBackground} />,
           tabBarStyle: Platform.select({
             ios: {
               // Use a transparent background on iOS to show the blur effect
@@ -63,14 +78,30 @@ export default function TabLayout() {
           }}
         />
       </Tabs>
-    </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    // make top safe-area explicit white so status-bar area is white on all devices
-    backgroundColor: palette.surface,
+    backgroundColor: palette.background,
     flex: 1,
+  },
+  header: {
+    backgroundColor: palette.accent,
+    height: 100,
+  },
+  headerTitleContainer: {
+    width: '100%',
+  },
+  logoWrap: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingBottom: 0,
+    paddingTop: 10,
+  },
+  tabBackground: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: palette.accent,
   },
 });

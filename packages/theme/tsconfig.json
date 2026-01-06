@@ -1,0 +1,11 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@team/theme": ["./src/index.ts"],
+      "@team/theme/*": ["./src/*"]
+    }
+  },
+  "include": ["./src/**/*"]
+}
