@@ -21,7 +21,7 @@ runs:
         mkdir -p $HOME/.cache/go-build
 
     - name: Setup Go
-      uses: actions/setup-go@v5
+      uses: actions/setup-go@v6
       with:
         go-version: ${{ inputs.go-version }}
         cache-dependency-path: ${{ inputs.working-directory }}/go.sum
