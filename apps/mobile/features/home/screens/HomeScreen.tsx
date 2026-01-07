@@ -62,7 +62,7 @@ export default function HomeScreen() {
     });
 
     return () => cancelAnimationFrame(rafId);
-  }, [filteredShops, listRef]); // listRef を依存配列に追加
+  }, [filteredShops]);
 
   useEffect(() => {
     return () => {
