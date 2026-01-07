@@ -23,26 +23,18 @@ const TAB_BAR_SPACING = 107;
 export default function HomeScreen() {
   const router = useRouter();
   // category selection removed
-  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const loadMoreTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const listRef = useAnimatedRef<FlatList<Shop>>();
 
   const filteredShops = useMemo(() => SHOPS, []);
 
-  useEffect(() => {
-    if (loadMoreTimeout.current) {
-      clearTimeout(loadMoreTimeout.current);
-      loadMoreTimeout.current = null;
-    }
-    const newVisibleCount =
-      filteredShops.length === 0 ? PAGE_SIZE : Math.min(PAGE_SIZE, filteredShops.length);
-
-    queueMicrotask(() => {
-      setIsLoadingMore(false);
-      setVisibleCount(newVisibleCount);
-    });
+  const initialVisibleCount = useMemo(() => {
+    if (filteredShops.length === 0) return PAGE_SIZE;
+    return Math.min(PAGE_SIZE, filteredShops.length);
   }, [filteredShops.length]);
+
+  const [visibleCount, setVisibleCount] = useState(initialVisibleCount);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
 
   useEffect(() => {
     return () => {
