@@ -178,12 +178,12 @@ apps/mobile/ @TeamH04/mobile-team
 
 ### Workflow Triggers
 
-| Workflow | Trigger | Purpose |
-|----------|---------|---------|
-| CI | push/PR to main/develop | Lint, test, build verification |
-| Backend Deploy | push to main/develop (apps/backend/**) | Docker build & deployment |
-| Mobile App Deploy | push/PR to main (apps/mobile/**) | Expo builds & app store submission |
-| Discord Notify | issues/PR events | Team notifications |
+| Workflow          | Trigger                                  | Purpose                            |
+| ----------------- | ---------------------------------------- | ---------------------------------- |
+| CI                | push/PR to main/develop                  | Lint, test, build verification     |
+| Backend Deploy    | push to main/develop (apps/backend/\*\*) | Docker build & deployment          |
+| Mobile App Deploy | push/PR to main (apps/mobile/\*\*)       | Expo builds & app store submission |
+| Discord Notify    | issues/PR events                         | Team notifications                 |
 
 ## Additional Configuration
 
