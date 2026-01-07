@@ -23,6 +23,7 @@ export default [
       '**/web-build/**',
       '**/.next/**',
       '**/next-env.d.ts',
+      'nativewind-env.d.ts',
     ],
   },
 
