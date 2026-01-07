@@ -2,11 +2,11 @@ name: Notify Discord
 
 on:
   issues:
-    types: [assigned]           # アサインされた時/変更された時
+    types: [assigned] # アサインされた時/変更された時
   pull_request:
     types: [review_requested, ready_for_review, closed, reopened] # レビュー依頼/マージ等
   pull_request_review:
-    types: [submitted]                   # レビュー到着
+    types: [submitted] # レビュー到着
 
 permissions:
   contents: read
@@ -96,6 +96,7 @@ jobs:
                 // ※「review_requested」は作成時／後から依頼した時どちらも発火
                 const reqReviewer = context.payload.requested_reviewer?.login;
                 const reqTeam = context.payload.requested_team?.name;
+                if (reqReviewer && reqReviewer.toLowerCase().includes('copilot')) return;
                 // ユーザー個別のみメンション（チームは任意でロールに置換してもOK）
                 if (reqReviewer) {
                   const msg = [
