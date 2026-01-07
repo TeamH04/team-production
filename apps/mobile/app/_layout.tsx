@@ -50,29 +50,20 @@ function RootStack() {
     >
       <StatusBar hidden={false} style='dark' backgroundColor='transparent' />
       <Stack>
-        {user && !isProfileComplete ? (
-          // プロフィール未登録時は登録画面のみ表示（強制遷移）
-          <Stack.Screen
-            name='auth/register'
-            options={{ headerShown: false, animation: 'slide_from_right' }}
-          />
-        ) : (
-          <>
-            <Stack.Screen name='index' options={{ headerShown: false }} />
-            <Stack.Screen name='(tabs)' options={{ headerShown: false }} />
-            <Stack.Screen name='login' options={{ title: 'ログイン', headerShown: true }} />
-            <Stack.Screen
-              name='owner/signup'
-              options={{ title: 'オーナー登録', headerShown: true }}
-            />
-            <Stack.Screen name='auth/callback' options={{ title: '認証', headerShown: true }} />
-            <Stack.Screen
-              name='review-history'
-              options={{ title: 'あなたの記録', headerShown: true }}
-            />
-            <Stack.Screen name='+not-found' />
-          </>
-        )}
+        <Stack.Screen name='index' options={{ headerShown: false }} />
+        <Stack.Screen name='(tabs)' options={{ headerShown: false }} />
+        <Stack.Screen name='login' options={{ title: 'ログイン', headerShown: true }} />
+        <Stack.Screen name='owner/signup' options={{ title: 'オーナー登録', headerShown: true }} />
+        <Stack.Screen
+          name='owner/register-shop'
+          options={{ headerShown: true, presentation: 'card' }}
+        />
+        <Stack.Screen name='auth/callback' options={{ title: '認証', headerShown: true }} />
+        <Stack.Screen
+          name='review-history'
+          options={{ title: 'あなたの記録', headerShown: true }}
+        />
+        <Stack.Screen name='+not-found' />
       </Stack>
     </View>
   );

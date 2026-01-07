@@ -72,13 +72,6 @@ jobs:
         run: |
           mkdir -p $HOME/go/pkg/mod
           mkdir -p $HOME/.cache/go-build
-
-      - name: Debug Go cache paths
-        run: |
-          echo "Ensuring Go cache directories are present"
-          ls -la $HOME/go || true
-          ls -la $HOME/.cache || true
-
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
@@ -125,13 +118,6 @@ jobs:
         run: |
           mkdir -p $HOME/go/pkg/mod
           mkdir -p $HOME/.cache/go-build
-
-      - name: Debug Go cache paths
-        run: |
-          echo "Ensuring Go cache directories are present"
-          ls -la $HOME/go || true
-          ls -la $HOME/.cache || true
-
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
@@ -247,13 +233,6 @@ jobs:
         run: |
           mkdir -p $HOME/go/pkg/mod
           mkdir -p $HOME/.cache/go-build
-
-      - name: Debug Go cache paths
-        run: |
-          echo "Ensuring Go cache directories are present"
-          ls -la $HOME/go || true
-          ls -la $HOME/.cache || true
-
       - name: Setup Go
         uses: actions/setup-go@v5
         with:

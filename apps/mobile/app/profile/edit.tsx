@@ -1,4 +1,4 @@
-﻿import { Picker } from '@react-native-picker/picker';
+import { Picker } from '@react-native-picker/picker';
 import { useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import {
@@ -14,13 +14,10 @@ import {
 } from 'react-native';
 
 import { palette } from '@/constants/palette';
+import { TAB_BAR_SPACING } from '@/constants/TabBarSpacing';
 import { useUser } from '@/features/user/UserContext';
 
-// カラー定義
-const paletteSub = {
-  modalBackground: '#fff',
-  modalOverlay: '#0000004d',
-};
+const modalOverlayOpacity = 0.3;
 
 // プロフィール編集画面コンポーネント
 export default function EditProfileScreen() {
@@ -48,6 +45,9 @@ export default function EditProfileScreen() {
     return arr;
   }, []);
   const months = useMemo(() => Array.from({ length: 12 }, (_, i) => String(i + 1)), []);
+  const canSave = useMemo(() => {
+    return name.trim().length > 0 && email.trim().length > 0 && !saving;
+  }, [email, name, saving]);
 
   return (
     <KeyboardAvoidingView
@@ -55,39 +55,53 @@ export default function EditProfileScreen() {
       style={styles.keyboard}
     >
       <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
+        {/* タイトル */}
+        <View style={styles.headerContainer}>
+          <Text style={styles.title}>プロフィール編集</Text>
+        </View>
+
         {/* アバター（表示名の先頭2文字を表示） */}
         <View style={styles.avatar}>
           <Text style={styles.avatarText}>{(name || 'U').slice(0, 2).toUpperCase()}</Text>
         </View>
 
-        {/* 表示名入力 */}
-        <View style={styles.labelContainer}>
-          <Text style={styles.label}>表示名（必須） </Text>
-          <Text style={styles.errorText}>{errorName}</Text>
-        </View>
-        <TextInput
-          value={name}
-          onChangeText={setName}
-          placeholder='例: Hanako Tanaka'
-          placeholderTextColor={palette.secondaryText}
-          style={styles.input}
-          autoCapitalize='words'
-        />
+        {/* フォームカード */}
+        <View style={styles.cardShadow}>
+          <View style={styles.card}>
+            {/* 表示名入力 */}
+            <View style={styles.formGroup}>
+              <View style={styles.labelContainer}>
+                <Text style={styles.label}>表示名（必須）</Text>
+                <Text style={styles.errorText}>{errorName}</Text>
+              </View>
+              <TextInput
+                value={name}
+                onChangeText={setName}
+                placeholder='例: Hanako Tanaka'
+                placeholderTextColor={palette.mutedText}
+                style={styles.input}
+                autoCapitalize='words'
+              />
+            </View>
 
-        {/* メールアドレス入力 */}
-        <View style={styles.labelContainer}>
-          <Text style={styles.label}>メールアドレス（必須） </Text>
-          <Text style={styles.errorText}>{errorEmail}</Text>
+            {/* メールアドレス入力 */}
+            <View style={styles.formGroup}>
+              <View style={styles.labelContainer}>
+                <Text style={styles.label}>メールアドレス（必須）</Text>
+                <Text style={styles.errorText}>{errorEmail}</Text>
+              </View>
+              <TextInput
+                value={email}
+                onChangeText={setEmail}
+                placeholder='example@domain.com'
+                placeholderTextColor={palette.mutedText}
+                style={styles.input}
+                autoCapitalize='none'
+                keyboardType='email-address'
+              />
+            </View>
+          </View>
         </View>
-        <TextInput
-          value={email}
-          onChangeText={setEmail}
-          placeholder='example@domain.com'
-          placeholderTextColor={palette.secondaryText}
-          style={styles.input}
-          autoCapitalize='none'
-          keyboardType='email-address'
-        />
 
         {/* 性別ラジオボタン */}
         <Text style={styles.label}>性別（任意） </Text>
@@ -192,11 +206,11 @@ export default function EditProfileScreen() {
 
         {/* 保存ボタン
             - disabled 時は押せない
-            - 押したら updateProfile を呼んで前の画面へ戻る */}
+            - 押したら setUser を呼んで前の画面へ戻る */}
         <Text style={styles.errorText}>{errorStore}</Text>
 
         <Pressable
-          disabled={saving}
+          disabled={!canSave}
           onPress={async () => {
             // 前バリデーションのリセット
             setErrorName('');
@@ -247,7 +261,7 @@ export default function EditProfileScreen() {
               setSaving(false);
             }
           }}
-          style={styles.primaryBtn}
+          style={[styles.primaryBtn, !canSave && styles.primaryBtnDisabled]}
         >
           <Text style={styles.primaryBtnText}>{saving ? '保存中...' : '保存'}</Text>
         </Pressable>
@@ -267,17 +281,50 @@ const styles = StyleSheet.create({
   avatar: {
     alignItems: 'center',
     alignSelf: 'center',
-    backgroundColor: palette.avatarBackground,
+    backgroundColor: palette.secondarySurface,
     borderRadius: 999,
     height: 88,
     justifyContent: 'center',
-    marginBottom: 16,
+    marginBottom: 24,
+    marginTop: 16,
     width: 88,
   },
-  avatarText: { color: palette.avatarText, fontSize: 28, fontWeight: '800' },
+  avatarText: { color: palette.primary, fontSize: 32, fontWeight: '800' },
+
+  // カード背景
+  card: {
+    backgroundColor: palette.surface,
+    borderRadius: 20,
+    padding: 16,
+  },
+
+  // カードシャドウ
+  cardShadow: {
+    elevation: 4,
+    marginBottom: 24,
+    marginTop: 16,
+    shadowColor: palette.shadow,
+    shadowOffset: { height: 6, width: 0 },
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
+  },
 
   // コンテンツの余白
-  content: { padding: 16 },
+  content: {
+    padding: 16,
+    paddingBottom: TAB_BAR_SPACING,
+  },
+
+  // フォームグループ
+  formGroup: {
+    marginBottom: 16,
+  },
+
+  // ヘッダーコンテナ
+  headerContainer: {
+    alignItems: 'center',
+    marginBottom: 16,
+  },
 
   dobRow: { flexDirection: 'row', gap: 12, marginBottom: 4 },
 
@@ -289,8 +336,8 @@ const styles = StyleSheet.create({
     borderColor: palette.border,
     borderRadius: 12,
     borderWidth: 1,
-    color: palette.primaryText,
-    marginBottom: 16,
+    color: palette.primary,
+    marginTop: 8,
     paddingHorizontal: 14,
     paddingVertical: 12,
   },
@@ -303,12 +350,12 @@ const styles = StyleSheet.create({
   labelContainer: { flexDirection: 'row' },
 
   modalContent: {
-    backgroundColor: paletteSub.modalBackground,
+    backgroundColor: palette.surface,
     borderTopLeftRadius: 12,
     borderTopRightRadius: 12,
   },
   modalDoneText: { color: palette.accent, fontWeight: '700' },
-  modalOverlay: { backgroundColor: paletteSub.modalOverlay, flex: 1 },
+  modalOverlay: { backgroundColor: palette.shadow, flex: 1, opacity: modalOverlayOpacity },
   modalToolbar: {
     alignItems: 'flex-end',
     borderBottomWidth: 1,
@@ -333,8 +380,11 @@ const styles = StyleSheet.create({
   primaryBtn: {
     backgroundColor: palette.accent,
     borderRadius: 12,
-    marginTop: 28,
+    marginTop: 8,
     paddingVertical: 12,
+  },
+  primaryBtnDisabled: {
+    opacity: 0.5,
   },
   primaryBtnText: { color: palette.primaryOnAccent, fontWeight: '700', textAlign: 'center' },
 
@@ -353,7 +403,7 @@ const styles = StyleSheet.create({
   radioOptionText: { color: palette.primaryText, fontWeight: '600' },
 
   // 画面背景
-  screen: { backgroundColor: palette.surface, flex: 1 },
+  screen: { backgroundColor: palette.background, flex: 1 },
 
   // セカンダリボタン（キャンセル）
   secondaryBtn: {
@@ -362,9 +412,17 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 1,
     marginBottom: 40,
-    marginTop: 14,
+    marginTop: 12,
     paddingHorizontal: 14,
-    paddingVertical: 10,
+    paddingVertical: 12,
   },
   secondaryBtnText: { color: palette.primaryText, fontWeight: '700', textAlign: 'center' },
+
+  // タイトル
+  title: {
+    color: palette.primary,
+    fontSize: 20,
+    fontWeight: '700',
+    textAlign: 'center',
+  },
 });
