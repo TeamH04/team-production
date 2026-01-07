@@ -56,7 +56,7 @@ export default function LoginScreen() {
       'ログイン完了',
       isOwner ? 'オーナーとしてログインしました。' : '正常にログインしました。'
     );
-  }, [router]);
+  }, []);
 
   const handleOAuth = useCallback(
     async (provider: 'google' | 'apple') => {
@@ -129,7 +129,7 @@ export default function LoginScreen() {
         setLoading(null);
       }
     },
-    [finishLogin]
+    [finishLogin, setUser]
   );
 
   const handleAppleNative = useCallback(async () => {
@@ -203,7 +203,7 @@ export default function LoginScreen() {
     } finally {
       setLoading(null);
     }
-  }, [finishLogin, handleOAuth]);
+  }, [finishLogin, handleOAuth, setUser]);
 
   const handleDevGuestLogin = useCallback(async () => {
     if (!DEV_LOGIN_ENABLED || loading) return;

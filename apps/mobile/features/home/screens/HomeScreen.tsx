@@ -51,13 +51,17 @@ export default function HomeScreen() {
       loadMoreTimeout.current = null;
     }
 
-    setIsLoadingMore(false);
-    setVisibleCount(Math.min(PAGE_SIZE, filteredShops.length));
+    const rafId = requestAnimationFrame(() => {
+      setIsLoadingMore(false);
+      setVisibleCount(Math.min(PAGE_SIZE, filteredShops.length));
 
-    if (listRef.current) {
-      // any を排除して scrollToOffset を呼び出し
-      listRef.current.scrollToOffset({ animated: true, offset: 0 });
-    }
+      if (listRef.current) {
+        // any を排除して scrollToOffset を呼び出し
+        listRef.current.scrollToOffset({ animated: true, offset: 0 });
+      }
+    });
+
+    return () => cancelAnimationFrame(rafId);
   }, [filteredShops, listRef]); // listRef を依存配列に追加
 
   useEffect(() => {

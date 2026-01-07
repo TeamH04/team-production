@@ -257,6 +257,8 @@ export default function ShopDetailScreen() {
 }
 
 const styles = StyleSheet.create({
+  btnPressed: { opacity: 0.7 },
+
   card: {
     backgroundColor: palette.surface,
     borderRadius: 16,
@@ -374,7 +376,6 @@ const styles = StyleSheet.create({
   },
   reviewLeft: { flex: 1 },
   reviewLikeBtn: { padding: 4 },
-  btnPressed: { opacity: 0.7 },
   reviewTitle: { color: palette.primary, fontWeight: '700' },
   screen: { backgroundColor: palette.background, flex: 1 },
   secondaryBtn: {

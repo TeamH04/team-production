@@ -315,6 +315,10 @@ const styles = StyleSheet.create({
     paddingBottom: TAB_BAR_SPACING,
   },
 
+  dobRow: { flexDirection: 'row', gap: 12, marginBottom: 4 },
+
+  errorText: { color: palette.errorText, marginBottom: 8 },
+
   // フォームグループ
   formGroup: {
     marginBottom: 16,
@@ -325,10 +329,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 16,
   },
-
-  dobRow: { flexDirection: 'row', gap: 12, marginBottom: 4 },
-
-  errorText: { color: palette.errorText, marginBottom: 8 },
 
   // 入力欄のスタイル
   input: {
