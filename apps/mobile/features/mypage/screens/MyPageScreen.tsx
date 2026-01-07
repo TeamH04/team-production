@@ -25,7 +25,7 @@ export default function MyPageScreen({
   const router = useRouter();
 
   // 店舗ごとのレビュー一覧を取得
-  const { reviewsByShop } = useReviews();
+  const { reviewsByShop, getLikedReviews } = useReviews();
 
   // ユーザー情報
   const { profile } = useUser();
@@ -37,11 +37,12 @@ export default function MyPageScreen({
   }, [reviewsByShop]);
 
   // 表示画面の種類を定義（Union 型で管理）
-  type ScreenType = 'main' | 'reviewHistory' | 'settings' | 'notifications';
+  type ScreenType = 'main' | 'reviewHistory' | 'settings' | 'notifications' | 'likedReviews';
 
   // ScrollView の参照（コンポーネントトップレベルで定義）
   const mainScrollRef = useRef<ScrollView>(null);
   const reviewHistoryScrollRef = useRef<ScrollView>(null);
+  const likedReviewsScrollRef = useRef<ScrollView>(null);
   const settingsScrollRef = useRef<ScrollView>(null);
   const notificationsScrollRef = useRef<ScrollView>(null);
 
@@ -57,10 +58,12 @@ export default function MyPageScreen({
     reviewHistory: useCallback(() => {}, []),
     settings: useCallback(() => {}, []),
     notifications: useCallback(() => {}, []),
+    likedReviews: useCallback(() => {}, []),
   };
 
   const handleScroll = scrollHandlers.main;
   const handleReviewHistoryScroll = scrollHandlers.reviewHistory;
+  const handleLikedReviewsScroll = scrollHandlers.likedReviews;
   const handleSettingsScroll = scrollHandlers.settings;
   const handleNotificationsScroll = scrollHandlers.notifications;
 
@@ -103,9 +106,94 @@ export default function MyPageScreen({
     }
   }, [setWasDetailScreen]);
 
+  const handleGoToShopRegister = useCallback(() => {
+    router.push('/owner/register-shop');
+  }, [router]);
+
+  const handleGoToShopEdit = useCallback(() => {
+    Alert.alert('未実装', 'まだ未実装です');
+  }, []);
+
+  const handleGoToLikedReviews = useCallback(() => {
+    Alert.alert('未実装', 'まだ未実装です');
+  }, []);
+
   // 画面の描画（switch 文で管理）
   switch (currentScreen) {
-    case 'reviewHistory':
+    case 'likedReviews': {
+      const likedReviews = getLikedReviews();
+      return (
+        <ScrollView
+          ref={likedReviewsScrollRef}
+          onScroll={handleLikedReviewsScroll}
+          scrollEventThrottle={16}
+          style={styles.screen}
+          contentContainerStyle={styles.content}
+          showsVerticalScrollIndicator={false}
+        >
+          {/* いいねしたレビューヘッダー */}
+          <View style={styles.headerContainer}>
+            <Pressable onPress={handleBackPress} style={styles.backButton}>
+              <Text style={styles.backButtonText}>←</Text>
+            </Pressable>
+            <Text style={styles.headerTitle}>いいねしたレビュー</Text>
+            <View style={styles.spacer} />
+          </View>
+
+          {likedReviews.length === 0 ? (
+            <View style={styles.emptyContainer}>
+              <Text style={styles.emptyText}>いいねしたレビューがありません</Text>
+            </View>
+          ) : (
+            <View>
+              {likedReviews.map(review => {
+                const shop = SHOPS.find(s => s.id === review.shopId);
+                return (
+                  <Pressable
+                    key={review.id}
+                    style={styles.cardShadow}
+                    onPress={() => router.push(`/shop/${review.shopId}`)}
+                  >
+                    <View style={styles.card}>
+                      <View style={styles.reviewCardContent}>
+                        {shop?.imageUrl && (
+                          <Image source={{ uri: shop.imageUrl }} style={styles.reviewImage} />
+                        )}
+                        <View style={styles.reviewTextContainer}>
+                          <View style={styles.reviewHeader}>
+                            <View style={styles.shopInfo}>
+                              <Text style={styles.shopName}>{shop?.name ?? '不明な店舗'}</Text>
+                              <Text style={styles.shopCategory}>
+                                {shop?.category} │ ★ {shop?.rating.toFixed(1)}
+                              </Text>
+                            </View>
+                          </View>
+
+                          <View style={styles.reviewMeta}>
+                            <Text style={styles.rating}>★ {review.rating}</Text>
+                            <Text style={styles.date}>
+                              {new Date(review.createdAt).toLocaleDateString('ja-JP')}
+                            </Text>
+                          </View>
+
+                          {review.menuItemName && (
+                            <Text style={styles.menuItem}>メニュー: {review.menuItemName}</Text>
+                          )}
+
+                          {review.comment && <Text style={styles.comment}>{review.comment}</Text>}
+                        </View>
+                      </View>
+                    </View>
+                  </Pressable>
+                );
+              })}
+            </View>
+          )}
+        </ScrollView>
+      );
+    }
+
+    case 'reviewHistory': {
       return (
         <ScrollView
           ref={reviewHistoryScrollRef}
@@ -175,8 +263,9 @@ export default function MyPageScreen({
           )}
         </ScrollView>
       );
+    }
 
-    case 'notifications':
+    case 'notifications': {
       return (
         <ScrollView
           ref={notificationsScrollRef}
@@ -200,8 +289,9 @@ export default function MyPageScreen({
           </View>
         </ScrollView>
       );
+    }
 
-    case 'settings':
+    case 'settings': {
       return (
         <ScrollView
           ref={settingsScrollRef}
@@ -225,9 +315,10 @@ export default function MyPageScreen({
           </View>
         </ScrollView>
       );
+    }
 
     case 'main':
-    default:
+    default: {
       return (
         <ScrollView
           ref={mainScrollRef}
@@ -258,6 +349,40 @@ export default function MyPageScreen({
 
               <Pressable onPress={() => router.push('/profile/edit')} style={styles.primaryBtn}>
                 <Text style={styles.primaryBtnText}>プロフィールを編集</Text>
+              </Pressable>
+            </View>
+          </View>
+
+          {/* 店舗登録・編集 */}
+          <View style={styles.sectionCard}>
+            <View style={styles.sectionHeaderRow}>
+              <View style={styles.sectionIconBadge}>
+                <Ionicons
+                  name='storefront'
+                  size={18}
+                  color={palette.accent}
+                  style={styles.sectionIcon}
+                />
+              </View>
+              <View style={styles.sectionTextContainer}>
+                <Text style={styles.sectionTitle}>店舗登録</Text>
+                <Text style={styles.sectionSub}>オーナー用の店舗登録・編集はこちら</Text>
+              </View>
+            </View>
+
+            <View style={styles.gridContainer}>
+              <Pressable style={styles.gridCard} onPress={handleGoToShopRegister}>
+                <View style={styles.gridIconBadge}>
+                  <Ionicons name='add-circle' size={24} color={palette.primary} />
+                </View>
+                <Text style={styles.gridCardLabel}>登録</Text>
+              </Pressable>
+
+              <Pressable style={styles.gridCard} onPress={handleGoToShopEdit}>
+                <View style={styles.gridIconBadge}>
+                  <Ionicons name='create' size={24} color={palette.primary} />
+                </View>
+                <Text style={styles.gridCardLabel}>編集</Text>
               </Pressable>
             </View>
           </View>
@@ -294,7 +419,7 @@ export default function MyPageScreen({
                 <Text style={styles.gridCardLabel}>レビュー履歴</Text>
               </Pressable>
 
-              <Pressable style={styles.gridCard}>
+              <Pressable style={styles.gridCard} onPress={handleGoToLikedReviews}>
                 <View style={styles.gridIconBadge}>
                   <Ionicons name='thumbs-up' size={24} color={palette.primary} />
                 </View>
@@ -345,6 +470,7 @@ export default function MyPageScreen({
           </View>
         </ScrollView>
       );
+    }
   }
 }
 

@@ -45,6 +45,10 @@ function RootStack() {
         <Stack.Screen name='(tabs)' options={{ headerShown: false }} />
         <Stack.Screen name='login' options={{ title: 'ログイン', headerShown: true }} />
         <Stack.Screen name='owner/signup' options={{ title: 'オーナー登録', headerShown: true }} />
+        <Stack.Screen
+          name='owner/register-shop'
+          options={{ headerShown: true, presentation: 'card' }}
+        />
         <Stack.Screen name='auth/callback' options={{ title: '認証', headerShown: true }} />
         <Stack.Screen
           name='review-history'

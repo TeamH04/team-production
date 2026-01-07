@@ -37,7 +37,7 @@ export default function ShopDetailScreen() {
   const navigation = useNavigation();
 
   const { isFavorite, toggleFavorite } = useFavorites();
-  const { getReviews } = useReviews();
+  const { getReviews, toggleReviewLike, isReviewLiked } = useReviews();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   const currentShop = useMemo(() => SHOPS.find(s => s.id === id), [id]);
@@ -171,14 +171,41 @@ export default function ShopDetailScreen() {
           <Text style={styles.primaryBtnText}>レビューを書く</Text>
         </Pressable>
 
-        {reviews.map(review => (
-          <View key={review.id} style={[styles.card, styles.cardShadow]}>
-            <Text style={styles.reviewTitle}>
-              ★ {review.rating} ・ {new Date(review.createdAt).toLocaleDateString('ja-JP')}
-            </Text>
-            <Text style={styles.reviewBody}>{review.comment}</Text>
-          </View>
-        ))}
+        {(() => {
+          // isReviewLiked の呼び出しをメモ化してパフォーマンス改善
+          const likedReviewsMap = new Map(
+            reviews.map(review => [review.id, isReviewLiked(review.id)])
+          );
+          return reviews.map(review => {
+            const isLiked = likedReviewsMap.get(review.id) ?? false;
+            return (
+              <View key={review.id} style={[styles.card, styles.cardShadow]}>
+                <View style={styles.reviewHeader}>
+                  <View style={styles.reviewLeft}>
+                    <Text style={styles.reviewTitle}>
+                      ★ {review.rating} ・ {new Date(review.createdAt).toLocaleDateString('ja-JP')}
+                    </Text>
+                  </View>
+                  <Pressable
+                    onPress={() => toggleReviewLike(review.id)}
+                    style={({ pressed }) => [styles.reviewLikeBtn, pressed && styles.btnPressed]}
+                    accessibilityLabel='レビューをいいね'
+                  >
+                    <Ionicons
+                      name={isLiked ? 'heart' : 'heart-outline'}
+                      size={20}
+                      color={isLiked ? palette.accent : palette.muted}
+                    />
+                  </Pressable>
+                </View>
+                {review.menuItemName ? (
+                  <Text style={styles.muted}>メニュー: {review.menuItemName}</Text>
+                ) : null}
+                {review.comment ? <Text style={styles.reviewBody}>{review.comment}</Text> : null}
+              </View>
+            );
+          });
+        })()}
       </View>
     </ScrollView>
   );
@@ -229,18 +256,27 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
-
-  hero: {
-    height: 220,
-    width: SCREEN_WIDTH,
-  },
-
+  hero: { backgroundColor: palette.heroPlaceholder, height: 220, width: SCREEN_WIDTH },
   heroContainer: {
     backgroundColor: palette.heroPlaceholder,
+    marginBottom: 0,
     position: 'relative',
+  },
+  mapButton: {
+    alignItems: 'center',
+    backgroundColor: palette.secondarySurface,
+    borderColor: palette.border,
+    borderRadius: 12,
+    borderWidth: 1,
+    marginTop: 12,
+    paddingVertical: 14,
   },
 
   meta: {
+    color: palette.muted,
+    marginTop: 6,
+  },
+  muted: {
     color: palette.muted,
     marginTop: 6,
   },
@@ -274,26 +310,26 @@ const styles = StyleSheet.create({
     marginTop: 13,
     paddingVertical: 12,
   },
-
-  primaryBtnText: {
-    color: WHITE, // リテラルを排除
-    fontWeight: '700',
-    textAlign: 'center',
+  primaryBtnText: { color: palette.primaryOnAccent, fontWeight: '700', textAlign: 'center' },
+  reviewBody: { color: palette.primary, marginTop: 8 },
+  reviewHeader: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
   },
-
-  reviewBody: {
-    color: palette.primary,
-    marginTop: 8,
-  },
-
-  reviewTitle: {
-    color: palette.primary,
-    fontWeight: '700',
-  },
-
-  screen: {
-    backgroundColor: palette.background,
-    flex: 1,
+  reviewLeft: { flex: 1 },
+  reviewLikeBtn: { padding: 4 },
+  btnPressed: { opacity: 0.7 },
+  reviewTitle: { color: palette.primary, fontWeight: '700' },
+  screen: { backgroundColor: palette.background, flex: 1 },
+  secondaryBtn: {
+    backgroundColor: palette.secondarySurface,
+    borderColor: palette.border,
+    borderRadius: 10,
+    borderWidth: 1,
+    marginTop: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
   },
 
   sectionHeader: {
