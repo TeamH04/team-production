@@ -36,7 +36,7 @@ export default function EditProfileScreen() {
   const [errorName, setErrorName] = useState('');
   const [errorEmail, setErrorEmail] = useState('');
   const [errorBirth, setErrorBirth] = useState('');
-  const [errorStore, setErrorStore] = useState('');
+  const [saveError, setSaveError] = useState('');
 
   const years = useMemo(() => {
     const current = new Date().getFullYear();
