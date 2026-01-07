@@ -28,17 +28,20 @@ const BUDGET_LABEL: Record<Shop['budget'], string> = {
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
+// カラーリテラル対策
+const WHITE = '#FFFFFF';
+
 export default function ShopDetailScreen() {
-  const params = useLocalSearchParams<{ id?: string | string[] }>();
-  const id = Array.isArray(params.id) ? params.id[0] : params.id;
+  const params = useLocalSearchParams<{ id?: string }>();
+  const id = params.id;
   const router = useRouter();
   const navigation = useNavigation();
+
   const { isFavorite, toggleFavorite } = useFavorites();
   const { getReviews, toggleReviewLike, isReviewLiked } = useReviews();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   const shop = useMemo(() => SHOPS.find(s => s.id === id), [id]);
-
   const webBaseUrl = process.env.EXPO_PUBLIC_WEB_BASE_URL?.replace(/\/$/, '');
 
   useLayoutEffect(() => {
@@ -53,8 +56,8 @@ export default function ShopDetailScreen() {
     }, [navigation])
   );
 
-  const isFav = id ? isFavorite(id) : false;
-  const reviews = id ? getReviews(id) : [];
+  const isFav = shop ? isFavorite(shop.id) : false;
+  const reviews = shop ? getReviews(shop.id) : [];
   const imageUrls = shop?.imageUrls;
   const flatListRef = useRef<FlatList>(null);
   const mapOpenUrl = useMemo(
@@ -64,10 +67,6 @@ export default function ShopDetailScreen() {
         : null,
     [shop?.placeId]
   );
-
-  const scrollToImage = (index: number) => {
-    flatListRef.current?.scrollToIndex({ index, animated: true });
-  };
 
   const handleShare = useCallback(() => {
     if (!shop) return;
@@ -81,15 +80,11 @@ export default function ShopDetailScreen() {
     }
 
     const url = `${webBaseUrl}/shop/${shop.id}`;
-
     Share.share({
       message: `${shop.name}\n${shop.description}\n${url}`,
-      url,
       title: shop.name,
-    }).catch(err => {
-      console.warn('Failed to share shop', err);
-      Alert.alert('共有に失敗しました', 'もう一度お試しください。');
-    });
+      url,
+    }).catch(() => Alert.alert('共有に失敗しました', 'もう一度お試しください。'));
   }, [shop, webBaseUrl]);
 
   if (!shop) {
@@ -104,68 +99,38 @@ export default function ShopDetailScreen() {
   }
 
   return (
-    <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
-      {imageUrls && imageUrls.length > 0 ? (
-        <View style={styles.heroContainer}>
-          <FlatList
-            ref={flatListRef}
-            data={imageUrls}
-            renderItem={({ item, index }) => (
-              <Image
-                source={{ uri: item }}
-                style={styles.hero}
-                contentFit='cover'
-                accessibilityLabel={`${shop.name} image ${index + 1} of ${imageUrls.length}`}
-              />
-            )}
-            keyExtractor={(_, index) => index.toString()}
-            horizontal
-            pagingEnabled
-            scrollEnabled
-            showsHorizontalScrollIndicator={false}
-            onMomentumScrollEnd={event => {
-              const contentOffsetX = event.nativeEvent.contentOffset.x;
-              const currentIndex = Math.round(contentOffsetX / SCREEN_WIDTH);
-              setCurrentImageIndex(currentIndex);
-            }}
-          />
-          {imageUrls.length > 1 && (
-            <>
-              {currentImageIndex > 0 && (
-                <Pressable
-                  style={[styles.arrowButton, styles.arrowButtonLeft]}
-                  onPress={() => scrollToImage(currentImageIndex - 1)}
-                  accessibilityLabel='前の画像'
-                >
-                  <Text style={styles.arrowText}>‹</Text>
-                </Pressable>
-              )}
-              {currentImageIndex < imageUrls.length - 1 && (
-                <Pressable
-                  style={[styles.arrowButton, styles.arrowButtonRight]}
-                  onPress={() => scrollToImage(currentImageIndex + 1)}
-                  accessibilityLabel='次の画像'
-                >
-                  <Text style={styles.arrowText}>›</Text>
-                </Pressable>
-              )}
-              <View style={styles.paginationContainer}>
-                {imageUrls.map((_, idx) => (
-                  <View
-                    key={idx}
-                    style={[
-                      styles.paginationDot,
-                      idx === currentImageIndex && styles.paginationDotActive,
-                    ]}
-                  />
-                ))}
-              </View>
-            </>
+    <ScrollView contentContainerStyle={styles.content} style={styles.screen}>
+      <View style={styles.heroContainer}>
+        <FlatList
+          data={imageUrls?.length ? imageUrls : [shop.imageUrl]}
+          horizontal
+          keyExtractor={(_, index) => index.toString()}
+          onMomentumScrollEnd={event => {
+            const index = Math.round(event.nativeEvent.contentOffset.x / SCREEN_WIDTH);
+            setCurrentImageIndex(index);
+          }}
+          pagingEnabled
+          ref={flatListRef}
+          renderItem={({ item }) => (
+            <Image contentFit='cover' source={{ uri: item }} style={styles.hero} />
           )}
-        </View>
-      ) : (
-        <Image source={{ uri: shop.imageUrl }} style={styles.hero} contentFit='cover' />
-      )}
+          showsHorizontalScrollIndicator={false}
+        />
+
+        {imageUrls && imageUrls.length > 1 && (
+          <View style={styles.paginationContainer}>
+            {imageUrls.map((_, idx) => (
+              <View
+                key={idx}
+                style={[
+                  styles.paginationDot,
+                  idx === currentImageIndex && styles.paginationDotActive,
+                ]}
+              />
+            ))}
+          </View>
+        )}
+      </View>
 
       <View style={styles.container}>
         <View style={styles.headerRow}>
@@ -182,26 +147,22 @@ export default function ShopDetailScreen() {
                 !webBaseUrl && { opacity: 0.4 },
               ]}
             >
-              <Ionicons name='share-outline' size={22} color={palette.muted} />
+              <Ionicons color={palette.muted} name='share-outline' size={22} />
             </Pressable>
 
-            <Pressable
-              accessibilityLabel='お気に入り切り替え'
-              onPress={() => toggleFavorite(shop.id)}
-              style={({ pressed }) => [styles.favBtn, pressed && styles.btnPressed]}
-            >
+            <Pressable onPress={() => toggleFavorite(shop.id)} style={styles.favBtn}>
               <Ionicons
+                color={isFav ? palette.favoriteActive : palette.muted}
                 name={isFav ? 'heart' : 'heart-outline'}
                 size={24}
-                color={isFav ? palette.favoriteActive : palette.muted}
               />
             </Pressable>
           </View>
         </View>
 
-        <Text
-          style={styles.meta}
-        >{`${shop.category} │ 徒歩${shop.distanceMinutes}分 │ 予算 ${BUDGET_LABEL[shop.budget]} │ ★ ${shop.rating.toFixed(1)}`}</Text>
+        <Text style={styles.meta}>
+          {`${shop.category} │ 徒歩${shop.distanceMinutes}分 │ 予算 ${BUDGET_LABEL[shop.budget]} │ ★ ${shop.rating.toFixed(1)}`}
+        </Text>
 
         <Text style={styles.description}>{shop.description}</Text>
 
@@ -209,12 +170,13 @@ export default function ShopDetailScreen() {
           {shop.tags.map(tag => (
             <Pressable
               key={tag}
-              style={styles.tagPill}
-              accessibilityLabel={`タグ ${tag} で検索`}
               onPress={() => {
-                navigation.setOptions?.({ headerBackTitle: '戻る' });
-                router.navigate({ pathname: '/(tabs)', params: { q: tag } });
+                router.navigate({
+                  params: { tag: tag },
+                  pathname: '/(tabs)',
+                });
               }}
+              style={styles.tagPill}
             >
               <Text style={styles.tagText}>{tag}</Text>
             </Pressable>
@@ -226,7 +188,7 @@ export default function ShopDetailScreen() {
             <Text style={styles.sectionTitle}>場所</Text>
             <Pressable
               style={styles.mapButton}
-              onPress={() => mapOpenUrl && Linking.openURL(mapOpenUrl)}
+              onPress={() => Linking.openURL(mapOpenUrl)}
               accessibilityLabel={`${shop.name} の場所をマップで開く`}
             >
               <Text style={styles.mapButtonText}>マップで開く</Text>
@@ -236,15 +198,11 @@ export default function ShopDetailScreen() {
 
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>レビュー</Text>
-          <Text style={styles.sectionSub}>みんなの感想や体験談</Text>
         </View>
 
         <Pressable
+          onPress={() => router.push({ params: { id: shop.id }, pathname: '/shop/[id]/review' })}
           style={styles.primaryBtn}
-          onPress={() => {
-            navigation.setOptions?.({ headerBackTitle: '戻る' });
-            router.push({ pathname: '/shop/[id]/review', params: { id: shop.id } });
-          }}
         >
           <Text style={styles.primaryBtnText}>レビューを書く</Text>
         </Pressable>
@@ -299,40 +257,14 @@ export default function ShopDetailScreen() {
 }
 
 const styles = StyleSheet.create({
-  arrowButton: {
-    alignItems: 'center',
-    backgroundColor: palette.arrowButtonBg,
-    borderRadius: 20,
-    elevation: 3,
-    height: 40,
-    justifyContent: 'center',
-    position: 'absolute',
-    shadowColor: palette.shadow,
-    shadowOffset: { height: 2, width: 0 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    top: '50%',
-    transform: [{ translateY: -20 }],
-    width: 40,
-  },
-  arrowButtonLeft: {
-    left: 12,
-  },
-  arrowButtonRight: {
-    right: 12,
-  },
-  arrowText: {
-    color: palette.textOnSecondary,
-    fontSize: 32,
-    fontWeight: '600',
-    lineHeight: 32,
-  },
-  btnPressed: { opacity: 0.9 },
+  btnPressed: { opacity: 0.7 },
+
   card: {
     backgroundColor: palette.surface,
     borderRadius: 16,
     padding: 16,
   },
+
   cardShadow: {
     elevation: 4,
     marginBottom: 16,
@@ -341,18 +273,30 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.06,
     shadowRadius: 12,
   },
+
   centered: {
     alignItems: 'center',
     justifyContent: 'center',
   },
-  container: { padding: 16 },
-  content: { paddingBottom: 24 },
+
+  container: {
+    padding: 16,
+  },
+
+  content: {
+    paddingBottom: 24,
+  },
+
   description: {
     color: palette.primary,
     lineHeight: 20,
     marginTop: 12,
   },
-  favBtn: { marginLeft: 12 },
+
+  favBtn: {
+    marginLeft: 12,
+  },
+
   headerActions: {
     alignItems: 'center',
     flexDirection: 'row',
@@ -364,7 +308,11 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   hero: { backgroundColor: palette.heroPlaceholder, height: 220, width: SCREEN_WIDTH },
-  heroContainer: { marginBottom: 0, position: 'relative' },
+  heroContainer: {
+    backgroundColor: palette.heroPlaceholder,
+    marginBottom: 0,
+    position: 'relative',
+  },
   mapButton: {
     alignItems: 'center',
     backgroundColor: palette.secondarySurface,
@@ -375,21 +323,30 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
   },
   mapButtonText: { color: palette.primary, fontWeight: '700' },
+
   mapCard: {
     marginTop: 12,
     padding: 12,
   },
-  meta: { color: palette.muted, marginTop: 6 },
-  muted: { color: palette.muted },
+  meta: {
+    color: palette.muted,
+    marginTop: 6,
+  },
+
+  muted: {
+    color: palette.muted,
+    marginTop: 6,
+  },
+
   paginationContainer: {
     bottom: 12,
     flexDirection: 'row',
     gap: 6,
     justifyContent: 'center',
-    left: 0,
     position: 'absolute',
-    right: 0,
+    width: '100%',
   },
+
   paginationDot: {
     backgroundColor: palette.muted,
     borderRadius: 3,
@@ -397,7 +354,11 @@ const styles = StyleSheet.create({
     opacity: 0.5,
     width: 6,
   },
-  paginationDotActive: { backgroundColor: palette.primaryOnAccent },
+
+  paginationDotActive: {
+    backgroundColor: WHITE, // リテラルを排除
+    opacity: 1,
+  },
   primaryBtn: {
     backgroundColor: palette.accent,
     borderRadius: 12,
@@ -412,12 +373,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
-  reviewLeft: {
-    flex: 1,
-  },
-  reviewLikeBtn: {
-    padding: 4,
-  },
+  reviewLeft: { flex: 1 },
+  reviewLikeBtn: { padding: 4 },
   reviewTitle: { color: palette.primary, fontWeight: '700' },
   screen: { backgroundColor: palette.background, flex: 1 },
   secondaryBtn: {
@@ -430,13 +387,22 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   secondaryBtnText: { color: palette.textOnSecondary, fontWeight: '700' },
-  sectionHeader: { marginBottom: 8, marginTop: 16 },
-  sectionSub: { color: palette.muted, marginTop: 2 },
-  sectionTitle: { color: palette.primary, fontSize: 18, fontWeight: '700' },
+
+  sectionHeader: {
+    marginBottom: 8,
+    marginTop: 16,
+  },
+
+  sectionTitle: {
+    color: palette.primary,
+    fontSize: 18,
+    fontWeight: '700',
+  },
+
   shareBtn: {
-    marginLeft: 8,
     padding: 4,
   },
+
   tagPill: {
     backgroundColor: palette.tagSurface,
     borderRadius: 999,
@@ -445,7 +411,22 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 6,
   },
-  tagRow: { flexDirection: 'row', flexWrap: 'wrap', marginTop: 12 },
-  tagText: { color: palette.tagText, fontSize: 12, fontWeight: '600' },
-  title: { color: palette.primary, fontSize: 22, fontWeight: '800' },
+
+  tagRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginTop: 12,
+  },
+
+  tagText: {
+    color: palette.tagText,
+    fontSize: 12,
+    fontWeight: '600',
+  },
+
+  title: {
+    color: palette.primary,
+    fontSize: 22,
+    fontWeight: '800',
+  },
 });

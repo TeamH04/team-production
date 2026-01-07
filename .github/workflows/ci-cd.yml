@@ -68,6 +68,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Ensure Go cache directories exist
+        run: |
+          mkdir -p $HOME/go/pkg/mod
+          mkdir -p $HOME/.cache/go-build
+
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
@@ -109,6 +114,11 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Ensure Go cache directories exist
+        run: |
+          mkdir -p $HOME/go/pkg/mod
+          mkdir -p $HOME/.cache/go-build
 
       - name: Setup Go
         uses: actions/setup-go@v5
@@ -220,6 +230,11 @@ jobs:
       - name: Run security audit (dev deps only)
         run: |
           pnpm audit --dev --audit-level moderate
+
+      - name: Ensure Go cache directories exist
+        run: |
+          mkdir -p $HOME/go/pkg/mod
+          mkdir -p $HOME/.cache/go-build
 
       - name: Setup Go
         uses: actions/setup-go@v5
