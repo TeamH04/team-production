@@ -1,7 +1,7 @@
 {
   "name": "team-production",
   "private": true,
-  "packageManager": "pnpm@10.26.0",
+  "packageManager": "pnpm@10.27.0",
   "engines": {
     "node": "24.x",
     "pnpm": ">=10"
@@ -38,6 +38,12 @@
     "globals": "^17.0.0",
     "prettier": "^3.7.4",
     "typescript": "~5.9.3"
+  },
+  "pnpm": {
+    "overrides": {
+      "@types/react": "~19.1.0",
+      "@types/react-dom": "~19.1.0"
+    }
   },
   "type": "module",
   "version": "1.0.0"
