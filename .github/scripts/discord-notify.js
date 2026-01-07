@@ -15,24 +15,24 @@ module.exports = async ({ context, core, fs }) => {
   let map = {};
   try {
     map = JSON.parse(fs.readFileSync('.github/discord-map.json', 'utf8'));
-  } catch (e) {
+  } catch {
     core.warning('discord-map.json が読めません。メンションなしで送ります。');
   }
 
-  const mentionOf = (login) => {
+  const mentionOf = login => {
     const id = map[login];
     return id ? `<@${id}>` : `@${login}`;
   };
 
-  const uniq = (arr) => [...new Set(arr)].filter(Boolean);
+  const uniq = arr => [...new Set(arr)].filter(Boolean);
 
   const COPILOT_LOGINS = ['github-copilot', 'github-copilot[bot]', 'copilot', 'copilot[bot]'];
-  const isCopilotLogin = (login) => {
+  const isCopilotLogin = login => {
     if (!login) return false;
     return COPILOT_LOGINS.includes(login.toLowerCase());
   };
 
-  const post = async (content) => {
+  const post = async content => {
     const url = process.env.DISCORD_WEBHOOK_URL;
     if (!url) throw new Error('DISCORD_WEBHOOK_URL が未設定です');
     const body = { content };
@@ -69,14 +69,12 @@ module.exports = async ({ context, core, fs }) => {
         `📝 **Issue Assigned** in \`${owner}/${repo}\``,
         `**${title}**`,
         `${mentions}`,
-        `${url}`
+        `${url}`,
       ].join('\n');
 
       await post(msg);
     }
-  }
-
-  else if (ev === 'pull_request') {
+  } else if (ev === 'pull_request') {
     const pr = context.payload.pull_request;
     const owner = context.repo.owner;
     const repo = context.repo.repo;
@@ -85,7 +83,8 @@ module.exports = async ({ context, core, fs }) => {
       // 仕様: PRを立てた時に reviewer にした人へメンション
       // ※「review_requested」は作成時／後から依頼した時どちらも発火
       const reqReviewer = context.payload.requested_reviewer?.login;
-      const reqTeam = context.payload.requested_team?.name;
+      // チームへのレビュー依頼は現在未対応（将来的にロールメンションに置換可能）
+      // const reqTeam = context.payload.requested_team?.name;
       if (reqReviewer && isCopilotLogin(reqReviewer)) return;
       // ユーザー個別のみメンション（チームは任意でロールに置換してもOK）
       if (reqReviewer) {
@@ -93,13 +92,11 @@ module.exports = async ({ context, core, fs }) => {
           `👀 **Review Requested** in \`${owner}/${repo}\``,
           `**${pr.title}** by @${pr.user.login}`,
           `${mentionOf(reqReviewer)}`,
-          `${pr.html_url}`
+          `${pr.html_url}`,
         ].join('\n');
         await post(msg);
       }
-    }
-
-    else if (action === 'opened' || action === 'ready_for_review' || action === 'reopened') {
+    } else if (action === 'opened' || action === 'ready_for_review' || action === 'reopened') {
       // PR作成時／Draft解除時: reviewerが同時指定されていたら通知（任意）
       const reviewers = (pr.requested_reviewers || []).map(u => u.login);
       const filteredReviewers = reviewers.filter(login => !isCopilotLogin(login));
@@ -108,24 +105,20 @@ module.exports = async ({ context, core, fs }) => {
           `🆕 **PR Opened** in \`${owner}/${repo}\``,
           `**${pr.title}** by @${pr.user.login}`,
           `Reviewers: ${uniq(filteredReviewers).map(mentionOf).join(' ')}`,
-          `${pr.html_url}`
+          `${pr.html_url}`,
         ].join('\n');
         await post(msg);
       }
-    }
-
-    else if (action === 'closed' && pr.merged) {
+    } else if (action === 'closed' && pr.merged) {
       // 仕様: PRがmergeされたときに通知
       const msg = [
         `✅ **PR Merged** in \`${owner}/${repo}\``,
         `**${pr.title}** by @${pr.user.login}`,
-        `${pr.html_url}`
+        `${pr.html_url}`,
       ].join('\n');
       await post(msg);
     }
-  }
-
-  else if (ev === 'pull_request_review') {
+  } else if (ev === 'pull_request_review') {
     // 仕様: PRにreviewが来たときに、PR作成者へ通知
     if (action === 'submitted') {
       const pr = context.payload.pull_request;
@@ -148,7 +141,7 @@ module.exports = async ({ context, core, fs }) => {
         `**${pr.title}**`,
         `Reviewer: ${mentionOf(reviewer)}`,
         `${authorMention}`, // ← ここでPR作成者へ通知
-        `${pr.html_url}#pullrequestreview-${review.id}`
+        `${pr.html_url}#pullrequestreview-${review.id}`,
       ];
       if (snippet) {
         msgLines.push('\n> ' + snippet.replace(/\n/g, '\n> '));
