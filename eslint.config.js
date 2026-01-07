@@ -10,6 +10,8 @@ import reactNative from 'eslint-plugin-react-native';
 import globals from 'globals';
 import path from 'node:path';
 
+const MOBILE_NODE_MODULES = path.resolve(process.cwd(), 'apps/mobile/node_modules');
+
 export default [
   {
     ignores: [
@@ -135,7 +137,10 @@ export default [
     plugins: { 'react-native': reactNative },
     settings: {
       'import/resolver': {
-        node: { extensions: ['.ts', '.tsx', '.js', '.jsx', '.json'] },
+        node: {
+          extensions: ['.ts', '.tsx', '.js', '.jsx', '.json'],
+          paths: [MOBILE_NODE_MODULES],
+        },
         typescript: {
           // tsconfig の paths (= @, ~) を使わせる
           project: [path.resolve(process.cwd(), 'apps/mobile/tsconfig.json')],
