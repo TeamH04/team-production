@@ -17,7 +17,6 @@ import {
 const TAB_BAR_SPACING = 129;
 const INACTIVE_COLOR = palette.secondarySurface;
 
-// Lint対策: カラーリテラルの定数化
 const COLOR_WHITE = '#FFFFFF';
 const COLOR_ACTIVE_NAVY = '#1A2533';
 const COLOR_TAG_BG = '#F0F2F5';
@@ -97,9 +96,23 @@ export default function SearchScreen() {
     setFilterVisited('all');
   };
 
-  const handleSearch = () => {
-    setCurrentSearchText(userTypedText);
-    setUserTypedText('');
+  const handleSearch = (textToSearch?: string) => {
+    const targetText = textToSearch !== undefined ? textToSearch : userTypedText;
+    const trimmedText = targetText.trim();
+
+    if (trimmedText === '') return;
+
+    // 検索履歴を更新
+    setSearchHistory(prev => {
+      // 既にある場合は一旦消して、配列の先頭に追加（重複防止）
+      const filtered = prev.filter(item => item !== trimmedText);
+      return [trimmedText, ...filtered].slice(0, 10); // 最大10件
+    });
+
+    setCurrentSearchText(trimmedText);
+    if (textToSearch === undefined) {
+      setUserTypedText('');
+    }
   };
 
   const handleSortTypePress = (value: SortType) => {
@@ -274,7 +287,6 @@ export default function SearchScreen() {
 
             {activeCategories.length > 0 && (
               <View style={styles.subTagSection}>
-                {/* メインとサブの間の線（1回のみ表示） */}
                 <View style={styles.divider} />
 
                 {activeCategories.map(cat => (
@@ -438,7 +450,8 @@ export default function SearchScreen() {
               scrollEnabled={false}
               renderItem={({ item }) => (
                 <View style={styles.historyItem}>
-                  <Pressable onPress={() => handleSearch()} style={styles.historyTextContainer}>
+                  {/* タップした時にその履歴ワードで再検索を実行 */}
+                  <Pressable onPress={() => handleSearch(item)} style={styles.historyTextContainer}>
                     <Text style={styles.historyText}>{item}</Text>
                   </Pressable>
                   <Pressable onPress={() => handleRemoveHistory(item)}>
