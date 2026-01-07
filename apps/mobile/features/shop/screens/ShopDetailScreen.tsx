@@ -1,11 +1,12 @@
 ﻿import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { useFocusEffect, useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import {
   Alert,
   Dimensions,
   FlatList,
+  Linking,
   Pressable,
   ScrollView,
   Share,
@@ -40,16 +41,7 @@ export default function ShopDetailScreen() {
   const { getReviews, toggleReviewLike, isReviewLiked } = useReviews();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
-  const currentShop = useMemo(() => SHOPS.find(s => s.id === id), [id]);
-  const [stickyShop, setStickyShop] = useState<Shop | null>(null);
-
-  useEffect(() => {
-    if (currentShop) {
-      setStickyShop(currentShop);
-    }
-  }, [currentShop]);
-
-  const shop = currentShop || stickyShop;
+  const shop = useMemo(() => SHOPS.find(s => s.id === id), [id]);
   const webBaseUrl = process.env.EXPO_PUBLIC_WEB_BASE_URL?.replace(/\/$/, '');
 
   useLayoutEffect(() => {
@@ -64,24 +56,46 @@ export default function ShopDetailScreen() {
     }, [navigation])
   );
 
-  const isFav = id ? isFavorite(id) : shop ? isFavorite(shop.id) : false;
+  const isFav = shop ? isFavorite(shop.id) : false;
   const reviews = shop ? getReviews(shop.id) : [];
   const imageUrls = shop?.imageUrls;
   const flatListRef = useRef<FlatList>(null);
+  const mapOpenUrl = useMemo(
+    () =>
+      shop?.placeId
+        ? `https://www.google.com/maps/search/?api=1&query=Google&query_place_id=${shop.placeId}`
+        : null,
+    [shop?.placeId]
+  );
 
   const handleShare = useCallback(() => {
     if (!shop) return;
+
+    if (!webBaseUrl) {
+      Alert.alert(
+        '共有できません',
+        '共有URLの設定が見つからないため、この機能は現在利用できません。'
+      );
+      return;
+    }
 
     const url = `${webBaseUrl}/shop/${shop.id}`;
     Share.share({
       message: `${shop.name}\n${shop.description}\n${url}`,
       title: shop.name,
       url,
-    }).catch(() => Alert.alert('エラー', '共有に失敗しました。'));
+    }).catch(() => Alert.alert('共有に失敗しました', 'もう一度お試しください。'));
   }, [shop, webBaseUrl]);
 
   if (!shop) {
-    return <View style={styles.screen} />;
+    return (
+      <View style={[styles.screen, styles.centered]}>
+        <Text style={styles.title}>店舗が見つかりませんでした</Text>
+        <Pressable style={styles.secondaryBtn} onPress={() => router.back()}>
+          <Text style={styles.secondaryBtnText}>戻る</Text>
+        </Pressable>
+      </View>
+    );
   }
 
   return (
@@ -123,7 +137,16 @@ export default function ShopDetailScreen() {
           <Text style={styles.title}>{shop.name}</Text>
 
           <View style={styles.headerActions}>
-            <Pressable onPress={handleShare} style={styles.shareBtn}>
+            <Pressable
+              accessibilityLabel='このお店を共有'
+              onPress={handleShare}
+              disabled={!webBaseUrl}
+              style={({ pressed }) => [
+                styles.shareBtn,
+                pressed && styles.btnPressed,
+                !webBaseUrl && { opacity: 0.4 },
+              ]}
+            >
               <Ionicons color={palette.muted} name='share-outline' size={22} />
             </Pressable>
 
@@ -160,6 +183,19 @@ export default function ShopDetailScreen() {
           ))}
         </View>
 
+        {mapOpenUrl ? (
+          <View style={[styles.card, styles.cardShadow, styles.mapCard]}>
+            <Text style={styles.sectionTitle}>場所</Text>
+            <Pressable
+              style={styles.mapButton}
+              onPress={() => Linking.openURL(mapOpenUrl)}
+              accessibilityLabel={`${shop.name} の場所をマップで開く`}
+            >
+              <Text style={styles.mapButtonText}>マップで開く</Text>
+            </Pressable>
+          </View>
+        ) : null}
+
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>レビュー</Text>
         </View>
@@ -171,41 +207,50 @@ export default function ShopDetailScreen() {
           <Text style={styles.primaryBtnText}>レビューを書く</Text>
         </Pressable>
 
-        {(() => {
-          // isReviewLiked の呼び出しをメモ化してパフォーマンス改善
-          const likedReviewsMap = new Map(
-            reviews.map(review => [review.id, isReviewLiked(review.id)])
-          );
-          return reviews.map(review => {
-            const isLiked = likedReviewsMap.get(review.id) ?? false;
-            return (
-              <View key={review.id} style={[styles.card, styles.cardShadow]}>
-                <View style={styles.reviewHeader}>
-                  <View style={styles.reviewLeft}>
-                    <Text style={styles.reviewTitle}>
-                      ★ {review.rating} ・ {new Date(review.createdAt).toLocaleDateString('ja-JP')}
-                    </Text>
-                  </View>
-                  <Pressable
-                    onPress={() => toggleReviewLike(review.id)}
-                    style={({ pressed }) => [styles.reviewLikeBtn, pressed && styles.btnPressed]}
-                    accessibilityLabel='レビューをいいね'
-                  >
-                    <Ionicons
-                      name={isLiked ? 'heart' : 'heart-outline'}
-                      size={20}
-                      color={isLiked ? palette.accent : palette.muted}
-                    />
-                  </Pressable>
-                </View>
-                {review.menuItemName ? (
-                  <Text style={styles.muted}>メニュー: {review.menuItemName}</Text>
-                ) : null}
-                {review.comment ? <Text style={styles.reviewBody}>{review.comment}</Text> : null}
-              </View>
+        {reviews.length === 0 ? (
+          <View style={[styles.card, styles.cardShadow]}>
+            <Text style={styles.muted}>
+              まだレビューがありません。最初のレビューを投稿しましょう！
+            </Text>
+          </View>
+        ) : (
+          (() => {
+            // isReviewLiked の呼び出しをメモ化してパフォーマンス改善
+            const likedReviewsMap = new Map(
+              reviews.map(review => [review.id, isReviewLiked(review.id)])
             );
-          });
-        })()}
+            return reviews.map(review => {
+              const isLiked = likedReviewsMap.get(review.id) ?? false;
+              return (
+                <View key={review.id} style={[styles.card, styles.cardShadow]}>
+                  <View style={styles.reviewHeader}>
+                    <View style={styles.reviewLeft}>
+                      <Text style={styles.reviewTitle}>
+                        ★ {review.rating} ・{' '}
+                        {new Date(review.createdAt).toLocaleDateString('ja-JP')}
+                      </Text>
+                    </View>
+                    <Pressable
+                      onPress={() => toggleReviewLike(review.id)}
+                      style={({ pressed }) => [styles.reviewLikeBtn, pressed && styles.btnPressed]}
+                      accessibilityLabel='レビューをいいね'
+                    >
+                      <Ionicons
+                        name={isLiked ? 'heart' : 'heart-outline'}
+                        size={20}
+                        color={isLiked ? palette.accent : palette.muted}
+                      />
+                    </Pressable>
+                  </View>
+                  {review.menuItemName ? (
+                    <Text style={styles.muted}>メニュー: {review.menuItemName}</Text>
+                  ) : null}
+                  {review.comment ? <Text style={styles.reviewBody}>{review.comment}</Text> : null}
+                </View>
+              );
+            });
+          })()
+        )}
       </View>
     </ScrollView>
   );
@@ -225,6 +270,11 @@ const styles = StyleSheet.create({
     shadowOffset: { height: 6, width: 0 },
     shadowOpacity: 0.06,
     shadowRadius: 12,
+  },
+
+  centered: {
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 
   container: {
@@ -270,6 +320,11 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     marginTop: 12,
     paddingVertical: 14,
+  },
+  mapButtonText: { color: palette.primary, fontWeight: '700' },
+  mapCard: {
+    marginTop: 12,
+    padding: 12,
   },
 
   meta: {
@@ -331,6 +386,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 10,
   },
+  secondaryBtnText: { color: palette.textOnSecondary, fontWeight: '700' },
 
   sectionHeader: {
     marginBottom: 8,

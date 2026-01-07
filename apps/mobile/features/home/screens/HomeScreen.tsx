@@ -46,6 +46,12 @@ export default function HomeScreen() {
   }, [activeTag, activeCategory]);
 
   useEffect(() => {
+    if (loadMoreTimeout.current) {
+      clearTimeout(loadMoreTimeout.current);
+      loadMoreTimeout.current = null;
+    }
+
+    setIsLoadingMore(false);
     setVisibleCount(Math.min(PAGE_SIZE, filteredShops.length));
 
     if (listRef.current) {
@@ -53,6 +59,15 @@ export default function HomeScreen() {
       listRef.current.scrollToOffset({ animated: true, offset: 0 });
     }
   }, [filteredShops, listRef]); // listRef を依存配列に追加
+
+  useEffect(() => {
+    return () => {
+      if (loadMoreTimeout.current) {
+        clearTimeout(loadMoreTimeout.current);
+        loadMoreTimeout.current = null;
+      }
+    };
+  }, []);
 
   const visibleShops = useMemo(() => {
     return filteredShops.slice(0, visibleCount);
@@ -68,6 +83,7 @@ export default function HomeScreen() {
     loadMoreTimeout.current = setTimeout(() => {
       setVisibleCount(prev => Math.min(prev + PAGE_SIZE, filteredShops.length));
       setIsLoadingMore(false);
+      loadMoreTimeout.current = null;
     }, 350);
   }, [filteredShops.length, hasMoreResults, isLoadingMore]);
 
