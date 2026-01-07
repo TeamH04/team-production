@@ -1,4 +1,5 @@
-﻿import React, { useMemo, useState } from 'react';
+﻿import React from 'react';
+import { useMemo, useState } from 'react';
 import { useRouter } from 'expo-router';
 import {
   KeyboardAvoidingView,
@@ -11,20 +12,9 @@ import {
   View,
 } from 'react-native';
 
+import { palette } from '@/constants/palette';
 import { TAB_BAR_SPACING } from '@/constants/TabBarSpacing';
 import { useUser } from '@/features/user/UserContext';
-
-const palette = {
-  accent: '#0EA5E9',
-  background: '#F9FAFB',
-  border: '#E5E7EB',
-  mutedText: '#6B7280',
-  primary: '#111827',
-  primaryOnAccent: '#FFFFFF',
-  secondarySurface: '#F3F4F6',
-  shadow: '#0f172a',
-  surface: '#FFFFFF',
-} as const;
 
 // プロフィール編集画面コンポーネント
 export default function EditProfileScreen() {

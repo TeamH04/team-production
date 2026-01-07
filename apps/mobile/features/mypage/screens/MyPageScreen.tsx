@@ -66,8 +66,8 @@ export default function MyPageScreen({
   const [currentScreen, setCurrentScreen] = useState<ScreenType>('main');
 
   // プロフィール編集用の状態管理
-  const [editName, setEditName] = useState(profile.name);
-  const [editEmail, setEditEmail] = useState(profile.email);
+  const [editName, setEditName] = useState('');
+  const [editEmail, setEditEmail] = useState('');
 
   /**
    * スクロールハンドラーのマップ
@@ -150,7 +150,7 @@ export default function MyPageScreen({
   }, [profile, setWasDetailScreen]);
 
   const handleSaveProfile = useCallback(() => {
-    const emailOk = /.+@.+\..+/.test(editEmail.trim());
+    const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(editEmail.trim());
     if (editName.trim().length === 0 || !emailOk) {
       Alert.alert('入力エラー', '表示名とメールアドレスを正しく入力してください');
       return;
