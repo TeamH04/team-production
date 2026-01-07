@@ -218,7 +218,7 @@ export default function LoginScreen() {
           height='100%'
           preserveAspectRatio='xMidYMid meet'
           accessibilityLabel='Kuguriロゴ'
-          fill='#FFFFFF'
+          fill={palette.white}
         />
       </View>
       <View style={styles.actions}>
@@ -234,7 +234,7 @@ export default function LoginScreen() {
             ]}
           >
             <View style={styles.buttonContent}>
-              <Ionicons name='logo-google' size={28} color='#FFFFFF' />
+              <Ionicons name='logo-google' size={28} color={palette.white} />
               <Text style={styles.buttonOutlineText}>
                 {loading === 'google' ? 'Google で処理中…' : 'Google でログイン'}
               </Text>
@@ -256,7 +256,7 @@ export default function LoginScreen() {
               <Ionicons
                 name='logo-apple'
                 size={28}
-                color='#FFFFFF'
+                color={palette.white}
                 style={styles.appleIconAdjust}
               />
               <Text style={styles.buttonOutlineText}>
