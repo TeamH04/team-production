@@ -85,10 +85,6 @@ export default function SearchScreen() {
     setSortBy('default');
   };
 
-  /**
-   * 修正：検索実行時に履歴を保存するロジックを追加
-   * 引数 textToSearch があればそれ（履歴タップ時）、なければ userTypedText を使う
-   */
   const handleSearch = (textToSearch?: string) => {
     const targetText = textToSearch !== undefined ? textToSearch : userTypedText;
     const trimmedText = targetText.trim();
@@ -399,7 +395,7 @@ export default function SearchScreen() {
               scrollEnabled={false}
               renderItem={({ item }) => (
                 <View style={styles.historyItem}>
-                  {/* 修正：タップした時にその履歴ワードで再検索を実行 */}
+                  {/* タップした時にその履歴ワードで再検索を実行 */}
                   <Pressable onPress={() => handleSearch(item)} style={styles.historyTextContainer}>
                     <Text style={styles.historyText}>{item}</Text>
                   </Pressable>
@@ -420,9 +416,7 @@ export default function SearchScreen() {
   );
 }
 
-// styles は変更なしのため、元のコードのままで大丈夫です
 const styles = StyleSheet.create({
-  // ... (元のスタイルコード)
   categoriesRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
