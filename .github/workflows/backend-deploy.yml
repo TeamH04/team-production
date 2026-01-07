@@ -1,4 +1,4 @@
-name: Backend - Go Build & Deploy
+name: Backend Deploy
 
 on:
   push:
@@ -6,12 +6,6 @@ on:
     paths:
       - 'apps/backend/**'
       - '.github/workflows/backend-deploy.yml'
-  pull_request:
-    branches: [main, develop]
-    paths:
-      - 'apps/backend/**'
-
-  # 手動実行も可能
   workflow_dispatch:
     inputs:
       environment:
@@ -29,216 +23,18 @@ concurrency:
 
 permissions:
   contents: read
-  pull-requests: write
-  issues: write
-  security-events: write
+  packages: write
 
 env:
-  GO_VERSION: '1.24.6'
+  GO_VERSION: '1.24'
   DOCKER_REGISTRY: 'ghcr.io'
   IMAGE_NAME: '${{ github.repository }}/backend'
 
 jobs:
-  # ----- Tests with different Go versions -----
-  test-matrix:
-    name: Test (Go ${{ matrix.go-version }})
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: apps/backend
-
-    strategy:
-      matrix:
-        go-version: ['1.24.0', '1.23.x']
-
-    services:
-      postgres:
-        image: postgres:16
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: test_app
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 5432:5432
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Go ${{ matrix.go-version }}
-        uses: actions/setup-go@v5
-        with:
-          go-version: ${{ matrix.go-version }}
-          cache-dependency-path: apps/backend/go.sum
-
-      - name: Install dependencies
-        run: go mod download
-
-      - name: Run go vet
-        run: go vet ./...
-
-      - name: Run tests with race detector
-        env:
-          DATABASE_URL: postgres://postgres:postgres@localhost:5432/test_app?sslmode=disable
-        run: |
-          go test -v -race -coverprofile=coverage.out -covermode=atomic ./...
-
-      - name: Generate coverage report
-        if: matrix.go-version == env.GO_VERSION
-        run: |
-          go tool cover -html=coverage.out -o coverage.html
-          go tool cover -func=coverage.out
-
-      - name: Upload coverage to Codecov
-        if: matrix.go-version == env.GO_VERSION
-        uses: codecov/codecov-action@v4
-        with:
-          file: apps/backend/coverage.out
-          flags: backend
-          token: ${{ secrets.CODECOV_TOKEN }}
-
-      - name: Upload coverage artifact
-        if: matrix.go-version == env.GO_VERSION
-        uses: actions/upload-artifact@v4
-        with:
-          name: coverage-report
-          path: apps/backend/coverage.html
-          retention-days: 7
-
-  # ----- Benchmark & Performance tests -----
-  benchmark:
-    name: Benchmark
-    runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request'
-    defaults:
-      run:
-        working-directory: apps/backend
-
-    services:
-      postgres:
-        image: postgres:16
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: test_app
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 5432:5432
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: ${{ env.GO_VERSION }}
-          cache-dependency-path: apps/backend/go.sum
-
-      - name: Install dependencies
-        run: go mod download
-
-      - name: Run benchmarks
-        env:
-          DATABASE_URL: postgres://postgres:postgres@localhost:5432/test_app?sslmode=disable
-        run: |
-          # ベンチマークが存在する場合のみ実行
-          if find . -name "*_test.go" -exec grep -l "func Benchmark" {} \; | head -1 > /dev/null; then
-            go test -bench=. -benchmem -run=^$ ./... | tee benchmark_result.txt
-          else
-            echo "No benchmarks found, skipping..."
-          fi
-
-      - name: Comment benchmark results
-        if: github.event_name == 'pull_request'
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const fs = require('fs');
-            const path = './apps/backend/benchmark_result.txt';
-
-            if (fs.existsSync(path)) {
-              const benchmark = fs.readFileSync(path, 'utf8');
-              
-               const comment = `## Benchmark Results
-              
-              \`\`\`
-              ${benchmark}
-              \`\`\`
-              
-              > Benchmark comparison with base branch coming soon!`;
-              
-              github.rest.issues.createComment({
-                issue_number: context.issue.number,
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                body: comment
-              });
-            }
-
-  # ----- Security scanning -----
-  security:
-    name: Security Scan
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: apps/backend
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: ${{ env.GO_VERSION }}
-          cache-dependency-path: apps/backend/go.sum
-
-      - name: Install dependencies
-        run: go mod download
-
-      - name: Run Gosec Security Scanner (gosec)
-        continue-on-error: true
-        run: |
-          go install github.com/securego/gosec/v2/cmd/gosec@latest
-          $GOPATH/bin/gosec -fmt sarif -out results.sarif ./... || true
-          if [ -f results.sarif ]; then
-            echo "SARIF file created successfully"
-            ls -la results.sarif
-            echo "sarif_exists=true" >> $GITHUB_OUTPUT
-          else
-            echo "SARIF file not created"
-            echo "sarif_exists=false" >> $GITHUB_OUTPUT
-          fi
-        id: gosec
-
-      - name: Upload SARIF file
-        if: steps.gosec.outputs.sarif_exists == 'true'
-        uses: github/codeql-action/upload-sarif@v4
-        with:
-          sarif_file: results.sarif
-          category: gosec
-
-      - name: Run govulncheck
-        continue-on-error: true
-        run: |
-          go install golang.org/x/vuln/cmd/govulncheck@latest
-          govulncheck ./... || echo "Vulnerabilities found, but continuing..."
-
   # ----- Build multi-platform binaries -----
   build:
     name: Build (${{ matrix.os }}/${{ matrix.arch }})
     runs-on: ubuntu-latest
-    needs: [test-matrix, security]
     defaults:
       run:
         working-directory: apps/backend
@@ -262,13 +58,9 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Setup Go
-        uses: actions/setup-go@v5
+        uses: ./.github/actions/go-setup
         with:
           go-version: ${{ env.GO_VERSION }}
-          cache-dependency-path: apps/backend/go.sum
-
-      - name: Install dependencies
-        run: go mod download
 
       - name: Build binary
         env:
@@ -297,7 +89,6 @@ jobs:
     name: Docker Build & Push
     runs-on: ubuntu-latest
     needs: [build]
-    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
     defaults:
       run:
         working-directory: apps/backend
@@ -309,7 +100,7 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: 🔑 Log in to Container Registry
+      - name: Log in to Container Registry
         uses: docker/login-action@v3
         with:
           registry: ${{ env.DOCKER_REGISTRY }}
@@ -327,51 +118,11 @@ jobs:
             type=sha,prefix={{branch}}-
             type=raw,value=latest,enable={{is_default_branch}}
 
-      - name: Create Dockerfile
-        run: |
-          cat > Dockerfile << 'EOF'
-          # Multi-stage build for minimal production image
-          FROM golang:1.24-alpine AS builder
-
-          WORKDIR /app
-
-          # Install dependencies
-          COPY go.mod go.sum ./
-          RUN go mod download
-
-          # Copy source code
-          COPY . .
-
-          # Build the binary
-          RUN CGO_ENABLED=0 GOOS=linux go build \
-              -ldflags="-w -s" \
-              -o bin/server ./cmd/server
-
-          # Production stage
-          FROM alpine:latest
-
-          # Install ca-certificates for HTTPS requests
-          RUN apk --no-cache add ca-certificates
-
-          WORKDIR /root/
-
-          # Copy binary from builder stage
-          COPY --from=builder /app/bin/server .
-
-          # Create non-root user
-          RUN addgroup -g 1001 -S appgroup && \
-              adduser -u 1001 -S appuser -G appgroup
-          USER appuser
-
-          EXPOSE 8080
-
-          CMD ["./server"]
-          EOF
-
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
           context: apps/backend
+          file: apps/backend/Dockerfile
           platforms: linux/amd64,linux/arm64
           push: true
           tags: ${{ steps.meta.outputs.tags }}
@@ -392,18 +143,7 @@ jobs:
         run: |
           echo "Deploying to staging..."
           # ここに実際のデプロイロジックを追加
-
-          # 例: Kubernetes deployment
-          # kubectl set image deployment/backend-app container=${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
-
-          # 例: Docker Swarm
-          # docker service update --image ${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }} backend_app
-
-          # 例: Railway
-          # railway deploy --service backend --image ${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
-
-          # 例: Render
-          # render deploy --service backend --image ${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+          # 例: kubectl set image deployment/backend-app container=${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
 
   # ----- Deploy to production -----
   deploy-production:
@@ -419,20 +159,14 @@ jobs:
           echo "Deploying to production..."
           # ここに実際のデプロイロジックを追加
 
-          # プロダクション環境へのデプロイ設定
-          # Blue-Green deploymentやRolling deploymentの実装も検討
-
       - name: Health check
         run: |
           echo "Performing health check..."
-          # デプロイ後のヘルスチェック
           # curl -f https://your-api.com/health || exit 1
 
       - name: Notify deployment success
         if: success()
-        run: |
-          echo "Production deployment successful!"
-          # Slack, Discord, メール通知など
+        run: echo "Production deployment successful!"
 
   # ----- Database migrations -----
   migrate:
@@ -450,13 +184,12 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Setup Go
-        uses: actions/setup-go@v5
+        uses: ./.github/actions/go-setup
         with:
           go-version: ${{ env.GO_VERSION }}
 
       - name: Install migrate tool
-        run: |
-          go install -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@latest
+        run: go install -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@latest
 
       - name: Run migrations
         env:
