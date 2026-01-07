@@ -96,7 +96,8 @@ jobs:
                 // ※「review_requested」は作成時／後から依頼した時どちらも発火
                 const reqReviewer = context.payload.requested_reviewer?.login;
                 const reqTeam = context.payload.requested_team?.name;
-                if (reqReviewer && reqReviewer.toLowerCase().includes('copilot')) return;
+                const copilotLogins = ['github-copilot', 'github-copilot[bot]', 'copilot', 'copilot[bot]'];
+                if (reqReviewer && copilotLogins.includes(reqReviewer.toLowerCase())) return;
                 // ユーザー個別のみメンション（チームは任意でロールに置換してもOK）
                 if (reqReviewer) {
                   const msg = [
