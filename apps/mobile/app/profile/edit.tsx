@@ -1,5 +1,5 @@
-﻿import { useRouter } from 'expo-router';
-import { useMemo, useState } from 'react';
+﻿import React, { useMemo, useState } from 'react';
+import { useRouter } from 'expo-router';
 import {
   KeyboardAvoidingView,
   Platform,
@@ -11,8 +11,20 @@ import {
   View,
 } from 'react-native';
 
-import { palette } from '@/constants/palette';
+import { TAB_BAR_SPACING } from '@/constants/TabBarSpacing';
 import { useUser } from '@/features/user/UserContext';
+
+const palette = {
+  accent: '#0EA5E9',
+  background: '#F9FAFB',
+  border: '#E5E7EB',
+  mutedText: '#6B7280',
+  primary: '#111827',
+  primaryOnAccent: '#FFFFFF',
+  secondarySurface: '#F3F4F6',
+  shadow: '#0f172a',
+  surface: '#FFFFFF',
+} as const;
 
 // プロフィール編集画面コンポーネント
 export default function EditProfileScreen() {
@@ -39,33 +51,47 @@ export default function EditProfileScreen() {
       style={styles.keyboard}
     >
       <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
+        {/* タイトル */}
+        <View style={styles.headerContainer}>
+          <Text style={styles.title}>プロフィール編集</Text>
+        </View>
+
         {/* アバター（表示名の先頭2文字を表示） */}
         <View style={styles.avatar}>
           <Text style={styles.avatarText}>{(name || 'U').slice(0, 2).toUpperCase()}</Text>
         </View>
 
-        {/* 表示名入力 */}
-        <Text style={styles.label}>表示名</Text>
-        <TextInput
-          value={name}
-          onChangeText={setName}
-          placeholder='例: Hanako Tanaka'
-          placeholderTextColor={palette.muted}
-          style={styles.input}
-          autoCapitalize='words'
-        />
+        {/* フォームカード */}
+        <View style={styles.cardShadow}>
+          <View style={styles.card}>
+            {/* 表示名入力 */}
+            <View style={styles.formGroup}>
+              <Text style={styles.label}>表示名</Text>
+              <TextInput
+                value={name}
+                onChangeText={setName}
+                placeholder='例: Hanako Tanaka'
+                placeholderTextColor={palette.mutedText}
+                style={styles.input}
+                autoCapitalize='words'
+              />
+            </View>
 
-        {/* メールアドレス入力 */}
-        <Text style={styles.label}>メールアドレス</Text>
-        <TextInput
-          value={email}
-          onChangeText={setEmail}
-          placeholder='example@domain.com'
-          placeholderTextColor={palette.muted}
-          style={styles.input}
-          autoCapitalize='none'
-          keyboardType='email-address'
-        />
+            {/* メールアドレス入力 */}
+            <View style={styles.formGroup}>
+              <Text style={styles.label}>メールアドレス</Text>
+              <TextInput
+                value={email}
+                onChangeText={setEmail}
+                placeholder='example@domain.com'
+                placeholderTextColor={palette.mutedText}
+                style={styles.input}
+                autoCapitalize='none'
+                keyboardType='email-address'
+              />
+            </View>
+          </View>
+        </View>
 
         {/* 保存ボタン
             - disabled 時は押せない
@@ -76,7 +102,7 @@ export default function EditProfileScreen() {
             updateProfile({ name: name.trim(), email: email.trim() });
             router.back();
           }}
-          style={styles.primaryBtn}
+          style={[styles.primaryBtn, !canSave && styles.primaryBtnDisabled]}
         >
           <Text style={styles.primaryBtnText}>保存</Text>
         </Pressable>
@@ -97,17 +123,50 @@ const styles = StyleSheet.create({
   avatar: {
     alignItems: 'center',
     alignSelf: 'center',
-    backgroundColor: palette.avatarBackground,
+    backgroundColor: palette.secondarySurface,
     borderRadius: 999,
     height: 88,
     justifyContent: 'center',
-    marginBottom: 16,
+    marginBottom: 24,
+    marginTop: 16,
     width: 88,
   },
-  avatarText: { color: palette.avatarText, fontSize: 28, fontWeight: '800' },
+  avatarText: { color: palette.primary, fontSize: 32, fontWeight: '800' },
+
+  // カード背景
+  card: {
+    backgroundColor: palette.surface,
+    borderRadius: 20,
+    padding: 16,
+  },
+
+  // カードシャドウ
+  cardShadow: {
+    elevation: 4,
+    marginBottom: 24,
+    marginTop: 16,
+    shadowColor: palette.shadow,
+    shadowOffset: { height: 6, width: 0 },
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
+  },
 
   // コンテンツの余白
-  content: { padding: 16 },
+  content: {
+    padding: 16,
+    paddingBottom: TAB_BAR_SPACING,
+  },
+
+  // フォームグループ
+  formGroup: {
+    marginBottom: 16,
+  },
+
+  // ヘッダーコンテナ
+  headerContainer: {
+    alignItems: 'center',
+    marginBottom: 16,
+  },
 
   // 入力欄のスタイル
   input: {
@@ -115,8 +174,8 @@ const styles = StyleSheet.create({
     borderColor: palette.border,
     borderRadius: 12,
     borderWidth: 1,
-    color: palette.primaryText,
-    marginBottom: 16,
+    color: palette.primary,
+    marginTop: 8,
     paddingHorizontal: 14,
     paddingVertical: 12,
   },
@@ -125,19 +184,22 @@ const styles = StyleSheet.create({
   keyboard: { flex: 1 },
 
   // ラベル（表示名・メールなどの見出し）
-  label: { color: palette.primaryText, fontWeight: '700', marginBottom: 8 },
+  label: { color: palette.primary, fontWeight: '700' },
 
   // プライマリボタン（保存）
   primaryBtn: {
     backgroundColor: palette.accent,
     borderRadius: 12,
-    marginTop: 28,
+    marginTop: 8,
     paddingVertical: 12,
   },
-  primaryBtnText: { color: palette.textOnPrimary, fontWeight: '700', textAlign: 'center' },
+  primaryBtnDisabled: {
+    opacity: 0.5,
+  },
+  primaryBtnText: { color: palette.primaryOnAccent, fontWeight: '700', textAlign: 'center' },
 
   // 画面背景
-  screen: { backgroundColor: palette.surface, flex: 1 },
+  screen: { backgroundColor: palette.background, flex: 1 },
 
   // セカンダリボタン（キャンセル）
   secondaryBtn: {
@@ -145,9 +207,16 @@ const styles = StyleSheet.create({
     borderColor: palette.border,
     borderRadius: 12,
     borderWidth: 1,
-    marginTop: 14,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
+    marginTop: 12,
+    paddingVertical: 12,
   },
-  secondaryBtnText: { color: palette.textOnSecondary, fontWeight: '700', textAlign: 'center' },
+  secondaryBtnText: { color: palette.primary, fontWeight: '700', textAlign: 'center' },
+
+  // タイトル
+  title: {
+    color: palette.primary,
+    fontSize: 20,
+    fontWeight: '700',
+    textAlign: 'center',
+  },
 });

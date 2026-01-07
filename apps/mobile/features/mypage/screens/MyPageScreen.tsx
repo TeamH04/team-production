@@ -1,6 +1,15 @@
 ﻿import { useRouter } from 'expo-router';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
-import { Alert, Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import {
+  Alert,
+  Image,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 
 import Ionicons from '@expo/vector-icons/Ionicons';
 
@@ -28,7 +37,7 @@ export default function MyPageScreen({
   const { reviewsByShop, getLikedReviews } = useReviews();
 
   // ユーザー情報
-  const { profile } = useUser();
+  const { profile, updateProfile } = useUser();
 
   // 全店舗のレビューを一つの配列にまとめ、新しい順で最大20件を返す
   const reviews = useMemo(() => {
@@ -37,7 +46,13 @@ export default function MyPageScreen({
   }, [reviewsByShop]);
 
   // 表示画面の種類を定義（Union 型で管理）
-  type ScreenType = 'main' | 'reviewHistory' | 'settings' | 'notifications' | 'likedReviews';
+  type ScreenType =
+    | 'main'
+    | 'reviewHistory'
+    | 'settings'
+    | 'notifications'
+    | 'likedReviews'
+    | 'profileEdit';
 
   // ScrollView の参照（コンポーネントトップレベルで定義）
   const mainScrollRef = useRef<ScrollView>(null);
@@ -45,9 +60,14 @@ export default function MyPageScreen({
   const likedReviewsScrollRef = useRef<ScrollView>(null);
   const settingsScrollRef = useRef<ScrollView>(null);
   const notificationsScrollRef = useRef<ScrollView>(null);
+  const profileEditScrollRef = useRef<ScrollView>(null);
 
   // 現在表示している画面を管理（Union 型で一元管理）
   const [currentScreen, setCurrentScreen] = useState<ScreenType>('main');
+
+  // プロフィール編集用の状態管理
+  const [editName, setEditName] = useState(profile.name);
+  const [editEmail, setEditEmail] = useState(profile.email);
 
   /**
    * スクロールハンドラーのマップ
@@ -59,6 +79,7 @@ export default function MyPageScreen({
     settings: useCallback(() => {}, []),
     notifications: useCallback(() => {}, []),
     likedReviews: useCallback(() => {}, []),
+    profileEdit: useCallback(() => {}, []),
   };
 
   const handleScroll = scrollHandlers.main;
@@ -66,6 +87,7 @@ export default function MyPageScreen({
   const handleLikedReviewsScroll = scrollHandlers.likedReviews;
   const handleSettingsScroll = scrollHandlers.settings;
   const handleNotificationsScroll = scrollHandlers.notifications;
+  const handleProfileEditScroll = scrollHandlers.profileEdit;
 
   const handleBackPress = useCallback(() => {
     setCurrentScreen('main');
@@ -117,6 +139,25 @@ export default function MyPageScreen({
   const handleGoToLikedReviews = useCallback(() => {
     Alert.alert('未実装', 'まだ未実装です');
   }, []);
+
+  const handleGoToProfileEdit = useCallback(() => {
+    setEditName(profile.name);
+    setEditEmail(profile.email);
+    setCurrentScreen('profileEdit');
+    if (setWasDetailScreen) {
+      setWasDetailScreen(true);
+    }
+  }, [profile, setWasDetailScreen]);
+
+  const handleSaveProfile = useCallback(() => {
+    const emailOk = /.+@.+\..+/.test(editEmail.trim());
+    if (editName.trim().length === 0 || !emailOk) {
+      Alert.alert('入力エラー', '表示名とメールアドレスを正しく入力してください');
+      return;
+    }
+    updateProfile({ name: editName.trim(), email: editEmail.trim() });
+    handleBackPress();
+  }, [editName, editEmail, updateProfile, handleBackPress]);
 
   // 画面の描画（switch 文で管理）
   switch (currentScreen) {
@@ -291,6 +332,81 @@ export default function MyPageScreen({
       );
     }
 
+    case 'profileEdit': {
+      return (
+        <ScrollView
+          ref={profileEditScrollRef}
+          onScroll={handleProfileEditScroll}
+          scrollEventThrottle={16}
+          style={styles.screen}
+          contentContainerStyle={styles.content}
+          showsVerticalScrollIndicator={false}
+        >
+          {/* プロフィール編集ヘッダー */}
+          <View style={styles.headerContainer}>
+            <Pressable onPress={handleBackPress} style={styles.backButton}>
+              <Text style={styles.backButtonText}>←</Text>
+            </Pressable>
+            <Text style={styles.headerTitle}>プロフィール編集</Text>
+            <View style={styles.spacer} />
+          </View>
+
+          {/* アバター */}
+          <View style={styles.avatarLarge}>
+            <Text style={styles.avatarLargeText}>
+              {(editName || 'U').slice(0, 2).toUpperCase()}
+            </Text>
+          </View>
+
+          {/* フォームカード */}
+          <View style={styles.cardShadow}>
+            <View style={styles.card}>
+              {/* 表示名入力 */}
+              <View style={styles.formGroup}>
+                <Text style={styles.label}>表示名</Text>
+                <View style={styles.textInputContainer}>
+                  <TextInput
+                    value={editName}
+                    onChangeText={setEditName}
+                    placeholder='例: Hanako Tanaka'
+                    placeholderTextColor={palette.mutedText}
+                    style={styles.textInput}
+                    autoCapitalize='words'
+                  />
+                </View>
+              </View>
+
+              {/* メールアドレス入力 */}
+              <View style={styles.formGroup}>
+                <Text style={styles.label}>メールアドレス</Text>
+                <View style={styles.textInputContainer}>
+                  <TextInput
+                    value={editEmail}
+                    onChangeText={setEditEmail}
+                    placeholder='example@domain.com'
+                    placeholderTextColor={palette.mutedText}
+                    style={styles.textInput}
+                    autoCapitalize='none'
+                    keyboardType='email-address'
+                  />
+                </View>
+              </View>
+            </View>
+          </View>
+
+          {/* 保存ボタン */}
+          <Pressable onPress={handleSaveProfile} style={styles.saveBtnProfile}>
+            <Text style={styles.saveBtnProfileText}>保存</Text>
+          </Pressable>
+
+          {/* キャンセルボタン */}
+          <Pressable onPress={handleBackPress} style={styles.secondaryBtn}>
+            <Text style={styles.secondaryBtnText}>キャンセル</Text>
+          </Pressable>
+        </ScrollView>
+      );
+    }
+
     case 'settings': {
       return (
         <ScrollView
@@ -347,7 +463,7 @@ export default function MyPageScreen({
                 </Pressable>
               </View>
 
-              <Pressable onPress={() => router.push('/profile/edit')} style={styles.primaryBtn}>
+              <Pressable onPress={handleGoToProfileEdit} style={styles.primaryBtn}>
                 <Text style={styles.primaryBtnText}>プロフィールを編集</Text>
               </Pressable>
             </View>
@@ -484,6 +600,18 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     width: 64,
   },
+  avatarLarge: {
+    alignItems: 'center',
+    alignSelf: 'center',
+    backgroundColor: palette.secondarySurface,
+    borderRadius: 999,
+    height: 88,
+    justifyContent: 'center',
+    marginBottom: 24,
+    marginTop: 16,
+    width: 88,
+  },
+  avatarLargeText: { color: palette.primary, fontSize: 32, fontWeight: '800' },
   avatarText: { color: palette.avatarText, fontSize: 22, fontWeight: '800' },
   backButton: {
     paddingHorizontal: 12,
@@ -520,6 +648,9 @@ const styles = StyleSheet.create({
     marginTop: 60,
   },
   emptyText: { color: palette.mutedText },
+  formGroup: {
+    marginBottom: 16,
+  },
   gridCard: {
     alignItems: 'center',
     backgroundColor: palette.surface,
@@ -566,6 +697,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '700',
   },
+  label: { color: palette.primary, fontWeight: '700', marginBottom: 8 },
   logoutBtn: {
     alignSelf: 'flex-start',
     marginLeft: 'auto',
@@ -573,7 +705,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 4,
   },
-  logoutText: { color: palette.accent, fontSize: 14, fontWeight: '600' },
+  logoutText: { color: palette.error, fontSize: 14, fontWeight: '600' },
   menuItem: {
     color: palette.mutedText,
     fontSize: 11,
@@ -587,7 +719,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   primaryBtnText: {
-    color: palette.textOnSecondary,
+    color: palette.primary,
     fontSize: 16,
     fontWeight: '700',
     textAlign: 'center',
@@ -622,7 +754,29 @@ const styles = StyleSheet.create({
   reviewTextContainer: {
     flex: 1,
   },
+  saveBtnProfile: {
+    backgroundColor: palette.accent,
+    borderRadius: 12,
+    marginTop: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
+  saveBtnProfileText: {
+    color: palette.textOnPrimary,
+    fontSize: 16,
+    fontWeight: '700',
+    textAlign: 'center',
+  },
   screen: { backgroundColor: palette.background, flex: 1 },
+  secondaryBtn: {
+    backgroundColor: palette.secondarySurface,
+    borderColor: palette.border,
+    borderRadius: 12,
+    borderWidth: 1,
+    marginTop: 12,
+    paddingVertical: 12,
+  },
+  secondaryBtnText: { color: palette.primary, fontWeight: '700', textAlign: 'center' },
   sectionCard: {
     backgroundColor: palette.surface,
     borderRadius: 18,
@@ -669,5 +823,16 @@ const styles = StyleSheet.create({
   },
   spacer: {
     width: 50,
+  },
+  textInput: {
+    backgroundColor: palette.background,
+    color: palette.primary,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+  },
+  textInputContainer: {
+    borderColor: palette.border,
+    borderRadius: 12,
+    borderWidth: 1,
   },
 });
