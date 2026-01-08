@@ -217,14 +217,6 @@ jobs:
             -o bin/server \
             ./cmd/server
 
-      - name: Upload build artifact
-        if: github.ref == 'refs/heads/main'
-        uses: actions/upload-artifact@v6
-        with:
-          name: backend-binary
-          path: apps/backend/bin/server
-          retention-days: 7
-
   # ----- Mobile Tests -----
   mobile-test:
     name: Mobile Tests
