@@ -13,6 +13,7 @@ import {
   View,
 } from 'react-native';
 
+import { HEADER_HEIGHT } from '@/constants/layout';
 import { palette } from '@/constants/palette';
 
 type ItemWithId = { id: string; value: string };
@@ -77,11 +78,11 @@ export default function RegisterShopScreen() {
   useEffect(() => {
     navigation.setOptions?.({
       title: '店舗登録',
-      headerBackTitle: '戻る',
+      headerBackTitle: ' 戻る',
       headerTintColor: palette.textOnAccent,
       headerStyle: {
         backgroundColor: palette.accent,
-        height: 100,
+        height: HEADER_HEIGHT,
       },
       headerTitleStyle: {
         color: palette.textOnAccent,
