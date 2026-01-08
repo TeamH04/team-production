@@ -60,13 +60,14 @@ export default function HomeScreen() {
       setVisibleCount(Math.min(PAGE_SIZE, filteredShops.length));
 
       if (listRef.current) {
-        // any を排除して scrollToOffset を呼び出し
         listRef.current.scrollToOffset({ animated: true, offset: 0 });
       }
     }, 0);
 
     return () => clearTimeout(resetId);
-  }, [filteredShops, listRef]);
+    // listRef は useAnimatedRef で安定しているため依存配列に不要
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filteredShops]);
 
   useEffect(() => {
     return () => {
