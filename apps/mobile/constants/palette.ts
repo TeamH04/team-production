@@ -66,6 +66,9 @@ export const palette = {
   // お気に入り
   favoriteActive: '#EF4444',
 
+  // 訪問済み
+  visitedActive: '#10B981',
+
   // その他のUI
   arrowButtonBg: withAlpha(textOnBackground, 0.05),
   heroPlaceholder: withAlpha(textOnBackground, 0.1),
