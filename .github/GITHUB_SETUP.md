@@ -168,7 +168,7 @@ apps/mobile/ @TeamH04/mobile-team
 │   ├── go-setup/              # Go setup with caching
 │   └── expo-setup/            # Expo CLI setup with dependencies
 ├── scripts/
-│   └── discord-notify.js      # Discord notification logic
+│   └── discord-notify.cjs      # Discord notification logic
 └── workflows/
     ├── ci.yml                 # CI: lint, test, build, security
     ├── backend-deploy.yml     # Backend: Docker build & deploy
