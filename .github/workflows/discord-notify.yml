@@ -4,7 +4,7 @@ on:
   issues:
     types: [assigned]
   pull_request:
-    types: [review_requested, ready_for_review, closed, reopened]
+    types: [opened, review_requested, ready_for_review, closed, reopened]
   pull_request_review:
     types: [submitted]
 
@@ -26,7 +26,6 @@ jobs:
         with:
           script: |
             const fs = require('fs');
-            const path = require('path');
             const scriptPath = './.github/scripts/discord-notify.cjs';
 
             if (!fs.existsSync(scriptPath)) {
