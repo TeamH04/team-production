@@ -43,6 +43,7 @@ export default function RegisterProfileScreen() {
 
   const onSave = () => {
     setUser({
+      ...user,
       name: name,
       email: email,
       isProfileRegistered: true,

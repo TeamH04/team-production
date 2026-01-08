@@ -224,7 +224,7 @@ export default function EditProfileScreen() {
             setErrorBirth('');
             setSaveError('');
 
-            const emailOk = /.+@.+\..+/.test(email.trim());
+            const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
 
             // バリデーションチェック
             if (name.trim().length <= 0) {
@@ -251,6 +251,7 @@ export default function EditProfileScreen() {
               // 保存処理（ここは同期の setUser だが、将来的に API 呼び出しに置き換え可能）
               await Promise.resolve();
               setUser({
+                ...user,
                 name: name.trim(),
                 email: email.trim(),
                 gender,
