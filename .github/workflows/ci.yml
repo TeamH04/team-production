@@ -121,6 +121,7 @@ jobs:
           files: apps/backend/coverage.out
           flags: backend
           token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: true
 
       - name: Upload coverage artifact
         uses: actions/upload-artifact@v6
@@ -172,6 +173,9 @@ jobs:
     needs: changes
     if: ${{ github.event_name == 'pull_request' && (needs.changes.outputs.backend == 'true' || needs.changes.outputs.root == 'true') }}
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
     defaults:
       run:
         working-directory: apps/backend
@@ -204,7 +208,7 @@ jobs:
         env:
           DATABASE_URL: postgres://postgres:postgres@localhost:5432/test_app?sslmode=disable
         run: |
-          if find . -name "*_test.go" -exec grep -l "func Benchmark" {} \; | head -1 > /dev/null; then
+          if find . -name "*_test.go" -exec grep -l "func Benchmark" {} \; | grep -q .; then
             go test -bench=. -benchmem -run=^$ ./... | tee benchmark_result.txt
           else
             echo "No benchmarks found, skipping..."
@@ -215,18 +219,19 @@ jobs:
         with:
           script: |
             const fs = require('fs');
-            const path = './apps/backend/benchmark_result.txt';
+            const benchmarkPath = './apps/backend/benchmark_result.txt';
 
-            if (fs.existsSync(path)) {
-              const benchmark = fs.readFileSync(path, 'utf8');
-
-              const comment = `## Benchmark Results
-
-              \`\`\`
-              ${benchmark}
-              \`\`\`
-
-              > Benchmark comparison with base branch coming soon!`;
+            if (fs.existsSync(benchmarkPath)) {
+              const benchmark = fs.readFileSync(benchmarkPath, 'utf8');
+              const comment = [
+                '## Benchmark Results',
+                '',
+                '```',
+                benchmark,
+                '```',
+                '',
+                '> Benchmark comparison with base branch coming soon!'
+              ].join('\n');
 
               github.rest.issues.createComment({
                 issue_number: context.issue.number,
@@ -261,7 +266,7 @@ jobs:
 
       - name: Format check mobile
         run: |
-          cd ../..
+          cd $GITHUB_WORKSPACE
           pnpm run format:mobile
           git diff --exit-code || (echo "Code is not formatted. Please run 'pnpm run format:mobile'" && exit 1)
 
@@ -296,6 +301,8 @@ jobs:
   # ----- Security Audit -----
   security-audit:
     name: Security Audit
+    needs: changes
+    if: ${{ needs.changes.outputs.backend == 'true' || needs.changes.outputs.mobile == 'true' || needs.changes.outputs.root == 'true' }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
