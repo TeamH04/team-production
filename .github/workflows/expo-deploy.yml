@@ -92,7 +92,7 @@ jobs:
           fi
 
           echo "Building preview for channel: $CHANNEL"
-          npx eas update --branch=$CHANNEL --message="Preview build for ${{ github.event_name }}" --non-interactive || echo "EAS Update not configured, skipping..."
+          npx eas update --channel=$CHANNEL --message="Preview build for ${{ github.event_name }}" --non-interactive || echo "EAS Update not configured, skipping..."
 
       - name: Comment PR with preview link
         if: github.event_name == 'pull_request' && env.EXPO_USERNAME != ''
@@ -103,7 +103,7 @@ jobs:
           script: |
             const channel = `pr-${{ github.event.number }}`;
             const expoUsername = process.env.EXPO_USERNAME;
-            const previewUrl = `exp://exp.host/@${expoUsername}/team-production?release-channel=${channel}`;
+            const previewUrl = `exp://exp.host/@${expoUsername}/team-production?channel=${channel}`;
 
             const comment = `## Mobile Preview Available
 

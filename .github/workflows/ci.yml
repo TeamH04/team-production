@@ -30,6 +30,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
 
       - name: Filter paths
         uses: dorny/paths-filter@v3
@@ -352,6 +354,7 @@ jobs:
       - name: Run govulncheck
         continue-on-error: true
         run: |
+          GOBIN="$(go env GOPATH)/bin"
           go install golang.org/x/vuln/cmd/govulncheck@latest
           cd apps/backend
-          govulncheck ./... || echo "Vulnerabilities found, but continuing..."
+          "$GOBIN/govulncheck" ./... || echo "Vulnerabilities found, but continuing..."
