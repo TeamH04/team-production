@@ -25,8 +25,15 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+  pull-requests: write
+
 env:
   NODE_VERSION: '24.x'
+  # Repository Variables で設定してください:
+  # - EXPO_USERNAME: Expo のユーザー名（PRプレビューコメントで使用）
+  EXPO_USERNAME: ${{ vars.EXPO_USERNAME }}
 
 jobs:
   # ----- Build Web -----
@@ -88,12 +95,15 @@ jobs:
           npx eas update --branch=$CHANNEL --message="Preview build for ${{ github.event_name }}" --non-interactive || echo "EAS Update not configured, skipping..."
 
       - name: Comment PR with preview link
-        if: github.event_name == 'pull_request'
+        if: github.event_name == 'pull_request' && env.EXPO_USERNAME != ''
         uses: actions/github-script@v8
+        env:
+          EXPO_USERNAME: ${{ env.EXPO_USERNAME }}
         with:
           script: |
             const channel = `pr-${{ github.event.number }}`;
-            const previewUrl = `exp://exp.host/@YOUR_EXPO_USERNAME/team-production?release-channel=${channel}`;
+            const expoUsername = process.env.EXPO_USERNAME;
+            const previewUrl = `exp://exp.host/@${expoUsername}/team-production?release-channel=${channel}`;
 
             const comment = `## Mobile Preview Available
 
@@ -119,7 +129,9 @@ jobs:
   # ----- Production builds -----
   build-ios:
     name: Build iOS
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    if: |
+      (github.ref == 'refs/heads/main' && github.event_name == 'push') ||
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'production')
     runs-on: macos-latest
     defaults:
       run:
@@ -136,16 +148,13 @@ jobs:
           expo-token: ${{ secrets.EXPO_TOKEN }}
 
       - name: Build iOS
-        run: |
-          if command -v eas &> /dev/null; then
-            npx eas build --platform ios --non-interactive --wait
-          else
-            echo "EAS Build not configured. Run 'npx eas build:configure' to set up."
-          fi
+        run: npx eas build --platform ios --non-interactive --wait
 
   build-android:
     name: Build Android
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    if: |
+      (github.ref == 'refs/heads/main' && github.event_name == 'push') ||
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'production')
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -168,12 +177,7 @@ jobs:
           java-version: '17'
 
       - name: Build Android
-        run: |
-          if command -v eas &> /dev/null; then
-            npx eas build --platform android --non-interactive --wait
-          else
-            echo "EAS Build not configured. Run 'npx eas build:configure' to set up."
-          fi
+        run: npx eas build --platform android --non-interactive --wait
 
   # ----- Web deployment -----
   deploy-web:
