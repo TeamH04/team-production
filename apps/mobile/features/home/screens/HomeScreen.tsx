@@ -4,7 +4,7 @@ import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactElement } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
-import Animated from 'react-native-reanimated';
+import Animated, { useAnimatedRef } from 'react-native-reanimated';
 
 const PAGE_SIZE = 10;
 const TAB_BAR_SPACING = 107;
@@ -27,6 +27,42 @@ function ShopResultsList({ filteredShops, renderListHeader, renderShop }: ShopRe
   const [visibleCount, setVisibleCount] = useState(() => Math.min(PAGE_SIZE, filteredShops.length));
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const loadMoreTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // 型を正しく指定
+  const listRef = useAnimatedRef<FlatList<Shop>>();
+  
+  const filteredShops = useMemo(() => {
+    if (!activeTag && !activeCategory) {
+      return SHOPS;
+    }
+
+    return SHOPS.filter(shop => {
+      const matchesTag = activeTag ? shop.tags?.includes(activeTag) : true;
+
+      const matchesCategory = activeCategory ? shop.category === activeCategory : true;
+
+      return matchesTag && matchesCategory;
+    });
+  }, [activeTag, activeCategory]);
+  
+  useEffect(() => {
+    if (loadMoreTimeout.current) {
+      clearTimeout(loadMoreTimeout.current);
+      loadMoreTimeout.current = null;
+    }
+
+    const resetId = setTimeout(() => {
+      setIsLoadingMore(false);
+      setVisibleCount(Math.min(PAGE_SIZE, filteredShops.length));
+
+      if (listRef.current) {
+        // any を排除して scrollToOffset を呼び出し
+        listRef.current.scrollToOffset({ animated: true, offset: 0 });
+      }
+    }, 0);
+
+    return () => clearTimeout(resetId);
+  }, [filteredShops, listRef]);
 
   useEffect(() => {
     return () => {
