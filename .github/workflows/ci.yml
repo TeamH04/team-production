@@ -104,6 +104,14 @@ jobs:
         with:
           go-version: ${{ env.GO_VERSION }}
 
+      - name: Wait for PostgreSQL to be ready
+        run: |
+          for i in {1..30}; do
+            pg_isready -h localhost -p 5432 -U postgres && break
+            echo "Waiting for PostgreSQL... ($i/30)"
+            sleep 1
+          done
+
       - name: Run go vet
         run: go vet ./...
 
@@ -208,6 +216,14 @@ jobs:
         uses: ./.github/actions/go-setup
         with:
           go-version: ${{ env.GO_VERSION }}
+
+      - name: Wait for PostgreSQL to be ready
+        run: |
+          for i in {1..30}; do
+            pg_isready -h localhost -p 5432 -U postgres && break
+            echo "Waiting for PostgreSQL... ($i/30)"
+            sleep 1
+          done
 
       - name: Run benchmarks
         env:

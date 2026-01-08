@@ -40,6 +40,8 @@ jobs:
   build-web:
     name: Build Web
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     defaults:
       run:
         working-directory: apps/mobile
@@ -133,6 +135,8 @@ jobs:
       (github.ref == 'refs/heads/main' && github.event_name == 'push') ||
       (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'production')
     runs-on: macos-latest
+    permissions:
+      contents: read
     defaults:
       run:
         working-directory: apps/mobile
@@ -156,6 +160,8 @@ jobs:
       (github.ref == 'refs/heads/main' && github.event_name == 'push') ||
       (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'production')
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     defaults:
       run:
         working-directory: apps/mobile
