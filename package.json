@@ -9,6 +9,7 @@
   "scripts": {
     "dev": "pnpm --dir apps/mobile exec expo start -c --tunnel",
     "dev:mobile": "pnpm --dir apps/mobile start",
+    "typecheck": "tsc --noEmit -p apps/mobile && tsc --noEmit -p apps/web && tsc --noEmit -p packages/shop-core && tsc --noEmit -p packages/theme && tsc --noEmit -p packages/types",
     "lint": "eslint \"**/*.{ts,tsx,js,jsx}\"",
     "lint:mobile": "eslint \"apps/mobile/**/*.{ts,tsx,js,jsx}\"",
     "lint:report:prep": "node scripts/prepare-reports.mjs",

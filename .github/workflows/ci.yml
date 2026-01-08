@@ -67,6 +67,9 @@ jobs:
       - name: Lint
         run: pnpm run lint
 
+      - name: TypeScript type check
+        run: pnpm run typecheck
+
       - name: Format check
         run: pnpm run format:check
 
@@ -282,12 +285,11 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           working-directory: apps/mobile
 
-      - name: Lint mobile
-        run: pnpm run lint
+      # Lint は lint ジョブで実行されるため省略
 
       - name: Format check mobile
+        working-directory: .
         run: |
-          cd $GITHUB_WORKSPACE
           pnpm run format:mobile
           git diff --exit-code || (echo "Code is not formatted. Please run 'pnpm run format:mobile'" && exit 1)
 
