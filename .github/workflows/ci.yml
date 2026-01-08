@@ -324,11 +324,25 @@ jobs:
         with:
           go-version: ${{ env.GO_VERSION }}
 
+      - name: Cache security tools
+        uses: actions/cache@v4
+        with:
+          path: ~/go/bin
+          key: go-security-tools-${{ runner.os }}-${{ env.GO_VERSION }}
+
+      - name: Install security tools
+        run: |
+          if [ ! -f "$HOME/go/bin/gosec" ]; then
+            go install github.com/securego/gosec/v2/cmd/gosec@latest
+          fi
+          if [ ! -f "$HOME/go/bin/govulncheck" ]; then
+            go install golang.org/x/vuln/cmd/govulncheck@latest
+          fi
+
       - name: Run Gosec Security Scanner
         continue-on-error: true
         id: gosec
         run: |
-          go install github.com/securego/gosec/v2/cmd/gosec@latest
           $HOME/go/bin/gosec -fmt sarif -out ../../results.sarif ./... || true
           if [ -f ../../results.sarif ]; then
             echo "sarif_exists=true" >> $GITHUB_OUTPUT
@@ -346,6 +360,4 @@ jobs:
       - name: Run govulncheck
         continue-on-error: true
         run: |
-          GOBIN="$(go env GOPATH)/bin"
-          go install golang.org/x/vuln/cmd/govulncheck@latest
-          "$GOBIN/govulncheck" ./... || echo "Vulnerabilities found, but continuing..."
+          $HOME/go/bin/govulncheck ./... || echo "Vulnerabilities found, but continuing..."

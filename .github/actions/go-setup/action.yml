@@ -14,27 +14,13 @@ inputs:
 runs:
   using: 'composite'
   steps:
-    - name: Ensure Go cache directories exist
-      shell: bash
-      run: |
-        mkdir -p $HOME/go/pkg/mod
-        mkdir -p $HOME/.cache/go-build
-
     - name: Setup Go
       uses: actions/setup-go@v6
       with:
         go-version: ${{ inputs.go-version }}
         cache-dependency-path: ${{ inputs.working-directory }}/go.sum
 
-    - name: Cache Go build artifacts
-      uses: actions/cache@v4
-      with:
-        path: ~/.cache/go-build
-        key: go-build-${{ runner.os }}-${{ hashFiles('**/go.sum', '**/*.go') }}
-        restore-keys: |
-          go-build-${{ runner.os }}-
-
-    - name: Install dependencies
+    - name: Download dependencies
       shell: bash
       working-directory: ${{ inputs.working-directory }}
       run: go mod download
