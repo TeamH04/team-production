@@ -31,7 +31,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
         with:
-          fetch-depth: 0
+          fetch-depth: 2
 
       - name: Filter paths
         uses: dorny/paths-filter@v3
@@ -73,12 +73,15 @@ jobs:
       - name: Format check
         run: pnpm run format:check
 
-  # ----- Backend Tests -----
+  # ----- Backend Tests & Benchmark -----
   backend-test:
     name: Backend Tests
     needs: changes
     if: ${{ needs.changes.outputs.backend == 'true' || needs.changes.outputs.root == 'true' }}
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
     defaults:
       run:
         working-directory: apps/backend
@@ -107,13 +110,8 @@ jobs:
         with:
           go-version: ${{ env.GO_VERSION }}
 
-      - name: Wait for PostgreSQL to be ready
-        run: |
-          for i in {1..30}; do
-            pg_isready -h localhost -p 5432 -U postgres && break
-            echo "Waiting for PostgreSQL... ($i/30)"
-            sleep 1
-          done
+      - name: Wait for PostgreSQL
+        uses: ./.github/actions/wait-for-postgres
 
       - name: Run go vet
         run: go vet ./...
@@ -145,6 +143,49 @@ jobs:
           name: coverage-report
           path: apps/backend/coverage.html
           retention-days: 7
+
+      # ----- Benchmark (PR only) -----
+      - name: Run benchmarks
+        if: github.event_name == 'pull_request'
+        id: benchmark
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/test_app?sslmode=disable
+        run: |
+          if find . -name "*_test.go" -exec grep -l "func Benchmark" {} \; | grep -q .; then
+            go test -bench=. -benchmem -run=^$ ./... | tee benchmark_result.txt
+            echo "has_results=true" >> $GITHUB_OUTPUT
+          else
+            echo "No benchmarks found, skipping..."
+            echo "has_results=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Comment benchmark results
+        if: github.event_name == 'pull_request' && steps.benchmark.outputs.has_results == 'true'
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const fs = require('fs');
+            const benchmarkPath = './apps/backend/benchmark_result.txt';
+
+            if (fs.existsSync(benchmarkPath)) {
+              const benchmark = fs.readFileSync(benchmarkPath, 'utf8');
+              const comment = [
+                '## Benchmark Results',
+                '',
+                '```',
+                benchmark,
+                '```',
+                '',
+                '> Benchmark comparison with base branch coming soon!'
+              ].join('\n');
+
+              github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: comment
+              });
+            }
 
   # ----- Backend Build -----
   backend-build:
@@ -182,88 +223,6 @@ jobs:
           name: backend-binary
           path: apps/backend/bin/server
           retention-days: 7
-
-  # ----- Backend Benchmark (PR only) -----
-  backend-benchmark:
-    name: Backend Benchmark
-    needs: changes
-    if: ${{ github.event_name == 'pull_request' && (needs.changes.outputs.backend == 'true' || needs.changes.outputs.root == 'true') }}
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      pull-requests: write
-    defaults:
-      run:
-        working-directory: apps/backend
-
-    services:
-      postgres:
-        image: postgres:16
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: test_app
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 5432:5432
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-
-      - name: Setup Go
-        uses: ./.github/actions/go-setup
-        with:
-          go-version: ${{ env.GO_VERSION }}
-
-      - name: Wait for PostgreSQL to be ready
-        run: |
-          for i in {1..30}; do
-            pg_isready -h localhost -p 5432 -U postgres && break
-            echo "Waiting for PostgreSQL... ($i/30)"
-            sleep 1
-          done
-
-      - name: Run benchmarks
-        env:
-          DATABASE_URL: postgres://postgres:postgres@localhost:5432/test_app?sslmode=disable
-        run: |
-          if find . -name "*_test.go" -exec grep -l "func Benchmark" {} \; | grep -q .; then
-            go test -bench=. -benchmem -run=^$ ./... | tee benchmark_result.txt
-          else
-            echo "No benchmarks found, skipping..."
-          fi
-
-      - name: Comment benchmark results
-        uses: actions/github-script@v8
-        with:
-          script: |
-            const fs = require('fs');
-            const benchmarkPath = './apps/backend/benchmark_result.txt';
-
-            if (fs.existsSync(benchmarkPath)) {
-              const benchmark = fs.readFileSync(benchmarkPath, 'utf8');
-              const comment = [
-                '## Benchmark Results',
-                '',
-                '```',
-                benchmark,
-                '```',
-                '',
-                '> Benchmark comparison with base branch coming soon!'
-              ].join('\n');
-
-              github.rest.issues.createComment({
-                issue_number: context.issue.number,
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                body: comment
-              });
-            }
 
   # ----- Mobile Tests -----
   mobile-test:
