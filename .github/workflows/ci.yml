@@ -115,13 +115,16 @@ jobs:
           go tool cover -html=coverage.out -o coverage.html
           go tool cover -func=coverage.out
 
+      # Repository Secrets で CODECOV_TOKEN を設定してください
+      # 設定後は fail_ci_if_error を true に変更することを推奨
       - name: Upload coverage to Codecov
+        if: secrets.CODECOV_TOKEN != ''
         uses: codecov/codecov-action@v5
         with:
           files: apps/backend/coverage.out
           flags: backend
           token: ${{ secrets.CODECOV_TOKEN }}
-          fail_ci_if_error: true
+          fail_ci_if_error: false
 
       - name: Upload coverage artifact
         uses: actions/upload-artifact@v6
