@@ -282,15 +282,12 @@ jobs:
           npx expo export --platform web --output-dir dist
           echo "Build configuration is valid"
 
-  # ----- Security Audit -----
-  security-audit:
-    name: Security Audit
+  # ----- Security Audit (Node.js) -----
+  security-audit-node:
+    name: Security Audit (Node.js)
     needs: changes
-    if: ${{ needs.changes.outputs.backend == 'true' || needs.changes.outputs.mobile == 'true' || needs.changes.outputs.root == 'true' }}
+    if: ${{ needs.changes.outputs.mobile == 'true' || needs.changes.outputs.root == 'true' }}
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      security-events: write
 
     steps:
       - name: Checkout
@@ -305,6 +302,23 @@ jobs:
         run: pnpm audit --dev --audit-level moderate
         continue-on-error: true
 
+  # ----- Security Audit (Go) -----
+  security-audit-go:
+    name: Security Audit (Go)
+    needs: changes
+    if: ${{ needs.changes.outputs.backend == 'true' || needs.changes.outputs.root == 'true' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    defaults:
+      run:
+        working-directory: apps/backend
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
       - name: Setup Go
         uses: ./.github/actions/go-setup
         with:
@@ -315,7 +329,6 @@ jobs:
         id: gosec
         run: |
           go install github.com/securego/gosec/v2/cmd/gosec@latest
-          cd apps/backend
           $HOME/go/bin/gosec -fmt sarif -out ../../results.sarif ./... || true
           if [ -f ../../results.sarif ]; then
             echo "sarif_exists=true" >> $GITHUB_OUTPUT
@@ -335,5 +348,4 @@ jobs:
         run: |
           GOBIN="$(go env GOPATH)/bin"
           go install golang.org/x/vuln/cmd/govulncheck@latest
-          cd apps/backend
           "$GOBIN/govulncheck" ./... || echo "Vulnerabilities found, but continuing..."

@@ -21,25 +21,11 @@ inputs:
 runs:
   using: 'composite'
   steps:
-    - name: Setup pnpm
-      uses: pnpm/action-setup@v4
-
-    - name: Ensure pnpm cache dirs
-      shell: bash
-      run: |
-        mkdir -p "$HOME/.pnpm-store"
-        mkdir -p "$HOME/.local/share/pnpm"
-
-    - name: Setup Node.js
-      uses: actions/setup-node@v6
+    - name: Setup pnpm and Node.js
+      uses: ./.github/actions/pnpm-setup
       with:
         node-version: ${{ inputs.node-version }}
-        cache: 'pnpm'
-
-    - name: Install dependencies
-      shell: bash
-      working-directory: ${{ inputs.working-directory }}
-      run: pnpm install --frozen-lockfile
+        working-directory: ${{ inputs.working-directory }}
 
     - name: Setup Expo CLI
       uses: expo/expo-github-action@v8
