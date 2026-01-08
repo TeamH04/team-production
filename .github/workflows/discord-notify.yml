@@ -26,5 +26,18 @@ jobs:
         with:
           script: |
             const fs = require('fs');
-            const script = require('./.github/scripts/discord-notify.cjs');
-            await script({ context, core, fs });
+            const path = require('path');
+            const scriptPath = './.github/scripts/discord-notify.cjs';
+
+            if (!fs.existsSync(scriptPath)) {
+              core.warning(`Discord notification script not found: ${scriptPath}`);
+              return;
+            }
+
+            try {
+              const script = require(scriptPath);
+              await script({ context, core, fs });
+            } catch (error) {
+              core.error(`Failed to execute Discord notification: ${error.message}`);
+              throw error;
+            }
