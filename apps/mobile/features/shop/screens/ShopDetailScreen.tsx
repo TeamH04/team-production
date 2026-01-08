@@ -46,7 +46,12 @@ export default function ShopDetailScreen() {
 
   useLayoutEffect(() => {
     if (shop) {
-      navigation.setOptions?.({ title: shop.name, headerBackTitle: '戻る' });
+      navigation.setOptions?.({
+        title: shop.name,
+        headerBackTitle: '戻る',
+        headerStyle: { backgroundColor: palette.accent },
+        headerTintColor: palette.textOnAccent,
+      });
     }
   }, [navigation, shop]);
 

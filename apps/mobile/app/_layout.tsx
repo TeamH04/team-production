@@ -29,7 +29,8 @@ function RootStack() {
   const segments = useSegments();
   const first = segments[0] ?? '';
   const isInsideTabs = segments.some(seg => seg === '(tabs)');
-  const padTop = !isInsideTabs && first !== 'shop' && first !== 'profile' ? insets.top : 0;
+  const padTop =
+    !isInsideTabs && first !== 'shop' && first !== 'profile' && first !== 'owner' ? insets.top : 0;
   return (
     <View
       style={[
