@@ -21,10 +21,6 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-permissions:
-  contents: read
-  packages: write
-
 env:
   GO_VERSION: '1.24'
   DOCKER_REGISTRY: 'ghcr.io'
@@ -35,6 +31,8 @@ jobs:
   build:
     name: Build (${{ matrix.os }}/${{ matrix.arch }})
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     defaults:
       run:
         working-directory: apps/backend
@@ -88,7 +86,9 @@ jobs:
   docker:
     name: Docker Build & Push
     runs-on: ubuntu-latest
-    needs: [build]
+    permissions:
+      contents: read
+      packages: write
     defaults:
       run:
         working-directory: apps/backend
@@ -151,35 +151,12 @@ jobs:
           # ここに実際のデプロイロジックを追加
           # 例: kubectl set image deployment/backend-app container=${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
 
-  # ----- Deploy to production -----
-  deploy-production:
-    name: Deploy to Production
+  # ----- Database migrations (before deploy) -----
+  migrate:
+    name: Run Database Migrations
     if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'production'))
     runs-on: ubuntu-latest
     needs: [docker]
-    environment: production
-
-    steps:
-      - name: Deploy to production environment
-        run: |
-          echo "Deploying to production..."
-          # ここに実際のデプロイロジックを追加
-
-      - name: Health check
-        run: |
-          echo "Performing health check..."
-          # curl -f https://your-api.com/health || exit 1
-
-      - name: Notify deployment success
-        if: success()
-        run: echo "Production deployment successful!"
-
-  # ----- Database migrations -----
-  migrate:
-    name: Run Database Migrations
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-    runs-on: ubuntu-latest
-    needs: [deploy-production]
     environment: production
     defaults:
       run:
@@ -203,3 +180,38 @@ jobs:
         run: |
           migrate -path ./migrations -database "$DATABASE_URL" up
           echo "Migrations completed successfully"
+
+  # ----- Deploy to production -----
+  deploy-production:
+    name: Deploy to Production
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'production'))
+    runs-on: ubuntu-latest
+    needs: [docker, migrate]
+    environment: production
+
+    steps:
+      - name: Deploy to production environment
+        env:
+          DOCKER_REGISTRY: ${{ env.DOCKER_REGISTRY }}
+          IMAGE_NAME: ${{ env.IMAGE_NAME }}
+        run: |
+          echo "Deploying to production..."
+          # ここに実際のデプロイロジックを追加
+          # 例: kubectl set image deployment/backend-app container=${DOCKER_REGISTRY}/${IMAGE_NAME}:${{ github.sha }}
+
+      # Repository Variables で設定してください:
+      # - PRODUCTION_HEALTH_CHECK_URL: 本番環境のヘルスチェックURL（オプション）
+      - name: Health check
+        env:
+          HEALTH_CHECK_URL: ${{ vars.PRODUCTION_HEALTH_CHECK_URL }}
+        run: |
+          echo "Performing health check..."
+          if [ -n "$HEALTH_CHECK_URL" ]; then
+            curl -f "$HEALTH_CHECK_URL" || exit 1
+          else
+            echo "PRODUCTION_HEALTH_CHECK_URL not set, skipping health check"
+          fi
+
+      - name: Notify deployment success
+        if: success()
+        run: echo "Production deployment successful!"
