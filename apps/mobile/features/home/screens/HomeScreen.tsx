@@ -54,14 +54,19 @@ export default function HomeScreen() {
       clearTimeout(loadMoreTimeout.current);
       loadMoreTimeout.current = null;
     }
-    setTimeout(() => {
+
+    const resetId = setTimeout(() => {
       setIsLoadingMore(false);
       setVisibleCount(Math.min(PAGE_SIZE, filteredShops.length));
+
       if (listRef.current) {
+        // any を排除して scrollToOffset を呼び出し
         listRef.current.scrollToOffset({ animated: true, offset: 0 });
       }
     }, 0);
-  }, [filteredShops.length, listRef]);
+
+    return () => clearTimeout(resetId);
+  }, [filteredShops, listRef]);
 
   useEffect(() => {
     return () => {

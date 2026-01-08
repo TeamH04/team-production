@@ -258,7 +258,6 @@ export default function ShopDetailScreen() {
 
 const styles = StyleSheet.create({
   btnPressed: { opacity: 0.7 },
-
   card: {
     backgroundColor: palette.surface,
     borderRadius: 16,
