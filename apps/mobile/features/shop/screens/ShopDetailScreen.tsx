@@ -18,6 +18,7 @@ import {
 import { palette } from '@/constants/palette';
 import { useFavorites } from '@/features/favorites/FavoritesContext';
 import { useReviews } from '@/features/reviews/ReviewsContext';
+import { useVisited } from '@/features/visited/VisitedContext';
 import { SHOPS, type Shop } from '@team/shop-core';
 
 const BUDGET_LABEL: Record<Shop['budget'], string> = {
@@ -38,6 +39,7 @@ export default function ShopDetailScreen() {
   const navigation = useNavigation();
 
   const { isFavorite, toggleFavorite } = useFavorites();
+  const { isVisited, toggleVisited } = useVisited();
   const { getReviews, toggleReviewLike, isReviewLiked } = useReviews();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
@@ -57,6 +59,7 @@ export default function ShopDetailScreen() {
   );
 
   const isFav = shop ? isFavorite(shop.id) : false;
+  const isVis = shop ? isVisited(shop.id) : false;
   const reviews = shop ? getReviews(shop.id) : [];
   const imageUrls = shop?.imageUrls;
   const flatListRef = useRef<FlatList>(null);
@@ -150,7 +153,23 @@ export default function ShopDetailScreen() {
               <Ionicons color={palette.muted} name='share-outline' size={22} />
             </Pressable>
 
-            <Pressable onPress={() => toggleFavorite(shop.id)} style={styles.favBtn}>
+            <Pressable
+              accessibilityLabel='訪問済み切り替え'
+              onPress={() => toggleVisited(shop.id)}
+              style={({ pressed }) => [styles.visitedBtn, pressed && styles.btnPressed]}
+            >
+              <Ionicons
+                name={isVis ? 'checkmark-circle' : 'checkmark-circle-outline'}
+                size={24}
+                color={isVis ? palette.visitedActive : palette.muted}
+              />
+            </Pressable>
+
+            <Pressable
+              accessibilityLabel='お気に入り切り替え'
+              onPress={() => toggleFavorite(shop.id)}
+              style={({ pressed }) => [styles.favBtn, pressed && styles.btnPressed]}
+            >
               <Ionicons
                 color={isFav ? palette.favoriteActive : palette.muted}
                 name={isFav ? 'heart' : 'heart-outline'}
@@ -291,11 +310,9 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     marginTop: 12,
   },
-
   favBtn: {
-    marginLeft: 12,
+    marginLeft: 8,
   },
-
   headerActions: {
     alignItems: 'center',
     flexDirection: 'row',
@@ -411,7 +428,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 6,
   },
-
   tagRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -428,5 +444,9 @@ const styles = StyleSheet.create({
     color: palette.primary,
     fontSize: 22,
     fontWeight: '800',
+  },
+
+  visitedBtn: {
+    marginLeft: 8,
   },
 });
