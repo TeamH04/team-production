@@ -190,11 +190,12 @@ jobs:
   # ----- Backend Build -----
   backend-build:
     name: Backend Build
-    needs: [changes, lint]
+    needs: [changes, lint, backend-test]
     if: |
       always() &&
       (needs.changes.outputs.backend == 'true' || needs.changes.outputs.root == 'true') &&
-      (needs.lint.result == 'success' || needs.lint.result == 'skipped')
+      (needs.lint.result == 'success' || needs.lint.result == 'skipped') &&
+      (needs.backend-test.result == 'success' || needs.backend-test.result == 'skipped')
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -255,11 +256,12 @@ jobs:
   # ----- Mobile Build Check -----
   mobile-build:
     name: Mobile Build Check
-    needs: [changes, lint]
+    needs: [changes, lint, mobile-test]
     if: |
       always() &&
       (needs.changes.outputs.mobile == 'true' || needs.changes.outputs.root == 'true') &&
-      (needs.lint.result == 'success' || needs.lint.result == 'skipped')
+      (needs.lint.result == 'success' || needs.lint.result == 'skipped') &&
+      (needs.mobile-test.result == 'success' || needs.mobile-test.result == 'skipped')
     runs-on: ubuntu-latest
     defaults:
       run:
