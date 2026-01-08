@@ -118,8 +118,8 @@ jobs:
       # Repository Secrets で CODECOV_TOKEN を設定してください
       # 設定後は fail_ci_if_error を true に変更することを推奨
       - name: Upload coverage to Codecov
-        if: secrets.CODECOV_TOKEN != ''
         uses: codecov/codecov-action@v5
+        continue-on-error: true
         with:
           files: apps/backend/coverage.out
           flags: backend
