@@ -26,5 +26,5 @@ jobs:
         with:
           script: |
             const fs = require('fs');
-            const script = require('./.github/scripts/discord-notify.js');
+            const script = require('./.github/scripts/discord-notify.cjs');
             await script({ context, core, fs });
