@@ -1,8 +1,8 @@
-import { Ionicons } from '@expo/vector-icons';
 import { palette } from '@/constants/palette';
-import { withAlpha } from '@team/theme';
 import { useFavorites } from '@/features/favorites/FavoritesContext';
+import { Ionicons } from '@expo/vector-icons';
 import { SHOPS, type Shop } from '@team/shop-core';
+import { withAlpha } from '@team/theme';
 import { useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { FlatList, Image, Modal, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
