@@ -1,4 +1,4 @@
-import { Picker } from '@react-native-picker/picker';
+﻿import { Picker } from '@react-native-picker/picker';
 import { useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import {
@@ -48,6 +48,58 @@ export default function EditProfileScreen() {
   const canSave = useMemo(() => {
     return name.trim().length > 0 && email.trim().length > 0 && !saving;
   }, [email, name, saving]);
+
+  const validateForm = (): boolean => {
+    setErrorName('');
+    setErrorEmail('');
+    setErrorBirth('');
+    setSaveError('');
+
+    if (name.trim().length <= 0) {
+      setErrorName('※表示名の入力は必須です');
+      return false;
+    }
+
+    if (email.trim().length <= 0) {
+      setErrorEmail('※メールアドレスの入力は必須です');
+      return false;
+    }
+
+    const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
+    if (!emailOk) {
+      setErrorEmail('※有効なメールアドレスを入力してください');
+      return false;
+    }
+
+    // 生年月日は任意だが、入力する場合は年と月の両方が必要
+    if (!!birthYear !== !!birthMonth) {
+      setErrorBirth('※生年月日は年と月の両方を選択してください');
+      return false;
+    }
+
+    return true;
+  };
+
+  const saveProfile = async () => {
+    if (!user) {
+      throw new Error('user is null');
+    }
+
+    // 将来的に API 呼び出しに置き換え可能
+    await Promise.resolve();
+
+    setUser({
+      ...user,
+      name: name.trim(),
+      email: email.trim(),
+      gender: gender || undefined,
+      birthYear: birthYear || undefined,
+      birthMonth: birthMonth || undefined,
+      isProfileRegistered: true,
+    });
+
+    router.back();
+  };
 
   return (
     <KeyboardAvoidingView
@@ -144,7 +196,12 @@ export default function EditProfileScreen() {
         </View>
         <View style={styles.dobRow}>
           <View style={styles.pickerContainer}>
-            <Pressable style={styles.pickerBox} onPress={() => setShowYearPicker(true)}>
+            <Pressable
+              style={styles.pickerBox}
+              onPress={() => setShowYearPicker(true)}
+              accessibilityRole='button'
+              accessibilityLabel='生年月日の年を選択'
+            >
               <Text style={birthYear ? styles.pickerText : styles.pickerUnselectedText}>
                 {birthYear ? `${birthYear}年` : '年を選択'}
               </Text>
@@ -152,7 +209,12 @@ export default function EditProfileScreen() {
           </View>
 
           <View style={styles.pickerContainer}>
-            <Pressable style={styles.pickerBox} onPress={() => setShowMonthPicker(true)}>
+            <Pressable
+              style={styles.pickerBox}
+              onPress={() => setShowMonthPicker(true)}
+              accessibilityRole='button'
+              accessibilityLabel='生年月日の月を選択'
+            >
               <Text style={birthMonth ? styles.pickerText : styles.pickerUnselectedText}>
                 {birthMonth ? `${birthMonth}月` : '月を選択'}
               </Text>
@@ -218,49 +280,15 @@ export default function EditProfileScreen() {
         <Pressable
           disabled={!canSave}
           onPress={async () => {
-            // 前バリデーションのリセット
-            setErrorName('');
-            setErrorEmail('');
-            setErrorBirth('');
-            setSaveError('');
-
-            const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
-
-            // バリデーションチェック
-            if (name.trim().length <= 0) {
-              setErrorName('※表示名の入力は必須です');
-              return;
-            } else if (email.trim().length <= 0) {
-              setErrorEmail('※メールアドレスの入力は必須です');
-              return;
-            }
-
-            if (!emailOk) {
-              setErrorEmail('※有効なメールアドレスを入力してください');
-              return;
-            }
-
-            // 生年月日は任意だが、入力する場合は年と月の両方が必要
-            if (!!birthYear !== !!birthMonth) {
-              setErrorBirth('※生年月日は年と月の両方を選択してください');
+            if (!validateForm()) {
               return;
             }
 
             setSaving(true);
             try {
-              // 保存処理（ここは同期の setUser だが、将来的に API 呼び出しに置き換え可能）
-              await Promise.resolve();
-              setUser({
-                ...user,
-                name: name.trim(),
-                email: email.trim(),
-                gender: gender || undefined,
-                birthYear: birthYear || undefined,
-                birthMonth: birthMonth || undefined,
-                isProfileRegistered: true,
-              });
-              router.back();
-            } catch {
+              await saveProfile();
+            } catch (e) {
+              console.error('saveProfile failed', e);
               setSaveError('保存に失敗しました。もう一度お試しください。');
             } finally {
               setSaving(false);

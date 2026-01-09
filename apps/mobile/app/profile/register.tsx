@@ -1,6 +1,7 @@
 import { Stack, useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import {
+  Alert,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -42,6 +43,11 @@ export default function RegisterProfileScreen() {
   }, [selectedGenres]);
 
   const onSave = () => {
+    if (!user) {
+      Alert.alert('ユーザー情報が見つかりません', 'ログインし直してください');
+      return;
+    }
+
     setUser({
       ...user,
       name: name,

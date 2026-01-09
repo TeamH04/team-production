@@ -175,10 +175,19 @@ export default function LoginScreen() {
       }
 
       // TODO: Supabase 側で Apple の Services ID / Team ID / Key ID / 秘密鍵 を設定する必要があり
-      // ログイン成功後に user をセット
+      // Apple ログイン成功後
+      const fullName =
+        credential.fullName &&
+        [credential.fullName.familyName, credential.fullName.givenName]
+          .filter(Boolean)
+          .join(' ')
+          .trim();
+
       setUser({
-        name: 'Apple User', // 仮。後で Supabase から取得
-        email: 'apple@example.com',
+        // Apple から取得できた氏名があればそれを優先し、なければ仮の名称を使用
+        name: fullName && fullName.length > 0 ? fullName : 'Appleユーザー',
+        // email は初回ログイン時のみ返る場合があるため、未提供時は仮のメールアドレスを使用
+        email: credential.email ?? 'apple@example.com',
         isProfileRegistered: false,
       });
 

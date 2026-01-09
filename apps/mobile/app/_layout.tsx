@@ -7,7 +7,7 @@ import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native
 import { useFonts } from 'expo-font';
 import { router, Stack, useSegments, type Href } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect, useRef } from 'react';
+import { useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
 import 'react-native-reanimated';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -29,35 +29,22 @@ const styles = StyleSheet.create({
 function RootStack() {
   const insets = useSafeAreaInsets();
   const { user, isProfileComplete } = useUser();
-  const isMounted = useRef(true);
+  const segments = useSegments();
 
   useEffect(() => {
-    isMounted.current = true;
-    return () => {
-      isMounted.current = false;
-    };
-  }, []);
+    const isOnProfileRegister = segments[0] === 'profile' && segments[1] === 'register';
 
-  useEffect(() => {
-    if (user && !isProfileComplete && isMounted.current) {
+    if (user && !isProfileComplete && !isOnProfileRegister) {
       router.replace('/profile/register' as Href);
     }
-  }, [user, isProfileComplete]);
+  }, [user, isProfileComplete, segments]);
 
-  const segments = useSegments();
   const first = segments[0] ?? '';
   const isInsideTabs = segments.some(seg => seg === '(tabs)');
   const padTop =
     !isInsideTabs && first !== 'shop' && first !== 'profile' && first !== 'owner' ? insets.top : 0;
   return (
-    <View
-      style={[
-        styles.container,
-        {
-          paddingTop: padTop,
-        },
-      ]}
-    >
+    <View style={[styles.container, { paddingTop: padTop }]}>
       <StatusBar hidden={false} style='dark' backgroundColor='transparent' />
       <Stack>
         <Stack.Screen name='index' options={{ headerShown: false }} />
