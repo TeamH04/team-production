@@ -1,4 +1,5 @@
 import { palette } from '@/constants/palette';
+import { useVisited } from '@/features/visited/VisitedContext';
 import { CATEGORIES, SHOPS } from '@team/shop-core';
 import { useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
@@ -22,12 +23,19 @@ const COLOR_TAG_BG = '#F0F2F5';
 
 type SortType = 'default' | 'newest' | 'rating' | 'registered';
 type SortOrder = 'asc' | 'desc';
+type VisitedFilter = 'all' | 'visited' | 'not_visited';
 
 const SORT_OPTIONS: { label: string; value: SortType }[] = [
   { label: 'おすすめ', value: 'default' },
   { label: '新着順', value: 'newest' },
   { label: '評価順(★)', value: 'rating' },
   { label: '登録順', value: 'registered' },
+];
+
+const VISITED_FILTER_OPTIONS: { label: string; value: VisitedFilter }[] = [
+  { label: 'すべて', value: 'all' },
+  { label: '訪問済み', value: 'visited' },
+  { label: '未訪問', value: 'not_visited' },
 ];
 
 const getIdNum = (id: string) => {
@@ -44,11 +52,13 @@ const getIdNum = (id: string) => {
 
 export default function SearchScreen() {
   const router = useRouter();
+  const { isVisited } = useVisited();
   const [userTypedText, setUserTypedText] = useState('');
   const [currentSearchText, setCurrentSearchText] = useState('');
   const [activeCategories, setActiveCategories] = useState<string[]>([]);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [searchHistory, setSearchHistory] = useState<string[]>([]);
+  const [filterVisited, setFilterVisited] = useState<VisitedFilter>('all');
 
   const [sortBy, setSortBy] = useState<SortType>('default');
   const [sortOrders, setSortOrders] = useState<Record<SortType, SortOrder>>({
@@ -83,6 +93,7 @@ export default function SearchScreen() {
     setActiveCategories([]);
     setSelectedTags([]);
     setSortBy('default');
+    setFilterVisited('all');
   };
 
   const handleSearch = (textToSearch?: string) => {
@@ -174,7 +185,13 @@ export default function SearchScreen() {
           ? tags.some(tag => shop.tags.some(st => st.toLowerCase().includes(tag)))
           : true;
       const matchesCategory = hasCategories ? activeCategories.includes(shop.category) : true;
-      return matchesText && matchesTags && matchesCategory;
+      const matchesVisited =
+        filterVisited === 'all'
+          ? true
+          : filterVisited === 'visited'
+            ? isVisited(shop.id)
+            : !isVisited(shop.id);
+      return matchesText && matchesTags && matchesCategory && matchesVisited;
     });
 
     return filtered.sort((a, b) => {
@@ -195,7 +212,16 @@ export default function SearchScreen() {
       }
       return currentOrder === 'asc' ? comparison : -comparison;
     });
-  }, [currentSearchText, selectedTags, activeCategories, sortBy, sortOrders, hasSearchCriteria]);
+  }, [
+    currentSearchText,
+    selectedTags,
+    activeCategories,
+    sortBy,
+    sortOrders,
+    hasSearchCriteria,
+    filterVisited,
+    isVisited,
+  ]);
 
   return (
     <ScrollView
@@ -300,10 +326,39 @@ export default function SearchScreen() {
 
       {hasSearchCriteria && (
         <View style={styles.resultsSection}>
+          <Text style={styles.resultsTitle}>{`検索結果：${searchResults.length}件`}</Text>
+
+          <View style={styles.visitedFilterRow}>
+            {VISITED_FILTER_OPTIONS.map(option => {
+              const isActive = filterVisited === option.value;
+              return (
+                <Pressable
+                  key={option.value}
+                  accessibilityLabel={`訪問済みフィルター: ${option.label}`}
+                  onPress={() => setFilterVisited(option.value)}
+                  style={[
+                    styles.visitedFilterButton,
+                    isActive
+                      ? styles.visitedFilterButtonActive
+                      : styles.visitedFilterButtonInactive,
+                  ]}
+                >
+                  <Text
+                    style={
+                      isActive
+                        ? styles.visitedFilterButtonTextActive
+                        : styles.visitedFilterButtonTextInactive
+                    }
+                  >
+                    {option.label}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
+
           {searchResults.length > 0 ? (
             <View>
-              <Text style={styles.resultsTitle}>{`検索結果：${searchResults.length}件`}</Text>
-
               <View style={styles.sortRow}>
                 <ScrollView
                   horizontal
@@ -725,5 +780,33 @@ const styles = StyleSheet.create({
     height: 18,
     marginRight: 8,
     width: 1,
+  },
+  visitedFilterButton: {
+    borderRadius: 8,
+    borderWidth: 1,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+  },
+  visitedFilterButtonActive: {
+    backgroundColor: palette.primary,
+    borderColor: palette.primary,
+  },
+  visitedFilterButtonInactive: {
+    backgroundColor: palette.background,
+    borderColor: palette.border,
+  },
+  visitedFilterButtonTextActive: {
+    color: COLOR_WHITE,
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  visitedFilterButtonTextInactive: {
+    color: palette.secondaryText,
+    fontSize: 13,
+  },
+  visitedFilterRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 12,
   },
 });

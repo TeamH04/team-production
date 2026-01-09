@@ -1,4 +1,5 @@
 import KuguriTitle from '@/assets/icons/kaguri.svg';
+import { HEADER_HEIGHT } from '@/constants/layout';
 import { palette } from '@/constants/palette';
 import { Tabs } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -89,7 +90,7 @@ const styles = StyleSheet.create({
   },
   header: {
     backgroundColor: palette.accent,
-    height: 100,
+    height: HEADER_HEIGHT,
   },
   headerTitleContainer: {
     width: '100%',

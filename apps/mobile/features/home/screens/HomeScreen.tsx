@@ -2,9 +2,9 @@ import { palette } from '@/constants/palette';
 import { SHOPS, type Shop } from '@team/shop-core';
 import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
-import Animated, { useAnimatedRef } from 'react-native-reanimated';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactElement } from 'react';
+import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import Animated from 'react-native-reanimated';
 
 const PAGE_SIZE = 10;
 const TAB_BAR_SPACING = 107;
@@ -17,38 +17,17 @@ const BUDGET_LABEL: Record<Shop['budget'], string> = {
 
 const KEY_EXTRACTOR = (item: Shop) => item.id;
 
-export default function HomeScreen() {
-  const router = useRouter();
+type ShopResultsListProps = {
+  filteredShops: Shop[];
+  renderListHeader: ReactElement;
+  renderShop: ({ item }: { item: Shop }) => ReactElement;
+};
 
-  const params = useLocalSearchParams<{ tag?: string; category?: string }>();
-  const activeTag = params.tag;
-  const activeCategory = params.category;
-
+function ShopResultsList({ filteredShops, renderListHeader, renderShop }: ShopResultsListProps) {
+  const [visibleCount, setVisibleCount] = useState(() => Math.min(PAGE_SIZE, filteredShops.length));
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const loadMoreTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // 型を正しく指定
-  const listRef = useAnimatedRef<FlatList<Shop>>();
-
-  const filteredShops = useMemo(() => {
-    if (!activeTag && !activeCategory) {
-      return SHOPS;
-    }
-
-    return SHOPS.filter(shop => {
-      const matchesTag = activeTag ? shop.tags?.includes(activeTag) : true;
-
-      const matchesCategory = activeCategory ? shop.category === activeCategory : true;
-
-      return matchesTag && matchesCategory;
-    });
-  }, [activeTag, activeCategory]);
-
-  const initialVisibleCount = useMemo(() => {
-    if (filteredShops.length === 0) return PAGE_SIZE;
-    return Math.min(PAGE_SIZE, filteredShops.length);
-  }, [filteredShops.length]);
-  const [visibleCount, setVisibleCount] = useState(initialVisibleCount);
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
   useEffect(() => {
     if (loadMoreTimeout.current) {
       clearTimeout(loadMoreTimeout.current);
@@ -58,15 +37,9 @@ export default function HomeScreen() {
     const resetId = setTimeout(() => {
       setIsLoadingMore(false);
       setVisibleCount(Math.min(PAGE_SIZE, filteredShops.length));
-
-      if (listRef.current) {
-        listRef.current.scrollToOffset({ animated: true, offset: 0 });
-      }
     }, 0);
 
     return () => clearTimeout(resetId);
-    // listRef は useAnimatedRef で安定しているため依存配列に不要
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filteredShops]);
 
   useEffect(() => {
@@ -95,6 +68,55 @@ export default function HomeScreen() {
       loadMoreTimeout.current = null;
     }, 350);
   }, [filteredShops.length, hasMoreResults, isLoadingMore]);
+
+  return (
+    <Animated.FlatList
+      ListEmptyComponent={
+        <View style={styles.emptyState}>
+          <Text style={styles.emptyTitle}>条件に合うお店が見つかりませんでした</Text>
+        </View>
+      }
+      ListFooterComponent={
+        isLoadingMore ? (
+          <View style={styles.footerLoader}>
+            <ActivityIndicator color={palette.accent} />
+          </View>
+        ) : null
+      }
+      ListHeaderComponent={renderListHeader}
+      contentContainerStyle={styles.content}
+      data={visibleShops}
+      keyExtractor={KEY_EXTRACTOR}
+      onEndReached={handleLoadMore}
+      onEndReachedThreshold={0.2}
+      renderItem={renderShop}
+      showsVerticalScrollIndicator={false}
+    />
+  );
+}
+
+export default function HomeScreen() {
+  const router = useRouter();
+
+  const params = useLocalSearchParams<{ tag?: string; category?: string }>();
+  const activeTag = params.tag;
+  const activeCategory = params.category;
+
+  const listKey = `${activeTag ?? 'all'}-${activeCategory ?? 'all'}`;
+
+  const filteredShops = useMemo(() => {
+    if (!activeTag && !activeCategory) {
+      return SHOPS;
+    }
+
+    return SHOPS.filter(shop => {
+      const matchesTag = activeTag ? shop.tags?.includes(activeTag) : true;
+
+      const matchesCategory = activeCategory ? shop.category === activeCategory : true;
+
+      return matchesTag && matchesCategory;
+    });
+  }, [activeTag, activeCategory]);
 
   const renderShop = useCallback(
     ({ item }: { item: Shop }) => (
@@ -153,28 +175,11 @@ export default function HomeScreen() {
 
   return (
     <View style={styles.screen}>
-      <Animated.FlatList
-        ListEmptyComponent={
-          <View style={styles.emptyState}>
-            <Text style={styles.emptyTitle}>条件に合うお店が見つかりませんでした</Text>
-          </View>
-        }
-        ListFooterComponent={
-          isLoadingMore ? (
-            <View style={styles.footerLoader}>
-              <ActivityIndicator color={palette.accent} />
-            </View>
-          ) : null
-        }
-        ListHeaderComponent={renderListHeader}
-        contentContainerStyle={styles.content}
-        data={visibleShops}
-        keyExtractor={KEY_EXTRACTOR}
-        onEndReached={handleLoadMore}
-        onEndReachedThreshold={0.2}
-        ref={listRef}
-        renderItem={renderShop}
-        showsVerticalScrollIndicator={false}
+      <ShopResultsList
+        key={listKey}
+        filteredShops={filteredShops}
+        renderListHeader={renderListHeader}
+        renderShop={renderShop}
       />
     </View>
   );
