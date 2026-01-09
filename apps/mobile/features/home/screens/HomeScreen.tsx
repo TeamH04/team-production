@@ -3,7 +3,7 @@ import { SHOPS, type Shop } from '@team/shop-core';
 import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactElement } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, { useAnimatedRef } from 'react-native-reanimated';
 
 const PAGE_SIZE = 10;
@@ -30,21 +30,7 @@ function ShopResultsList({ filteredShops, renderListHeader, renderShop }: ShopRe
 
   // 型を正しく指定
   const listRef = useAnimatedRef<FlatList<Shop>>();
-  
-  const filteredShops = useMemo(() => {
-    if (!activeTag && !activeCategory) {
-      return SHOPS;
-    }
 
-    return SHOPS.filter(shop => {
-      const matchesTag = activeTag ? shop.tags?.includes(activeTag) : true;
-
-      const matchesCategory = activeCategory ? shop.category === activeCategory : true;
-
-      return matchesTag && matchesCategory;
-    });
-  }, [activeTag, activeCategory]);
-  
   useEffect(() => {
     if (loadMoreTimeout.current) {
       clearTimeout(loadMoreTimeout.current);
@@ -93,6 +79,7 @@ function ShopResultsList({ filteredShops, renderListHeader, renderShop }: ShopRe
 
   return (
     <Animated.FlatList
+      ref={listRef}
       ListEmptyComponent={
         <View style={styles.emptyState}>
           <Text style={styles.emptyTitle}>条件に合うお店が見つかりませんでした</Text>
