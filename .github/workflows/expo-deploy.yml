@@ -94,7 +94,7 @@ jobs:
           fi
 
           echo "Building preview for channel: $CHANNEL"
-          npx eas update --channel=$CHANNEL --message="Preview build for ${{ github.event_name }}" --non-interactive || echo "EAS Update not configured, skipping..."
+          npx eas-cli update --channel=$CHANNEL --message="Preview build for ${{ github.event_name }}" --non-interactive || echo "EAS Update not configured, skipping..."
 
       - name: Comment PR with preview link
         if: github.event_name == 'pull_request' && env.EXPO_USERNAME != ''
@@ -152,7 +152,7 @@ jobs:
           expo-token: ${{ secrets.EXPO_TOKEN }}
 
       - name: Build iOS
-        run: npx eas build --platform ios --non-interactive --wait
+        run: npx eas-cli build --platform ios --non-interactive --wait
 
   build-android:
     name: Build Android
@@ -183,7 +183,7 @@ jobs:
           java-version: '17'
 
       - name: Build Android
-        run: npx eas build --platform android --non-interactive --wait
+        run: npx eas-cli build --platform android --non-interactive --wait
 
   # ----- Web deployment -----
   deploy-web:
@@ -225,7 +225,7 @@ jobs:
 
       - name: Submit to App Store
         working-directory: apps/mobile
-        run: npx eas submit --platform ios --latest --non-interactive
+        run: npx eas-cli submit --platform ios --latest --non-interactive
 
   submit-android:
     name: Submit to Play Store
@@ -246,4 +246,4 @@ jobs:
 
       - name: Submit to Play Store
         working-directory: apps/mobile
-        run: npx eas submit --platform android --latest --non-interactive
+        run: npx eas-cli submit --platform android --latest --non-interactive
