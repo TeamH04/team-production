@@ -1,14 +1,15 @@
 {
   "name": "team-production",
   "private": true,
-  "packageManager": "pnpm@10.26.0",
+  "packageManager": "pnpm@10.27.0",
   "engines": {
-    "node": "20.x",
+    "node": "24.x",
     "pnpm": ">=10"
   },
   "scripts": {
     "dev": "pnpm --dir apps/mobile exec expo start -c --tunnel",
     "dev:mobile": "pnpm --dir apps/mobile start",
+    "typecheck": "tsc --noEmit -p apps/mobile && tsc --noEmit -p apps/web && tsc --noEmit -p packages/shop-core && tsc --noEmit -p packages/theme && tsc --noEmit -p packages/types",
     "lint": "eslint \"**/*.{ts,tsx,js,jsx}\"",
     "lint:mobile": "eslint \"apps/mobile/**/*.{ts,tsx,js,jsx}\"",
     "lint:report:prep": "node scripts/prepare-reports.mjs",
@@ -24,10 +25,13 @@
     "ios": "pnpm --dir apps/mobile exec expo run:ios"
   },
   "devDependencies": {
+    "@actions/core": "^2.0.1",
+    "@actions/github": "^6.0.1",
     "@babel/core": "^7.28.5",
     "@eslint/js": "^9.39.2",
-    "@typescript-eslint/eslint-plugin": "^8.50.0",
-    "@typescript-eslint/parser": "^8.50.0",
+    "@types/node": "^25.0.3",
+    "@typescript-eslint/eslint-plugin": "^8.52.0",
+    "@typescript-eslint/parser": "^8.52.0",
     "eslint": "^9.39.2",
     "eslint-config-prettier": "^10.1.8",
     "eslint-import-resolver-typescript": "^4.4.4",
@@ -35,9 +39,15 @@
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-native": "^5.0.0",
-    "globals": "^16.5.0",
+    "globals": "^17.0.0",
     "prettier": "^3.7.4",
     "typescript": "~5.9.3"
+  },
+  "pnpm": {
+    "overrides": {
+      "@types/react": "~19.1.0",
+      "@types/react-dom": "~19.1.0"
+    }
   },
   "type": "module",
   "version": "1.0.0"

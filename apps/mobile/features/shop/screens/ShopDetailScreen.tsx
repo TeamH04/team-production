@@ -1,4 +1,5 @@
 ﻿import { Ionicons } from '@expo/vector-icons';
+import { useFocusEffect } from '@react-navigation/native';
 import { Image } from 'expo-image';
 import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -18,9 +19,8 @@ import {
 import { palette } from '@/constants/palette';
 import { useFavorites } from '@/features/favorites/FavoritesContext';
 import { useReviews } from '@/features/reviews/ReviewsContext';
+import { useVisited } from '@/features/visited/VisitedContext';
 import { SHOPS, type Shop } from '@team/shop-core';
-
-// --- 定数と型定義 ---
 
 const COLORS = {
   BLACK: '#000000',
@@ -39,8 +39,6 @@ const BUDGET_LABEL: Record<Shop['budget'], string> = {
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
-// --- メインコンポーネント ---
-
 export default function ShopDetailScreen() {
   const params = useLocalSearchParams<{ id?: string }>();
   const id = params.id;
@@ -48,20 +46,26 @@ export default function ShopDetailScreen() {
   const navigation = useNavigation();
 
   const { isFavorite, toggleFavorite } = useFavorites();
+  const { isVisited, toggleVisited } = useVisited();
   const { getReviews, isReviewLiked, toggleReviewLike } = useReviews();
+
   const [isAccordionOpen, setIsAccordionOpen] = useState(false);
 
   const shop = useMemo(() => (SHOPS as ExtendedShop[]).find(s => s.id === id), [id]);
+
   const webBaseUrl = process.env.EXPO_PUBLIC_WEB_BASE_URL?.replace(/\/$/, '');
+
   const reviews = useMemo(() => (shop ? getReviews(shop.id) : []), [shop, getReviews]);
+
   const isFav = useMemo(() => (shop ? isFavorite(shop.id) : false), [shop, isFavorite]);
+
+  const isVis = useMemo(() => (shop ? isVisited(shop.id) : false), [shop, isVisited]);
 
   const recommendedMenu = useMemo(() => {
     if (!shop?.menu) return [];
     return shop.menu.slice(0, 2);
   }, [shop]);
 
-  // 1. ヘッダーの外観制御
   useLayoutEffect(() => {
     if (shop) {
       navigation.setOptions?.({
@@ -84,11 +88,24 @@ export default function ShopDetailScreen() {
     }
   }, [navigation, shop]);
 
-  // 2. 共有・マップ機能
+  useFocusEffect(
+    useCallback(() => {
+      navigation.setOptions?.({ headerBackTitle: '戻る' });
+    }, [navigation])
+  );
+
+  // 依存配列を [shop] に修正
+  const mapOpenUrl = useMemo(
+    () =>
+      shop?.placeId
+        ? `https://www.google.com/maps/search/?api=1&query_place_id=${shop.placeId}`
+        : null,
+    [shop]
+  );
+
   const handleShare = useCallback(() => {
     if (!shop || !webBaseUrl) return;
     const url = `${webBaseUrl}/shop/${shop.id}`;
-
     Share.share({
       message: `${shop.name}\n${shop.description}\n${url}`,
       title: shop.name,
@@ -97,17 +114,15 @@ export default function ShopDetailScreen() {
   }, [shop, webBaseUrl]);
 
   const handleOpenMap = useCallback(() => {
-    if (!shop?.placeId) return;
-    const url = `https://www.google.com/maps/search/?api=1&query=Google&query_place_id=${shop.placeId}`;
-    Linking.openURL(url).catch(() => Alert.alert('マップを開けませんでした'));
-  }, [shop?.placeId]);
+    if (!mapOpenUrl) return;
+    Linking.openURL(mapOpenUrl).catch(() => Alert.alert('マップを開けませんでした'));
+  }, [mapOpenUrl]);
 
   if (!shop) return null;
 
   return (
     <View style={styles.screen}>
       <StatusBar style='light' translucent={true} />
-
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.heroContainer}>
           <Image contentFit='cover' source={{ uri: shop.imageUrl }} style={styles.hero} />
@@ -116,13 +131,24 @@ export default function ShopDetailScreen() {
         <View style={styles.container}>
           <View style={styles.headerRow}>
             <Text style={styles.title}>{shop.name}</Text>
-
             <View style={styles.headerActions}>
               <Pressable onPress={handleShare} style={styles.shareBtn}>
                 <Ionicons color={palette.muted} name='share-outline' size={22} />
               </Pressable>
-
-              <Pressable onPress={() => toggleFavorite(shop.id)} style={styles.favBtn}>
+              <Pressable
+                onPress={() => toggleVisited(shop.id)}
+                style={({ pressed }) => [styles.visitedBtn, pressed && styles.btnPressed]}
+              >
+                <Ionicons
+                  name={isVis ? 'checkmark-circle' : 'checkmark-circle-outline'}
+                  size={24}
+                  color={isVis ? palette.visitedActive : palette.muted}
+                />
+              </Pressable>
+              <Pressable
+                onPress={() => toggleFavorite(shop.id)}
+                style={({ pressed }) => [styles.favBtn, pressed && styles.btnPressed]}
+              >
                 <Ionicons
                   color={isFav ? palette.favoriteActive : palette.muted}
                   name={isFav ? 'heart' : 'heart-outline'}
@@ -136,9 +162,16 @@ export default function ShopDetailScreen() {
             {`${shop.category} │ 予算 ${BUDGET_LABEL[shop.budget]} │ ★ ${shop.rating.toFixed(1)}`}
           </Text>
 
+          <View style={styles.tagRow}>
+            {shop.tags?.map(tag => (
+              <View key={tag} style={styles.tagPill}>
+                <Text style={styles.tagText}>{tag}</Text>
+              </View>
+            ))}
+          </View>
+
           <Text style={styles.descriptionText}>{shop.description}</Text>
 
-          {/* メニューセクション */}
           {shop.menu && shop.menu.length > 0 && (
             <View style={[styles.card, styles.cardShadow, styles.menuSection]}>
               <Pressable
@@ -152,12 +185,10 @@ export default function ShopDetailScreen() {
                   size={20}
                 />
               </Pressable>
-
               {isAccordionOpen && (
                 <View style={styles.accordionContent}>
                   <View style={styles.recommendedBox}>
                     <Text style={styles.recommendedLabel}>おすすめメニュー</Text>
-
                     {recommendedMenu.map(item => (
                       <View key={item.id} style={styles.recommendedItem}>
                         <Ionicons
@@ -170,7 +201,6 @@ export default function ShopDetailScreen() {
                       </View>
                     ))}
                   </View>
-
                   <Pressable
                     onPress={() => router.push({ params: { id: shop.id }, pathname: '/menu' })}
                     style={styles.moreBtnOutline}
@@ -183,11 +213,9 @@ export default function ShopDetailScreen() {
             </View>
           )}
 
-          {/* 場所セクション */}
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>場所</Text>
           </View>
-
           <View style={[styles.card, styles.cardShadow]}>
             <Pressable onPress={handleOpenMap} style={styles.mapButton}>
               <Ionicons
@@ -200,11 +228,9 @@ export default function ShopDetailScreen() {
             </Pressable>
           </View>
 
-          {/* レビューセクション */}
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>レビュー</Text>
           </View>
-
           <Pressable
             onPress={() => router.push(`/shop/${shop.id}/review`)}
             style={styles.primaryBtn}
@@ -242,18 +268,15 @@ export default function ShopDetailScreen() {
   );
 }
 
-// --- スタイル定義 (アルファベット順) ---
-
 const styles = StyleSheet.create({
-  accordionContent: {
-    marginTop: 16,
-  },
+  accordionContent: { marginTop: 16 },
   accordionHeader: {
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
     paddingVertical: 4,
   },
+  btnPressed: { opacity: 0.7 },
   card: {
     backgroundColor: palette.surface,
     borderRadius: 16,
@@ -267,9 +290,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.06,
     shadowRadius: 12,
   },
-  container: {
-    padding: 16,
-  },
+  container: { padding: 16 },
   content: {
     backgroundColor: COLORS.WHITE,
     paddingBottom: 24,
@@ -279,55 +300,27 @@ const styles = StyleSheet.create({
     lineHeight: 22,
     marginBottom: 16,
   },
-  favBtn: {
-    marginLeft: 12,
-    padding: 4,
-  },
-  headerActions: {
-    alignItems: 'center',
-    flexDirection: 'row',
-  },
+  favBtn: { marginLeft: 12, padding: 4 },
+  headerActions: { alignItems: 'center', flexDirection: 'row' },
   headerRow: {
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
-  hero: {
-    height: 220,
-    width: SCREEN_WIDTH,
-  },
-  heroContainer: {
-    backgroundColor: palette.heroPlaceholder,
-  },
+  hero: { height: 220, width: SCREEN_WIDTH },
+  heroContainer: { backgroundColor: palette.heroPlaceholder },
   mapButton: {
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'center',
     paddingVertical: 10,
   },
-  mapButtonText: {
-    color: palette.primary,
-    fontWeight: '700',
-  },
-  mapIcon: {
-    marginRight: 8,
-  },
-  menuIcon: {
-    marginRight: 10,
-  },
-  menuItemText: {
-    color: palette.primary,
-    fontSize: 15,
-    fontWeight: '500',
-  },
-  menuSection: {
-    marginTop: 8,
-  },
-  meta: {
-    color: palette.muted,
-    marginBottom: 12,
-    marginTop: 4,
-  },
+  mapButtonText: { color: palette.primary, fontWeight: '700' },
+  mapIcon: { marginRight: 8 },
+  menuIcon: { marginRight: 10 },
+  menuItemText: { color: palette.primary, fontSize: 15, fontWeight: '500' },
+  menuSection: { marginTop: 8 },
+  meta: { color: palette.muted, marginBottom: 12, marginTop: 4 },
   moreBtnOutline: {
     alignItems: 'center',
     borderColor: palette.primary,
@@ -338,14 +331,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingVertical: 12,
   },
-  moreBtnText: {
-    color: palette.primary,
-    fontSize: 15,
-    fontWeight: '700',
-  },
-  muted: {
-    color: palette.muted,
-  },
+  moreBtnText: { color: palette.primary, fontSize: 15, fontWeight: '700' },
+  muted: { color: palette.muted },
   primaryBtn: {
     backgroundColor: palette.accent,
     borderRadius: 12,
@@ -376,38 +363,27 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     marginBottom: 8,
   },
-  reviewBody: {
-    color: palette.primary,
-    lineHeight: 20,
-  },
+  reviewBody: { color: palette.primary, lineHeight: 20 },
   reviewHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginBottom: 8,
   },
-  reviewTitle: {
-    color: palette.primary,
-    fontWeight: '700',
+  reviewTitle: { color: palette.primary, fontWeight: '700' },
+  screen: { backgroundColor: COLORS.BLACK, flex: 1 },
+  sectionHeader: { marginBottom: 8, marginTop: 16 },
+  sectionTitle: { color: palette.primary, fontSize: 18, fontWeight: '700' },
+  shareBtn: { padding: 4 },
+  tagPill: {
+    backgroundColor: palette.tagSurface,
+    borderRadius: 999,
+    marginRight: 8,
+    marginTop: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
   },
-  screen: {
-    backgroundColor: COLORS.BLACK,
-    flex: 1,
-  },
-  sectionHeader: {
-    marginBottom: 8,
-    marginTop: 16,
-  },
-  sectionTitle: {
-    color: palette.primary,
-    fontSize: 18,
-    fontWeight: '700',
-  },
-  shareBtn: {
-    padding: 4,
-  },
-  title: {
-    color: palette.primary,
-    fontSize: 22,
-    fontWeight: '800',
-  },
+  tagRow: { flexDirection: 'row', flexWrap: 'wrap', marginBottom: 16 },
+  tagText: { color: palette.tagText, fontSize: 12, fontWeight: '600' },
+  title: { color: palette.primary, fontSize: 22, fontWeight: '800' },
+  visitedBtn: { marginLeft: 8 },
 });

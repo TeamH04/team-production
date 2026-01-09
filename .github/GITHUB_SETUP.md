@@ -88,8 +88,8 @@ GITHUB_TOKEN=<github-token-for-deployment>
 ```
 DOCKER_REGISTRY=ghcr.io
 IMAGE_NAME=teamh04/team-production/backend
-NODE_VERSION=20.x
-GO_VERSION=1.24.0
+NODE_VERSION=24.x
+GO_VERSION=1.24
 PNPM_VERSION=10.17.1
 ```
 
@@ -156,6 +156,34 @@ apps/mobile/ @TeamH04/mobile-team
   - Required reviewers: `core-team`
   - Wait timer: 5 minutes
   - Prevent self-review
+
+## CI/CD Workflows
+
+### Workflow Structure
+
+```
+.github/
+├── actions/                    # Reusable Composite Actions
+│   ├── pnpm-setup/            # Node.js + pnpm setup with caching
+│   ├── go-setup/              # Go setup with caching
+│   └── expo-setup/            # Expo CLI setup with dependencies
+├── scripts/
+│   └── discord-notify.cjs      # Discord notification logic
+└── workflows/
+    ├── ci.yml                 # CI: lint, test, build, security
+    ├── backend-deploy.yml     # Backend: Docker build & deploy
+    ├── expo-deploy.yml        # Mobile: Expo build & deploy
+    └── discord-notify.yml     # Discord notifications
+```
+
+### Workflow Triggers
+
+| Workflow          | Trigger                                  | Purpose                            |
+| ----------------- | ---------------------------------------- | ---------------------------------- |
+| CI                | push/PR to main/develop                  | Lint, test, build verification     |
+| Backend Deploy    | push to main/develop (apps/backend/\*\*) | Docker build & deployment          |
+| Mobile App Deploy | push/PR to main (apps/mobile/\*\*)       | Expo builds & app store submission |
+| Discord Notify    | issues/PR events                         | Team notifications                 |
 
 ## Additional Configuration
 

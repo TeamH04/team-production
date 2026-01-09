@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { useLocalSearchParams, useNavigation } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect, useLayoutEffect, useMemo, useState } from 'react';
+import { useLayoutEffect, useMemo, useState } from 'react';
 import { Pressable, ScrollView, SectionList, StyleSheet, Text, View } from 'react-native';
 
 import { MENU_TAB_MAP, SHOPS, type Shop } from '@team/shop-core';
@@ -46,13 +46,11 @@ export default function ShopMenuScreen() {
     return ['すべて', 'おすすめ', ...baseCategories];
   }, [shop]);
 
+  // 初期値を空文字にして、useEffectでの更新を廃止
   const [selectedCategory, setSelectedCategory] = useState('');
 
-  useEffect(() => {
-    if (categories.length > 0 && !selectedCategory) {
-      setSelectedCategory(categories[0]);
-    }
-  }, [categories, selectedCategory]);
+  // 実際に表示に使うカテゴリ（選択中がなければ最初のカテゴリをデフォルトにする）
+  const activeCategory = selectedCategory || categories[0] || '';
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -69,8 +67,9 @@ export default function ShopMenuScreen() {
     if (!shop?.menu) return [];
     const menuItems = shop.menu as unknown as ExtendedMenuItem[];
 
-    if (selectedCategory === 'すべて' || selectedCategory === 'おすすめ') {
-      const targetItems = selectedCategory === 'おすすめ' ? menuItems.slice(0, 2) : menuItems;
+    // activeCategory を使用して判定
+    if (activeCategory === 'すべて' || activeCategory === 'おすすめ') {
+      const targetItems = activeCategory === 'おすすめ' ? menuItems.slice(0, 2) : menuItems;
 
       if (targetItems.length === 0) return [];
 
@@ -89,9 +88,9 @@ export default function ShopMenuScreen() {
       }));
     }
 
-    const filtered = menuItems.filter(item => item.category === selectedCategory);
-    return filtered.length > 0 ? [{ data: filtered, title: selectedCategory }] : [];
-  }, [shop, selectedCategory]);
+    const filtered = menuItems.filter(item => item.category === activeCategory);
+    return filtered.length > 0 ? [{ data: filtered, title: activeCategory }] : [];
+  }, [shop, activeCategory]);
 
   if (!shop) return null;
 
@@ -106,7 +105,8 @@ export default function ShopMenuScreen() {
           showsHorizontalScrollIndicator={false}
         >
           {categories.map(category => {
-            const isSelected = category === selectedCategory;
+            // activeCategory と比較
+            const isSelected = category === activeCategory;
             return (
               <Pressable
                 key={category}
@@ -127,9 +127,9 @@ export default function ShopMenuScreen() {
           <View style={styles.emptyContainer}>
             <Ionicons color={COLORS.TAX_TEXT} name='restaurant-outline' size={48} />
             <Text style={styles.emptyText}>
-              {selectedCategory === 'おすすめ'
+              {activeCategory === 'おすすめ'
                 ? 'おすすめメニューは現在ありません'
-                : `「${selectedCategory}」のメニューは準備中です`}
+                : `「${activeCategory}」のメニューは準備中です`}
             </Text>
           </View>
         }
@@ -137,7 +137,7 @@ export default function ShopMenuScreen() {
         keyExtractor={item => item.id}
         renderItem={({ item, index }) => {
           const showBadge =
-            selectedCategory === 'すべて' && index === 0 && item.category === sections[0]?.title;
+            activeCategory === 'すべて' && index === 0 && item.category === sections[0]?.title;
 
           return (
             <View style={styles.menuCard}>
@@ -180,7 +180,7 @@ export default function ShopMenuScreen() {
           );
         }}
         renderSectionHeader={({ section: { title } }) => {
-          if (selectedCategory !== 'すべて' && selectedCategory !== 'おすすめ') {
+          if (activeCategory !== 'すべて' && activeCategory !== 'おすすめ') {
             return null;
           }
           return (
