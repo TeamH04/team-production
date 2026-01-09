@@ -234,7 +234,7 @@ export default function LoginScreen() {
             ]}
           >
             <View style={styles.buttonContent}>
-              <Ionicons name='logo-google' size={28} color={palette.white} />
+              <Ionicons name='logo-google' size={28} color={palette.grayDark} />
               <Text style={styles.buttonOutlineText}>
                 {loading === 'google' ? 'Google で処理中…' : 'Google でログイン'}
               </Text>
@@ -256,7 +256,7 @@ export default function LoginScreen() {
               <Ionicons
                 name='logo-apple'
                 size={28}
-                color={palette.white}
+                color={palette.grayDark}
                 style={styles.appleIconAdjust}
               />
               <Text style={styles.buttonOutlineText}>
@@ -329,7 +329,7 @@ const styles = StyleSheet.create({
   },
   buttonFrame: {
     alignSelf: 'stretch',
-    backgroundColor: palette.accentButtonBg,
+    backgroundColor: palette.grayLight,
     borderRadius: 16,
     paddingHorizontal: 6,
     paddingVertical: 6,
@@ -345,7 +345,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   buttonOutlineText: {
-    color: palette.white,
+    color: palette.grayDark,
     fontSize: 20,
     fontWeight: '700',
     textAlign: 'center',
