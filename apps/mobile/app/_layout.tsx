@@ -7,7 +7,7 @@ import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native
 import { useFonts } from 'expo-font';
 import { router, Stack, useSegments, type Href } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { StyleSheet, View } from 'react-native';
 import 'react-native-reanimated';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -29,9 +29,17 @@ const styles = StyleSheet.create({
 function RootStack() {
   const insets = useSafeAreaInsets();
   const { user, isProfileComplete } = useUser();
+  const isMounted = useRef(true);
 
   useEffect(() => {
-    if (user && !isProfileComplete) {
+    isMounted.current = true;
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (user && !isProfileComplete && isMounted.current) {
       router.replace('/profile/register' as Href);
     }
   }, [user, isProfileComplete]);

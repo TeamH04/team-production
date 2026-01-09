@@ -56,7 +56,12 @@ export default function LoginScreen() {
       'ログイン完了',
       isOwner ? 'オーナーとしてログインしました。' : '正常にログインしました。'
     );
-  }, []);
+    // オーナーの場合は直接オーナー画面へ遷移（プロフィール登録をスキップ）
+    if (isOwner) {
+      router.replace('/owner' as Href);
+    }
+    // 一般ユーザーの場合は _layout.tsx の useEffect でプロフィール登録画面へリダイレクトされる
+  }, [router]);
 
   const handleOAuth = useCallback(
     async (provider: 'google' | 'apple') => {
