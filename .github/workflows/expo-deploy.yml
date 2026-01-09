@@ -29,7 +29,7 @@ concurrency:
 
 env:
   EXPO_CLI_VERSION: 'latest'
-  NODE_VERSION: '20.x'
+  NODE_VERSION: '24.x'
 
 jobs:
   # ----- Build for different platforms -----
@@ -54,8 +54,10 @@ jobs:
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
+        with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'pnpm'
+          cache-dependency-path: '**/pnpm-lock.yaml'
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -182,6 +184,7 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'pnpm'
+          cache-dependency-path: '**/pnpm-lock.yaml'
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -227,6 +230,7 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'pnpm'
+          cache-dependency-path: '**/pnpm-lock.yaml'
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
