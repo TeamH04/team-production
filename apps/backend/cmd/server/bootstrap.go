@@ -62,6 +62,7 @@ func buildRouterDependencies(cfg *config.Config, db *gorm.DB) *router.Dependenci
 	log.Println("Dependencies setup completed!")
 
 	return &router.Dependencies{
+		UserUC:          userUseCase,
 		StoreHandler:    storeHandler,
 		MenuHandler:     menuHandler,
 		ReviewHandler:   reviewHandler,

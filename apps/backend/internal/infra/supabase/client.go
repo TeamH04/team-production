@@ -240,8 +240,11 @@ func (c *Client) Verify(token string) (*security.TokenClaims, error) {
 		}
 		return []byte(c.jwtSecret), nil
 	})
-	if err != nil || !parsed.Valid {
-		return nil, fmt.Errorf("invalid or expired token")
+	if err != nil {
+		return nil, fmt.Errorf("token verify failed: %w", err)
+	}
+	if !parsed.Valid {
+		return nil, fmt.Errorf("token is invalid")
 	}
 
 	userID := claims.Subject

@@ -14,7 +14,7 @@ import (
 
 // Dependencies bundles the HTTP handlers and middleware collaborators required by the router.
 type Dependencies struct {
-	userUC          input.UserUseCase
+	UserUC          input.UserUseCase
 	StoreHandler    *handlers.StoreHandler
 	MenuHandler     *handlers.MenuHandler
 	ReviewHandler   *handlers.ReviewHandler
@@ -81,8 +81,8 @@ func setupAuthRoutes(api *echo.Group, deps *Dependencies) {
 	auth := api.Group("/auth")
 	auth.POST("/signup", deps.AuthHandler.Signup)
 	auth.POST("/login", deps.AuthHandler.Login)
-	auth.GET("/me", deps.AuthHandler.GetMe, mw.NewAuthMiddleware(deps.userUC).JWTAuth(deps.TokenVerifier))
-	auth.PUT("/role", deps.AuthHandler.UpdateRole, mw.NewAuthMiddleware(deps.userUC).JWTAuth(deps.TokenVerifier))
+	auth.GET("/me", deps.AuthHandler.GetMe, mw.NewAuthMiddleware(deps.UserUC).JWTAuth(deps.TokenVerifier))
+	auth.PUT("/role", deps.AuthHandler.UpdateRole, mw.NewAuthMiddleware(deps.UserUC).JWTAuth(deps.TokenVerifier))
 }
 
 // setupStoreRoutes は店舗関連のルーティングを設定します
@@ -90,49 +90,49 @@ func setupStoreRoutes(api *echo.Group, deps *Dependencies) {
 	// 店舗エンドポイント（一部公開、一部認証必要）
 	api.GET("/stores", deps.StoreHandler.GetStores)
 	api.GET("/stores/:id", deps.StoreHandler.GetStoreByID)
-	api.POST("/stores", deps.StoreHandler.CreateStore, mw.NewAuthMiddleware(deps.userUC).JWTAuth(deps.TokenVerifier), mw.NewAuthMiddleware(deps.userUC).RequireRole("owner", "admin"))
-	api.PUT("/stores/:id", deps.StoreHandler.UpdateStore, mw.NewAuthMiddleware(deps.userUC).JWTAuth(deps.TokenVerifier), mw.NewAuthMiddleware(deps.userUC).RequireRole("owner", "admin"))
-	api.DELETE("/stores/:id", deps.StoreHandler.DeleteStore, mw.NewAuthMiddleware(deps.userUC).JWTAuth(deps.TokenVerifier), mw.NewAuthMiddleware(deps.userUC).RequireRole("admin"))
+	api.POST("/stores", deps.StoreHandler.CreateStore, mw.NewAuthMiddleware(deps.UserUC).JWTAuth(deps.TokenVerifier), mw.NewAuthMiddleware(deps.UserUC).RequireRole("owner", "admin"))
+	api.PUT("/stores/:id", deps.StoreHandler.UpdateStore, mw.NewAuthMiddleware(deps.UserUC).JWTAuth(deps.TokenVerifier), mw.NewAuthMiddleware(deps.UserUC).RequireRole("owner", "admin"))
+	api.DELETE("/stores/:id", deps.StoreHandler.DeleteStore, mw.NewAuthMiddleware(deps.UserUC).JWTAuth(deps.TokenVerifier), mw.NewAuthMiddleware(deps.UserUC).RequireRole("admin"))
 
 	// メニューエンドポイント
 	api.GET("/stores/:id/menus", deps.MenuHandler.GetMenusByStoreID)
-	api.POST("/stores/:id/menus", deps.MenuHandler.CreateMenu, mw.NewAuthMiddleware(deps.userUC).JWTAuth(deps.TokenVerifier), mw.NewAuthMiddleware(deps.userUC).RequireRole("owner", "admin"))
+	api.POST("/stores/:id/menus", deps.MenuHandler.CreateMenu, mw.NewAuthMiddleware(deps.UserUC).JWTAuth(deps.TokenVerifier), mw.NewAuthMiddleware(deps.UserUC).RequireRole("owner", "admin"))
 	// レビューエンドポイント
 	api.GET("/stores/:id/reviews", deps.ReviewHandler.GetReviewsByStoreID)
-	api.POST("/stores/:id/reviews", deps.ReviewHandler.Create, mw.NewAuthMiddleware(deps.userUC).JWTAuth(deps.TokenVerifier))
+	api.POST("/stores/:id/reviews", deps.ReviewHandler.Create, mw.NewAuthMiddleware(deps.UserUC).JWTAuth(deps.TokenVerifier))
 
 	// レビューいいねエンドポイント
-	api.POST("/reviews/:id/likes", deps.ReviewHandler.LikeReview, mw.NewAuthMiddleware(deps.userUC).JWTAuth(deps.TokenVerifier))
-	api.DELETE("/reviews/:id/likes", deps.ReviewHandler.UnlikeReview, mw.NewAuthMiddleware(deps.userUC).JWTAuth(deps.TokenVerifier))
+	api.POST("/reviews/:id/likes", deps.ReviewHandler.LikeReview, mw.NewAuthMiddleware(deps.UserUC).JWTAuth(deps.TokenVerifier))
+	api.DELETE("/reviews/:id/likes", deps.ReviewHandler.UnlikeReview, mw.NewAuthMiddleware(deps.UserUC).JWTAuth(deps.TokenVerifier))
 }
 
 // setupUserRoutes はユーザー関連のルーティングを設定します
 func setupUserRoutes(api *echo.Group, deps *Dependencies) {
-	api.GET("/users/me", deps.UserHandler.GetMe, mw.NewAuthMiddleware(deps.userUC).JWTAuth(deps.TokenVerifier))
-	api.PUT("/users/:id", deps.UserHandler.UpdateUser, mw.NewAuthMiddleware(deps.userUC).JWTAuth(deps.TokenVerifier))
+	api.GET("/users/me", deps.UserHandler.GetMe, mw.NewAuthMiddleware(deps.UserUC).JWTAuth(deps.TokenVerifier))
+	api.PUT("/users/:id", deps.UserHandler.UpdateUser, mw.NewAuthMiddleware(deps.UserUC).JWTAuth(deps.TokenVerifier))
 	api.GET("/users/:id/reviews", deps.UserHandler.GetUserReviews)
 }
 
 // setupFavoriteRoutes はお気に入り関連のルーティングを設定します
 func setupFavoriteRoutes(api *echo.Group, deps *Dependencies) {
 	api.GET("/users/:id/favorites", deps.FavoriteHandler.GetUserFavorites)
-	api.POST("/users/:id/favorites", deps.FavoriteHandler.AddFavorite, mw.NewAuthMiddleware(deps.userUC).JWTAuth(deps.TokenVerifier))
-	api.DELETE("/users/:id/favorites/:store_id", deps.FavoriteHandler.RemoveFavorite, mw.NewAuthMiddleware(deps.userUC).JWTAuth(deps.TokenVerifier))
+	api.POST("/users/:id/favorites", deps.FavoriteHandler.AddFavorite, mw.NewAuthMiddleware(deps.UserUC).JWTAuth(deps.TokenVerifier))
+	api.DELETE("/users/:id/favorites/:store_id", deps.FavoriteHandler.RemoveFavorite, mw.NewAuthMiddleware(deps.UserUC).JWTAuth(deps.TokenVerifier))
 }
 
 // setupReportRoutes は通報関連のルーティングを設定します
 func setupReportRoutes(api *echo.Group, deps *Dependencies) {
-	api.POST("/reports", deps.ReportHandler.CreateReport, mw.NewAuthMiddleware(deps.userUC).JWTAuth(deps.TokenVerifier))
+	api.POST("/reports", deps.ReportHandler.CreateReport, mw.NewAuthMiddleware(deps.UserUC).JWTAuth(deps.TokenVerifier))
 }
 
 // setupMediaRoutes はメディア関連のルーティングを設定します
 func setupMediaRoutes(api *echo.Group, deps *Dependencies) {
-	api.POST("/media/upload", deps.MediaHandler.CreateReviewUploads, mw.NewAuthMiddleware(deps.userUC).JWTAuth(deps.TokenVerifier))
+	api.POST("/media/upload", deps.MediaHandler.CreateReviewUploads, mw.NewAuthMiddleware(deps.UserUC).JWTAuth(deps.TokenVerifier))
 }
 
 // setupAdminRoutes は管理者用のルーティングを設定します
 func setupAdminRoutes(api *echo.Group, deps *Dependencies) {
-	admin := api.Group("/admin", mw.NewAuthMiddleware(deps.userUC).JWTAuth(deps.TokenVerifier), mw.NewAuthMiddleware(deps.userUC).RequireRole("admin"))
+	admin := api.Group("/admin", mw.NewAuthMiddleware(deps.UserUC).JWTAuth(deps.TokenVerifier), mw.NewAuthMiddleware(deps.UserUC).RequireRole("admin"))
 	admin.GET("/stores/pending", deps.AdminHandler.GetPendingStores)
 	admin.POST("/stores/:id/approve", deps.AdminHandler.ApproveStore)
 	admin.POST("/stores/:id/reject", deps.AdminHandler.RejectStore)

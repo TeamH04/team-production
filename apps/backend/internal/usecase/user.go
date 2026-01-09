@@ -16,7 +16,7 @@ type userUseCase struct {
 }
 
 // NewUserUseCase は UserUseCase の実装を生成します
-func NewUserUseCase(userRepo output.UserRepository, reviewRepo output.ReviewRepository) *userUseCase {
+func NewUserUseCase(userRepo output.UserRepository, reviewRepo output.ReviewRepository) input.UserUseCase {
 	return &userUseCase{
 		userRepo:   userRepo,
 		reviewRepo: reviewRepo,

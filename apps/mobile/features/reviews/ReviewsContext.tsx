@@ -6,10 +6,10 @@ import {
   fetchStoreReviews,
   fetchUserReviews,
   likeReview,
+  unlikeReview,
   type ApiReview,
   type ReviewSort,
   type UploadFileInput,
-  unlikeReview,
 } from '@/lib/api';
 import { getAccessToken, getCurrentUser } from '@/lib/auth';
 
@@ -132,6 +132,12 @@ export function ReviewsProvider({ children }: { children: React.ReactNode }) {
       assets: ReviewAsset[]
     ) => {
       const token = await getAccessToken();
+      if (token) {
+        const header = JSON.parse(atob(token.split('.')[0]));
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        console.log('[jwt] alg', header.alg);
+        console.log('[jwt] iss', payload.iss);
+      }
       if (!token) {
         throw new Error(AUTH_REQUIRED);
       }

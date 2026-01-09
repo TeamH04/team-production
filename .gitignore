@@ -69,3 +69,4 @@ reports/
 docs/ESLint_Report.md
 docs/Conflict_Report.md
 .wtp.yml
+apps/backend/tmp/

@@ -23,6 +23,18 @@ func NewAuthMiddleware(userUC input.UserUseCase) *AuthMiddleware {
 func (m *AuthMiddleware) JWTAuth(verifier security.TokenVerifier) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
+			if m == nil {
+				c.Logger().Error("auth middleware: m is nil")
+				return presentation.NewInternalServerError("auth middleware: m is nil")
+			}
+			if m.userUC == nil {
+				c.Logger().Error("auth middleware: userUC is nil")
+				return presentation.NewInternalServerError("auth middleware: userUC is nil")
+			}
+			if verifier == nil {
+				c.Logger().Error("auth middleware: verifier is nil")
+				return presentation.NewInternalServerError("auth middleware: verifier is nil")
+			}
 			// Authorizationヘッダーを取得
 			auth := c.Request().Header.Get("Authorization")
 			if auth == "" {

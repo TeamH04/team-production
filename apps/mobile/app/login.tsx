@@ -73,6 +73,7 @@ export default function LoginScreen() {
           scheme: 'shopmobile',
           path: 'auth/callback',
         });
+        console.log('redirectUrl', redirectUrl);
         const { data, error } = await getSupabase().auth.signInWithOAuth({
           provider,
           options: {
