@@ -32,7 +32,8 @@ function RootStack() {
   const segments = useSegments();
 
   useEffect(() => {
-    const isOnProfileRegister = segments[0] === 'profile' && segments[1] === 'register';
+    const isOnProfileRegister =
+      segments.length >= 2 && segments[0] === 'profile' && segments[1] === 'register';
 
     if (user && !isProfileComplete && !isOnProfileRegister) {
       router.replace('/profile/register' as Href);
