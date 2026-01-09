@@ -15,7 +15,7 @@ import {
 
 import { palette } from '@/constants/palette';
 import { TAB_BAR_SPACING } from '@/constants/TabBarSpacing';
-import { useUser } from '@/features/user/UserContext';
+import { useUser, type Gender } from '@/features/user/UserContext';
 
 const modalOverlayOpacity = 0.3;
 
@@ -27,7 +27,7 @@ export default function EditProfileScreen() {
   // ローカルなフォーム state（表示名・メールアドレス）
   const [name, setName] = useState(user?.name ?? '');
   const [email, setEmail] = useState(user?.email ?? '');
-  const [gender, setGender] = useState(user?.gender ?? '');
+  const [gender, setGender] = useState<Gender | ''>(user?.gender ?? '');
   const [birthYear, setBirthYear] = useState<string>(user?.birthYear ?? '');
   const [birthMonth, setBirthMonth] = useState<string>(user?.birthMonth ?? '');
   const [showYearPicker, setShowYearPicker] = useState(false);
@@ -254,16 +254,14 @@ export default function EditProfileScreen() {
                 ...user,
                 name: name.trim(),
                 email: email.trim(),
-                gender,
+                gender: gender || undefined,
                 birthYear: birthYear || undefined,
                 birthMonth: birthMonth || undefined,
                 isProfileRegistered: true,
               });
               router.back();
-            } catch (e) {
-              setSaveError(
-                '保存に失敗しました。もう一度お試しください。error:' + (e as Error).message
-              );
+            } catch {
+              setSaveError('保存に失敗しました。もう一度お試しください。');
             } finally {
               setSaving(false);
             }
