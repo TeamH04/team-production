@@ -7,12 +7,7 @@
     "moduleResolution": "bundler",
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "noEmit": true,
-    "baseUrl": ".",
-    "paths": {
-      "@team/theme": ["./src/index.ts"],
-      "@team/theme/*": ["./src/*"]
-    }
+    "noEmit": true
   },
-  "include": ["./src/**/*"]
+  "include": ["src"]
 }
