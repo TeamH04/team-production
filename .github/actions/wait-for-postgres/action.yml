@@ -1,0 +1,34 @@
+name: 'Wait for PostgreSQL'
+description: 'Waits for PostgreSQL service to be ready'
+
+inputs:
+  host:
+    description: 'PostgreSQL host'
+    required: false
+    default: 'localhost'
+  port:
+    description: 'PostgreSQL port'
+    required: false
+    default: '5432'
+  user:
+    description: 'PostgreSQL user'
+    required: false
+    default: 'postgres'
+  max-attempts:
+    description: 'Maximum number of connection attempts'
+    required: false
+    default: '30'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Wait for PostgreSQL to be ready
+      shell: bash
+      run: |
+        for i in $(seq 1 ${{ inputs.max-attempts }}); do
+          pg_isready -h ${{ inputs.host }} -p ${{ inputs.port }} -U ${{ inputs.user }} && exit 0
+          echo "Waiting for PostgreSQL... ($i/${{ inputs.max-attempts }})"
+          sleep 1
+        done
+        echo "PostgreSQL did not become ready in time"
+        exit 1

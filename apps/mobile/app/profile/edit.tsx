@@ -172,7 +172,10 @@ export default function EditProfileScreen() {
                   <Text style={styles.modalDoneText}>完了</Text>
                 </Pressable>
               </View>
-              <Picker selectedValue={birthYear} onValueChange={v => setBirthYear(String(v))}>
+              <Picker
+                selectedValue={birthYear}
+                onValueChange={(v: string) => setBirthYear(String(v))}
+              >
                 <Picker.Item label='年を選択' value='' />
                 {years.map(y => (
                   <Picker.Item key={y} label={`${y}年`} value={y} />
@@ -194,7 +197,10 @@ export default function EditProfileScreen() {
                   <Text style={styles.modalDoneText}>完了</Text>
                 </Pressable>
               </View>
-              <Picker selectedValue={birthMonth} onValueChange={v => setBirthMonth(String(v))}>
+              <Picker
+                selectedValue={birthMonth}
+                onValueChange={(v: string) => setBirthMonth(String(v))}
+              >
                 <Picker.Item label='月を選択' value='' />
                 {months.map(m => (
                   <Picker.Item key={m} label={`${m}月`} value={m} />
@@ -207,7 +213,7 @@ export default function EditProfileScreen() {
         {/* 保存ボタン
             - disabled 時は押せない
             - 押したら setUser を呼んで前の画面へ戻る */}
-        <Text style={styles.errorText}>{errorStore}</Text>
+        <Text style={styles.errorText}>{saveError}</Text>
 
         <Pressable
           disabled={!canSave}
@@ -216,7 +222,7 @@ export default function EditProfileScreen() {
             setErrorName('');
             setErrorEmail('');
             setErrorBirth('');
-            setErrorStore('');
+            setSaveError('');
 
             const emailOk = /.+@.+\..+/.test(email.trim());
 
@@ -254,7 +260,7 @@ export default function EditProfileScreen() {
               });
               router.back();
             } catch (e) {
-              setErrorStore(
+              setSaveError(
                 '保存に失敗しました。もう一度お試しください。error:' + (e as Error).message
               );
             } finally {

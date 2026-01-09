@@ -53,6 +53,7 @@ yarn.lock
 .vscode/*
 !.vscode/settings.json
 !.vscode/extensions.json
+.claude/
 
 # ---- Tests / Coverage ----
 coverage/

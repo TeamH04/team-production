@@ -1,27 +1,19 @@
-import {
-  HeaderBackButton,
-  HeaderBackButtonDisplayMode,
-  HeaderButtonProps,
-  Layout,
-} from '@react-navigation/elements';
+import { HeaderBackButton } from '@react-navigation/elements';
 import { useNavigation, useRouter, type Href } from 'expo-router';
-import React, { useCallback, useEffect, useLayoutEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Alert,
-  Animated,
   KeyboardAvoidingView,
-  LayoutChangeEvent,
   Platform,
   Pressable,
   ScrollView,
-  StyleProp,
   StyleSheet,
   Text,
   TextInput,
-  TextStyle,
   View,
 } from 'react-native';
 
+import { HEADER_HEIGHT } from '@/constants/layout';
 import { palette } from '@/constants/palette';
 
 type ItemWithId = { id: string; value: string };
@@ -86,35 +78,20 @@ export default function RegisterShopScreen() {
   useEffect(() => {
     navigation.setOptions?.({
       title: '店舗登録',
-      headerBackTitle: '戻る',
+      headerBackTitle: ' 戻る',
       headerTintColor: palette.textOnAccent,
       headerStyle: {
         backgroundColor: palette.accent,
+        height: HEADER_HEIGHT,
       },
       headerTitleStyle: {
         color: palette.textOnAccent,
       },
+      headerLeft: (props: Parameters<typeof HeaderBackButton>[0]) => (
+        <HeaderBackButton {...props} onPress={handleBack} />
+      ),
     });
-  }, [navigation]);
-
-  useLayoutEffect(() => {
-    navigation.setOptions?.({
-      headerLeft: (
-        props: React.JSX.IntrinsicAttributes &
-          Omit<HeaderButtonProps, 'children'> & {
-            backImage?: (props: { tintColor: string }) => React.ReactNode;
-            label?: string;
-            truncatedLabel?: string;
-            displayMode?: HeaderBackButtonDisplayMode;
-            labelStyle?: Animated.WithAnimatedValue<StyleProp<TextStyle>>;
-            allowFontScaling?: boolean;
-            onLabelLayout?: (e: LayoutChangeEvent) => void;
-            screenLayout?: Layout;
-            titleLayout?: Layout;
-          }
-      ) => <HeaderBackButton {...props} onPress={handleBack} />,
-    });
-  }, [handleBack, navigation]);
+  }, [navigation, handleBack]);
 
   const handleSubmit = useCallback(async () => {
     if (loading) return;

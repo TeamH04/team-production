@@ -1,10 +1,11 @@
 import { FavoritesProvider } from '@/features/favorites/FavoritesContext';
 import { ReviewsProvider } from '@/features/reviews/ReviewsContext';
 import { UserProvider, useUser } from '@/features/user/UserContext';
+import { VisitedProvider } from '@/features/visited/VisitedContext';
 import '@/global.css';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
-import { router, Stack, useSegments } from 'expo-router';
+import { router, Stack, useSegments, type Href } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -31,14 +32,15 @@ function RootStack() {
 
   useEffect(() => {
     if (user && !isProfileComplete) {
-      router.replace('/profile/register');
+      router.replace('/profile/register' as Href);
     }
   }, [user, isProfileComplete]);
 
   const segments = useSegments();
   const first = segments[0] ?? '';
   const isInsideTabs = segments.some(seg => seg === '(tabs)');
-  const padTop = !isInsideTabs && first !== 'shop' && first !== 'profile' ? insets.top : 0;
+  const padTop =
+    !isInsideTabs && first !== 'shop' && first !== 'profile' && first !== 'owner' ? insets.top : 0;
   return (
     <View
       style={[
@@ -85,9 +87,11 @@ export default function RootLayout() {
       <SafeAreaProvider>
         <UserProvider>
           <FavoritesProvider>
-            <ReviewsProvider>
-              <RootStack />
-            </ReviewsProvider>
+            <VisitedProvider>
+              <ReviewsProvider>
+                <RootStack />
+              </ReviewsProvider>
+            </VisitedProvider>
           </FavoritesProvider>
         </UserProvider>
       </SafeAreaProvider>

@@ -717,7 +717,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 4,
   },
-  logoutText: { color: palette.error, fontSize: 14, fontWeight: '600' },
+  logoutText: { color: palette.errorText, fontSize: 14, fontWeight: '600' },
   menuItem: {
     color: palette.mutedText,
     fontSize: 11,
