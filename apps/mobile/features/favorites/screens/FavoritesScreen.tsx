@@ -17,11 +17,17 @@ const TAB_BAR_SPACING = 113;
 
 type SortType = 'newest' | 'rating-high' | 'rating-low';
 
+/**
+ * ソート機能のオプション設定
+ */
 interface SortOption {
   label: string;
   value: SortType;
 }
 
+/**
+ * ソート方法の選択肢
+ */
 const SORT_OPTIONS: SortOption[] = [
   { label: '新着順', value: 'newest' },
   { label: '評価が高い順', value: 'rating-high' },
@@ -69,17 +75,25 @@ export default function FavoritesScreen() {
     }
 
     return sorted;
-  }, [favoriteShops, searchText, sortType]);
+  }, [searchText, sortType, favoriteShops]);
 
   const handleShopPress = (shopId: string) => {
     router.push({ pathname: '/shop/[id]', params: { id: shopId } });
   };
 
+  /**
+   * ソート方法を変更し、モーダルを閉じる
+   * @param value - 選択されたソート方法
+   */
   const handleSortSelect = (value: SortType) => {
     setSortType(value);
     setShowSortModal(false);
   };
 
+  /**
+   * 現在選択されているソート方法のラベルを取得
+   * @returns ソート方法の表示名
+   */
   const getCurrentSortLabel = () => {
     const option = SORT_OPTIONS.find(opt => opt.value === sortType);
     return option?.label || '新着順';
@@ -103,16 +117,28 @@ export default function FavoritesScreen() {
             placeholderTextColor={palette.secondaryText}
             value={searchText}
             onChangeText={setSearchText}
+            accessibilityLabel='お気に入り検索'
+            accessibilityHint='店舗名、説明、カテゴリーで検索'
           />
           {searchText.length > 0 && (
-            <Pressable onPress={() => setSearchText('')}>
+            <Pressable
+              onPress={() => setSearchText('')}
+              accessibilityLabel='検索を削除'
+              accessibilityRole='button'
+            >
               <Ionicons name='close' size={18} color={palette.secondaryText} />
             </Pressable>
           )}
         </View>
 
         {/* ソートボタン */}
-        <Pressable style={styles.sortButton} onPress={() => setShowSortModal(true)}>
+        <Pressable
+          style={styles.sortButton}
+          onPress={() => setShowSortModal(true)}
+          accessibilityLabel='ソートオプション'
+          accessibilityHint={`現在のソート：${getCurrentSortLabel()}`}
+          accessibilityRole='button'
+        >
           <Ionicons name='funnel' size={18} color={palette.primaryText} />
           <Text style={styles.sortButtonText}>{getCurrentSortLabel()}</Text>
         </Pressable>
@@ -127,25 +153,32 @@ export default function FavoritesScreen() {
       >
         <Pressable style={styles.modalOverlay} onPress={() => setShowSortModal(false)}>
           <View style={styles.sortModalContent}>
-            {SORT_OPTIONS.map(option => (
-              <Pressable
-                key={option.value}
-                style={[styles.sortOption, sortType === option.value && styles.sortOptionActive]}
-                onPress={() => handleSortSelect(option.value)}
-              >
-                <Text
-                  style={[
-                    styles.sortOptionText,
-                    sortType === option.value && styles.sortOptionTextActive,
-                  ]}
+            <FlatList
+              data={SORT_OPTIONS}
+              keyExtractor={item => item.value}
+              scrollEnabled={false}
+              contentContainerStyle={styles.sortOptionsList}
+              style={styles.sortOptionsFlatList}
+              ItemSeparatorComponent={() => <View style={styles.sortOptionSeparator} />}
+              renderItem={({ item: option }) => (
+                <Pressable
+                  style={[styles.sortOption, sortType === option.value && styles.sortOptionActive]}
+                  onPress={() => handleSortSelect(option.value)}
                 >
-                  {option.label}
-                </Text>
-                {sortType === option.value && (
-                  <Ionicons name='checkmark' size={20} color={palette.primary} />
-                )}
-              </Pressable>
-            ))}
+                  <Text
+                    style={[
+                      styles.sortOptionText,
+                      sortType === option.value && styles.sortOptionTextActive,
+                    ]}
+                  >
+                    {option.label}
+                  </Text>
+                  {sortType === option.value && (
+                    <Ionicons name='checkmark' size={20} color={palette.primary} />
+                  )}
+                </Pressable>
+              )}
+            />
           </View>
         </Pressable>
       </Modal>
@@ -317,17 +350,17 @@ const styles = StyleSheet.create({
   sortModalContent: {
     backgroundColor: palette.surface,
     borderRadius: 12,
+    maxHeight: 200,
     minWidth: 250,
     overflow: 'hidden',
     shadowColor: palette.shadow,
     shadowOffset: { height: 4, width: 0 },
     shadowOpacity: 0.15,
     shadowRadius: 8,
+    width: 280,
   },
   sortOption: {
     alignItems: 'center',
-    borderBottomColor: palette.border,
-    borderBottomWidth: 1,
     flexDirection: 'row',
     justifyContent: 'space-between',
     paddingHorizontal: 20,
@@ -336,6 +369,10 @@ const styles = StyleSheet.create({
   sortOptionActive: {
     backgroundColor: palette.highlight,
   },
+  sortOptionSeparator: {
+    backgroundColor: palette.border,
+    height: 1,
+  },
   sortOptionText: {
     color: palette.primaryText,
     fontSize: 14,
@@ -343,5 +380,11 @@ const styles = StyleSheet.create({
   },
   sortOptionTextActive: {
     fontWeight: '700',
+  },
+  sortOptionsFlatList: {
+    width: 280,
+  },
+  sortOptionsList: {
+    flexGrow: 0,
   },
 });
