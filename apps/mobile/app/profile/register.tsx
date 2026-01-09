@@ -78,7 +78,11 @@ export default function RegisterProfileScreen() {
             })}
           </View>
 
-          <Pressable disabled={!canSave} onPress={onSave} style={styles.primaryBtn}>
+          <Pressable
+            disabled={!canSave}
+            onPress={onSave}
+            style={[styles.primaryBtn, !canSave && styles.primaryBtnDisabled]}
+          >
             <Text style={styles.primaryBtnText}>登録して続行</Text>
           </Pressable>
 
@@ -120,6 +124,9 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     marginTop: 28,
     paddingVertical: 14,
+  },
+  primaryBtnDisabled: {
+    opacity: 0.5,
   },
   primaryBtnText: { color: palette.primaryOnAccent, fontWeight: '700', textAlign: 'center' },
 

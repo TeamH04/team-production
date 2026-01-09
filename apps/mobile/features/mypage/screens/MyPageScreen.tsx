@@ -467,8 +467,8 @@ export default function MyPageScreen({
                 </View>
 
                 <View style={styles.profileMeta}>
-                  <Text style={styles.profileName}>{user?.name}</Text>
-                  <Text style={styles.profileSub}>{user?.email}</Text>
+                  <Text style={styles.profileName}>{user?.name ?? '未設定'}</Text>
+                  <Text style={styles.profileSub}>{user?.email ?? '未設定'}</Text>
                 </View>
                 <Pressable onPress={handleLogout} style={styles.logoutBtn} hitSlop={8}>
                   <Text style={styles.logoutText}>ログアウト</Text>
