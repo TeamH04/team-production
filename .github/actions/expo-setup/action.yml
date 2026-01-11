@@ -10,6 +10,10 @@ inputs:
     description: 'Expo CLI version to use'
     required: false
     default: 'latest'
+  eas-version:
+    description: 'EAS CLI version to use'
+    required: false
+    default: 'latest'
   expo-token:
     description: 'Expo token for authentication'
     required: true
@@ -31,4 +35,5 @@ runs:
       uses: expo/expo-github-action@v8
       with:
         expo-version: ${{ inputs.expo-version }}
+        eas-version: ${{ inputs.eas-version }}
         token: ${{ inputs.expo-token }}
