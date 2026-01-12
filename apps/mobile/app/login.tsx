@@ -280,8 +280,8 @@ export default function LoginScreen() {
                 onPress={handleDevGuestLogin}
                 style={({ pressed }) => [
                   styles.devButton,
-                  pressed && { opacity: 0.9 },
-                  loading === 'guest' && { opacity: 0.75 },
+                  pressed && styles.devButtonPressed,
+                  loading === 'guest' && styles.devButtonLoading,
                 ]}
               >
                 <Text style={styles.devButtonText}>
@@ -368,6 +368,12 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     marginTop: 12,
     paddingVertical: 12,
+  },
+  devButtonLoading: {
+    opacity: 0.75,
+  },
+  devButtonPressed: {
+    opacity: 0.9,
   },
   devButtonText: {
     color: palette.primaryText,
