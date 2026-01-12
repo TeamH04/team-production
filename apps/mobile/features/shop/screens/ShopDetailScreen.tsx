@@ -480,6 +480,18 @@ const styles = StyleSheet.create({
   },
   likeText: { color: palette.muted, fontSize: 12, fontWeight: '600' },
   likeTextActive: { color: palette.likeActiveText },
+  mapButton: {
+    backgroundColor: palette.accent,
+    borderRadius: 999,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+  },
+  mapButtonText: { color: palette.primaryOnAccent, fontSize: 12, fontWeight: '700' },
+  mapCard: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
   meta: { color: palette.muted, marginTop: 6 },
   muted: { color: palette.muted },
   paginationContainer: {
