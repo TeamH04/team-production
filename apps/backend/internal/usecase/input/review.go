@@ -15,8 +15,8 @@ type ReviewUseCase interface {
 }
 
 type CreateReview struct {
-	MenuIDs []string
-	Rating  int
-	Content *string
-	FileIDs []string
+	MenuIDs []string `json:"menu_ids"`
+	Rating  int      `json:"rating"`
+	Content *string  `json:"content"`
+	FileIDs []string `json:"file_ids"`
 }

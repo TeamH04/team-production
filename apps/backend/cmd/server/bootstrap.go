@@ -26,6 +26,7 @@ func buildRouterDependencies(cfg *config.Config, db *gorm.DB) *router.Dependenci
 	favoriteRepo := repository.NewFavoriteRepository(db)
 	reportRepo := repository.NewReportRepository(db)
 	fileRepo := repository.NewFileRepository(db)
+	transaction := repository.NewGormTransaction(db)
 
 	// External services
 	supabaseClient := supabase.NewClient(
@@ -39,7 +40,7 @@ func buildRouterDependencies(cfg *config.Config, db *gorm.DB) *router.Dependenci
 	log.Println("  - Initializing use cases...")
 	storeUseCase := usecase.NewStoreUseCase(storeRepo)
 	menuUseCase := usecase.NewMenuUseCase(menuRepo, storeRepo)
-	reviewUseCase := usecase.NewReviewUseCase(reviewRepo, storeRepo, menuRepo, fileRepo)
+	reviewUseCase := usecase.NewReviewUseCase(reviewRepo, storeRepo, menuRepo, fileRepo, transaction)
 	mediaUseCase := usecase.NewMediaUseCase(supabaseClient, fileRepo, storeRepo, cfg.SupabaseStorageBucket)
 	userUseCase := usecase.NewUserUseCase(userRepo, reviewRepo)
 	favoriteUseCase := usecase.NewFavoriteUseCase(favoriteRepo, userRepo, storeRepo)

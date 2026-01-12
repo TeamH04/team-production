@@ -23,12 +23,14 @@ func NewReviewUseCase(
 	storeRepo output.StoreRepository,
 	menuRepo output.MenuRepository,
 	fileRepo output.FileRepository,
+	transaction output.Transaction,
 ) input.ReviewUseCase {
 	return &reviewUseCase{
-		reviewRepo: reviewRepo,
-		storeRepo:  storeRepo,
-		menuRepo:   menuRepo,
-		fileRepo:   fileRepo,
+		reviewRepo:  reviewRepo,
+		storeRepo:   storeRepo,
+		menuRepo:    menuRepo,
+		fileRepo:    fileRepo,
+		transaction: transaction,
 	}
 }
 
@@ -57,13 +59,28 @@ func (uc *reviewUseCase) Create(ctx context.Context, storeID string, userID stri
 		return ErrInvalidRating
 	}
 
+	menuIDs := dedupeStrings(input.MenuIDs)
+	if len(menuIDs) > 0 {
+		menus, err := uc.menuRepo.FindByStoreAndIDs(ctx, storeID, menuIDs)
+		if err != nil {
+			return err
+		}
+		if len(menus) != len(menuIDs) {
+			return ErrInvalidInput
+		}
+	}
+
+	if uc.transaction == nil {
+		return output.ErrInvalidTransaction
+	}
+
 	return uc.transaction.StartTransaction(func(tx interface{}) error {
 		return uc.reviewRepo.CreateInTx(ctx, tx, output.CreateReview{
 			StoreID: storeID,
 			UserID:  userID,
 			Rating:  input.Rating,
 			Content: input.Content,
-			MenuIDs: input.MenuIDs,
+			MenuIDs: menuIDs,
 			FileIDs: input.FileIDs,
 		})
 	})
@@ -102,4 +119,23 @@ func normalizeReviewSort(sort string) string {
 	default:
 		return "new"
 	}
+}
+
+func dedupeStrings(values []string) []string {
+	if len(values) == 0 {
+		return nil
+	}
+	seen := make(map[string]struct{}, len(values))
+	result := make([]string, 0, len(values))
+	for _, value := range values {
+		if value == "" {
+			continue
+		}
+		if _, ok := seen[value]; ok {
+			continue
+		}
+		seen[value] = struct{}{}
+		result = append(result, value)
+	}
+	return result
 }
