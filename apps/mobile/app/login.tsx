@@ -3,9 +3,9 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import * as AuthSession from 'expo-auth-session';
 import * as Crypto from 'expo-crypto';
-import { useRouter, type Href } from 'expo-router';
+import { type Href, useRouter } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
-import React, { useCallback, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { Alert, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { palette } from '@/constants/palette';
@@ -29,7 +29,11 @@ function parseParamsFromUrl(url: string) {
     const code = searchParams.get('code') || hashParams.get('code') || undefined;
     return { access_token, refresh_token, code };
   } catch {
-    return {} as { access_token?: string; refresh_token?: string; code?: string };
+    return {} as {
+      access_token?: string;
+      refresh_token?: string;
+      code?: string;
+    };
   }
 }
 

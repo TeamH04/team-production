@@ -1,8 +1,8 @@
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
-
 import { fetchStores } from '@/lib/api';
 import { mapApiStoresToShops } from '@/lib/storeMapping';
 import type { Shop } from '@team/shop-core';
+import type React from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 
 type StoresContextValue = {
   stores: Shop[];

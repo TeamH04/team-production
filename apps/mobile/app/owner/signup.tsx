@@ -1,5 +1,5 @@
 import { useNavigation, useRouter } from 'expo-router';
-import React, { useLayoutEffect, useState } from 'react';
+import { useLayoutEffect, useState } from 'react';
 import {
   Alert,
   KeyboardAvoidingView,

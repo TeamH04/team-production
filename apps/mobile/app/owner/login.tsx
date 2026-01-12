@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation, useRouter, type Href } from 'expo-router';
-import React, { useLayoutEffect, useState } from 'react';
+import { type Href, useNavigation, useRouter } from 'expo-router';
+import { useLayoutEffect, useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { palette } from '@/constants/palette';
@@ -253,7 +253,11 @@ const styles = StyleSheet.create({
   secondaryBtnPressed: {
     opacity: 0.9,
   },
-  secondaryBtnText: { color: palette.link, fontWeight: '700', textAlign: 'center' },
+  secondaryBtnText: {
+    color: palette.link,
+    fontWeight: '700',
+    textAlign: 'center',
+  },
   title: { color: palette.primaryText, fontSize: 20, fontWeight: '800' },
   titleContainer: {
     alignItems: 'center',

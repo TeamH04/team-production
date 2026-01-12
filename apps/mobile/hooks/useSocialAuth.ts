@@ -1,4 +1,5 @@
 import { getSupabase, isSupabaseConfigured } from '@/lib/supabase';
+import type { AuthError, Session } from '@supabase/supabase-js';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import * as AuthSession from 'expo-auth-session';
 import * as WebBrowser from 'expo-web-browser';
@@ -48,7 +49,15 @@ export const useSocialAuth = () => {
           const access_token = params.get('access_token');
           const refresh_token = params.get('refresh_token');
           const code = params.get('code');
-          let sessionData, sessionError;
+
+          type SessionResult = {
+            session: Session | null;
+            user: Session['user'] | null;
+          };
+
+          let sessionData: SessionResult | null = null;
+          let sessionError: AuthError | null = null;
+
           if (access_token && refresh_token) {
             ({ data: sessionData, error: sessionError } = await supabase.auth.setSession({
               access_token,
@@ -96,7 +105,10 @@ export const useSocialAuth = () => {
       // Check if Apple signin is available
       const isAvailable = await AppleAuthentication.isAvailableAsync();
       if (!isAvailable) {
-        return { success: false, error: 'Apple signin is not available on this device' };
+        return {
+          success: false,
+          error: 'Apple signin is not available on this device',
+        };
       }
 
       const credential = await AppleAuthentication.signInAsync({
@@ -107,7 +119,10 @@ export const useSocialAuth = () => {
       });
 
       if (!credential.identityToken) {
-        return { success: false, error: 'Failed to get identity token from Apple' };
+        return {
+          success: false,
+          error: 'Failed to get identity token from Apple',
+        };
       }
 
       const { data, error } = await supabase.auth.signInWithIdToken({

@@ -1,6 +1,6 @@
 import * as Linking from 'expo-linking';
-import { useRouter, type Href } from 'expo-router';
-import React, { useEffect, useState } from 'react';
+import { type Href, useRouter } from 'expo-router';
+import { useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, StyleSheet, Text, View } from 'react-native';
 
 import { checkIsOwner, ensureUserExistsInDB } from '@/lib/auth';
@@ -69,6 +69,11 @@ export default function OAuthCallback() {
 }
 
 const styles = StyleSheet.create({
-  container: { alignItems: 'center', flex: 1, justifyContent: 'center', padding: 24 },
+  container: {
+    alignItems: 'center',
+    flex: 1,
+    justifyContent: 'center',
+    padding: 24,
+  },
   text: { marginTop: 12 },
 });

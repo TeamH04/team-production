@@ -1,6 +1,6 @@
 import { HeaderBackButton } from '@react-navigation/elements';
-import { useNavigation, useRouter, type Href } from 'expo-router';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { type Href, useNavigation, useRouter } from 'expo-router';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Alert,
   KeyboardAvoidingView,
@@ -368,7 +368,10 @@ export default function RegisterShopScreen() {
                   const prefix = currentStep.key === 'menu' ? 'menu' : 'tag';
                   const newItems = [
                     ...(currentStep.value as ItemWithId[]),
-                    { id: `${prefix}-${Date.now()}-${Math.random()}`, value: '' },
+                    {
+                      id: `${prefix}-${Date.now()}-${Math.random()}`,
+                      value: '',
+                    },
                   ];
                   (currentStep.onChange as (items: ItemWithId[]) => void)(newItems);
                 }}

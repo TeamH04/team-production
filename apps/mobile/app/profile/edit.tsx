@@ -1,6 +1,5 @@
-﻿import React from 'react';
+﻿import { useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { useRouter } from 'expo-router';
 import {
   KeyboardAvoidingView,
   Platform,
@@ -186,7 +185,11 @@ const styles = StyleSheet.create({
   primaryBtnDisabled: {
     opacity: 0.5,
   },
-  primaryBtnText: { color: palette.primaryOnAccent, fontWeight: '700', textAlign: 'center' },
+  primaryBtnText: {
+    color: palette.primaryOnAccent,
+    fontWeight: '700',
+    textAlign: 'center',
+  },
 
   // 画面背景
   screen: { backgroundColor: palette.background, flex: 1 },
@@ -200,7 +203,11 @@ const styles = StyleSheet.create({
     marginTop: 12,
     paddingVertical: 12,
   },
-  secondaryBtnText: { color: palette.primary, fontWeight: '700', textAlign: 'center' },
+  secondaryBtnText: {
+    color: palette.primary,
+    fontWeight: '700',
+    textAlign: 'center',
+  },
 
   // タイトル
   title: {

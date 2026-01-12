@@ -1,5 +1,5 @@
-import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 
 // Environment variables must be provided via Expo's EXPO_PUBLIC_* mechanism.
 const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;

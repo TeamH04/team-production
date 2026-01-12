@@ -1,5 +1,12 @@
-﻿import { useRouter } from 'expo-router';
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+﻿import { palette } from '@/constants/palette';
+import { TAB_BAR_SPACING } from '@/constants/TabBarSpacing';
+import { useReviews } from '@/features/reviews/ReviewsContext';
+import { useUser } from '@/features/user/UserContext';
+import { getSupabase } from '@/lib/supabase';
+import Ionicons from '@expo/vector-icons/Ionicons';
+import { SHOPS } from '@team/shop-core';
+import { useRouter } from 'expo-router';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import {
   Alert,
   Image,
@@ -10,15 +17,6 @@ import {
   TextInput,
   View,
 } from 'react-native';
-
-import Ionicons from '@expo/vector-icons/Ionicons';
-
-import { palette } from '@/constants/palette';
-import { TAB_BAR_SPACING } from '@/constants/TabBarSpacing';
-import { useReviews } from '@/features/reviews/ReviewsContext';
-import { useUser } from '@/features/user/UserContext';
-import { getSupabase } from '@/lib/supabase';
-import { SHOPS } from '@team/shop-core';
 
 /**
  * マイページ画面コンポーネント
@@ -776,7 +774,11 @@ const styles = StyleSheet.create({
     marginTop: 12,
     paddingVertical: 12,
   },
-  secondaryBtnText: { color: palette.primary, fontWeight: '700', textAlign: 'center' },
+  secondaryBtnText: {
+    color: palette.primary,
+    fontWeight: '700',
+    textAlign: 'center',
+  },
   sectionCard: {
     backgroundColor: palette.surface,
     borderRadius: 18,

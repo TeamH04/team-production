@@ -1,8 +1,8 @@
+import { Image } from 'expo-image';
+import * as ImagePicker from 'expo-image-picker';
 import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
 import { useEffect, useLayoutEffect, useMemo, useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
-import { Image } from 'expo-image';
-import * as ImagePicker from 'expo-image-picker';
 
 import { palette } from '@/constants/palette';
 import { useReviews } from '@/features/reviews/ReviewsContext';
@@ -39,7 +39,10 @@ export default function ReviewModalScreen() {
     fetchStoreMenus(id)
       .then(menus => {
         if (!active) return;
-        const mapped = menus.map(item => ({ id: item.menu_id, name: item.name }));
+        const mapped = menus.map(item => ({
+          id: item.menu_id,
+          name: item.name,
+        }));
         setMenuOptions(mapped);
       })
       .catch(err => {
@@ -245,7 +248,12 @@ const styles = StyleSheet.create({
   centered: { alignItems: 'center', justifyContent: 'center' }, // 中央寄せ
   content: { padding: 16 }, // 画面内余白
   errorText: { color: palette.error, fontSize: 14, marginTop: 4 }, // エラーメッセージ
-  heading: { color: palette.primary, fontSize: 18, fontWeight: '800', marginBottom: 8 }, // 店舗名
+  heading: {
+    color: palette.primary,
+    fontSize: 18,
+    fontWeight: '800',
+    marginBottom: 8,
+  }, // 店舗名
   imageGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -288,7 +296,11 @@ const styles = StyleSheet.create({
     marginTop: 18,
     paddingVertical: 12,
   },
-  primaryBtnText: { color: palette.primaryOnAccent, fontWeight: '700', textAlign: 'center' },
+  primaryBtnText: {
+    color: palette.primaryOnAccent,
+    fontWeight: '700',
+    textAlign: 'center',
+  },
   removeImageBtn: {
     backgroundColor: palette.primary,
     borderRadius: 10,
@@ -298,7 +310,11 @@ const styles = StyleSheet.create({
     top: -6,
     width: 20,
   },
-  removeImageText: { color: palette.primaryOnAccent, fontSize: 12, textAlign: 'center' },
+  removeImageText: {
+    color: palette.primaryOnAccent,
+    fontSize: 12,
+    textAlign: 'center',
+  },
   screen: { backgroundColor: palette.surface, flex: 1 },
   secondaryBtn: {
     backgroundColor: palette.secondarySurface,
@@ -309,8 +325,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 10,
   },
-  secondaryBtnText: { color: palette.primary, fontWeight: '700', textAlign: 'center' },
-  sectionLabel: { color: palette.primary, fontWeight: '700', marginBottom: 8, marginTop: 12 },
+  secondaryBtnText: {
+    color: palette.primary,
+    fontWeight: '700',
+    textAlign: 'center',
+  },
+  sectionLabel: {
+    color: palette.primary,
+    fontWeight: '700',
+    marginBottom: 8,
+    marginTop: 12,
+  },
   star: { color: palette.starInactive, fontSize: 22, marginRight: 4 },
   starActive: { color: palette.starHighlight },
   starsRow: { flexDirection: 'row', marginBottom: 8 },

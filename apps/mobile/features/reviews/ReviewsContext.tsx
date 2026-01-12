@@ -1,14 +1,15 @@
-import React, { createContext, useCallback, useContext, useMemo, useState } from 'react';
+import type React from 'react';
+import { createContext, useCallback, useContext, useMemo, useState } from 'react';
 
 import {
+  type ApiReview,
   createReview,
   createReviewUploads,
   fetchStoreReviews,
   fetchUserReviews,
   likeReview,
-  unlikeReview,
-  type ApiReview,
   type ReviewSort,
+  unlikeReview,
   type UploadFileInput,
 } from '@/lib/api';
 import { getAccessToken, getCurrentUser } from '@/lib/auth';
@@ -51,7 +52,12 @@ type ReviewsContextValue = {
   loadReviews: (shopId: string, sort: ReviewSort) => Promise<void>;
   addReview: (
     shopId: string,
-    input: { rating: number; comment?: string; menuItemIds?: string[]; menuItemName?: string },
+    input: {
+      rating: number;
+      comment?: string;
+      menuItemIds?: string[];
+      menuItemName?: string;
+    },
     assets: ReviewAsset[]
   ) => Promise<void>;
   deleteReview: (reviewId: string) => void;
@@ -119,7 +125,10 @@ export function ReviewsProvider({ children }: { children: React.ReactNode }) {
     try {
       const token = await getAccessToken();
       const reviews = await fetchStoreReviews(shopId, sort, token ?? undefined);
-      setReviewsByShop(prev => ({ ...prev, [shopId]: reviews.map(mapApiReview) }));
+      setReviewsByShop(prev => ({
+        ...prev,
+        [shopId]: reviews.map(mapApiReview),
+      }));
     } finally {
       setLoadingByShop(prev => ({ ...prev, [shopId]: false }));
     }
@@ -128,7 +137,12 @@ export function ReviewsProvider({ children }: { children: React.ReactNode }) {
   const addReview = useCallback(
     async (
       shopId: string,
-      input: { rating: number; comment?: string; menuItemIds?: string[]; menuItemName?: string },
+      input: {
+        rating: number;
+        comment?: string;
+        menuItemIds?: string[];
+        menuItemName?: string;
+      },
       assets: ReviewAsset[]
     ) => {
       const token = await getAccessToken();

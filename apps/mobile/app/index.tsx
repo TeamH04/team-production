@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Redirect, type Href } from 'expo-router';
-import React, { useEffect, useState } from 'react';
+import { type Href, Redirect } from 'expo-router';
+import { useEffect, useState } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
 import { checkIsOwner, ensureUserExistsInDB } from '@/lib/auth';

@@ -1,12 +1,12 @@
 import { palette } from '@/constants/palette';
 import { TAB_BAR_SPACING } from '@/constants/TabBarSpacing';
 import { useStores } from '@/features/stores/StoresContext';
+import type { Shop } from '@team/shop-core';
 import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactElement } from 'react';
-import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { type ReactElement, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { ActivityIndicator, type FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, { useAnimatedRef } from 'react-native-reanimated';
-import type { Shop } from '@team/shop-core';
 
 const PAGE_SIZE = 10;
 
@@ -107,7 +107,10 @@ function ShopResultsList({
 export default function HomeScreen() {
   const router = useRouter();
   const { stores, loading, error } = useStores();
-  const params = useLocalSearchParams<{ tag?: string | string[]; category?: string | string[] }>();
+  const params = useLocalSearchParams<{
+    tag?: string | string[];
+    category?: string | string[];
+  }>();
   const activeTag = Array.isArray(params.tag) ? params.tag[0] : params.tag;
   const activeCategory = Array.isArray(params.category) ? params.category[0] : params.category;
 

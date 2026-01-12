@@ -12,10 +12,10 @@ const DEFAULT_IMAGE_URL =
 const MOCK_BY_NAME = new Map<string, Shop>(SHOPS.map(shop => [shop.name, shop]));
 
 function normalizeDate(value?: string | null, fallback?: string): string {
-  if (value && value.trim()) {
+  if (value?.trim()) {
     return value;
   }
-  if (fallback && fallback.trim()) {
+  if (fallback?.trim()) {
     return fallback;
   }
   return new Date().toISOString();

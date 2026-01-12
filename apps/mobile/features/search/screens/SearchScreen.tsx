@@ -71,7 +71,9 @@ export default function SearchScreen() {
 
   const CATEGORY_OPTIONS = useMemo(() => {
     const set = new Set<string>();
-    shops.forEach(shop => set.add(shop.category));
+    for (const shop of shops) {
+      set.add(shop.category);
+    }
     return Array.from(set).sort();
   }, [shops]);
 
@@ -79,14 +81,20 @@ export default function SearchScreen() {
     const m = new Map<string, Set<string>>();
     shops.forEach(shop => {
       const cat = shop.category;
-      if (!m.has(cat)) m.set(cat, new Set());
-      shop.tags.forEach(t => m.get(cat)!.add(t));
+
+      let set = m.get(cat);
+      if (!set) {
+        set = new Set<string>();
+        m.set(cat, set);
+      }
+
+      for (const t of shop.tags) {
+        set.add(t);
+      }
     });
-    const out: Record<string, string[]> = {};
-    Array.from(m.entries()).forEach(([cat, s]) => {
-      out[cat] = Array.from(s).sort();
-    });
-    return out;
+    return Object.fromEntries(
+      Array.from(m.entries(), ([cat, set]) => [cat, Array.from(set).sort()] as const)
+    ) as Record<string, string[]>;
   }, [shops]);
 
   const hasSearchCriteria =
@@ -178,7 +186,7 @@ export default function SearchScreen() {
     const tags = selectedTags.map(t => t.toLowerCase());
     const hasCategories = activeCategories.length > 0;
 
-    let filtered = shops.filter(shop => {
+    const filtered = shops.filter(shop => {
       const matchesText =
         q.length > 0
           ? shop.name.toLowerCase().includes(q) ||
