@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"errors"
 	"strings"
 
 	"github.com/labstack/echo/v4"
@@ -8,6 +9,7 @@ import (
 	"github.com/TeamH04/team-production/apps/backend/internal/presentation"
 	"github.com/TeamH04/team-production/apps/backend/internal/presentation/requestcontext"
 	"github.com/TeamH04/team-production/apps/backend/internal/security"
+	"github.com/TeamH04/team-production/apps/backend/internal/usecase"
 	"github.com/TeamH04/team-production/apps/backend/internal/usecase/input"
 )
 
@@ -56,7 +58,17 @@ func (m *AuthMiddleware) JWTAuth(verifier security.TokenVerifier) echo.Middlewar
 
 			user, err := m.userUC.FindByID(c.Request().Context(), claims.UserID)
 			if err != nil {
-				return presentation.NewUnauthorized("user not found")
+				if errors.Is(err, usecase.ErrUserNotFound) {
+					user, err = m.userUC.EnsureUser(c.Request().Context(), input.EnsureUserInput{
+						UserID: claims.UserID,
+						Email:  claims.Email,
+						Role:   claims.Role,
+						Provider: claims.Provider,
+					})
+				}
+				if err != nil {
+					return err
+				}
 			}
 
 			requestcontext.SetToContext(c, user, claims.Role)

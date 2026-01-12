@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"context"
+	"strings"
 	"time"
 
 	"github.com/TeamH04/team-production/apps/backend/internal/apperr"
@@ -32,6 +33,73 @@ func (uc *userUseCase) FindByID(ctx context.Context, userID string) (entity.User
 		return entity.User{}, err
 	}
 	return user, nil
+}
+
+func (uc *userUseCase) EnsureUser(ctx context.Context, input input.EnsureUserInput) (entity.User, error) {
+	if input.UserID == "" {
+		return entity.User{}, ErrInvalidInput
+	}
+
+	provider := normalizeProvider(input.Provider)
+
+	user, err := uc.userRepo.FindByID(ctx, input.UserID)
+	if err == nil {
+		if shouldUpdateProvider(user.Provider, provider) {
+			user.Provider = provider
+			user.UpdatedAt = time.Now()
+			if err := uc.userRepo.Update(ctx, user); err != nil {
+				return entity.User{}, err
+			}
+		}
+		return user, nil
+	}
+	if !apperr.IsCode(err, apperr.CodeNotFound) {
+		return entity.User{}, err
+	}
+
+	email := strings.ToLower(strings.TrimSpace(input.Email))
+	if email == "" {
+		return entity.User{}, ErrInvalidInput
+	}
+
+	role := strings.ToLower(strings.TrimSpace(input.Role))
+	validRoles := map[string]bool{
+		"user":  true,
+		"owner": true,
+		"admin": true,
+	}
+	if !validRoles[role] {
+		role = "user"
+	}
+
+	name := deriveNameFromEmail(email)
+	now := time.Now()
+	newUser := &entity.User{
+		UserID:    input.UserID,
+		Name:      name,
+		Email:     email,
+		Provider:  provider,
+		Role:      role,
+		CreatedAt: now,
+		UpdatedAt: now,
+	}
+
+	if err := uc.userRepo.Create(ctx, newUser); err != nil {
+		existing, fetchErr := uc.userRepo.FindByID(ctx, input.UserID)
+		if fetchErr == nil {
+			if shouldUpdateProvider(existing.Provider, provider) {
+				existing.Provider = provider
+				existing.UpdatedAt = time.Now()
+				if err := uc.userRepo.Update(ctx, existing); err != nil {
+					return entity.User{}, err
+				}
+			}
+			return existing, nil
+		}
+		return entity.User{}, err
+	}
+
+	return *newUser, nil
 }
 
 func (uc *userUseCase) UpdateUser(ctx context.Context, userID string, input input.UpdateUserInput) (entity.User, error) {
@@ -100,4 +168,41 @@ func (uc *userUseCase) GetUserReviews(ctx context.Context, userID string) ([]ent
 	}
 
 	return uc.reviewRepo.FindByUserID(ctx, userID)
+}
+
+func deriveNameFromEmail(email string) string {
+	local := strings.TrimSpace(email)
+	if local == "" {
+		return "user"
+	}
+	if at := strings.Index(local, "@"); at >= 0 {
+		local = local[:at]
+	}
+	local = strings.TrimSpace(local)
+	if local == "" {
+		return "user"
+	}
+	return local
+}
+
+func normalizeProvider(provider string) string {
+	trimmed := strings.ToLower(strings.TrimSpace(provider))
+	validProviders := map[string]bool{
+		"google": true,
+		"apple":  true,
+		"email":  true,
+		"oauth":  true,
+	}
+	if !validProviders[trimmed] {
+		return "oauth"
+	}
+	return trimmed
+}
+
+func shouldUpdateProvider(current string, incoming string) bool {
+	if incoming == "" || incoming == "oauth" {
+		return false
+	}
+	currentTrimmed := strings.ToLower(strings.TrimSpace(current))
+	return currentTrimmed == "" || currentTrimmed == "oauth"
 }

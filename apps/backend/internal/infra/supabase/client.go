@@ -224,6 +224,8 @@ func (c *Client) Login(ctx context.Context, input output.AuthLoginInput) (*outpu
 type supabaseClaims struct {
 	Role  string `json:"role"`
 	Email string `json:"email"`
+	AppMetadata  map[string]any `json:"app_metadata"`
+	UserMetadata map[string]any `json:"user_metadata"`
 	jwt.RegisteredClaims
 }
 
@@ -257,11 +259,71 @@ func (c *Client) Verify(token string) (*security.TokenClaims, error) {
 		role = "user"
 	}
 
+	provider := extractProvider(claims)
+	if provider == "" {
+		provider = "oauth"
+	}
+
 	return &security.TokenClaims{
 		UserID: userID,
 		Role:   role,
 		Email:  claims.Email,
+		Provider: provider,
 	}, nil
+}
+
+func extractProvider(claims *supabaseClaims) string {
+	if claims == nil {
+		return ""
+	}
+	if provider := getStringFromMap(claims.AppMetadata, "provider"); provider != "" {
+		return provider
+	}
+	if provider := getStringFromMap(claims.UserMetadata, "provider"); provider != "" {
+		return provider
+	}
+	if providers := getStringSliceFromMap(claims.AppMetadata, "providers"); len(providers) > 0 {
+		return providers[0]
+	}
+	return ""
+}
+
+func getStringFromMap(values map[string]any, key string) string {
+	if values == nil {
+		return ""
+	}
+	raw, ok := values[key]
+	if !ok {
+		return ""
+	}
+	if s, ok := raw.(string); ok {
+		return strings.ToLower(strings.TrimSpace(s))
+	}
+	return ""
+}
+
+func getStringSliceFromMap(values map[string]any, key string) []string {
+	if values == nil {
+		return nil
+	}
+	raw, ok := values[key]
+	if !ok {
+		return nil
+	}
+	list, ok := raw.([]any)
+	if !ok {
+		return nil
+	}
+	result := make([]string, 0, len(list))
+	for _, item := range list {
+		if s, ok := item.(string); ok {
+			trimmed := strings.ToLower(strings.TrimSpace(s))
+			if trimmed != "" {
+				result = append(result, trimmed)
+			}
+		}
+	}
+	return result
 }
 
 // GenerateSignedUploadURL creates a signed upload URL for Supabase Storage.

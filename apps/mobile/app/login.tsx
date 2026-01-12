@@ -9,7 +9,7 @@ import React, { useCallback, useState } from 'react';
 import { Alert, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { palette } from '@/constants/palette';
-import { checkIsOwner } from '@/lib/auth';
+import { checkIsOwner, ensureUserExistsInDB } from '@/lib/auth';
 import { DEV_GUEST_FLAG_KEY, DEV_LOGIN_ENABLED } from '@/lib/devMode';
 import { getSupabase, isSupabaseConfigured } from '@/lib/supabase';
 
@@ -49,6 +49,18 @@ export default function LoginScreen() {
   const [loading, setLoading] = useState<null | 'google' | 'apple' | 'guest'>(null);
 
   const finishLogin = useCallback(async () => {
+    try {
+      await ensureUserExistsInDB();
+    } catch (err) {
+      const raw = err instanceof Error ? err.message : 'ログイン処理に失敗しました';
+      const message =
+        raw === 'session_not_found'
+          ? 'セッションを取得できませんでした。もう一度ログインしてください。'
+          : raw;
+      Alert.alert('ログイン失敗', message);
+      return;
+    }
+
     const { isOwner } = await checkIsOwner();
     Alert.alert(
       'ログイン完了',
@@ -73,7 +85,6 @@ export default function LoginScreen() {
           scheme: 'shopmobile',
           path: 'auth/callback',
         });
-        console.log('redirectUrl', redirectUrl);
         const { data, error } = await getSupabase().auth.signInWithOAuth({
           provider,
           options: {

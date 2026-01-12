@@ -3,7 +3,7 @@ import { Redirect, type Href } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
-import { checkIsOwner } from '@/lib/auth';
+import { checkIsOwner, ensureUserExistsInDB } from '@/lib/auth';
 import { DEV_GUEST_FLAG_KEY, DEV_LOGIN_ENABLED } from '@/lib/devMode';
 
 export default function Entry() {
@@ -24,7 +24,12 @@ export default function Entry() {
 
         const { isOwner, user } = await checkIsOwner();
         if (user) {
-          setDest(isOwner ? '/owner' : '/(tabs)');
+          try {
+            await ensureUserExistsInDB();
+            setDest(isOwner ? '/owner' : '/(tabs)');
+          } catch {
+            setDest('/login');
+          }
         } else {
           setDest('/login');
         }

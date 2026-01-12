@@ -10,6 +10,20 @@ export type ApiFile = {
   content_type?: string | null;
 };
 
+export type ApiUser = {
+  user_id: string;
+  name: string;
+  email: string;
+  icon_file_id?: string | null;
+  icon_url?: string | null;
+  provider: string;
+  gender?: string | null;
+  birthday?: string | null;
+  role: string;
+  created_at: string;
+  updated_at: string;
+};
+
 export type ApiMenu = {
   menu_id: string;
   name: string;

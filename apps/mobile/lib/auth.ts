@@ -1,4 +1,6 @@
 import type { User } from '@supabase/supabase-js';
+
+import { fetchAuthMe } from './api';
 import { getSupabase } from './supabase';
 
 export type OwnerCheck = {
@@ -62,4 +64,17 @@ export async function getAccessToken(): Promise<string | null> {
 export async function checkIsOwner(): Promise<OwnerCheck> {
   const user = await getCurrentUser();
   return { isOwner: isOwnerFromUser(user), user };
+}
+
+export async function ensureUserExistsInDB(): Promise<void> {
+  const token = await getAccessToken();
+  if (!token) {
+    throw new Error('session_not_found');
+  }
+  try {
+    await fetchAuthMe(token);
+  } catch (err) {
+    await getSupabase().auth.signOut();
+    throw err;
+  }
 }

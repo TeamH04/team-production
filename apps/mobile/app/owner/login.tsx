@@ -4,6 +4,7 @@ import React, { useLayoutEffect, useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { palette } from '@/constants/palette';
+import { ensureUserExistsInDB } from '@/lib/auth';
 import { getSupabase, isSupabaseConfigured } from '@/lib/supabase';
 
 const isLikelyEmail = (value: string) => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(value.trim());
@@ -58,6 +59,18 @@ export default function OwnerLoginScreen() {
           ? 'メールアドレスまたはパスワードが正しくありません。再度入力してください。'
           : error.message;
         Alert.alert('ログイン失敗', msg);
+        return;
+      }
+
+      try {
+        await ensureUserExistsInDB();
+      } catch (err) {
+        const raw = err instanceof Error ? err.message : 'ログイン処理に失敗しました';
+        const message =
+          raw === 'session_not_found'
+            ? 'セッションを取得できませんでした。もう一度ログインしてください。'
+            : raw;
+        Alert.alert('ログイン失敗', message);
         return;
       }
 
@@ -120,7 +133,7 @@ export default function OwnerLoginScreen() {
                   disabled={loading}
                   style={({ pressed }) => [
                     styles.loginButtonPressable,
-                    (pressed || loading) && { opacity: 0.7 },
+                    (pressed || loading) && styles.loginButtonPressed,
                   ]}
                 >
                   <Text style={styles.loginButtonText}>{loading ? 'ログイン中…' : 'ログイン'}</Text>
@@ -132,7 +145,7 @@ export default function OwnerLoginScreen() {
 
             <Pressable
               onPress={() => router.push('/owner/signup' as Href)}
-              style={({ pressed }) => [styles.secondaryBtn, pressed && { opacity: 0.9 }]}
+              style={({ pressed }) => [styles.secondaryBtn, pressed && styles.secondaryBtnPressed]}
             >
               <Text style={styles.secondaryBtnText}>アカウントを新規作成</Text>
             </Pressable>
@@ -201,6 +214,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: 24,
   },
+  loginButtonPressed: {
+    opacity: 0.7,
+  },
   loginButtonText: {
     color: palette.surface,
     fontSize: 16,
@@ -233,6 +249,9 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     marginTop: 16,
     paddingVertical: 12,
+  },
+  secondaryBtnPressed: {
+    opacity: 0.9,
   },
   secondaryBtnText: { color: palette.link, fontWeight: '700', textAlign: 'center' },
   title: { color: palette.primaryText, fontSize: 20, fontWeight: '800' },
