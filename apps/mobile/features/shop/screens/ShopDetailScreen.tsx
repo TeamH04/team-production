@@ -99,14 +99,17 @@ export default function ShopDetailScreen() {
   );
 
   const resolveMenuName = useCallback(
-    (review: { menuItemId?: string; menuItemName?: string }) => {
+    (review: { menuItemIds?: string[]; menuItemName?: string }) => {
       if (review.menuItemName) {
         return review.menuItemName;
       }
-      if (!review.menuItemId || !shop?.menu) {
+      if (!review.menuItemIds || review.menuItemIds.length === 0 || !shop?.menu) {
         return undefined;
       }
-      return shop.menu.find(item => item.id === review.menuItemId)?.name;
+      const names = shop.menu
+        .filter(item => review.menuItemIds?.includes(item.id))
+        .map(item => item.name);
+      return names.length > 0 ? names.join(' / ') : undefined;
     },
     [shop]
   );

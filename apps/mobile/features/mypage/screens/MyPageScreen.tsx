@@ -77,22 +77,23 @@ export default function MyPageScreen() {
   }, [router]);
 
   const resolveMenuName = useCallback(
-    (shop: Shop | undefined, menuItemId?: string, menuItemName?: string) => {
+    (shop: Shop | undefined, menuItemIds?: string[], menuItemName?: string) => {
       if (menuItemName) {
         return menuItemName;
       }
-      if (!menuItemId || !shop?.menu) {
+      if (!menuItemIds || menuItemIds.length === 0 || !shop?.menu) {
         return undefined;
       }
-      return shop.menu.find(item => item.id === menuItemId)?.name;
+      const names = shop.menu.filter(item => menuItemIds.includes(item.id)).map(item => item.name);
+      return names.length > 0 ? names.join(' / ') : undefined;
     },
     []
   );
 
   const renderReviewCard = useCallback(
     (review: (typeof reviews)[number]) => {
-      const shop = SHOPS.find(s => s.id === review.shopId);
-      const menuName = resolveMenuName(shop, review.menuItemId, review.menuItemName);
+      const shop = stores.find(s => s.id === review.shopId);
+      const menuName = resolveMenuName(shop, review.menuItemIds, review.menuItemName);
 
       return (
         <View key={review.id} style={styles.cardShadow}>
@@ -132,7 +133,7 @@ export default function MyPageScreen() {
         </View>
       );
     },
-    [resolveMenuName]
+    [resolveMenuName, stores]
   );
 
   return (

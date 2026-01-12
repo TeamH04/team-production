@@ -141,6 +141,13 @@ export async function fetchStoreById(storeId: string) {
   });
 }
 
+export async function fetchStoreMenus(storeId: string) {
+  const menus = await request<ApiMenu[] | null>(`/stores/${storeId}/menus`, {
+    headers: buildHeaders(),
+  });
+  return menus ?? [];
+}
+
 export async function fetchUserReviews(userId: string, accessToken?: string) {
   return request<ReviewsResponse>(`/users/${userId}/reviews`, {
     headers: buildHeaders(accessToken),

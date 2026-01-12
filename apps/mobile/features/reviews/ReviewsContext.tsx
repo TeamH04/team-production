@@ -27,7 +27,7 @@ export type Review = {
   rating: number;
   comment?: string;
   createdAt: string;
-  menuItemId?: string;
+  menuItemIds?: string[];
   menuItemName?: string;
   likesCount: number;
   likedByMe: boolean;
@@ -51,7 +51,7 @@ type ReviewsContextValue = {
   loadReviews: (shopId: string, sort: ReviewSort) => Promise<void>;
   addReview: (
     shopId: string,
-    input: { rating: number; comment?: string; menuItemId?: string; menuItemName?: string },
+    input: { rating: number; comment?: string; menuItemIds?: string[]; menuItemName?: string },
     assets: ReviewAsset[]
   ) => Promise<void>;
   deleteReview: (reviewId: string) => void;
@@ -69,7 +69,7 @@ const AUTH_REQUIRED = 'auth_required';
 
 function mapApiReview(review: ApiReview): Review {
   const menus = review.menus ?? [];
-  const menuItemId = menus[0]?.menu_id ?? review.menu_ids?.[0];
+  const menuItemIds = menus.length > 0 ? menus.map(menu => menu.menu_id) : (review.menu_ids ?? []);
   const menuItemName = menus.length > 0 ? menus.map(menu => menu.name).join(' / ') : undefined;
 
   return {
@@ -79,7 +79,7 @@ function mapApiReview(review: ApiReview): Review {
     rating: review.rating,
     comment: review.content ?? undefined,
     createdAt: review.created_at,
-    menuItemId,
+    menuItemIds: menuItemIds.length > 0 ? menuItemIds : undefined,
     menuItemName,
     likesCount: review.likes_count ?? 0,
     likedByMe: review.liked_by_me ?? false,
@@ -128,16 +128,10 @@ export function ReviewsProvider({ children }: { children: React.ReactNode }) {
   const addReview = useCallback(
     async (
       shopId: string,
-      input: { rating: number; comment?: string; menuItemId?: string; menuItemName?: string },
+      input: { rating: number; comment?: string; menuItemIds?: string[]; menuItemName?: string },
       assets: ReviewAsset[]
     ) => {
       const token = await getAccessToken();
-      if (token) {
-        const header = JSON.parse(atob(token.split('.')[0]));
-        const payload = JSON.parse(atob(token.split('.')[1]));
-        console.log('[jwt] alg', header.alg);
-        console.log('[jwt] iss', payload.iss);
-      }
       if (!token) {
         throw new Error(AUTH_REQUIRED);
       }
@@ -166,7 +160,7 @@ export function ReviewsProvider({ children }: { children: React.ReactNode }) {
           rating: input.rating,
           content: input.comment ?? null,
           file_ids: fileIDs,
-          menu_ids: input.menuItemId ? [input.menuItemId] : [],
+          menu_ids: input.menuItemIds ?? [],
         },
         token
       );

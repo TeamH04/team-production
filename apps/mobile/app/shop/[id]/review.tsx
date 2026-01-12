@@ -1,12 +1,13 @@
 import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
-import { useLayoutEffect, useMemo, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 
 import { palette } from '@/constants/palette';
 import { useReviews } from '@/features/reviews/ReviewsContext';
-import { SHOPS } from '@team/shop-core';
+import { useStores } from '@/features/stores/StoresContext';
+import { fetchStoreMenus } from '@/lib/api';
 
 // レビュー投稿画面のコンポーネント
 export default function ReviewModalScreen() {
@@ -15,10 +16,13 @@ export default function ReviewModalScreen() {
   const router = useRouter(); // 画面遷移用
   const navigation = useNavigation();
   const { addReview } = useReviews(); // レビュー追加関数
+  const { getStoreById, loading: storesLoading } = useStores();
 
   // 店舗情報を取得
-  const shop = useMemo(() => SHOPS.find(s => s.id === id), [id]);
-  const menu = shop?.menu ?? [];
+  const shop = useMemo(() => (id ? getStoreById(id) : undefined), [getStoreById, id]);
+  const [menuOptions, setMenuOptions] = useState<{ id: string; name: string }[]>([]);
+  const [menuLoading, setMenuLoading] = useState(false);
+  const menu = menuOptions.length > 0 ? menuOptions : (shop?.menu ?? []);
 
   // ヘッダータイトルを設定
   useLayoutEffect(() => {
@@ -28,11 +32,34 @@ export default function ReviewModalScreen() {
     });
   }, [navigation]);
 
+  useEffect(() => {
+    if (!id) return;
+    let active = true;
+    setMenuLoading(true);
+    fetchStoreMenus(id)
+      .then(menus => {
+        if (!active) return;
+        const mapped = menus.map(item => ({ id: item.menu_id, name: item.name }));
+        setMenuOptions(mapped);
+      })
+      .catch(err => {
+        console.warn('Failed to load menus', err);
+      })
+      .finally(() => {
+        if (active) {
+          setMenuLoading(false);
+        }
+      });
+    return () => {
+      active = false;
+    };
+  }, [id]);
+
   // ユーザー入力用のstate
   const [rating, setRating] = useState(0); // 評価（初期値0）
   const [comment, setComment] = useState(''); // コメント
   const [ratingError, setRatingError] = useState(false); // 評価エラー表示
-  const [selectedMenuId, setSelectedMenuId] = useState<string | undefined>(undefined); // メニュー選択
+  const [selectedMenuIds, setSelectedMenuIds] = useState<string[]>([]); // メニュー選択
   const [assets, setAssets] = useState<ImagePicker.ImagePickerAsset[]>([]); // 添付画像
   const [submitting, setSubmitting] = useState(false);
 
@@ -57,14 +84,15 @@ export default function ReviewModalScreen() {
 
     setSubmitting(true);
     try {
-      const selectedMenu = menu.find(item => item.id === selectedMenuId);
+      const selectedMenus = menu.filter(item => selectedMenuIds.includes(item.id));
       await addReview(
         shop.id,
         {
           rating,
           comment: comment.trim(),
-          menuItemId: selectedMenu?.id,
-          menuItemName: selectedMenu?.name,
+          menuItemIds: selectedMenuIds,
+          menuItemName:
+            selectedMenus.length > 0 ? selectedMenus.map(item => item.name).join(' / ') : undefined,
         },
         assets.map((asset, index) => ({
           uri: asset.uri,
@@ -90,6 +118,14 @@ export default function ReviewModalScreen() {
   };
 
   // 店舗が見つからない場合の表示
+  if (storesLoading) {
+    return (
+      <View style={[styles.screen, styles.centered]}>
+        <Text style={styles.title}>店舗情報を読み込み中...</Text>
+      </View>
+    );
+  }
+
   if (!shop) {
     return (
       <View style={[styles.screen, styles.centered]}>
@@ -135,16 +171,25 @@ export default function ReviewModalScreen() {
       />
 
       {/* メニュー選択（店舗にメニューがある場合のみ表示） */}
-      {menu.length > 0 ? (
+      {menuLoading && menu.length === 0 ? (
+        <View style={styles.menuSection}>
+          <Text style={styles.sectionLabel}>メニュー</Text>
+          <Text style={styles.muted}>メニューを読み込み中...</Text>
+        </View>
+      ) : menu.length > 0 ? (
         <View style={styles.menuSection}>
           <Text style={styles.sectionLabel}>メニュー</Text>
           <View style={styles.menuList}>
             {menu.map(item => {
-              const selected = selectedMenuId === item.id;
+              const selected = selectedMenuIds.includes(item.id);
               return (
                 <Pressable
                   key={item.id}
-                  onPress={() => setSelectedMenuId(selected ? undefined : item.id)}
+                  onPress={() =>
+                    setSelectedMenuIds(prev =>
+                      selected ? prev.filter(id => id !== item.id) : [...prev, item.id]
+                    )
+                  }
                   style={[styles.menuItem, selected && styles.menuItemSelected]}
                 >
                   <Text style={[styles.menuItemText, selected && styles.menuItemTextSelected]}>
@@ -154,7 +199,9 @@ export default function ReviewModalScreen() {
               );
             })}
           </View>
-          <Text style={styles.muted}>メニューは任意です。該当が無ければ未選択でOK。</Text>
+          <Text style={styles.muted}>
+            メニューは任意です。複数選択できます。該当が無ければ未選択でOK。
+          </Text>
         </View>
       ) : null}
 
