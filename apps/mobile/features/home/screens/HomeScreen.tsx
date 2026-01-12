@@ -1,12 +1,13 @@
 import { palette } from '@/constants/palette';
 import { TAB_BAR_SPACING } from '@/constants/TabBarSpacing';
-import { SHOPS, type Shop } from '@team/shop-core';
+import { useStores } from '@/features/stores/StoresContext';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { FlatList } from 'react-native';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, { useAnimatedRef } from 'react-native-reanimated';
+import type { Shop } from '@team/shop-core';
 
 const PAGE_SIZE = 10;
 // Categories removed from Home screen; use Search screen for category/tag browsing
@@ -24,10 +25,11 @@ export default function HomeScreen() {
   // category selection removed
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const { stores, loading, error } = useStores();
   const loadMoreTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const listRef = useAnimatedRef<FlatList<Shop>>();
 
-  const filteredShops = useMemo(() => SHOPS, []);
+  const filteredShops = useMemo(() => stores, [stores]);
 
   useEffect(() => {
     if (loadMoreTimeout.current) {
@@ -111,17 +113,31 @@ export default function HomeScreen() {
 
   const renderListHeader = useMemo(() => <View style={styles.headerContainer}></View>, []);
 
-  const renderEmptyState = useMemo(
-    () => (
+  const renderEmptyState = useMemo(() => {
+    if (loading) {
+      return (
+        <View style={styles.emptyState}>
+          <ActivityIndicator color={palette.accent} />
+        </View>
+      );
+    }
+    if (error) {
+      return (
+        <View style={styles.emptyState}>
+          <Text style={styles.emptyTitle}>店舗情報の取得に失敗しました</Text>
+          <Text style={styles.emptySubtitle}>{error}</Text>
+        </View>
+      );
+    }
+    return (
       <View style={styles.emptyState}>
         <Text style={styles.emptyTitle}>条件に合うお店が見つかりませんでした</Text>
         <Text style={styles.emptySubtitle}>
           キーワードを変えるか、カテゴリを切り替えて別の候補もチェックしてみてください。
         </Text>
       </View>
-    ),
-    []
-  );
+    );
+  }, [error, loading]);
 
   return (
     <View style={styles.screen}>

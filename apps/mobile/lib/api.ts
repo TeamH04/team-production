@@ -17,6 +17,25 @@ export type ApiMenu = {
   description?: string | null;
 };
 
+export type ApiStore = {
+  store_id: string;
+  thumbnail_file_id?: string | null;
+  thumbnail_file?: ApiFile | null;
+  name: string;
+  opened_at?: string | null;
+  description?: string | null;
+  address: string;
+  place_id: string;
+  opening_hours?: string | null;
+  latitude: number;
+  longitude: number;
+  google_map_url?: string | null;
+  is_approved: boolean;
+  created_at: string;
+  updated_at: string;
+  menus?: ApiMenu[];
+};
+
 export type ApiReview = {
   review_id: string;
   store_id: string;
@@ -51,6 +70,7 @@ type UploadResponse = {
 };
 
 type ReviewsResponse = ApiReview[];
+type StoresResponse = ApiStore[];
 
 type FetchOptions = Parameters<typeof fetch>[1];
 type HeaderInit = NonNullable<FetchOptions>['headers'];
@@ -105,6 +125,19 @@ export async function fetchStoreReviews(storeId: string, sort: ReviewSort, acces
   const q = query.toString();
   return request<ReviewsResponse>(`/stores/${storeId}/reviews${q ? `?${q}` : ''}`, {
     headers: buildHeaders(accessToken),
+  });
+}
+
+export async function fetchStores() {
+  const stores = await request<StoresResponse | null>('/stores', {
+    headers: buildHeaders(),
+  });
+  return stores ?? [];
+}
+
+export async function fetchStoreById(storeId: string) {
+  return request<ApiStore>(`/stores/${storeId}`, {
+    headers: buildHeaders(),
   });
 }
 

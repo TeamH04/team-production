@@ -1,22 +1,23 @@
-import { useFocusEffect, useRouter } from 'expo-router';
-import { useCallback, useMemo, useState } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { Image } from 'expo-image';
-
-import { palette } from '@/constants/palette';
+﻿import { palette } from '@/constants/palette';
 import { TAB_BAR_SPACING } from '@/constants/TabBarSpacing';
 import { useFavorites } from '@/features/favorites/FavoritesContext';
 import { useReviews } from '@/features/reviews/ReviewsContext';
+import { useStores } from '@/features/stores/StoresContext';
 import { useUser } from '@/features/user/UserContext';
 import { getCurrentUser } from '@/lib/auth';
-import { getSupabase } from '@/lib/supabase';
 import { getPublicStorageUrl } from '@/lib/storage';
-import { SHOPS, type Shop } from '@team/shop-core';
+import { getSupabase } from '@/lib/supabase';
+import type { Shop } from '@team/shop-core';
+import { Image } from 'expo-image';
+import { useFocusEffect, useRouter } from 'expo-router';
+import { useCallback, useMemo, useState } from 'react';
+import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 export default function MyPageScreen() {
   const router = useRouter();
   const { favorites } = useFavorites();
   const { userReviews, loadUserReviews, getLikedReviews } = useReviews();
+  const { stores, loading: storesLoading } = useStores();
   const { profile } = useUser();
 
   const [reviewLoading, setReviewLoading] = useState(false);
@@ -47,8 +48,8 @@ export default function MyPageScreen() {
 
   const favoriteShops = useMemo<Shop[]>(() => {
     const ids = Array.from(favorites);
-    return SHOPS.filter(shop => ids.includes(shop.id));
-  }, [favorites]);
+    return stores.filter(shop => ids.includes(shop.id));
+  }, [favorites, stores]);
 
   const reviews = useMemo(() => {
     const sorted = [...userReviews].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
@@ -198,7 +199,11 @@ export default function MyPageScreen() {
         <Text style={styles.sectionSub}>ブックマークしたお店の一覧</Text>
       </View>
 
-      {favoriteShops.length === 0 ? (
+      {storesLoading ? (
+        <View style={styles.emptyBox}>
+          <Text style={styles.emptyText}>店舗情報を読み込み中...</Text>
+        </View>
+      ) : favoriteShops.length === 0 ? (
         <View style={styles.emptyBox}>
           <Text style={styles.emptyText}>まだお気に入りがありません</Text>
         </View>
@@ -214,7 +219,12 @@ export default function MyPageScreen() {
                   </Text>
                 </View>
                 <Pressable
-                  onPress={() => router.push({ pathname: '/shop/[id]', params: { id: shop.id } })}
+                  onPress={() =>
+                    router.push({
+                      pathname: '/shop/[id]',
+                      params: { id: shop.id },
+                    })
+                  }
                   style={({ pressed }) => [styles.secondaryBtn, pressed && styles.btnPressed]}
                 >
                   <Text style={styles.secondaryBtnText}>詳細</Text>
@@ -343,9 +353,18 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   reviewImage: { borderRadius: 12, height: 88, width: 88 },
-  reviewImages: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: 12 },
+  reviewImages: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+    marginTop: 12,
+  },
   reviewText: { color: palette.primary, marginTop: 8 },
-  rowCard: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between' },
+  rowCard: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
   rowCardMeta: { flex: 1, paddingRight: 12 },
   rowCardSub: { color: palette.mutedText, marginTop: 4 },
   rowCardTitle: { color: palette.primary, fontSize: 16, fontWeight: '700' },
@@ -358,7 +377,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 10,
   },
-  secondaryBtnText: { color: palette.textOnSecondary, fontWeight: '700', textAlign: 'center' },
+  secondaryBtnText: {
+    color: palette.textOnSecondary,
+    fontWeight: '700',
+    textAlign: 'center',
+  },
   sectionHeader: { marginBottom: 8, marginTop: 8, paddingHorizontal: 4 },
   sectionSub: { color: palette.mutedText, fontSize: 13, marginTop: 2 },
   sectionTitle: { color: palette.primary, fontSize: 18, fontWeight: '700' },

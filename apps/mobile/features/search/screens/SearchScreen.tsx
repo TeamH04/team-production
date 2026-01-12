@@ -1,5 +1,5 @@
 import { palette } from '@/constants/palette';
-import { CATEGORIES, SHOPS } from '@team/shop-core';
+import { useStores } from '@/features/stores/StoresContext';
 import { useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import {
@@ -50,6 +50,7 @@ export default function SearchScreen() {
   const [activeCategories, setActiveCategories] = useState<string[]>([]);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [searchHistory, setSearchHistory] = useState<string[]>([]);
+  const { stores: shops, loading, error: loadError } = useStores();
 
   const [sortBy, setSortBy] = useState<SortType>('default');
   const [sortOrders, setSortOrders] = useState<Record<SortType, SortOrder>>({
@@ -59,11 +60,15 @@ export default function SearchScreen() {
     registered: 'desc',
   });
 
-  const CATEGORY_OPTIONS = useMemo(() => [...CATEGORIES].sort(), []);
+  const CATEGORY_OPTIONS = useMemo(() => {
+    const set = new Set<string>();
+    shops.forEach(shop => set.add(shop.category));
+    return Array.from(set).sort();
+  }, [shops]);
 
   const TAGS_BY_CATEGORY = useMemo(() => {
     const m = new Map<string, Set<string>>();
-    SHOPS.forEach(shop => {
+    shops.forEach(shop => {
       const cat = shop.category;
       if (!m.has(cat)) m.set(cat, new Set());
       shop.tags.forEach(t => m.get(cat)!.add(t));
@@ -73,7 +78,7 @@ export default function SearchScreen() {
       out[cat] = Array.from(s).sort();
     });
     return out;
-  }, []);
+  }, [shops]);
 
   const hasSearchCriteria =
     currentSearchText.length > 0 || selectedTags.length > 0 || activeCategories.length > 0;
@@ -149,7 +154,7 @@ export default function SearchScreen() {
     const tags = selectedTags.map(t => t.toLowerCase());
     const hasCategories = activeCategories.length > 0;
 
-    let filtered = SHOPS.filter(shop => {
+    let filtered = shops.filter(shop => {
       const matchesText =
         q.length > 0
           ? shop.name.toLowerCase().includes(q) ||
@@ -172,7 +177,10 @@ export default function SearchScreen() {
           comparison = new Date(a.openedAt).getTime() - new Date(b.openedAt).getTime();
           break;
         case 'registered':
-          comparison = getIdNum(a.id) - getIdNum(b.id);
+          comparison =
+            getIdNum(a.id) !== 0 || getIdNum(b.id) !== 0
+              ? getIdNum(a.id) - getIdNum(b.id)
+              : new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
           break;
         case 'rating':
           comparison = a.rating - b.rating;
@@ -182,7 +190,15 @@ export default function SearchScreen() {
       }
       return currentOrder === 'asc' ? comparison : -comparison;
     });
-  }, [currentSearchText, selectedTags, activeCategories, sortBy, sortOrders, hasSearchCriteria]);
+  }, [
+    activeCategories,
+    currentSearchText,
+    hasSearchCriteria,
+    selectedTags,
+    shops,
+    sortBy,
+    sortOrders,
+  ]);
 
   return (
     <ScrollView
@@ -286,7 +302,20 @@ export default function SearchScreen() {
         )}
       </View>
 
-      {hasSearchCriteria && (
+      {loading && (
+        <View style={styles.emptyState}>
+          <Text style={styles.emptyTitle}>店舗情報を読み込み中...</Text>
+        </View>
+      )}
+
+      {!loading && loadError && (
+        <View style={styles.emptyState}>
+          <Text style={styles.emptyTitle}>店舗情報の取得に失敗しました</Text>
+          <Text style={styles.emptyHistoryText}>{loadError}</Text>
+        </View>
+      )}
+
+      {!loading && !loadError && hasSearchCriteria && (
         <View style={styles.resultsSection}>
           {searchResults.length > 0 ? (
             <View>
@@ -373,7 +402,7 @@ export default function SearchScreen() {
         </View>
       )}
 
-      {!hasSearchCriteria && (
+      {!loading && !loadError && !hasSearchCriteria && (
         <View style={styles.historySection}>
           <Text style={styles.historyTitle}>検索履歴</Text>
           {searchHistory.length > 0 ? (

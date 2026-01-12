@@ -1,5 +1,6 @@
 import { FavoritesProvider } from '@/features/favorites/FavoritesContext';
 import { ReviewsProvider } from '@/features/reviews/ReviewsContext';
+import { StoresProvider } from '@/features/stores/StoresContext';
 import { UserProvider } from '@/features/user/UserContext';
 import '@/global.css';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
@@ -71,11 +72,13 @@ export default function RootLayout() {
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <SafeAreaProvider>
         <UserProvider>
-          <FavoritesProvider>
-            <ReviewsProvider>
-              <RootStack />
-            </ReviewsProvider>
-          </FavoritesProvider>
+          <StoresProvider>
+            <FavoritesProvider>
+              <ReviewsProvider>
+                <RootStack />
+              </ReviewsProvider>
+            </FavoritesProvider>
+          </StoresProvider>
         </UserProvider>
       </SafeAreaProvider>
     </ThemeProvider>

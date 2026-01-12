@@ -19,7 +19,8 @@ import { useFavorites } from '@/features/favorites/FavoritesContext';
 import { useReviews } from '@/features/reviews/ReviewsContext';
 import { type ReviewSort } from '@/lib/api';
 import { getPublicStorageUrl } from '@/lib/storage';
-import { SHOPS, type Shop } from '@team/shop-core';
+import { useStores } from '@/features/stores/StoresContext';
+import type { Shop } from '@team/shop-core';
 
 const palette = {
   accent: '#0EA5E9',
@@ -56,10 +57,10 @@ export default function ShopDetailScreen() {
   const navigation = useNavigation();
   const { isFavorite, toggleFavorite } = useFavorites();
   const { getReviews, loadReviews, toggleLike, loadingByShop } = useReviews();
+  const { getStoreById, loading: storesLoading } = useStores();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [reviewSort, setReviewSort] = useState<ReviewSort>('new');
-
-  const shop = useMemo(() => SHOPS.find(s => s.id === id), [id]);
+  const shop = useMemo(() => (id ? (getStoreById(id) ?? null) : null), [getStoreById, id]);
 
   const webBaseUrl = process.env.EXPO_PUBLIC_WEB_BASE_URL?.replace(/\/$/, '');
 
@@ -156,6 +157,14 @@ export default function ShopDetailScreen() {
       Alert.alert('共有に失敗しました', 'もう一度お試しください。');
     });
   }, [shop, webBaseUrl]);
+
+  if (storesLoading) {
+    return (
+      <View style={[styles.screen, styles.centered]}>
+        <Text style={styles.title}>店舗情報を読み込み中...</Text>
+      </View>
+    );
+  }
 
   if (!shop) {
     return (

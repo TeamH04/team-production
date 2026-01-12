@@ -1,7 +1,8 @@
 import { palette } from '@/constants/palette';
 import { TAB_BAR_SPACING } from '@/constants/TabBarSpacing';
 import { useFavorites } from '@/features/favorites/FavoritesContext';
-import { SHOPS, type Shop } from '@team/shop-core';
+import { useStores } from '@/features/stores/StoresContext';
+import type { Shop } from '@team/shop-core';
 import { useRouter } from 'expo-router';
 import { FlatList, Image, Pressable, StyleSheet, Text, View } from 'react-native';
 const BUDGET_LABEL: Record<Shop['budget'], string> = {
@@ -13,9 +14,10 @@ const BUDGET_LABEL: Record<Shop['budget'], string> = {
 export default function FavoritesScreen() {
   const router = useRouter();
   const { favorites } = useFavorites();
+  const { stores, loading, error } = useStores();
 
   // お気に入りに登録されている店舗のみをフィルタリング
-  const favoriteShops = SHOPS.filter(shop => favorites.has(shop.id));
+  const favoriteShops = stores.filter(shop => favorites.has(shop.id));
 
   const handleShopPress = (shopId: string) => {
     router.push({ pathname: '/shop/[id]', params: { id: shopId } });
@@ -29,7 +31,15 @@ export default function FavoritesScreen() {
       </View>
 
       {/* お気に入り一覧 */}
-      {favoriteShops.length > 0 ? (
+      {loading ? (
+        <View style={styles.emptyState}>
+          <Text style={styles.emptyTitle}>読み込み中...</Text>
+        </View>
+      ) : error ? (
+        <View style={styles.emptyState}>
+          <Text style={styles.emptyTitle}>店舗情報の取得に失敗しました</Text>
+        </View>
+      ) : favoriteShops.length > 0 ? (
         <FlatList
           data={favoriteShops}
           keyExtractor={item => item.id}

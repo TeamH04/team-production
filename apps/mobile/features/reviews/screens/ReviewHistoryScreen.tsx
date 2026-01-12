@@ -7,8 +7,9 @@ import { palette } from '@/constants/palette';
 import { TAB_BAR_SPACING } from '@/constants/TabBarSpacing';
 import { useFavorites } from '@/features/favorites/FavoritesContext';
 import { useReviews } from '@/features/reviews/ReviewsContext';
+import { useStores } from '@/features/stores/StoresContext';
 import { getPublicStorageUrl } from '@/lib/storage';
-import { SHOPS, type Shop } from '@team/shop-core';
+import type { Shop } from '@team/shop-core';
 
 type TabType = 'favorites' | 'history' | 'likes';
 
@@ -16,6 +17,7 @@ export default function ReviewHistoryScreen() {
   const router = useRouter();
   const { favorites } = useFavorites();
   const { userReviews, loadUserReviews, getLikedReviews } = useReviews();
+  const { stores, loading: storesLoading } = useStores();
   const [activeTab, setActiveTab] = useState<TabType>('history');
   const [reviewLoading, setReviewLoading] = useState(false);
   const [reviewAuthRequired, setReviewAuthRequired] = useState(false);
@@ -45,8 +47,8 @@ export default function ReviewHistoryScreen() {
 
   const favoriteShops = useMemo<Shop[]>(() => {
     const ids = Array.from(favorites);
-    return SHOPS.filter(shop => ids.includes(shop.id));
-  }, [favorites]);
+    return stores.filter(shop => ids.includes(shop.id));
+  }, [favorites, stores]);
 
   const reviews = useMemo(() => {
     const sorted = [...userReviews].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
@@ -150,6 +152,13 @@ export default function ReviewHistoryScreen() {
 
   const renderTabContent = () => {
     if (activeTab === 'favorites') {
+      if (storesLoading) {
+        return (
+          <View style={styles.emptyBox}>
+            <Text style={styles.emptyText}>店舗情報を読み込み中...</Text>
+          </View>
+        );
+      }
       return favoriteShops.length === 0 ? (
         <View style={styles.emptyBox}>
           <Text style={styles.emptyText}>お気に入りがありません</Text>
