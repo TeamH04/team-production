@@ -8,8 +8,8 @@
     "typegen": "expo start --web --dev-client=false --clear --non-interactive",
     "types:cleanup": "node ./scripts/cleanup-href-casts.js",
     "reset-project": "node ./scripts/reset-project.js",
-    "android": "expo start --android",
-    "ios": "expo start --ios",
+    "android": "expo run:android",
+    "ios": "expo run:ios",
     "web": "expo start --web",
     "lint": "expo lint"
   },
