@@ -105,16 +105,26 @@ async function request<T>(path: string, options: FetchOptions = {}): Promise<T> 
   if (!res.ok) {
     let message = `Request failed (${res.status})`;
     try {
-      const body = (await res.json()) as { message?: string };
-      if (body?.message) {
-        message = body.message;
+      const text = await res.text();
+      if (text) {
+        const body = JSON.parse(text) as { message?: string };
+        if (body?.message) {
+          message = body.message;
+        }
       }
     } catch {
       // noop
     }
     throw new Error(message);
   }
-  return (await res.json()) as T;
+  if (res.status === 204 || res.status === 205) {
+    return undefined as T;
+  }
+  const text = await res.text();
+  if (!text) {
+    return undefined as T;
+  }
+  return JSON.parse(text) as T;
 }
 
 export async function fetchStoreReviews(storeId: string, sort: ReviewSort, accessToken?: string) {
@@ -123,9 +133,13 @@ export async function fetchStoreReviews(storeId: string, sort: ReviewSort, acces
     query.set('sort', sort);
   }
   const q = query.toString();
-  return request<ReviewsResponse>(`/stores/${storeId}/reviews${q ? `?${q}` : ''}`, {
-    headers: buildHeaders(accessToken),
-  });
+  const reviews = await request<ReviewsResponse | null>(
+    `/stores/${storeId}/reviews${q ? `?${q}` : ''}`,
+    {
+      headers: buildHeaders(accessToken),
+    }
+  );
+  return reviews ?? [];
 }
 
 export async function fetchStores() {
@@ -149,7 +163,14 @@ export async function fetchStoreMenus(storeId: string) {
 }
 
 export async function fetchUserReviews(userId: string, accessToken?: string) {
-  return request<ReviewsResponse>(`/users/${userId}/reviews`, {
+  const reviews = await request<ReviewsResponse | null>(`/users/${userId}/reviews`, {
+    headers: buildHeaders(accessToken),
+  });
+  return reviews ?? [];
+}
+
+export async function fetchAuthMe(accessToken: string) {
+  return request<ApiUser>('/auth/me', {
     headers: buildHeaders(accessToken),
   });
 }
