@@ -10,6 +10,7 @@ import (
 type StoreResponse struct {
 	StoreID         string           `json:"store_id"`
 	ThumbnailFileID *string          `json:"thumbnail_file_id,omitempty"`
+	ThumbnailFile   *FileResponse    `json:"thumbnail_file,omitempty"`
 	Name            string           `json:"name"`
 	OpenedAt        *time.Time       `json:"opened_at,omitempty"`
 	Description     *string          `json:"description,omitempty"`
@@ -134,6 +135,10 @@ func NewStoreResponse(store entity.Store) StoreResponse {
 		CreatedAt:       store.CreatedAt,
 		UpdatedAt:       store.UpdatedAt,
 	}
+	if store.ThumbnailFile != nil {
+		file := NewFileResponse(*store.ThumbnailFile)
+		resp.ThumbnailFile = &file
+	}
 	if len(store.Menus) > 0 {
 		resp.Menus = NewMenuResponses(store.Menus)
 	}
@@ -145,7 +150,7 @@ func NewStoreResponse(store entity.Store) StoreResponse {
 
 func NewStoreResponses(stores []entity.Store) []StoreResponse {
 	if len(stores) == 0 {
-		return nil
+		return []StoreResponse{}
 	}
 	resp := make([]StoreResponse, len(stores))
 	for i, store := range stores {
@@ -167,7 +172,7 @@ func NewMenuResponse(menu entity.Menu) MenuResponse {
 
 func NewMenuResponses(menus []entity.Menu) []MenuResponse {
 	if len(menus) == 0 {
-		return nil
+		return []MenuResponse{}
 	}
 	resp := make([]MenuResponse, len(menus))
 	for i, menu := range menus {
@@ -200,7 +205,7 @@ func NewReviewResponse(review entity.Review) ReviewResponse {
 
 func NewReviewResponses(reviews []entity.Review) []ReviewResponse {
 	if len(reviews) == 0 {
-		return nil
+		return []ReviewResponse{}
 	}
 	resp := make([]ReviewResponse, len(reviews))
 	for i, review := range reviews {
@@ -235,7 +240,7 @@ func NewFavoriteResponse(f entity.Favorite) FavoriteResponse {
 
 func NewFavoriteResponses(favorites []entity.Favorite) []FavoriteResponse {
 	if len(favorites) == 0 {
-		return nil
+		return []FavoriteResponse{}
 	}
 	resp := make([]FavoriteResponse, len(favorites))
 	for i, favorite := range favorites {
@@ -260,7 +265,7 @@ func NewFileResponse(file entity.File) FileResponse {
 
 func NewFileResponses(files []entity.File) []FileResponse {
 	if len(files) == 0 {
-		return nil
+		return []FileResponse{}
 	}
 	resp := make([]FileResponse, len(files))
 	for i, file := range files {
@@ -321,7 +326,7 @@ func NewReportResponse(report entity.Report) ReportResponse {
 
 func NewReportResponses(reports []entity.Report) []ReportResponse {
 	if len(reports) == 0 {
-		return nil
+		return []ReportResponse{}
 	}
 	resp := make([]ReportResponse, len(reports))
 	for i, report := range reports {

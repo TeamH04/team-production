@@ -7,6 +7,7 @@ import (
 type Store struct {
 	StoreID         string
 	ThumbnailFileID *string
+	ThumbnailFile   *File
 	Name            string
 	OpenedAt        *time.Time
 	Description     *string

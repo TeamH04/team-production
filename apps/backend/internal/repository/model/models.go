@@ -19,6 +19,7 @@ type Store struct {
 	UpdatedAt       time.Time      `gorm:"column:updated_at"`
 	Menus           []Menu         `gorm:"foreignKey:StoreID;references:StoreID"`
 	Reviews         []Review       `gorm:"foreignKey:StoreID;references:StoreID"`
+	ThumbnailFile   *File          `gorm:"foreignKey:ThumbnailFileID;references:FileID"`
 }
 
 type Menu struct {

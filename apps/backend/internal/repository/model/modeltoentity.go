@@ -18,6 +18,13 @@ func (s Store) Entity() entity.Store {
 	return entity.Store{
 		StoreID:         s.StoreID,
 		ThumbnailFileID: s.ThumbnailFileID,
+		ThumbnailFile: func() *entity.File {
+			if s.ThumbnailFile == nil {
+				return nil
+			}
+			file := s.ThumbnailFile.Entity()
+			return &file
+		}(),
 		Name:            s.Name,
 		OpenedAt:        s.OpenedAt,
 		Description:     s.Description,
