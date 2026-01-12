@@ -1,4 +1,4 @@
-name: Mobile App - Expo Build & Deploy
+name: Mobile App Deploy
 
 on:
   push:
@@ -10,8 +10,6 @@ on:
     branches: [main]
     paths:
       - 'apps/mobile/**'
-
-  # 手動実行も可能
   workflow_dispatch:
     inputs:
       environment:
@@ -27,56 +25,48 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+  pull-requests: write
+
 env:
-  EXPO_CLI_VERSION: 'latest'
-  NODE_VERSION: '20.x'
+  NODE_VERSION: '24.x'
+  # Repository Variables で設定してください:
+  # - EXPO_USERNAME: Expo のユーザー名（PRプレビューコメントで使用）
+  EXPO_USERNAME: ${{ vars.EXPO_USERNAME }}
 
 jobs:
-  # ----- Build for different platforms -----
+  # ----- Build Web -----
   build-web:
     name: Build Web
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     defaults:
       run:
         working-directory: apps/mobile
-    
+
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v6
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-
-      - name: Ensure pnpm cache dirs
-        run: |
-          mkdir -p "$HOME/.pnpm-store"
-          mkdir -p "$HOME/.local/share/pnpm"
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'pnpm'
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Setup Expo CLI
-        uses: expo/expo-github-action@v8
+      - name: Setup Expo
+        uses: ./.github/actions/expo-setup
         with:
-          expo-version: ${{ env.EXPO_CLI_VERSION }}
-          token: ${{ secrets.EXPO_TOKEN }}
+          node-version: ${{ env.NODE_VERSION }}
+          expo-token: ${{ secrets.EXPO_TOKEN }}
 
       - name: Build for web
-        run: |
-          npx expo export --platform web --output-dir dist
+        run: npx expo export --platform web --output-dir dist
 
       - name: Upload web build
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: web-build
           path: apps/mobile/dist
           retention-days: 7
 
+  # ----- Expo Preview (PR only) -----
   expo-preview:
     name: Expo Preview Build
     if: github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'preview')
@@ -84,71 +74,53 @@ jobs:
     defaults:
       run:
         working-directory: apps/mobile
-    
+
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v6
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-
-      - name: Ensure pnpm cache dirs
-        run: |
-          mkdir -p "$HOME/.pnpm-store"
-          mkdir -p "$HOME/.local/share/pnpm"
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Setup Expo
+        uses: ./.github/actions/expo-setup
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'pnpm'
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Setup Expo CLI
-        uses: expo/expo-github-action@v8
-        with:
-          expo-version: ${{ env.EXPO_CLI_VERSION }}
-          token: ${{ secrets.EXPO_TOKEN }}
+          expo-token: ${{ secrets.EXPO_TOKEN }}
 
       - name: Create Expo Preview
         run: |
-          # プレビューチャンネルを作成（PR番号を使用）
           if [ "${{ github.event_name }}" = "pull_request" ]; then
             CHANNEL="pr-${{ github.event.number }}"
           else
             CHANNEL="preview-$(date +%Y%m%d-%H%M%S)"
           fi
-          
+
           echo "Building preview for channel: $CHANNEL"
-          npx eas update --branch=$CHANNEL --message="Preview build for ${{ github.event_name }}" --non-interactive || echo "EAS Update not configured, skipping..."
-          
-          # 代替：通常のExpo publishを使用
-          # npx expo publish --release-channel=$CHANNEL --non-interactive
+          npx eas-cli update --channel=$CHANNEL --message="Preview build for ${{ github.event_name }}" --non-interactive || echo "EAS Update not configured, skipping..."
 
       - name: Comment PR with preview link
-        if: github.event_name == 'pull_request'
-        uses: actions/github-script@v7
+        if: github.event_name == 'pull_request' && env.EXPO_USERNAME != ''
+        uses: actions/github-script@v8
+        env:
+          EXPO_USERNAME: ${{ env.EXPO_USERNAME }}
         with:
           script: |
             const channel = `pr-${{ github.event.number }}`;
-            const previewUrl = `exp://exp.host/@YOUR_EXPO_USERNAME/team-production?release-channel=${channel}`;
-            
-            const comment = `## 📱 Mobile Preview Available
-            
-            Your mobile app preview is ready! 
-            
+            const expoUsername = process.env.EXPO_USERNAME;
+            const previewUrl = `exp://exp.host/@${expoUsername}/team-production?channel=${channel}`;
+
+            const comment = `## Mobile Preview Available
+
+            Your mobile app preview is ready!
+
             **Preview Channel:** \`${channel}\`
             **Preview URL:** ${previewUrl}
-            
+
             ### How to test:
             1. Install [Expo Go](https://expo.dev/client) on your device
             2. Open the preview URL above in Expo Go
             3. Or scan the QR code in the [Expo Dashboard](https://expo.dev)
-            
+
             > This preview will be available until the PR is closed.`;
-            
+
             github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
@@ -159,99 +131,59 @@ jobs:
   # ----- Production builds -----
   build-ios:
     name: Build iOS
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    if: |
+      (github.ref == 'refs/heads/main' && github.event_name == 'push') ||
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'production')
     runs-on: macos-latest
+    permissions:
+      contents: read
     defaults:
       run:
         working-directory: apps/mobile
-    
+
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v6
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-
-      - name: Ensure pnpm cache dirs
-        run: |
-          mkdir -p "$HOME/.pnpm-store"
-          mkdir -p "$HOME/.local/share/pnpm"
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Setup Expo
+        uses: ./.github/actions/expo-setup
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'pnpm'
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Setup Expo CLI
-        uses: expo/expo-github-action@v8
-        with:
-          expo-version: ${{ env.EXPO_CLI_VERSION }}
-          token: ${{ secrets.EXPO_TOKEN }}
+          expo-token: ${{ secrets.EXPO_TOKEN }}
 
       - name: Build iOS
-        run: |
-          # EAS Buildを使用（推奨）
-          if command -v eas &> /dev/null; then
-            npx eas build --platform ios --non-interactive --wait
-          else
-            echo "EAS Build not configured. Setting up for future use..."
-            echo "Run 'npx eas build:configure' to set up EAS Build"
-          fi
+        run: npx eas-cli build --platform ios --non-interactive --wait
 
   build-android:
     name: Build Android
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    if: |
+      (github.ref == 'refs/heads/main' && github.event_name == 'push') ||
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'production')
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     defaults:
       run:
         working-directory: apps/mobile
-    
+
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v6
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-
-      - name: Ensure pnpm cache dirs
-        run: |
-          mkdir -p "$HOME/.pnpm-store"
-          mkdir -p "$HOME/.local/share/pnpm"
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Setup Expo
+        uses: ./.github/actions/expo-setup
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'pnpm'
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Setup Expo CLI
-        uses: expo/expo-github-action@v8
-        with:
-          expo-version: ${{ env.EXPO_CLI_VERSION }}
-          token: ${{ secrets.EXPO_TOKEN }}
+          expo-token: ${{ secrets.EXPO_TOKEN }}
 
       - name: Setup Java 17
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: 'temurin'
           java-version: '17'
 
       - name: Build Android
-        run: |
-          # EAS Buildを使用（推奨）
-          if command -v eas &> /dev/null; then
-            npx eas build --platform android --non-interactive --wait
-          else
-            echo "EAS Build not configured. Setting up for future use..."
-            echo "Run 'npx eas build:configure' to set up EAS Build"
-          fi
+        run: npx eas-cli build --platform android --non-interactive --wait
 
   # ----- Web deployment -----
   deploy-web:
@@ -260,10 +192,10 @@ jobs:
     runs-on: ubuntu-latest
     needs: [build-web]
     environment: production
-    
+
     steps:
       - name: Download web build
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           name: web-build
           path: ./dist
@@ -271,41 +203,29 @@ jobs:
       - name: Deploy to hosting platform
         run: |
           echo "Deploying to web hosting platform..."
-          # 例：Vercel
-          # npx vercel --prod --token ${{ secrets.VERCEL_TOKEN }}
-          
-          # 例：Netlify
-          # npx netlify deploy --prod --dir ./dist --auth ${{ secrets.NETLIFY_AUTH_TOKEN }}
-          
-          # 例：Firebase Hosting
-          # npx firebase deploy --only hosting --token ${{ secrets.FIREBASE_TOKEN }}
-          
-          # 例：AWS S3 + CloudFront
-          # aws s3 sync ./dist s3://${{ secrets.S3_BUCKET_NAME }} --delete
-          # aws cloudfront create-invalidation --distribution-id ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }} --paths "/*"
+          # 例：Vercel, Netlify, Firebase Hosting, AWS S3 + CloudFront など
 
-  # ----- App Store deployment -----
+  # ----- App Store submission -----
   submit-ios:
     name: Submit to App Store
     if: github.ref == 'refs/heads/main' && github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'production'
     runs-on: ubuntu-latest
     needs: [build-ios]
     environment: production
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
 
-      - name: Setup Expo CLI
-        uses: expo/expo-github-action@v8
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Expo
+        uses: ./.github/actions/expo-setup
         with:
-          expo-version: ${{ env.EXPO_CLI_VERSION }}
-          token: ${{ secrets.EXPO_TOKEN }}
+          node-version: ${{ env.NODE_VERSION }}
+          expo-token: ${{ secrets.EXPO_TOKEN }}
 
       - name: Submit to App Store
-        run: |
-          cd apps/mobile
-          npx eas submit --platform ios --latest --non-interactive
+        working-directory: apps/mobile
+        run: npx eas-cli submit --platform ios --latest --non-interactive
 
   submit-android:
     name: Submit to Play Store
@@ -313,18 +233,17 @@ jobs:
     runs-on: ubuntu-latest
     needs: [build-android]
     environment: production
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
 
-      - name: Setup Expo CLI
-        uses: expo/expo-github-action@v8
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Expo
+        uses: ./.github/actions/expo-setup
         with:
-          expo-version: ${{ env.EXPO_CLI_VERSION }}
-          token: ${{ secrets.EXPO_TOKEN }}
+          node-version: ${{ env.NODE_VERSION }}
+          expo-token: ${{ secrets.EXPO_TOKEN }}
 
       - name: Submit to Play Store
-        run: |
-          cd apps/mobile
-          npx eas submit --platform android --latest --non-interactive
+        working-directory: apps/mobile
+        run: npx eas-cli submit --platform android --latest --non-interactive

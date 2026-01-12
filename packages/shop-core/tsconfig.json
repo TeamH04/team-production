@@ -1,9 +1,14 @@
 {
-  "extends": "../../tsconfig.json",
   "compilerOptions": {
-    "composite": false,
+    "strict": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
     "isolatedModules": true,
-    "noEmit": true
+    "noEmit": true,
+    "jsx": "react-jsx"
   },
   "include": ["src"]
 }
