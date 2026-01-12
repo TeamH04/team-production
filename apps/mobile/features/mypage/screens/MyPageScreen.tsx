@@ -1,63 +1,100 @@
-﻿import { palette } from '@/constants/palette';
+﻿import { useRouter } from 'expo-router';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
+import {
+  Alert,
+  Image,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
+
+import Ionicons from '@expo/vector-icons/Ionicons';
+
+import { palette } from '@/constants/palette';
 import { TAB_BAR_SPACING } from '@/constants/TabBarSpacing';
-import { useFavorites } from '@/features/favorites/FavoritesContext';
 import { useReviews } from '@/features/reviews/ReviewsContext';
-import { useStores } from '@/features/stores/StoresContext';
 import { useUser } from '@/features/user/UserContext';
-import { getCurrentUser } from '@/lib/auth';
-import { getPublicStorageUrl } from '@/lib/storage';
 import { getSupabase } from '@/lib/supabase';
-import type { Shop } from '@team/shop-core';
-import { Image } from 'expo-image';
-import { useFocusEffect, useRouter } from 'expo-router';
-import { useCallback, useMemo, useState } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { SHOPS } from '@team/shop-core';
 
-export default function MyPageScreen() {
+/**
+ * マイページ画面コンポーネント
+ * ユーザープロフィール、レビュー履歴、設定を表示します
+ * @param setWasDetailScreen - 詳細画面が表示されたことを通知するコールバック
+ */
+export default function MyPageScreen({
+  setWasDetailScreen,
+}: {
+  setWasDetailScreen?: (val: boolean) => void;
+}) {
+  // 画面遷移用
   const router = useRouter();
-  const { favorites } = useFavorites();
-  const { userReviews, loadUserReviews, getLikedReviews } = useReviews();
-  const { stores, loading: storesLoading } = useStores();
-  const { profile } = useUser();
 
-  const [reviewLoading, setReviewLoading] = useState(false);
-  const [reviewAuthRequired, setReviewAuthRequired] = useState(false);
+  // 店舗ごとのレビュー一覧を取得
+  const { reviewsByShop, getLikedReviews } = useReviews();
 
-  useFocusEffect(
-    useCallback(() => {
-      let active = true;
-      setReviewLoading(true);
-      setReviewAuthRequired(false);
+  // ユーザー情報
+  const { profile, updateProfile } = useUser();
 
-      loadUserReviews()
-        .catch(err => {
-          const message = err instanceof Error ? err.message : 'Unknown error';
-          if (message === 'auth_required' && active) {
-            setReviewAuthRequired(true);
-          }
-        })
-        .finally(() => {
-          if (active) setReviewLoading(false);
-        });
-
-      return () => {
-        active = false;
-      };
-    }, [loadUserReviews])
-  );
-
-  const favoriteShops = useMemo<Shop[]>(() => {
-    const ids = Array.from(favorites);
-    return stores.filter(shop => ids.includes(shop.id));
-  }, [favorites, stores]);
-
+  // 全店舗のレビューを一つの配列にまとめ、新しい順で最大20件を返す
   const reviews = useMemo(() => {
-    const sorted = [...userReviews].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
-    return sorted.slice(0, 20);
-  }, [userReviews]);
+    const all = Object.values(reviewsByShop).flat();
+    return all.sort((a, b) => b.createdAt.localeCompare(a.createdAt)).slice(0, 20);
+  }, [reviewsByShop]);
 
-  const likedReviewsAll = useMemo(() => getLikedReviews(), [getLikedReviews]);
-  const likedReviews = useMemo(() => likedReviewsAll.slice(0, 20), [likedReviewsAll]);
+  // 表示画面の種類を定義（Union 型で管理）
+  type ScreenType =
+    | 'main'
+    | 'reviewHistory'
+    | 'settings'
+    | 'notifications'
+    | 'likedReviews'
+    | 'profileEdit';
+
+  // ScrollView の参照（コンポーネントトップレベルで定義）
+  const mainScrollRef = useRef<ScrollView>(null);
+  const reviewHistoryScrollRef = useRef<ScrollView>(null);
+  const likedReviewsScrollRef = useRef<ScrollView>(null);
+  const settingsScrollRef = useRef<ScrollView>(null);
+  const notificationsScrollRef = useRef<ScrollView>(null);
+  const profileEditScrollRef = useRef<ScrollView>(null);
+
+  // 現在表示している画面を管理（Union 型で一元管理）
+  const [currentScreen, setCurrentScreen] = useState<ScreenType>('main');
+
+  // プロフィール編集用の状態管理
+  const [editName, setEditName] = useState('');
+  const [editEmail, setEditEmail] = useState('');
+
+  /**
+   * スクロールハンドラーのマップ
+   * 各画面のスクロール位置を記録します
+   */
+  const scrollHandlers = {
+    main: useCallback(() => {}, []),
+    reviewHistory: useCallback(() => {}, []),
+    settings: useCallback(() => {}, []),
+    notifications: useCallback(() => {}, []),
+    likedReviews: useCallback(() => {}, []),
+    profileEdit: useCallback(() => {}, []),
+  };
+
+  const handleScroll = scrollHandlers.main;
+  const handleReviewHistoryScroll = scrollHandlers.reviewHistory;
+  const handleLikedReviewsScroll = scrollHandlers.likedReviews;
+  const handleSettingsScroll = scrollHandlers.settings;
+  const handleNotificationsScroll = scrollHandlers.notifications;
+  const handleProfileEditScroll = scrollHandlers.profileEdit;
+
+  const handleBackPress = useCallback(() => {
+    setCurrentScreen('main');
+    if (setWasDetailScreen) {
+      setWasDetailScreen(false);
+    }
+  }, [setWasDetailScreen]);
 
   const handleLogout = useCallback(async () => {
     try {
@@ -69,220 +106,491 @@ export default function MyPageScreen() {
     }
   }, [router]);
 
-  const handleReviewLogin = useCallback(async () => {
-    const user = await getCurrentUser();
-    if (!user) {
-      router.push('/login');
+  // 詳細画面へのナビゲーション
+  const handleGoToReviewHistory = useCallback(() => {
+    setCurrentScreen('reviewHistory');
+    if (setWasDetailScreen) {
+      setWasDetailScreen(true);
     }
+  }, [setWasDetailScreen]);
+
+  const handleGoToSettings = useCallback(() => {
+    setCurrentScreen('settings');
+    if (setWasDetailScreen) {
+      setWasDetailScreen(true);
+    }
+  }, [setWasDetailScreen]);
+
+  const handleGoToNotifications = useCallback(() => {
+    setCurrentScreen('notifications');
+    if (setWasDetailScreen) {
+      setWasDetailScreen(true);
+    }
+  }, [setWasDetailScreen]);
+
+  const handleGoToShopRegister = useCallback(() => {
+    router.push('/owner/register-shop');
   }, [router]);
 
-  const resolveMenuName = useCallback(
-    (shop: Shop | undefined, menuItemIds?: string[], menuItemName?: string) => {
-      if (menuItemName) {
-        return menuItemName;
-      }
-      if (!menuItemIds || menuItemIds.length === 0 || !shop?.menu) {
-        return undefined;
-      }
-      const names = shop.menu.filter(item => menuItemIds.includes(item.id)).map(item => item.name);
-      return names.length > 0 ? names.join(' / ') : undefined;
-    },
-    []
-  );
+  const handleGoToShopEdit = useCallback(() => {
+    Alert.alert('未実装', 'まだ未実装です');
+  }, []);
 
-  const renderReviewCard = useCallback(
-    (review: (typeof reviews)[number]) => {
-      const shop = stores.find(s => s.id === review.shopId);
-      const menuName = resolveMenuName(shop, review.menuItemIds, review.menuItemName);
+  const handleGoToLikedReviews = useCallback(() => {
+    Alert.alert('未実装', 'まだ未実装です');
+  }, []);
 
+  const handleGoToProfileEdit = useCallback(() => {
+    setEditName(profile.name);
+    setEditEmail(profile.email);
+    setCurrentScreen('profileEdit');
+    if (setWasDetailScreen) {
+      setWasDetailScreen(true);
+    }
+  }, [profile, setWasDetailScreen]);
+
+  const handleSaveProfile = useCallback(() => {
+    const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(editEmail.trim());
+    if (editName.trim().length === 0 || !emailOk) {
+      Alert.alert('入力エラー', '表示名とメールアドレスを正しく入力してください');
+      return;
+    }
+    updateProfile({ name: editName.trim(), email: editEmail.trim() });
+    handleBackPress();
+  }, [editName, editEmail, updateProfile, handleBackPress]);
+
+  // 画面の描画（switch 文で管理）
+  switch (currentScreen) {
+    case 'likedReviews': {
+      const likedReviews = getLikedReviews();
       return (
-        <View key={review.id} style={styles.cardShadow}>
-          <View style={styles.card}>
-            <View style={styles.reviewHeader}>
-              <Text style={styles.rowCardTitle}>{shop?.name ?? '不明な店舗'}</Text>
-              <View style={styles.likePill}>
-                <Text style={styles.likeText}>いいね {review.likesCount}</Text>
-              </View>
-            </View>
-
-            <Text style={styles.rowCardSub}>
-              ★ {review.rating} │ {new Date(review.createdAt).toLocaleDateString('ja-JP')}
-            </Text>
-
-            {menuName ? <Text style={styles.menuText}>メニュー: {menuName}</Text> : null}
-
-            {review.comment ? <Text style={styles.reviewText}>{review.comment}</Text> : null}
-
-            {review.files.length > 0 && (
-              <View style={styles.reviewImages}>
-                {review.files.map(file => {
-                  const url = getPublicStorageUrl(file.objectKey);
-                  if (!url) return null;
-                  return (
-                    <Image
-                      key={file.id}
-                      source={{ uri: url }}
-                      style={styles.reviewImage}
-                      contentFit='cover'
-                    />
-                  );
-                })}
-              </View>
-            )}
-          </View>
-        </View>
-      );
-    },
-    [resolveMenuName, stores]
-  );
-
-  return (
-    <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
-      <View style={styles.cardShadow}>
-        <View style={styles.card}>
-          <View style={styles.profileRow}>
-            <View style={styles.avatar}>
-              <Text style={styles.avatarText}>
-                {profile.name ? profile.name.slice(0, 2).toUpperCase() : ''}
-              </Text>
-            </View>
-
-            <View style={styles.profileMeta}>
-              <Text style={styles.profileName}>{profile.name}</Text>
-              <Text style={styles.profileSub}>{profile.email}</Text>
-            </View>
-            <Pressable onPress={handleLogout} style={styles.logoutBtn} hitSlop={8}>
-              <Text style={styles.logoutText}>ログアウト</Text>
+        <ScrollView
+          ref={likedReviewsScrollRef}
+          onScroll={handleLikedReviewsScroll}
+          scrollEventThrottle={16}
+          style={styles.screen}
+          contentContainerStyle={styles.content}
+          showsVerticalScrollIndicator={false}
+        >
+          {/* いいねしたレビューヘッダー */}
+          <View style={styles.headerContainer}>
+            <Pressable onPress={handleBackPress} style={styles.backButton}>
+              <Text style={styles.backButtonText}>←</Text>
             </Pressable>
+            <Text style={styles.headerTitle}>いいねしたレビュー</Text>
+            <View style={styles.spacer} />
           </View>
 
-          <Pressable onPress={() => router.push('/profile/edit')} style={styles.primaryBtn}>
-            <Text style={styles.primaryBtnText}>プロフィールを編集</Text>
-          </Pressable>
-        </View>
-      </View>
-
-      <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>あなたの記録</Text>
-        <Text style={styles.sectionSub}>お気に入りやレビューの概要</Text>
-      </View>
-
-      <View style={styles.cardShadow}>
-        <View style={styles.card}>
-          <View style={styles.statsRow}>
-            <View style={styles.statItem}>
-              <Text style={styles.statValue}>{favoriteShops.length}</Text>
-              <Text style={styles.statLabel}>お気に入り</Text>
+          {likedReviews.length === 0 ? (
+            <View style={styles.emptyContainer}>
+              <Text style={styles.emptyText}>いいねしたレビューがありません</Text>
             </View>
-            <View style={styles.statDivider} />
-            <View style={styles.statItem}>
-              <Text style={styles.statValue}>
-                {reviewAuthRequired ? 'ログイン' : userReviews.length}
-              </Text>
-              <Text style={styles.statLabel}>レビュー</Text>
+          ) : (
+            <View>
+              {likedReviews.map(review => {
+                const shop = SHOPS.find(s => s.id === review.shopId);
+                return (
+                  <Pressable
+                    key={review.id}
+                    style={styles.cardShadow}
+                    onPress={() => router.push(`/shop/${review.shopId}`)}
+                  >
+                    <View style={styles.card}>
+                      <View style={styles.reviewCardContent}>
+                        {shop?.imageUrl && (
+                          <Image source={{ uri: shop.imageUrl }} style={styles.reviewImage} />
+                        )}
+                        <View style={styles.reviewTextContainer}>
+                          <View style={styles.reviewHeader}>
+                            <View style={styles.shopInfo}>
+                              <Text style={styles.shopName}>{shop?.name ?? '不明な店舗'}</Text>
+                              <Text style={styles.shopCategory}>
+                                {shop?.category} │ ★ {shop?.rating.toFixed(1)}
+                              </Text>
+                            </View>
+                          </View>
+
+                          <View style={styles.reviewMeta}>
+                            <Text style={styles.rating}>★ {review.rating}</Text>
+                            <Text style={styles.date}>
+                              {new Date(review.createdAt).toLocaleDateString('ja-JP')}
+                            </Text>
+                          </View>
+
+                          {review.menuItemName && (
+                            <Text style={styles.menuItem}>メニュー: {review.menuItemName}</Text>
+                          )}
+
+                          {review.comment && <Text style={styles.comment}>{review.comment}</Text>}
+                        </View>
+                      </View>
+                    </View>
+                  </Pressable>
+                );
+              })}
             </View>
-            <View style={styles.statDivider} />
-            <View style={styles.statItem}>
-              <Text style={styles.statValue}>
-                {reviewAuthRequired ? 'ログイン' : likedReviewsAll.length}
-              </Text>
-              <Text style={styles.statLabel}>いいね</Text>
+          )}
+        </ScrollView>
+      );
+    }
+
+    case 'reviewHistory': {
+      return (
+        <ScrollView
+          ref={reviewHistoryScrollRef}
+          onScroll={handleReviewHistoryScroll}
+          scrollEventThrottle={16}
+          style={styles.screen}
+          contentContainerStyle={styles.content}
+          showsVerticalScrollIndicator={false}
+        >
+          {/* レビュー履歴ヘッダー */}
+          <View style={styles.headerContainer}>
+            <Pressable onPress={handleBackPress} style={styles.backButton}>
+              <Text style={styles.backButtonText}>←</Text>
+            </Pressable>
+            <Text style={styles.headerTitle}>レビュー履歴</Text>
+            <View style={styles.spacer} />
+          </View>
+
+          {reviews.length === 0 ? (
+            <View style={styles.emptyContainer}>
+              <Text style={styles.emptyText}>まだレビューがありません</Text>
+            </View>
+          ) : (
+            <View>
+              {reviews.map(review => {
+                const shop = SHOPS.find(s => s.id === review.shopId);
+                return (
+                  <Pressable
+                    key={review.id}
+                    style={styles.cardShadow}
+                    onPress={() => router.push(`/shop/${review.shopId}`)}
+                  >
+                    <View style={styles.card}>
+                      <View style={styles.reviewCardContent}>
+                        {shop?.imageUrl && (
+                          <Image source={{ uri: shop.imageUrl }} style={styles.reviewImage} />
+                        )}
+                        <View style={styles.reviewTextContainer}>
+                          <View style={styles.reviewHeader}>
+                            <View style={styles.shopInfo}>
+                              <Text style={styles.shopName}>{shop?.name ?? '不明な店舗'}</Text>
+                              <Text style={styles.shopCategory}>
+                                {shop?.category} │ ★ {shop?.rating.toFixed(1)}
+                              </Text>
+                            </View>
+                          </View>
+
+                          <View style={styles.reviewMeta}>
+                            <Text style={styles.rating}>★ {review.rating}</Text>
+                            <Text style={styles.date}>
+                              {new Date(review.createdAt).toLocaleDateString('ja-JP')}
+                            </Text>
+                          </View>
+
+                          {review.menuItemName && (
+                            <Text style={styles.menuItem}>メニュー: {review.menuItemName}</Text>
+                          )}
+
+                          {review.comment && <Text style={styles.comment}>{review.comment}</Text>}
+                        </View>
+                      </View>
+                    </View>
+                  </Pressable>
+                );
+              })}
+            </View>
+          )}
+        </ScrollView>
+      );
+    }
+
+    case 'notifications': {
+      return (
+        <ScrollView
+          ref={notificationsScrollRef}
+          onScroll={handleNotificationsScroll}
+          scrollEventThrottle={16}
+          style={styles.screen}
+          contentContainerStyle={styles.content}
+          showsVerticalScrollIndicator={false}
+        >
+          {/* お知らせヘッダー */}
+          <View style={styles.headerContainer}>
+            <Pressable onPress={handleBackPress} style={styles.backButton}>
+              <Text style={styles.backButtonText}>←</Text>
+            </Pressable>
+            <Text style={styles.headerTitle}>お知らせ</Text>
+            <View style={styles.spacer} />
+          </View>
+
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyText}>お知らせはありません</Text>
+          </View>
+        </ScrollView>
+      );
+    }
+
+    case 'profileEdit': {
+      return (
+        <ScrollView
+          ref={profileEditScrollRef}
+          onScroll={handleProfileEditScroll}
+          scrollEventThrottle={16}
+          style={styles.screen}
+          contentContainerStyle={styles.content}
+          showsVerticalScrollIndicator={false}
+        >
+          {/* プロフィール編集ヘッダー */}
+          <View style={styles.headerContainer}>
+            <Pressable onPress={handleBackPress} style={styles.backButton}>
+              <Text style={styles.backButtonText}>←</Text>
+            </Pressable>
+            <Text style={styles.headerTitle}>プロフィール編集</Text>
+            <View style={styles.spacer} />
+          </View>
+
+          {/* アバター */}
+          <View style={styles.avatarLarge}>
+            <Text style={styles.avatarLargeText}>
+              {(editName || 'U').slice(0, 2).toUpperCase()}
+            </Text>
+          </View>
+
+          {/* フォームカード */}
+          <View style={styles.cardShadow}>
+            <View style={styles.card}>
+              {/* 表示名入力 */}
+              <View style={styles.formGroup}>
+                <Text style={styles.label}>表示名</Text>
+                <View style={styles.textInputContainer}>
+                  <TextInput
+                    value={editName}
+                    onChangeText={setEditName}
+                    placeholder='例: Hanako Tanaka'
+                    placeholderTextColor={palette.mutedText}
+                    style={styles.textInput}
+                    autoCapitalize='words'
+                  />
+                </View>
+              </View>
+
+              {/* メールアドレス入力 */}
+              <View style={styles.formGroup}>
+                <Text style={styles.label}>メールアドレス</Text>
+                <View style={styles.textInputContainer}>
+                  <TextInput
+                    value={editEmail}
+                    onChangeText={setEditEmail}
+                    placeholder='example@domain.com'
+                    placeholderTextColor={palette.mutedText}
+                    style={styles.textInput}
+                    autoCapitalize='none'
+                    keyboardType='email-address'
+                  />
+                </View>
+              </View>
             </View>
           </View>
-          <Pressable style={styles.secondaryBtn} onPress={() => router.push('/review-history')}>
-            <Text style={styles.secondaryBtnText}>履歴を見る</Text>
+
+          {/* 保存ボタン */}
+          <Pressable onPress={handleSaveProfile} style={styles.saveBtnProfile}>
+            <Text style={styles.saveBtnProfileText}>保存</Text>
           </Pressable>
-        </View>
-      </View>
 
-      <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>お気に入り店舗</Text>
-        <Text style={styles.sectionSub}>ブックマークしたお店の一覧</Text>
-      </View>
+          {/* キャンセルボタン */}
+          <Pressable onPress={handleBackPress} style={styles.secondaryBtn}>
+            <Text style={styles.secondaryBtnText}>キャンセル</Text>
+          </Pressable>
+        </ScrollView>
+      );
+    }
 
-      {storesLoading ? (
-        <View style={styles.emptyBox}>
-          <Text style={styles.emptyText}>店舗情報を読み込み中...</Text>
-        </View>
-      ) : favoriteShops.length === 0 ? (
-        <View style={styles.emptyBox}>
-          <Text style={styles.emptyText}>まだお気に入りがありません</Text>
-        </View>
-      ) : (
-        <View>
-          {favoriteShops.map(shop => (
-            <View key={shop.id} style={styles.cardShadow}>
-              <View style={[styles.card, styles.rowCard]}>
-                <View style={styles.rowCardMeta}>
-                  <Text style={styles.rowCardTitle}>{shop.name}</Text>
-                  <Text style={styles.rowCardSub}>
-                    {shop.category} │ ★ {shop.rating.toFixed(1)}
+    case 'settings': {
+      return (
+        <ScrollView
+          ref={settingsScrollRef}
+          onScroll={handleSettingsScroll}
+          scrollEventThrottle={16}
+          style={styles.screen}
+          contentContainerStyle={styles.content}
+          showsVerticalScrollIndicator={false}
+        >
+          {/* 設定ヘッダー */}
+          <View style={styles.headerContainer}>
+            <Pressable onPress={handleBackPress} style={styles.backButton}>
+              <Text style={styles.backButtonText}>←</Text>
+            </Pressable>
+            <Text style={styles.headerTitle}>設定</Text>
+            <View style={styles.spacer} />
+          </View>
+
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyText}>設定オプションはまもなく追加されます</Text>
+          </View>
+        </ScrollView>
+      );
+    }
+
+    case 'main':
+    default: {
+      return (
+        <ScrollView
+          ref={mainScrollRef}
+          onScroll={handleScroll}
+          scrollEventThrottle={16}
+          style={styles.screen}
+          contentContainerStyle={styles.content}
+          showsVerticalScrollIndicator={false}
+        >
+          {/* ユーザー情報カード */}
+          <View style={styles.cardShadow}>
+            <View style={styles.card}>
+              <View style={styles.profileRow}>
+                <View style={styles.avatar}>
+                  <Text style={styles.avatarText}>
+                    {profile.name ? profile.name.slice(0, 2).toUpperCase() : ''}
                   </Text>
                 </View>
-                <Pressable
-                  onPress={() =>
-                    router.push({
-                      pathname: '/shop/[id]',
-                      params: { id: shop.id },
-                    })
-                  }
-                  style={({ pressed }) => [styles.secondaryBtn, pressed && styles.btnPressed]}
-                >
-                  <Text style={styles.secondaryBtnText}>詳細</Text>
+
+                <View style={styles.profileMeta}>
+                  <Text style={styles.profileName}>{profile.name}</Text>
+                  <Text style={styles.profileSub}>{profile.email}</Text>
+                </View>
+                <Pressable onPress={handleLogout} style={styles.logoutBtn} hitSlop={8}>
+                  <Text style={styles.logoutText}>ログアウト</Text>
                 </Pressable>
               </View>
+
+              <Pressable onPress={handleGoToProfileEdit} style={styles.primaryBtn}>
+                <Text style={styles.primaryBtnText}>プロフィールを編集</Text>
+              </Pressable>
             </View>
-          ))}
-        </View>
-      )}
+          </View>
 
-      <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>レビュー投稿履歴</Text>
-        <Text style={styles.sectionSub}>最近投稿したレビュー</Text>
-      </View>
+          {/* 店舗登録・編集 */}
+          <View style={styles.sectionCard}>
+            <View style={styles.sectionHeaderRow}>
+              <View style={styles.sectionIconBadge}>
+                <Ionicons
+                  name='storefront'
+                  size={18}
+                  color={palette.accent}
+                  style={styles.sectionIcon}
+                />
+              </View>
+              <View style={styles.sectionTextContainer}>
+                <Text style={styles.sectionTitle}>店舗登録</Text>
+                <Text style={styles.sectionSub}>オーナー用の店舗登録・編集はこちら</Text>
+              </View>
+            </View>
 
-      {reviewAuthRequired ? (
-        <View style={styles.emptyBox}>
-          <Text style={styles.emptyText}>レビュー履歴を見るにはログインが必要です</Text>
-          <Pressable style={styles.secondaryBtn} onPress={handleReviewLogin}>
-            <Text style={styles.secondaryBtnText}>ログイン</Text>
-          </Pressable>
-        </View>
-      ) : reviewLoading ? (
-        <View style={styles.emptyBox}>
-          <Text style={styles.emptyText}>レビューを読み込み中...</Text>
-        </View>
-      ) : reviews.length === 0 ? (
-        <View style={styles.emptyBox}>
-          <Text style={styles.emptyText}>まだレビューがありません</Text>
-        </View>
-      ) : (
-        <View>{reviews.map(renderReviewCard)}</View>
-      )}
+            <View style={styles.gridContainer}>
+              <Pressable style={styles.gridCard} onPress={handleGoToShopRegister}>
+                <View style={styles.gridIconBadge}>
+                  <Ionicons name='add-circle' size={24} color={palette.primary} />
+                </View>
+                <Text style={styles.gridCardLabel}>登録</Text>
+              </Pressable>
 
-      <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>いいねしたレビュー</Text>
-        <Text style={styles.sectionSub}>高評価にしたレビューの一覧</Text>
-      </View>
+              <Pressable style={styles.gridCard} onPress={handleGoToShopEdit}>
+                <View style={styles.gridIconBadge}>
+                  <Ionicons name='create' size={24} color={palette.primary} />
+                </View>
+                <Text style={styles.gridCardLabel}>編集</Text>
+              </Pressable>
+            </View>
+          </View>
 
-      {reviewAuthRequired ? (
-        <View style={styles.emptyBox}>
-          <Text style={styles.emptyText}>いいねしたレビューを見るにはログインが必要です</Text>
-          <Pressable style={styles.secondaryBtn} onPress={handleReviewLogin}>
-            <Text style={styles.secondaryBtnText}>ログイン</Text>
-          </Pressable>
-        </View>
-      ) : likedReviewsAll.length === 0 ? (
-        <View style={styles.emptyBox}>
-          <Text style={styles.emptyText}>いいねしたレビューがありません</Text>
-        </View>
-      ) : (
-        <View>{likedReviews.map(renderReviewCard)}</View>
-      )}
-    </ScrollView>
-  );
+          {/* あなたの記録セクション */}
+          <View style={styles.sectionCard}>
+            <View style={styles.sectionHeaderRow}>
+              <View style={styles.sectionIconBadge}>
+                <Ionicons
+                  name='sparkles'
+                  size={18}
+                  color={palette.accent}
+                  style={styles.sectionIcon}
+                />
+              </View>
+              <View style={styles.sectionTextContainer}>
+                <Text style={styles.sectionTitle}>あなたの記録</Text>
+                <Text style={styles.sectionSub}>お気に入りやレビューをまとめてチェック</Text>
+              </View>
+            </View>
+
+            <View style={styles.gridContainer}>
+              <Pressable style={styles.gridCard} onPress={() => router.push('/(tabs)/favorites')}>
+                <View style={styles.gridIconBadge}>
+                  <Ionicons name='heart' size={24} color={palette.primary} />
+                </View>
+                <Text style={styles.gridCardLabel}>お気に入り</Text>
+              </Pressable>
+
+              <Pressable style={styles.gridCard} onPress={handleGoToReviewHistory}>
+                <View style={styles.gridIconBadge}>
+                  <Ionicons name='document-text' size={24} color={palette.primary} />
+                </View>
+                <Text style={styles.gridCardLabel}>レビュー履歴</Text>
+              </Pressable>
+
+              <Pressable style={styles.gridCard} onPress={handleGoToLikedReviews}>
+                <View style={styles.gridIconBadge}>
+                  <Ionicons name='thumbs-up' size={24} color={palette.primary} />
+                </View>
+                <Text style={styles.gridCardLabel}>いいねしたレビュー</Text>
+              </Pressable>
+
+              <Pressable style={styles.gridCard}>
+                <View style={styles.gridIconBadge}>
+                  <Ionicons name='checkmark-done' size={24} color={palette.primary} />
+                </View>
+                <Text style={styles.gridCardLabel}>好みチェック</Text>
+              </Pressable>
+            </View>
+          </View>
+
+          {/* 設定セクション */}
+          <View style={styles.sectionCard}>
+            <View style={styles.sectionHeaderRow}>
+              <View style={styles.sectionIconBadge}>
+                <Ionicons
+                  name='options'
+                  size={18}
+                  color={palette.accent}
+                  style={styles.sectionIcon}
+                />
+              </View>
+              <View style={styles.sectionTextContainer}>
+                <Text style={styles.sectionTitle}>設定</Text>
+                <Text style={styles.sectionSub}>通知やアカウントの管理はこちらから</Text>
+              </View>
+            </View>
+
+            <View style={styles.gridContainer}>
+              <Pressable style={styles.gridCard} onPress={handleGoToNotifications}>
+                <View style={styles.gridIconBadge}>
+                  <Ionicons name='notifications' size={24} color={palette.primary} />
+                </View>
+                <Text style={styles.gridCardLabel}>お知らせ</Text>
+              </Pressable>
+
+              <Pressable style={styles.gridCard} onPress={handleGoToSettings}>
+                <View style={styles.gridIconBadge}>
+                  <Ionicons name='settings' size={24} color={palette.primary} />
+                </View>
+                <Text style={styles.gridCardLabel}>設定</Text>
+              </Pressable>
+            </View>
+          </View>
+        </ScrollView>
+      );
+    }
+  }
 }
 
+// スタイル定義（見た目の調整）
 const styles = StyleSheet.create({
   avatar: {
     alignItems: 'center',
@@ -292,9 +600,30 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     width: 64,
   },
+  avatarLarge: {
+    alignItems: 'center',
+    alignSelf: 'center',
+    backgroundColor: palette.secondarySurface,
+    borderRadius: 999,
+    height: 88,
+    justifyContent: 'center',
+    marginBottom: 24,
+    marginTop: 16,
+    width: 88,
+  },
+  avatarLargeText: { color: palette.primary, fontSize: 32, fontWeight: '800' },
   avatarText: { color: palette.avatarText, fontSize: 22, fontWeight: '800' },
-  btnPressed: { opacity: 0.9 },
-  card: { backgroundColor: palette.surface, borderRadius: 20, padding: 16 },
+  backButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    width: 50,
+  },
+  backButtonText: {
+    color: palette.accent,
+    fontSize: 28,
+    fontWeight: '700',
+  },
+  card: { backgroundColor: palette.surface, borderRadius: 20, padding: 12 },
   cardShadow: {
     elevation: 4,
     marginBottom: 16,
@@ -303,24 +632,72 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.06,
     shadowRadius: 12,
   },
+  comment: {
+    color: palette.primary,
+    fontSize: 12,
+    lineHeight: 18,
+    marginTop: 4,
+  },
   content: { padding: 16, paddingBottom: TAB_BAR_SPACING },
-  emptyBox: {
+  date: {
+    color: palette.mutedText,
+    fontSize: 11,
+  },
+  emptyContainer: {
+    alignItems: 'center',
+    marginTop: 60,
+  },
+  emptyText: { color: palette.mutedText },
+  formGroup: {
+    marginBottom: 16,
+  },
+  gridCard: {
     alignItems: 'center',
     backgroundColor: palette.surface,
     borderRadius: 16,
-    paddingHorizontal: 16,
+    elevation: 2,
+    justifyContent: 'center',
+    marginBottom: 12,
     paddingVertical: 24,
+    shadowColor: palette.shadow,
+    shadowOffset: { height: 2, width: 0 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    width: '48%',
   },
-  emptyText: { color: palette.mutedText, textAlign: 'center' },
-  likePill: {
+  gridCardLabel: {
+    color: palette.primary,
+    fontSize: 13,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  gridContainer: {
+    display: 'flex',
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+  },
+  gridIconBadge: {
+    alignItems: 'center',
     backgroundColor: palette.secondarySurface,
-    borderColor: palette.border,
-    borderRadius: 999,
-    borderWidth: 1,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    borderRadius: 12,
+    height: 44,
+    justifyContent: 'center',
+    marginBottom: 10,
+    width: 44,
   },
-  likeText: { color: palette.mutedText, fontSize: 12, fontWeight: '700' },
+  headerContainer: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 20,
+  },
+  headerTitle: {
+    color: palette.primary,
+    fontSize: 18,
+    fontWeight: '700',
+  },
+  label: { color: palette.primary, fontWeight: '700', marginBottom: 8 },
   logoutBtn: {
     alignSelf: 'flex-start',
     marginLeft: 'auto',
@@ -328,8 +705,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 4,
   },
-  logoutText: { color: palette.accent, fontSize: 14, fontWeight: '600' },
-  menuText: { color: palette.mutedText, marginTop: 6 },
+  logoutText: { color: palette.error, fontSize: 14, fontWeight: '600' },
+  menuItem: {
+    color: palette.mutedText,
+    fontSize: 11,
+    marginTop: 4,
+  },
   primaryBtn: {
     backgroundColor: palette.secondarySurface,
     borderRadius: 12,
@@ -338,7 +719,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   primaryBtnText: {
-    color: palette.textOnSecondary,
+    color: palette.primary,
     fontSize: 16,
     fontWeight: '700',
     textAlign: 'center',
@@ -347,52 +728,111 @@ const styles = StyleSheet.create({
   profileName: { color: palette.primary, fontSize: 18, fontWeight: '700' },
   profileRow: { alignItems: 'center', flexDirection: 'row' },
   profileSub: { color: palette.mutedText, marginTop: 4 },
-  reviewHeader: {
-    alignItems: 'center',
+  rating: {
+    color: palette.primary,
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  reviewCardContent: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    gap: 10,
+  },
+  reviewHeader: {
     marginBottom: 4,
   },
-  reviewImage: { borderRadius: 12, height: 88, width: 88 },
-  reviewImages: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 10,
-    marginTop: 12,
+  reviewImage: {
+    borderRadius: 8,
+    height: 100,
+    marginRight: 12,
+    width: 100,
   },
-  reviewText: { color: palette.primary, marginTop: 8 },
-  rowCard: {
-    alignItems: 'center',
+  reviewMeta: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    gap: 8,
+    marginBottom: 2,
   },
-  rowCardMeta: { flex: 1, paddingRight: 12 },
-  rowCardSub: { color: palette.mutedText, marginTop: 4 },
-  rowCardTitle: { color: palette.primary, fontSize: 16, fontWeight: '700' },
+  reviewTextContainer: {
+    flex: 1,
+  },
+  saveBtnProfile: {
+    backgroundColor: palette.accent,
+    borderRadius: 12,
+    marginTop: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
+  saveBtnProfileText: {
+    color: palette.textOnPrimary,
+    fontSize: 16,
+    fontWeight: '700',
+    textAlign: 'center',
+  },
   screen: { backgroundColor: palette.background, flex: 1 },
   secondaryBtn: {
     backgroundColor: palette.secondarySurface,
     borderColor: palette.border,
-    borderRadius: 10,
+    borderRadius: 12,
     borderWidth: 1,
+    marginTop: 12,
+    paddingVertical: 12,
+  },
+  secondaryBtnText: { color: palette.primary, fontWeight: '700', textAlign: 'center' },
+  sectionCard: {
+    backgroundColor: palette.surface,
+    borderRadius: 18,
+    elevation: 3,
+    marginBottom: 16,
+    padding: 16,
+    shadowColor: palette.shadow,
+    shadowOffset: { height: 4, width: 0 },
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+  },
+  sectionHeaderRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+    marginBottom: 12,
+  },
+  sectionIcon: { alignSelf: 'center' },
+  sectionIconBadge: {
+    alignItems: 'center',
+    backgroundColor: palette.secondarySurface,
+    borderRadius: 14,
+    height: 40,
+    justifyContent: 'center',
+    marginRight: 12,
+    padding: 8,
+    width: 40,
+  },
+  sectionSub: { color: palette.mutedText, fontSize: 12, marginTop: 2 },
+  sectionTextContainer: { flex: 1 },
+  sectionTitle: { color: palette.primary, fontSize: 16, fontWeight: '700' },
+  shopCategory: {
+    color: palette.mutedText,
+    fontSize: 11,
+    marginTop: 2,
+  },
+  shopInfo: {
+    flex: 1,
+  },
+  shopName: {
+    color: palette.primary,
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  spacer: {
+    width: 50,
+  },
+  textInput: {
+    backgroundColor: palette.background,
+    color: palette.primary,
     paddingHorizontal: 14,
-    paddingVertical: 10,
+    paddingVertical: 12,
   },
-  secondaryBtnText: {
-    color: palette.textOnSecondary,
-    fontWeight: '700',
-    textAlign: 'center',
+  textInputContainer: {
+    borderColor: palette.border,
+    borderRadius: 12,
+    borderWidth: 1,
   },
-  sectionHeader: { marginBottom: 8, marginTop: 8, paddingHorizontal: 4 },
-  sectionSub: { color: palette.mutedText, fontSize: 13, marginTop: 2 },
-  sectionTitle: { color: palette.primary, fontSize: 18, fontWeight: '700' },
-  statDivider: {
-    backgroundColor: palette.border,
-    height: 36,
-    width: 1,
-  },
-  statItem: { alignItems: 'center', flex: 1 },
-  statLabel: { color: palette.mutedText, fontSize: 12, marginTop: 4 },
-  statValue: { color: palette.primary, fontSize: 20, fontWeight: '700' },
-  statsRow: { alignItems: 'center', flexDirection: 'row', marginBottom: 12 },
 });

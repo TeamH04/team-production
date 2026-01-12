@@ -1,5 +1,6 @@
 import { palette } from '@/constants/palette';
 import { useStores } from '@/features/stores/StoresContext';
+import { useVisited } from '@/features/visited/VisitedContext';
 import { useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import {
@@ -16,19 +17,25 @@ import {
 const TAB_BAR_SPACING = 129;
 const INACTIVE_COLOR = palette.secondarySurface;
 
-// Lint対策: カラーリテラルの定数化
 const COLOR_WHITE = '#FFFFFF';
 const COLOR_ACTIVE_NAVY = '#1A2533';
 const COLOR_TAG_BG = '#F0F2F5';
 
 type SortType = 'default' | 'newest' | 'rating' | 'registered';
 type SortOrder = 'asc' | 'desc';
+type VisitedFilter = 'all' | 'visited' | 'not_visited';
 
 const SORT_OPTIONS: { label: string; value: SortType }[] = [
   { label: 'おすすめ', value: 'default' },
   { label: '新着順', value: 'newest' },
   { label: '評価順(★)', value: 'rating' },
   { label: '登録順', value: 'registered' },
+];
+
+const VISITED_FILTER_OPTIONS: { label: string; value: VisitedFilter }[] = [
+  { label: 'すべて', value: 'all' },
+  { label: '訪問済み', value: 'visited' },
+  { label: '未訪問', value: 'not_visited' },
 ];
 
 const getIdNum = (id: string) => {
@@ -45,12 +52,14 @@ const getIdNum = (id: string) => {
 
 export default function SearchScreen() {
   const router = useRouter();
+  const { isVisited } = useVisited();
   const [userTypedText, setUserTypedText] = useState('');
   const [currentSearchText, setCurrentSearchText] = useState('');
   const [activeCategories, setActiveCategories] = useState<string[]>([]);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [searchHistory, setSearchHistory] = useState<string[]>([]);
   const { stores: shops, loading, error: loadError } = useStores();
+  const [filterVisited, setFilterVisited] = useState<VisitedFilter>('all');
 
   const [sortBy, setSortBy] = useState<SortType>('default');
   const [sortOrders, setSortOrders] = useState<Record<SortType, SortOrder>>({
@@ -89,11 +98,26 @@ export default function SearchScreen() {
     setActiveCategories([]);
     setSelectedTags([]);
     setSortBy('default');
+    setFilterVisited('all');
   };
 
-  const handleSearch = () => {
-    setCurrentSearchText(userTypedText);
-    setUserTypedText('');
+  const handleSearch = (textToSearch?: string) => {
+    const targetText = textToSearch !== undefined ? textToSearch : userTypedText;
+    const trimmedText = targetText.trim();
+
+    if (trimmedText === '') return;
+
+    // 検索履歴を更新
+    setSearchHistory(prev => {
+      // 既にある場合は一旦消して、配列の先頭に追加（重複防止）
+      const filtered = prev.filter(item => item !== trimmedText);
+      return [trimmedText, ...filtered].slice(0, 10); // 最大10件
+    });
+
+    setCurrentSearchText(trimmedText);
+    if (textToSearch === undefined) {
+      setUserTypedText('');
+    }
   };
 
   const handleSortTypePress = (value: SortType) => {
@@ -166,7 +190,13 @@ export default function SearchScreen() {
           ? tags.some(tag => shop.tags.some(st => st.toLowerCase().includes(tag)))
           : true;
       const matchesCategory = hasCategories ? activeCategories.includes(shop.category) : true;
-      return matchesText && matchesTags && matchesCategory;
+      const matchesVisited =
+        filterVisited === 'all'
+          ? true
+          : filterVisited === 'visited'
+            ? isVisited(shop.id)
+            : !isVisited(shop.id);
+      return matchesText && matchesTags && matchesCategory && matchesVisited;
     });
 
     return filtered.sort((a, b) => {
@@ -193,7 +223,9 @@ export default function SearchScreen() {
   }, [
     activeCategories,
     currentSearchText,
+    filterVisited,
     hasSearchCriteria,
+    isVisited,
     selectedTags,
     shops,
     sortBy,
@@ -264,7 +296,6 @@ export default function SearchScreen() {
 
             {activeCategories.length > 0 && (
               <View style={styles.subTagSection}>
-                {/* メインとサブの間の線（1回のみ表示） */}
                 <View style={styles.divider} />
 
                 {activeCategories.map(cat => (
@@ -317,10 +348,39 @@ export default function SearchScreen() {
 
       {!loading && !loadError && hasSearchCriteria && (
         <View style={styles.resultsSection}>
+          <Text style={styles.resultsTitle}>{`検索結果：${searchResults.length}件`}</Text>
+
+          <View style={styles.visitedFilterRow}>
+            {VISITED_FILTER_OPTIONS.map(option => {
+              const isActive = filterVisited === option.value;
+              return (
+                <Pressable
+                  key={option.value}
+                  accessibilityLabel={`訪問済みフィルター: ${option.label}`}
+                  onPress={() => setFilterVisited(option.value)}
+                  style={[
+                    styles.visitedFilterButton,
+                    isActive
+                      ? styles.visitedFilterButtonActive
+                      : styles.visitedFilterButtonInactive,
+                  ]}
+                >
+                  <Text
+                    style={
+                      isActive
+                        ? styles.visitedFilterButtonTextActive
+                        : styles.visitedFilterButtonTextInactive
+                    }
+                  >
+                    {option.label}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
+
           {searchResults.length > 0 ? (
             <View>
-              <Text style={styles.resultsTitle}>{`検索結果：${searchResults.length}件`}</Text>
-
               <View style={styles.sortRow}>
                 <ScrollView
                   horizontal
@@ -412,7 +472,8 @@ export default function SearchScreen() {
               scrollEnabled={false}
               renderItem={({ item }) => (
                 <View style={styles.historyItem}>
-                  <Pressable onPress={() => handleSearch()} style={styles.historyTextContainer}>
+                  {/* タップした時にその履歴ワードで再検索を実行 */}
+                  <Pressable onPress={() => handleSearch(item)} style={styles.historyTextContainer}>
                     <Text style={styles.historyText}>{item}</Text>
                   </Pressable>
                   <Pressable onPress={() => handleRemoveHistory(item)}>
@@ -741,5 +802,33 @@ const styles = StyleSheet.create({
     height: 18,
     marginRight: 8,
     width: 1,
+  },
+  visitedFilterButton: {
+    borderRadius: 8,
+    borderWidth: 1,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+  },
+  visitedFilterButtonActive: {
+    backgroundColor: palette.primary,
+    borderColor: palette.primary,
+  },
+  visitedFilterButtonInactive: {
+    backgroundColor: palette.background,
+    borderColor: palette.border,
+  },
+  visitedFilterButtonTextActive: {
+    color: COLOR_WHITE,
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  visitedFilterButtonTextInactive: {
+    color: palette.secondaryText,
+    fontSize: 13,
+  },
+  visitedFilterRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 12,
   },
 });

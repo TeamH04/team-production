@@ -1,0 +1,355 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: write
+
+env:
+  NODE_VERSION: '24.x'
+  GO_VERSION: '1.24'
+
+jobs:
+  # ----- Detect Changed Paths -----
+  changes:
+    name: Detect Changes
+    runs-on: ubuntu-latest
+    outputs:
+      backend: ${{ steps.filter.outputs.backend }}
+      mobile: ${{ steps.filter.outputs.mobile }}
+      root: ${{ steps.filter.outputs.root }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 2
+
+      - name: Filter paths
+        uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            backend:
+              - 'apps/backend/**'
+            mobile:
+              - 'apps/mobile/**'
+            root:
+              - 'package.json'
+              - 'pnpm-lock.yaml'
+              - 'tsconfig.json'
+              - 'biome.json'
+              - '.github/**'
+
+  # ----- Quality Checks -----
+  lint:
+    name: Lint & Format Check
+    needs: changes
+    if: ${{ needs.changes.outputs.root == 'true' || needs.changes.outputs.backend == 'true' || needs.changes.outputs.mobile == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup pnpm and Node.js
+        uses: ./.github/actions/pnpm-setup
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Lint
+        run: pnpm run lint
+
+      - name: TypeScript type check
+        run: pnpm run typecheck
+
+      - name: Format check
+        run: pnpm run format:check
+
+  # ----- Backend Tests & Benchmark -----
+  backend-test:
+    name: Backend Tests
+    needs: changes
+    if: ${{ needs.changes.outputs.backend == 'true' || needs.changes.outputs.root == 'true' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    defaults:
+      run:
+        working-directory: apps/backend
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: test_app
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Go
+        uses: ./.github/actions/go-setup
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Wait for PostgreSQL
+        uses: ./.github/actions/wait-for-postgres
+
+      - name: Run go vet
+        run: go vet ./...
+
+      - name: Run tests with race detector
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/test_app?sslmode=disable
+        run: go test -v -race -parallel 4 -coverprofile=coverage.out -covermode=atomic ./...
+
+      - name: Generate coverage report
+        run: |
+          go tool cover -html=coverage.out -o coverage.html
+          go tool cover -func=coverage.out
+
+      # Repository Secrets で CODECOV_TOKEN を設定してください
+      # 設定後は fail_ci_if_error を true に変更することを推奨
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v5
+        continue-on-error: true
+        with:
+          files: apps/backend/coverage.out
+          flags: backend
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: false
+
+      - name: Upload coverage artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: coverage-report
+          path: apps/backend/coverage.html
+          retention-days: 7
+
+      # ----- Benchmark (PR only) -----
+      - name: Run benchmarks
+        if: github.event_name == 'pull_request'
+        id: benchmark
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/test_app?sslmode=disable
+        run: |
+          if find . -name "*_test.go" -exec grep -l "func Benchmark" {} \; | grep -q .; then
+            go test -bench=. -benchmem -run=^$ ./... | tee benchmark_result.txt
+            echo "has_results=true" >> $GITHUB_OUTPUT
+          else
+            echo "No benchmarks found, skipping..."
+            echo "has_results=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Comment benchmark results
+        if: github.event_name == 'pull_request' && steps.benchmark.outputs.has_results == 'true'
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const fs = require('fs');
+            const benchmarkPath = './apps/backend/benchmark_result.txt';
+
+            if (fs.existsSync(benchmarkPath)) {
+              const benchmark = fs.readFileSync(benchmarkPath, 'utf8');
+              const comment = [
+                '## Benchmark Results',
+                '',
+                '```',
+                benchmark,
+                '```',
+                '',
+                '> Benchmark comparison with base branch coming soon!'
+              ].join('\n');
+
+              github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: comment
+              });
+            }
+
+  # ----- Backend Build -----
+  backend-build:
+    name: Backend Build
+    needs: [changes, lint, backend-test]
+    if: |
+      always() &&
+      (needs.changes.outputs.backend == 'true' || needs.changes.outputs.root == 'true') &&
+      (needs.lint.result == 'success' || needs.lint.result == 'skipped') &&
+      (needs.backend-test.result == 'success' || needs.backend-test.result == 'skipped')
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/backend
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Go
+        uses: ./.github/actions/go-setup
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Build binary
+        run: |
+          CGO_ENABLED=0 GOOS=linux go build \
+            -ldflags="-w -s -X main.version=${{ github.sha }} -X main.buildTime=$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            -o bin/server \
+            ./cmd/server
+
+  # ----- Mobile Tests -----
+  mobile-test:
+    name: Mobile Tests
+    needs: changes
+    if: ${{ needs.changes.outputs.mobile == 'true' || needs.changes.outputs.root == 'true' }}
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/mobile
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup pnpm and Node.js
+        uses: ./.github/actions/pnpm-setup
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          working-directory: apps/mobile
+
+      # Lint は lint ジョブで実行されるため省略
+
+      - name: Format check mobile
+        working-directory: .
+        run: |
+          pnpm run format:mobile
+          git diff --exit-code || (echo "Code is not formatted. Please run 'pnpm run format:mobile'" && exit 1)
+
+  # ----- Mobile Build Check -----
+  mobile-build:
+    name: Mobile Build Check
+    needs: [changes, lint, mobile-test]
+    if: |
+      always() &&
+      (needs.changes.outputs.mobile == 'true' || needs.changes.outputs.root == 'true') &&
+      (needs.lint.result == 'success' || needs.lint.result == 'skipped') &&
+      (needs.mobile-test.result == 'success' || needs.mobile-test.result == 'skipped')
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/mobile
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Expo
+        uses: ./.github/actions/expo-setup
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          expo-token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Check Expo build configuration
+        run: |
+          npx expo export --platform web --output-dir dist
+          echo "Build configuration is valid"
+
+  # ----- Security Audit (Node.js) -----
+  security-audit-node:
+    name: Security Audit (Node.js)
+    needs: changes
+    if: ${{ needs.changes.outputs.mobile == 'true' || needs.changes.outputs.root == 'true' }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup pnpm and Node.js
+        uses: ./.github/actions/pnpm-setup
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Run pnpm security audit
+        run: pnpm audit --dev --audit-level moderate
+        continue-on-error: true
+
+  # ----- Security Audit (Go) -----
+  security-audit-go:
+    name: Security Audit (Go)
+    needs: changes
+    if: ${{ needs.changes.outputs.backend == 'true' || needs.changes.outputs.root == 'true' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    defaults:
+      run:
+        working-directory: apps/backend
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Go
+        uses: ./.github/actions/go-setup
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Cache security tools
+        uses: actions/cache@v4
+        with:
+          path: ~/go/bin
+          key: go-security-tools-${{ runner.os }}-${{ env.GO_VERSION }}
+
+      - name: Install security tools
+        run: |
+          if [ ! -f "$HOME/go/bin/gosec" ]; then
+            go install github.com/securego/gosec/v2/cmd/gosec@latest
+          fi
+          if [ ! -f "$HOME/go/bin/govulncheck" ]; then
+            go install golang.org/x/vuln/cmd/govulncheck@latest
+          fi
+
+      - name: Run Gosec Security Scanner
+        continue-on-error: true
+        id: gosec
+        run: |
+          $HOME/go/bin/gosec -fmt sarif -out ../../results.sarif ./... || true
+          if [ -f ../../results.sarif ]; then
+            echo "sarif_exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "sarif_exists=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Upload SARIF file
+        if: steps.gosec.outputs.sarif_exists == 'true'
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: results.sarif
+          category: gosec
+
+      - name: Run govulncheck
+        continue-on-error: true
+        run: |
+          $HOME/go/bin/govulncheck ./... || echo "Vulnerabilities found, but continuing..."
