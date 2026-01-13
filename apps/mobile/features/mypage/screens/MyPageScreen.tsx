@@ -13,6 +13,7 @@ import {
 
 import Ionicons from '@expo/vector-icons/Ionicons';
 
+import { BackButton } from '@/components/BackButton';
 import { palette } from '@/constants/palette';
 import { TAB_BAR_SPACING } from '@/constants/TabBarSpacing';
 import { useReviews } from '@/features/reviews/ReviewsContext';
@@ -174,10 +175,7 @@ export default function MyPageScreen({
         >
           {/* いいねしたレビューヘッダー */}
           <View style={styles.headerContainer}>
-            <Pressable onPress={handleBackPress} style={styles.backButtonContainer}>
-              <Text style={styles.backButtonLabel}>＜</Text>
-              <Text style={styles.backButtonText}>戻る</Text>
-            </Pressable>
+            <BackButton onPress={handleBackPress} />
             <Text style={styles.headerTitle}>いいねしたレビュー</Text>
             <View style={styles.spacer} />
           </View>
@@ -247,10 +245,7 @@ export default function MyPageScreen({
         >
           {/* レビュー履歴ヘッダー */}
           <View style={styles.headerContainer}>
-            <Pressable onPress={handleBackPress} style={styles.backButtonContainer}>
-              <Text style={styles.backButtonLabel}>＜</Text>
-              <Text style={styles.backButtonText}>戻る</Text>
-            </Pressable>
+            <BackButton onPress={handleBackPress} />
             <Text style={styles.headerTitle}>レビュー履歴</Text>
             <View style={styles.spacer} />
           </View>
@@ -320,10 +315,7 @@ export default function MyPageScreen({
         >
           {/* お知らせヘッダー */}
           <View style={styles.headerContainer}>
-            <Pressable onPress={handleBackPress} style={styles.backButtonContainer}>
-              <Text style={styles.backButtonLabel}>＜</Text>
-              <Text style={styles.backButtonText}>戻る</Text>
-            </Pressable>
+            <BackButton onPress={handleBackPress} />
             <Text style={styles.headerTitle}>お知らせ</Text>
             <View style={styles.spacer} />
           </View>
@@ -347,10 +339,7 @@ export default function MyPageScreen({
         >
           {/* プロフィール編集ヘッダー */}
           <View style={styles.headerContainer}>
-            <Pressable onPress={handleBackPress} style={styles.backButtonContainer}>
-              <Text style={styles.backButtonLabel}>＜</Text>
-              <Text style={styles.backButtonText}>戻る</Text>
-            </Pressable>
+            <BackButton onPress={handleBackPress} />
             <Text style={styles.headerTitle}>プロフィール編集</Text>
             <View style={styles.spacer} />
           </View>
@@ -423,10 +412,7 @@ export default function MyPageScreen({
         >
           {/* 設定ヘッダー */}
           <View style={styles.headerContainer}>
-            <Pressable onPress={handleBackPress} style={styles.backButtonContainer}>
-              <Text style={styles.backButtonLabel}>＜</Text>
-              <Text style={styles.backButtonText}>戻る</Text>
-            </Pressable>
+            <BackButton onPress={handleBackPress} />
             <Text style={styles.headerTitle}>設定</Text>
             <View style={styles.spacer} />
           </View>
@@ -618,25 +604,6 @@ const styles = StyleSheet.create({
   },
   avatarLargeText: { color: palette.primary, fontSize: 32, fontWeight: '800' },
   avatarText: { color: palette.avatarText, fontSize: 22, fontWeight: '800' },
-  backButtonContainer: {
-    alignItems: 'center',
-    backgroundColor: palette.secondarySurface,
-    borderRadius: 20,
-    flexDirection: 'row',
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-  },
-  backButtonLabel: {
-    color: palette.primary,
-    fontSize: 20,
-    fontWeight: '700',
-    marginRight: 4,
-  },
-  backButtonText: {
-    color: palette.primary,
-    fontSize: 14,
-    fontWeight: '600',
-  },
   card: { backgroundColor: palette.surface, borderRadius: 20, padding: 12 },
   cardShadow: {
     elevation: 4,

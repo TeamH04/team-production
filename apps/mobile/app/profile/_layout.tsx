@@ -8,6 +8,7 @@ export default function ProfileStackLayout() {
         options={{
           title: 'プロフィール編集',
           headerShown: false,
+          presentation: 'modal',
         }}
       />
     </Stack>
