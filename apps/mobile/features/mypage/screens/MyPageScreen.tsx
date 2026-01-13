@@ -174,8 +174,9 @@ export default function MyPageScreen({
         >
           {/* いいねしたレビューヘッダー */}
           <View style={styles.headerContainer}>
-            <Pressable onPress={handleBackPress} style={styles.backButton}>
-              <Text style={styles.backButtonText}>←</Text>
+            <Pressable onPress={handleBackPress} style={styles.backButtonContainer}>
+              <Text style={styles.backButtonLabel}>＜</Text>
+              <Text style={styles.backButtonText}>戻る</Text>
             </Pressable>
             <Text style={styles.headerTitle}>いいねしたレビュー</Text>
             <View style={styles.spacer} />
@@ -246,8 +247,9 @@ export default function MyPageScreen({
         >
           {/* レビュー履歴ヘッダー */}
           <View style={styles.headerContainer}>
-            <Pressable onPress={handleBackPress} style={styles.backButton}>
-              <Text style={styles.backButtonText}>←</Text>
+            <Pressable onPress={handleBackPress} style={styles.backButtonContainer}>
+              <Text style={styles.backButtonLabel}>＜</Text>
+              <Text style={styles.backButtonText}>戻る</Text>
             </Pressable>
             <Text style={styles.headerTitle}>レビュー履歴</Text>
             <View style={styles.spacer} />
@@ -318,8 +320,9 @@ export default function MyPageScreen({
         >
           {/* お知らせヘッダー */}
           <View style={styles.headerContainer}>
-            <Pressable onPress={handleBackPress} style={styles.backButton}>
-              <Text style={styles.backButtonText}>←</Text>
+            <Pressable onPress={handleBackPress} style={styles.backButtonContainer}>
+              <Text style={styles.backButtonLabel}>＜</Text>
+              <Text style={styles.backButtonText}>戻る</Text>
             </Pressable>
             <Text style={styles.headerTitle}>お知らせ</Text>
             <View style={styles.spacer} />
@@ -344,8 +347,9 @@ export default function MyPageScreen({
         >
           {/* プロフィール編集ヘッダー */}
           <View style={styles.headerContainer}>
-            <Pressable onPress={handleBackPress} style={styles.backButton}>
-              <Text style={styles.backButtonText}>←</Text>
+            <Pressable onPress={handleBackPress} style={styles.backButtonContainer}>
+              <Text style={styles.backButtonLabel}>＜</Text>
+              <Text style={styles.backButtonText}>戻る</Text>
             </Pressable>
             <Text style={styles.headerTitle}>プロフィール編集</Text>
             <View style={styles.spacer} />
@@ -419,8 +423,9 @@ export default function MyPageScreen({
         >
           {/* 設定ヘッダー */}
           <View style={styles.headerContainer}>
-            <Pressable onPress={handleBackPress} style={styles.backButton}>
-              <Text style={styles.backButtonText}>←</Text>
+            <Pressable onPress={handleBackPress} style={styles.backButtonContainer}>
+              <Text style={styles.backButtonLabel}>＜</Text>
+              <Text style={styles.backButtonText}>戻る</Text>
             </Pressable>
             <Text style={styles.headerTitle}>設定</Text>
             <View style={styles.spacer} />
@@ -613,15 +618,24 @@ const styles = StyleSheet.create({
   },
   avatarLargeText: { color: palette.primary, fontSize: 32, fontWeight: '800' },
   avatarText: { color: palette.avatarText, fontSize: 22, fontWeight: '800' },
-  backButton: {
-    paddingHorizontal: 12,
+  backButtonContainer: {
+    alignItems: 'center',
+    backgroundColor: palette.secondarySurface,
+    borderRadius: 20,
+    flexDirection: 'row',
+    paddingHorizontal: 14,
     paddingVertical: 8,
-    width: 50,
+  },
+  backButtonLabel: {
+    color: palette.primary,
+    fontSize: 20,
+    fontWeight: '700',
+    marginRight: 4,
   },
   backButtonText: {
-    color: palette.accent,
-    fontSize: 28,
-    fontWeight: '700',
+    color: palette.primary,
+    fontSize: 14,
+    fontWeight: '600',
   },
   card: { backgroundColor: palette.surface, borderRadius: 20, padding: 12 },
   cardShadow: {
