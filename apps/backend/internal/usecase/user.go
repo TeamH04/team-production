@@ -25,14 +25,7 @@ func NewUserUseCase(userRepo output.UserRepository, reviewRepo output.ReviewRepo
 }
 
 func (uc *userUseCase) FindByID(ctx context.Context, userID string) (entity.User, error) {
-	user, err := uc.userRepo.FindByID(ctx, userID)
-	if err != nil {
-		if apperr.IsCode(err, apperr.CodeNotFound) {
-			return entity.User{}, ErrUserNotFound
-		}
-		return entity.User{}, err
-	}
-	return user, nil
+	return mustFindUser(ctx, uc.userRepo, userID)
 }
 
 func (uc *userUseCase) EnsureUser(ctx context.Context, input input.EnsureUserInput) (entity.User, error) {
@@ -63,12 +56,7 @@ func (uc *userUseCase) EnsureUser(ctx context.Context, input input.EnsureUserInp
 	}
 
 	role := strings.ToLower(strings.TrimSpace(input.Role))
-	validRoles := map[string]bool{
-		"user":  true,
-		"owner": true,
-		"admin": true,
-	}
-	if !validRoles[role] {
+	if !IsValidRole(role) {
 		role = "user"
 	}
 
@@ -103,11 +91,8 @@ func (uc *userUseCase) EnsureUser(ctx context.Context, input input.EnsureUserInp
 }
 
 func (uc *userUseCase) UpdateUser(ctx context.Context, userID string, input input.UpdateUserInput) (entity.User, error) {
-	user, err := uc.userRepo.FindByID(ctx, userID)
+	user, err := mustFindUser(ctx, uc.userRepo, userID)
 	if err != nil {
-		if apperr.IsCode(err, apperr.CodeNotFound) {
-			return entity.User{}, ErrUserNotFound
-		}
 		return entity.User{}, err
 	}
 
@@ -138,20 +123,12 @@ func (uc *userUseCase) UpdateUser(ctx context.Context, userID string, input inpu
 
 func (uc *userUseCase) UpdateUserRole(ctx context.Context, userID string, role string) error {
 	// ロールのバリデーション
-	validRoles := map[string]bool{
-		"user":  true,
-		"owner": true,
-		"admin": true,
-	}
-	if !validRoles[role] {
+	if !IsValidRole(role) {
 		return ErrInvalidRole
 	}
 
 	// ユーザーの存在確認
-	if _, err := uc.userRepo.FindByID(ctx, userID); err != nil {
-		if apperr.IsCode(err, apperr.CodeNotFound) {
-			return ErrUserNotFound
-		}
+	if err := ensureUserExists(ctx, uc.userRepo, userID); err != nil {
 		return err
 	}
 
@@ -160,10 +137,7 @@ func (uc *userUseCase) UpdateUserRole(ctx context.Context, userID string, role s
 
 func (uc *userUseCase) GetUserReviews(ctx context.Context, userID string) ([]entity.Review, error) {
 	// ユーザーの存在確認
-	if _, err := uc.userRepo.FindByID(ctx, userID); err != nil {
-		if apperr.IsCode(err, apperr.CodeNotFound) {
-			return nil, ErrUserNotFound
-		}
+	if err := ensureUserExists(ctx, uc.userRepo, userID); err != nil {
 		return nil, err
 	}
 

@@ -36,10 +36,7 @@ func NewFavoriteUseCase(
 
 func (uc *favoriteUseCase) GetUserFavorites(ctx context.Context, userID string) ([]entity.Favorite, error) {
 	// ユーザーの存在確認
-	if _, err := uc.userRepo.FindByID(ctx, userID); err != nil {
-		if apperr.IsCode(err, apperr.CodeNotFound) {
-			return nil, ErrUserNotFound
-		}
+	if err := ensureUserExists(ctx, uc.userRepo, userID); err != nil {
 		return nil, err
 	}
 
@@ -51,18 +48,12 @@ func (uc *favoriteUseCase) AddFavorite(ctx context.Context, userID string, store
 		return nil, ErrInvalidInput
 	}
 	// ユーザーの存在確認
-	if _, err := uc.userRepo.FindByID(ctx, userID); err != nil {
-		if apperr.IsCode(err, apperr.CodeNotFound) {
-			return nil, ErrUserNotFound
-		}
+	if err := ensureUserExists(ctx, uc.userRepo, userID); err != nil {
 		return nil, err
 	}
 
 	// ストアの存在確認
-	if _, err := uc.storeRepo.FindByID(ctx, storeID); err != nil {
-		if apperr.IsCode(err, apperr.CodeNotFound) {
-			return nil, ErrStoreNotFound
-		}
+	if err := ensureStoreExists(ctx, uc.storeRepo, storeID); err != nil {
 		return nil, err
 	}
 

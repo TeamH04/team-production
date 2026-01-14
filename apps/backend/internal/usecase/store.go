@@ -4,7 +4,6 @@ import (
 	"context"
 	"time"
 
-	"github.com/TeamH04/team-production/apps/backend/internal/apperr"
 	"github.com/TeamH04/team-production/apps/backend/internal/domain/entity"
 	"github.com/TeamH04/team-production/apps/backend/internal/usecase/input"
 	"github.com/TeamH04/team-production/apps/backend/internal/usecase/output"
@@ -35,14 +34,7 @@ func (uc *storeUseCase) GetAllStores(ctx context.Context) ([]entity.Store, error
 }
 
 func (uc *storeUseCase) GetStoreByID(ctx context.Context, id string) (*entity.Store, error) {
-	store, err := uc.storeRepo.FindByID(ctx, id)
-	if err != nil {
-		if apperr.IsCode(err, apperr.CodeNotFound) {
-			return nil, ErrStoreNotFound
-		}
-		return nil, err
-	}
-	return store, nil
+	return mustFindStore(ctx, uc.storeRepo, id)
 }
 
 func (uc *storeUseCase) CreateStore(ctx context.Context, in input.CreateStoreInput) (*entity.Store, error) {
@@ -83,11 +75,8 @@ func (uc *storeUseCase) CreateStore(ctx context.Context, in input.CreateStoreInp
 
 func (uc *storeUseCase) UpdateStore(ctx context.Context, id string, in input.UpdateStoreInput) (*entity.Store, error) {
 	// 既存のストアを取得
-	store, err := uc.storeRepo.FindByID(ctx, id)
+	store, err := mustFindStore(ctx, uc.storeRepo, id)
 	if err != nil {
-		if apperr.IsCode(err, apperr.CodeNotFound) {
-			return nil, ErrStoreNotFound
-		}
 		return nil, err
 	}
 
@@ -137,10 +126,7 @@ func (uc *storeUseCase) UpdateStore(ctx context.Context, id string, in input.Upd
 
 func (uc *storeUseCase) DeleteStore(ctx context.Context, id string) error {
 	// 存在確認
-	if _, err := uc.storeRepo.FindByID(ctx, id); err != nil {
-		if apperr.IsCode(err, apperr.CodeNotFound) {
-			return ErrStoreNotFound
-		}
+	if err := ensureStoreExists(ctx, uc.storeRepo, id); err != nil {
 		return err
 	}
 

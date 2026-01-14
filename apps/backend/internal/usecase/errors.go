@@ -11,7 +11,7 @@ var (
 	ErrStoreNotFound = apperr.New(apperr.CodeNotFound, errors.New("store not found"))
 
 	// ErrUserNotFound はユーザーが見つからない場合のエラー
-	ErrUserNotFound = errors.New("user not found")
+	ErrUserNotFound = apperr.New(apperr.CodeNotFound, errors.New("user not found"))
 
 	// ErrInvalidInput は入力が不正な場合のエラー
 	ErrInvalidInput = apperr.New(apperr.CodeInvalidInput, errors.New("invalid input"))

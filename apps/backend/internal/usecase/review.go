@@ -3,7 +3,6 @@ package usecase
 import (
 	"context"
 
-	"github.com/TeamH04/team-production/apps/backend/internal/apperr"
 	"github.com/TeamH04/team-production/apps/backend/internal/domain/entity"
 	"github.com/TeamH04/team-production/apps/backend/internal/usecase/input"
 	"github.com/TeamH04/team-production/apps/backend/internal/usecase/output"
@@ -36,10 +35,7 @@ func NewReviewUseCase(
 
 func (uc *reviewUseCase) GetReviewsByStoreID(ctx context.Context, storeID string, sort string, viewerID string) ([]entity.Review, error) {
 	// ストアの存在確認
-	if _, err := uc.storeRepo.FindByID(ctx, storeID); err != nil {
-		if apperr.IsCode(err, apperr.CodeNotFound) {
-			return nil, ErrStoreNotFound
-		}
+	if err := ensureStoreExists(ctx, uc.storeRepo, storeID); err != nil {
 		return nil, err
 	}
 
@@ -52,10 +48,7 @@ func (uc *reviewUseCase) Create(ctx context.Context, storeID string, userID stri
 	}
 
 	// ストアの存在確認
-	if _, err := uc.storeRepo.FindByID(ctx, storeID); err != nil {
-		if apperr.IsCode(err, apperr.CodeNotFound) {
-			return ErrStoreNotFound
-		}
+	if err := ensureStoreExists(ctx, uc.storeRepo, storeID); err != nil {
 		return err
 	}
 
@@ -105,10 +98,7 @@ func (uc *reviewUseCase) LikeReview(ctx context.Context, reviewID string, userID
 	if reviewID == "" || userID == "" {
 		return ErrInvalidInput
 	}
-	if _, err := uc.reviewRepo.FindByID(ctx, reviewID); err != nil {
-		if apperr.IsCode(err, apperr.CodeNotFound) {
-			return ErrReviewNotFound
-		}
+	if err := ensureReviewExists(ctx, uc.reviewRepo, reviewID); err != nil {
 		return err
 	}
 	return uc.reviewRepo.AddLike(ctx, reviewID, userID)
@@ -118,10 +108,7 @@ func (uc *reviewUseCase) UnlikeReview(ctx context.Context, reviewID string, user
 	if reviewID == "" || userID == "" {
 		return ErrInvalidInput
 	}
-	if _, err := uc.reviewRepo.FindByID(ctx, reviewID); err != nil {
-		if apperr.IsCode(err, apperr.CodeNotFound) {
-			return ErrReviewNotFound
-		}
+	if err := ensureReviewExists(ctx, uc.reviewRepo, reviewID); err != nil {
 		return err
 	}
 	return uc.reviewRepo.RemoveLike(ctx, reviewID, userID)

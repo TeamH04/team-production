@@ -3,7 +3,6 @@ package usecase
 import (
 	"context"
 
-	"github.com/TeamH04/team-production/apps/backend/internal/apperr"
 	"github.com/TeamH04/team-production/apps/backend/internal/domain/entity"
 	"github.com/TeamH04/team-production/apps/backend/internal/usecase/input"
 	"github.com/TeamH04/team-production/apps/backend/internal/usecase/output"
@@ -30,10 +29,7 @@ func NewMenuUseCase(menuRepo output.MenuRepository, storeRepo output.StoreReposi
 
 func (uc *menuUseCase) GetMenusByStoreID(ctx context.Context, storeID string) ([]entity.Menu, error) {
 	// ストアの存在確認
-	if _, err := uc.storeRepo.FindByID(ctx, storeID); err != nil {
-		if apperr.IsCode(err, apperr.CodeNotFound) {
-			return nil, ErrStoreNotFound
-		}
+	if err := ensureStoreExists(ctx, uc.storeRepo, storeID); err != nil {
 		return nil, err
 	}
 
@@ -42,10 +38,7 @@ func (uc *menuUseCase) GetMenusByStoreID(ctx context.Context, storeID string) ([
 
 func (uc *menuUseCase) CreateMenu(ctx context.Context, storeID string, in input.CreateMenuInput) (*entity.Menu, error) {
 	// ストアの存在確認
-	if _, err := uc.storeRepo.FindByID(ctx, storeID); err != nil {
-		if apperr.IsCode(err, apperr.CodeNotFound) {
-			return nil, ErrStoreNotFound
-		}
+	if err := ensureStoreExists(ctx, uc.storeRepo, storeID); err != nil {
 		return nil, err
 	}
 

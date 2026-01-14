@@ -3,7 +3,6 @@ package usecase
 import (
 	"context"
 
-	"github.com/TeamH04/team-production/apps/backend/internal/apperr"
 	"github.com/TeamH04/team-production/apps/backend/internal/domain/entity"
 	"github.com/TeamH04/team-production/apps/backend/internal/usecase/input"
 	"github.com/TeamH04/team-production/apps/backend/internal/usecase/output"
@@ -31,10 +30,7 @@ func NewReportUseCase(reportRepo output.ReportRepository, userRepo output.UserRe
 
 func (uc *reportUseCase) CreateReport(ctx context.Context, req input.CreateReportInput) (*entity.Report, error) {
 	// ユーザーの存在確認
-	if _, err := uc.userRepo.FindByID(ctx, req.UserID); err != nil {
-		if apperr.IsCode(err, apperr.CodeNotFound) {
-			return nil, ErrUserNotFound
-		}
+	if err := ensureUserExists(ctx, uc.userRepo, req.UserID); err != nil {
 		return nil, err
 	}
 
@@ -72,10 +68,7 @@ func (uc *reportUseCase) GetAllReports(ctx context.Context) ([]entity.Report, er
 
 func (uc *reportUseCase) HandleReport(ctx context.Context, reportID int64, action input.HandleReportAction) error {
 	// 通報の存在確認
-	if _, err := uc.reportRepo.FindByID(ctx, reportID); err != nil {
-		if apperr.IsCode(err, apperr.CodeNotFound) {
-			return ErrReportNotFound
-		}
+	if err := ensureReportExists(ctx, uc.reportRepo, reportID); err != nil {
 		return err
 	}
 
