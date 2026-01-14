@@ -1,96 +1,80 @@
-# Backend (Go)
+# Backend (Go / Echo)
 
 ## 概要
 
-- スマホアプリ向けの API サーバーを Go で提供します。
-- Supabase/PostgreSQL を Docker Compose で起動し、マイグレーションや Swagger 生成を Makefile で管理します。
-- **クリーンアーキテクチャ**を採用し、保守性・テスタビリティの高い設計を実現しています。
+- Go 1.24.6 / Echo / GORM / PostgreSQL の API サーバー。
+- Supabase Auth/Storage 連携と JWT 検証ミドルウェアで RBAC を適用。
+- 主要ルーティング: `/api/auth`、`/api/stores`、`/api/menus`、`/api/reviews`、`/api/users`、`/api/favorites`、`/api/reports`、`/api/admin/*`、`/api/media/*`。
 
-## アーキテクチャ
+## 前提条件
 
-このプロジェクトは**クリーンアーキテクチャ**に基づいて実装されています。詳細は [ARCHITECTURE.md](./ARCHITECTURE.md) を参照してください。
+- Go 1.24 系。
+- Docker / Docker Compose v2。
+- pnpm（ルート依存の取得に使用）。
 
-### レイヤー構成
+## セットアップ手順
 
-```text
-handlers/ (Presentation) → usecase/ (Application) → repository/ (Infrastructure)
-                                      ↓
-                                  domain/ (Domain)
-```
+1. 依存を取得する。
 
-- **handlers/**: HTTPリクエスト・レスポンスの処理
-- **usecase/**: ビジネスロジックの実装
-- **repository/**: データベースアクセスの抽象化
-- **domain/**: エンティティとドメインモデルの定義
-- Supabase/PostgreSQL を用いた API サーバーです（Echo + GORM）。
-- ローカル DB は `supabase/docker-compose.yml` を使用します。
-- CORS は環境変数で許可オリジンを設定できます。
+   ```bash
+   pnpm install
+   ```
 
-## 必要要件
+2. 環境変数を設定する。
 
-- Go 1.23 以上
-- Docker / Docker Compose v2
-- GNU Make（任意だが推奨）
+   ```bash
+   cp apps/backend/.env.example apps/backend/.env
+   ```
+
+   - `SUPABASE_URL`
+   - `SUPABASE_ANON_KEY`
+   - `SUPABASE_SERVICE_ROLE_KEY`
+   - `SUPABASE_JWT_SECRET`
+
+3. ローカルで起動する。
+
+   ```bash
+   make db-up      # Postgres のみ
+   make backend    # Postgres + API を Docker Compose で起動
+   ```
+
+4. マイグレーションを適用する。
+
+   ```bash
+   make db-init
+   ```
+
+## 主なコマンド（apps/backend/Makefile）
+
+| コマンド                                       | 用途                                                  |
+| ---------------------------------------------- | ----------------------------------------------------- |
+| `make run-dev`                                 | Postgres を起動し `go run ./cmd/server` を実行。      |
+| `make serve`                                   | 既存の DB で API のみ起動。                           |
+| `make db-up` / `make db-down` / `make destroy` | Docker Compose で DB 起動/停止/ボリューム削除。       |
+| `make db-init`                                 | ローカル Postgres に `migrations/` を適用。           |
+| `make migrate-new name=<name>`                 | 連番付き SQL マイグレーションを作成。                 |
+| `make migrate`                                 | `MIGRATE_DATABASE_URL` に対してマイグレーション適用。 |
+| `make test`                                    | Go テスト実行。                                       |
+| `make check`                                   | 簡易ヘルスチェック。                                  |
 
 ## 環境変数
 
-- `PORT`（任意）: サーバーの待ち受けポート。未指定時は 8080。占有時は近傍の空きポートへ自動フォールバック。
-- `DATABASE_URL`（任意）: Postgres DSN。未設定時はローカル向け既定値を使用。
-- `CORS_ALLOW_ORIGIN`（任意）: 例 `http://localhost:3000,https://example.com`（カンマ区切り）。未設定時は `*`。
-- `SUPABASE_JWT_SECRET`（必須）: サインアップ時の JWT 検証に使用。
+- ポート: `PORT`（デフォルト 8080。占有時は空きポートに自動フォールバック）。
+- DB: `DATABASE_URL`（未設定時は `postgres://postgres:postgres@localhost:5432/app?sslmode=disable`）。
+- CORS: `CORS_ALLOW_ORIGIN`（カンマ区切り。未設定は `*`）。
+- Supabase: `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_JWT_SECRET`。
+- Storage: `SUPABASE_STORAGE_BUCKET`（任意。デフォルト `media`）。
 
-## セットアップ
+## API 概要
 
-1. 環境変数を準備します（Supabase 認証は本番のキーをそのまま利用します）。
+- 認証: `/api/auth/signup`, `/login`, `/me`, `/role`。
+- 店舗: `/api/stores`, `/api/stores/:id`, `/api/stores/:id/menus`, `/api/stores/:id/reviews`。
+- ユーザー/お気に入り: `/api/users/me`, `/api/users/:id`, `/api/users/:id/favorites`。
+- 通報/管理: `/api/reports`, `/api/admin/*`。
+- メディア: `/api/media/upload`, `/api/media/:id`。
+- 詳細は `docs/API設計書.md` を参照。
 
-   ```bash
-   cp .env.example .env
-   # SUPABASE_URL / SUPABASE_* を本番と同じ値に設定
-   # DATABASE_URL は空で OK（Docker Compose 側で上書き）
-   ```
+## 開発時の補足
 
-2. Docker Compose でローカル DB と Go サーバーを起動します。
-
-   ```bash
-   # リポジトリルートで実行
-   docker compose up -d db backend
-   ```
-
-   - DB はローカルの PostgreSQL コンテナ (`tp-local-postgres`) を使用します。
-   - Supabase 認証まわりは `.env` に設定した本番キーをそのまま参照します。
-
-3. ローカルでマイグレーションを適用する場合は `make db-init` を使用してください（事前に `docker compose up -d db` で DB を起こしておく）。
-
-## よく使うコマンド
-
-| コマンド                       | 説明                                                                           |
-| ------------------------------ | ------------------------------------------------------------------------------ |
-| `make run-dev`                 | DB を起動して `go run ./cmd/server` を実行                                     |
-| `make db-up` / `make db-down`  | Docker Compose（リポジトリルートの `docker-compose.yml`）で DB を起動 / 停止   |
-| `make db-init`                 | ローカル Docker DB にマイグレーションを適用 (`db-up` を含む)                   |
-| `make destroy`                 | DB コンテナを停止しボリュームも削除                                            |
-| `make serve`                   | DB が稼働している前提で API のみを起動                                         |
-| `make migrate`                 | `migrations/` 配下の SQL をローカル Docker DSN (`MIGRATE_DATABASE_URL`) に適用 |
-| `make migrate-new name=<name>` | 連番付きの新規マイグレーションを作成                                           |
-| `make test`                    | Go のユニットテストを実行                                                      |
-| `make check`                   | CI 等で使える簡易ヘルスチェック                                                |
-
-## ヘルスチェック
-
-- `GET /health`: ライフネス確認
-- `GET /health/db`: DB 接続確認（JSON で `{"status":"db: OK"}` を返却）
-
-## 変更点（リファクタ）
-
-- CORS 設定を `config.AllowOrigins` に基づきミドルウェアで適用。
-- ヘルスチェックをハンドラーに集約し、DB 版も JSON 応答に統一。
-- エラーレスポンスを `handlers.JSONError` に統一。
-- `AuthHandler` で Bearer Token 取得・JWT 検証をヘルパー関数へ分離し、変数シャドーイングを解消。
-
-## Windows の補足
-
-`GO_BIN` が PATH 上に見つからない場合は、`Makefile` 実行時に自動検出されます。うまくいかない場合は以下のように明示指定してください。
-
-```bash
-make serve GO_BIN="C:/Program Files/Go/bin/go.exe"
-```
+- スキーマ基点は `migrations/000001_init.up.sql`。GORM モデルとの差分（`is_approved`、`updated_at`、メニュー価格など）は追加マイグレーションで補完する。
+- `GO_BIN` が見つからない場合は `make serve GO_BIN="C:/Program Files/Go/bin/go.exe"` のように指定する。

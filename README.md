@@ -1,94 +1,76 @@
-# team-production モノレポ
+# Team Production Monorepo
 
 ## 概要
 
-- モバイル(Expo)とバックエンド(Go)を一体管理するモノレポです。
-- パッケージ管理は pnpm、共通タスクは `Makefile` で提供しています。
+- モバイル（Expo）、Web（Next.js）、Go API をまとめた pnpm モノレポ。
+- フロントは `@team/shop-core` のダミー店舗データで動作。
+- バックエンドは Supabase Auth/Storage 連携の Echo + GORM。
 
-## ディレクトリ
+## 前提条件
 
-| パス           | 説明                                                            |
-| -------------- | --------------------------------------------------------------- |
-| `apps/mobile`  | Expo + React Native クライアント。詳細は各 `README.md` を参照。 |
-| `apps/backend` | Go 製の API。セットアップとコマンドは `README.md` を参照。      |
-| `supabase`     | ローカル DB 用の Docker Compose 一式。                          |
-| `docs/`        | アーキテクチャや運用ノートなどのドキュメント。                  |
+- Node.js 24.x / pnpm 10 以上（`corepack enable pnpm` 推奨）。
+- Go 1.24 系。
+- Docker Compose v2。
 
-## セットアップ
+## セットアップ手順
 
-1. Node.js 20 系、Go 1.23 以上、Docker(Compose v2) を用意します。
-2. ルートで依存関係をインストールします。
+1. 依存を取得する。
 
    ```bash
    corepack enable pnpm
    pnpm install
    ```
 
-3. 各アプリケーションの `.env.example` を `.env` にコピーし、必要値を設定します。
-4. Windows 環境では bash 前提の Makefile を使用するため、Git Bash (MINGW64) から `make` を実行してください（PowerShell / cmd では一部ターゲットが動作しません）。
+2. 環境変数を用意する。
+   - モバイル: `apps/mobile/.env.example` → `.env`
+     - `EXPO_PUBLIC_SUPABASE_URL`
+     - `EXPO_PUBLIC_SUPABASE_ANON_KEY`
+     - `EXPO_PUBLIC_WEB_BASE_URL`
+   - バックエンド: `apps/backend/.env.example` → `.env`
+     - `SUPABASE_URL` / `SUPABASE_ANON_KEY` / `SUPABASE_SERVICE_ROLE_KEY` / `SUPABASE_JWT_SECRET`
+3. Windows は Git Bash で `make` を利用する。
 
-## コマンド
+## 主なコマンド
 
-| コマンド                                      | 説明                                                                          |
-| --------------------------------------------- | ----------------------------------------------------------------------------- |
-| `make install`                                | pnpm ワークスペース全体の依存をインストール                                   |
-| `make backend`                                | DB 起動 + Go サーバー起動 (`apps/backend`)                                    |
-| `make backend-db-up` / `make backend-db-down` | DB スタックの起動 / 停止                                                      |
-| `make backend-db-init`                        | ローカル Docker データベースにマイグレーション適用 (`apps/backend`)           |
-| `make backend-test`                           | Go のユニットテスト実行                                                       |
-| `make frontend`                               | Expo Dev Server を起動 (`apps/mobile`)                                        |
-| `make dev`                                    | バックエンド + Expo を同時起動 (ポート競合時はログを確認して中断してください) |
+| コマンド                       | 用途                                                        |
+| ------------------------------ | ----------------------------------------------------------- |
+| `pnpm dev`                     | Expo (apps/mobile) をトンネル付きで起動。キャッシュクリア。 |
+| `pnpm --dir apps/mobile start` | モバイルのみを起動。                                        |
+| `pnpm --dir apps/web dev`      | Web を起動（http://localhost:3000）。                       |
+| `make dev`                     | Postgres + Go API + Expo を同時起動。                       |
+| `make backend`                 | Postgres + Go API を Docker Compose で起動。                |
+| `make db-up` / `make db-down`  | Postgres スタックの起動 / 停止。                            |
+| `make db-init`                 | ローカル Postgres にマイグレーション適用。                  |
 
-## CI/CD
+## 画面と機能（概要）
 
-### GitHub Actions ワークフロー
+- モバイル: ホーム/検索/お気に入り/マイページのタブ構成。Supabase OAuth ログイン。オーナー向け UI あり。
+- Web: カテゴリ・キーワード検索付きの店舗一覧と詳細ページ。
 
-プロジェクトには包括的な CI/CD パイプラインが設定されています（`.github/workflows/ci-cd.yml`）。
+## 開発時の補足
 
-#### トリガー条件
+- ルートの `pnpm dev` は Expo キャッシュを毎回クリアする起動ラッパー。
+- モバイル起動は `apps/mobile/scripts/start-dev.js` を経由し、非推奨フラグを排除。
 
-- `main` または `develop` ブランチへのプッシュ
-- `main` または `develop` ブランチへのプルリクエスト
+## 環境変数（最低限）
 
-#### ローカルでの CI チェック実行
+- モバイル: `EXPO_PUBLIC_SUPABASE_URL`, `EXPO_PUBLIC_SUPABASE_ANON_KEY`, `EXPO_PUBLIC_WEB_BASE_URL`。
+- バックエンド: `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_JWT_SECRET`。
 
-CI で実行されるチェックをローカルで事前に確認できます：
+## リポジトリ構成
 
-```bash
-# Lint チェック
-pnpm run lint
+| パス                 | 役割                                                |
+| -------------------- | --------------------------------------------------- |
+| `apps/mobile`        | Expo Router クライアント。Supabase OAuth 連携。     |
+| `apps/web`           | Next.js アプリ。検索/詳細 UI。                      |
+| `apps/backend`       | Go API。認証と店舗/メニュー/レビュー/お気に入り等。 |
+| `packages/`          | 共有データ・テーマ・型定義。                        |
+| `docs/`              | PRD / API / DB / 画面遷移ドキュメント。             |
+| `docker-compose.yml` | Postgres + API のローカルスタック。                 |
 
-# フォーマットチェック
-pnpm run format:check
+## 品質チェック
 
-# フォーマット自動修正
-pnpm run format
-
-# モバイルのフォーマット
-pnpm run format:mobile
-
-# バックエンドのテスト
-cd apps/backend
-go test -v -race ./...
-
-# セキュリティ監査
-pnpm audit --audit-level moderate
-
-# Go のセキュリティチェック (gosec)
-cd apps/backend
-go install github.com/securego/gosec/v2/cmd/gosec@latest
-gosec ./...
-```
-
-#### 環境変数
-
-CI/CD で使用される環境変数：
-
-- `NODE_VERSION`: `20.x`
-- `GO_VERSION`: `1.24.0`
-
-## ドキュメント
-
-- バックエンド: `apps/backend/README.md`
-- モバイル: `apps/mobile/README.md`
-- Expo 開発環境の補足: `apps/mobile/scripts/start-dev.js`（`make dev` で利用する起動スクリプト。Expo CLI の非推奨フラグを排除し、環境変数でポートを制御します）
+- `pnpm run lint`
+- `pnpm run format:check`
+- `pnpm run typecheck`
+- `make -C apps/backend test`

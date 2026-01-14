@@ -1,201 +1,200 @@
-# DBとE-R図
+# DB 設計
 
----
+## ドキュメント情報
 
-## 1. ドキュメント情報
+- オーナー: Team Production
+- ステータス: 更新中（最終更新: 2025-02-17）
+- 対象: `apps/backend`（PostgreSQL + GORM）
 
-- **作成者:** 佐野
-- **編集者:**
-- **ステータス:** draft
-- **最終更新日:** 2025/10/08
-- **メモ:** DB設計を変更した場合、SQLも変更すること
+## スキーマ概要
 
----
+> 初期マイグレーションは `migrations/000001_init.up.sql`。モデルでは下記カラムを想定しており、一部（`is_approved`、`updated_at`、メニュー `price` など）は追加入りのマイグレーションが必要です。
 
-## 2. DB設計
+### users
 
-### users（ユーザー情報）
+| カラム       | 型          | 備考                                            |
+| ------------ | ----------- | ----------------------------------------------- |
+| `user_id`    | UUID PK     | Supabase Auth と同一 ID                         |
+| `name`       | text        |                                                 |
+| `email`      | text UNIQUE | 小文字で保存                                    |
+| `icon_url`   | text        | nullable                                        |
+| `gender`     | text        | nullable                                        |
+| `birthday`   | date        | nullable                                        |
+| `role`       | text        | `user` / `owner` / `admin`（デフォルト `user`） |
+| `created_at` | timestamptz |                                                 |
+| `updated_at` | timestamptz |                                                 |
 
-| カラム名   | 型                   | 説明                           |
-| :--------- | :------------------- | :----------------------------- |
-| id         | UUID（32桁, 主キー） | Supabase Auth と連携           |
-| name       | string               | ユーザー名                     |
-| email      | string               | メールアドレス（validate付き） |
-| icon_url   | string               | デフォルト null                |
-| gender     | string               | 性別                           |
-| provider   | string               | 認証プロバイダ                 |
-| created_at | time.Time            | 作成日時                       |
-| updated_at | time.Time            | 更新日時                       |
+### stores
 
----
+| カラム                   | 型               | 備考                             |
+| ------------------------ | ---------------- | -------------------------------- |
+| `store_id`               | bigserial PK     |                                  |
+| `thumbnail_url`          | text             |                                  |
+| `name`                   | text             |                                  |
+| `opened_at`              | date             | nullable                         |
+| `description`            | text             | nullable                         |
+| `landscape_photos`       | text[]           | nullable                         |
+| `address`                | text             |                                  |
+| `place_id`               | text             | Google Place ID                  |
+| `opening_hours`          | text             | nullable                         |
+| `latitude` / `longitude` | double precision |                                  |
+| `is_approved`            | boolean          | デフォルト false（管理者承認用） |
+| `created_at`             | timestamptz      |                                  |
+| `updated_at`             | timestamptz      |                                  |
 
-### stores（店舗情報）
+### menus
 
-| カラム名         | 型                  | 説明                               |
-| :--------------- | :------------------ | :--------------------------------- |
-| id               | bigserial（主キー） | 店舗ID                             |
-| thumbnail_url    | string              | サムネイル写真                     |
-| name             | string              | 店舗名                             |
-| opened_at        | date                | オープン日                         |
-| description      | string              | 店舗の説明文                       |
-| landscape_photos | text[]              | 店舗風景写真の配列（複数枚を想定） |
-| address          | string              | 住所                               |
-| opening_hours    | string              | 営業時間（JSON形式も可）           |
-| latitude         | double precision    | 緯度                               |
-| longitude        | double precision    | 経度                               |
-| created_at       | timestamp           | 作成日時                           |
-| update_at        | time.Time           | 更新日時                           |
+| カラム        | 型                          | 備考     |
+| ------------- | --------------------------- | -------- |
+| `menu_id`     | bigserial PK                |          |
+| `store_id`    | bigint FK → stores.store_id |          |
+| `name`        | text                        |          |
+| `price`       | integer                     | nullable |
+| `image_url`   | text                        | nullable |
+| `description` | text                        | nullable |
+| `created_at`  | timestamptz                 |          |
 
----
+### reviews
 
-### favorites（お気に入り）
+| カラム       | 型                          | 備考     |
+| ------------ | --------------------------- | -------- |
+| `review_id`  | bigserial PK                |          |
+| `store_id`   | bigint FK → stores.store_id |          |
+| `user_id`    | uuid FK → users.user_id     |          |
+| `menu_id`    | bigint FK → menus.menu_id   |          |
+| `rating`     | integer check 1-5           |          |
+| `content`    | text                        | nullable |
+| `image_urls` | text[]                      | nullable |
+| `posted_at`  | timestamptz                 |          |
+| `created_at` | timestamptz                 |          |
 
-| カラム名                  | 型                             | 説明           |
-| :------------------------ | :----------------------------- | :------------- |
-| id                        | bigserial（主キー）            | お気に入りID   |
-| user_id                   | uuid（外部キー → users.id）    | ユーザーID     |
-| store_id                  | bigint（外部キー → stores.id） | 店舗ID         |
-| created_at                | timestamp                      | 登録日時       |
-| unique(user_id, store_id) | 制約                           | 重複登録を防ぐ |
+### favorites
 
----
+| カラム                      | 型                          | 備考         |
+| --------------------------- | --------------------------- | ------------ |
+| `favorite_id`               | bigserial PK                |              |
+| `user_id`                   | uuid FK → users.user_id     |              |
+| `store_id`                  | bigint FK → stores.store_id |              |
+| `created_at`                | timestamptz                 |              |
+| `UNIQUE(user_id, store_id)` |                             | 重複登録防止 |
 
-### menus（メニュー）
+### reports
 
-| カラム名    | 型                             | 説明         |
-| :---------- | :----------------------------- | :----------- |
-| id          | bigserial（主キー）            | メニューID   |
-| store_id    | bigint（外部キー → stores.id） | 店舗ID       |
-| name        | string                         | メニュー名   |
-| price       | integer                        | 価格         |
-| image_url   | string                         | メニュー写真 |
-| description | string                         | 説明文       |
-| created_at  | timestamp                      | 作成日時     |
+| カラム        | 型                      | 備考                                                         |
+| ------------- | ----------------------- | ------------------------------------------------------------ |
+| `report_id`   | bigserial PK            |                                                              |
+| `user_id`     | uuid FK → users.user_id |                                                              |
+| `target_type` | text                    | 例: `review`, `store`                                        |
+| `target_id`   | bigint                  | 対象 ID                                                      |
+| `reason`      | text                    |                                                              |
+| `status`      | text                    | `pending` / `resolved` / `rejected` （デフォルト `pending`） |
+| `created_at`  | timestamptz             |                                                              |
+| `updated_at`  | timestamptz             |                                                              |
 
----
+### media
 
-### reviews（レビュー）
+| カラム       | 型                      | 備考                        |
+| ------------ | ----------------------- | --------------------------- |
+| `media_id`   | bigserial PK            |                             |
+| `user_id`    | uuid FK → users.user_id | アップロード者              |
+| `url`        | text                    | Supabase Storage の公開 URL |
+| `file_type`  | text                    | MIME type                   |
+| `file_size`  | bigint                  | バイト数                    |
+| `created_at` | timestamptz             |                             |
 
-| カラム名   | 型                             | 説明               |
-| :--------- | :----------------------------- | :----------------- |
-| id         | bigserial（主キー）            | レビューID         |
-| store_id   | bigint（外部キー → stores.id） | 店舗ID             |
-| user_id    | uuid（外部キー → users.id）    | ユーザーID         |
-| menu_id    | bigint（外部キー → menus.id）  | メニューID         |
-| rating     | integer（1〜5）                | 評価               |
-| content    | string                         | レビュー内容       |
-| image_urls | text[]（NULL可）               | 写真（複数枚想定） |
-| posted_at  | timestamp                      | 投稿日時           |
-| created_at | timestamp                      | 作成日時           |
-
----
-
-## 4. E-R図
+## ER 図
 
 ```mermaid
 erDiagram
-    users ||--o{ reviews : "投稿する"
-    users ||--o{ favorites : "登録する"
-    stores ||--o{ reviews : "受ける"
-    stores ||--o{ favorites : "登録される"
+    users ||--o{ favorites : "保存"
+    users ||--o{ reviews : "投稿"
+    users ||--o{ reports : "通報"
+    users ||--o{ media : "アップロード"
     stores ||--o{ menus : "持つ"
-    menus ||--o{ reviews : "受ける"
+    stores ||--o{ reviews : "受ける"
+    stores ||--o{ favorites : "保存される"
+    menus ||--o{ reviews : "対象"
 
     users {
-        uuid id PK
-        string name
-        string email
-        string icon_url
-        string gender
-        string provider
-        timestamp created_at
-        timestamp updated_at
+        uuid user_id PK
+        text name
+        text email
+        text icon_url
+        text gender
+        date birthday
+        text role
+        timestamptz created_at
+        timestamptz updated_at
     }
 
     stores {
-        bigserial id PK
-        string thumbnail_url
-        string name
+        bigserial store_id PK
+        text thumbnail_url
+        text name
         date opened_at
-        string description
+        text description
         text[] landscape_photos
-        string address
-        string opening_hours
-        double_precision latitude
-        double_precision longitude
-        timestamp created_at
-        timestamp updated_at
-    }
-
-    favorites {
-        bigserial id PK
-        uuid user_id FK
-        bigint store_id FK
-        timestamp created_at
+        text address
+        text place_id
+        text opening_hours
+        double latitude
+        double longitude
+        boolean is_approved
+        timestamptz created_at
+        timestamptz updated_at
     }
 
     menus {
-        bigserial id PK
+        bigserial menu_id PK
         bigint store_id FK
-        string name
+        text name
         integer price
-        string image_url
-        string description
-        timestamp created_at
+        text image_url
+        text description
+        timestamptz created_at
     }
 
     reviews {
-        bigserial id PK
+        bigserial review_id PK
         bigint store_id FK
         uuid user_id FK
         bigint menu_id FK
         integer rating
-        string content
+        text content
         text[] image_urls
-        timestamp posted_at
-        timestamp created_at
+        timestamptz posted_at
+        timestamptz created_at
+    }
+
+    favorites {
+        bigserial favorite_id PK
+        uuid user_id FK
+        bigint store_id FK
+        timestamptz created_at
+    }
+
+    reports {
+        bigserial report_id PK
+        uuid user_id FK
+        text target_type
+        bigint target_id
+        text reason
+        text status
+        timestamptz created_at
+        timestamptz updated_at
+    }
+
+    media {
+        bigserial media_id PK
+        uuid user_id FK
+        text url
+        text file_type
+        bigint file_size
+        timestamptz created_at
     }
 ```
 
----
+## 今後の課題
 
-## 5. ミーティング後の追加
-
-### 店舗タブ切り替え用のDB設計
-
-#### 要件
-
-- アプリの店舗一覧を既存の `opened_at` で切り替えできるようにする。
-- 現在の日付から `opened_at` を引いた値を `new_stores` に代入。
-- 判定基準となる期間（日数）は **環境変数または設定テーブルで管理** し、将来的に変更可能とする。
-
----
-
-#### 実装方針
-
-- `new_stores` を利用し、クエリで条件抽出を行う。
-- 判定期間（日数）はパラメータで設定する。
-  - 例：`new_stores = 30`（環境変数または「新規店舗を1か月」とする場合）
-  - または `configurations` テーブルに管理キーとして保存する。
-
----
-
-#### サンプルクエリ（環境変数を利用する場合）
-
-```mermaid
-flowchart LR
-    A[アプリ起動] --> B{環境変数<br/>new_stores取得}
-    B --> C[new_stores = 30日]
-    C --> D[SQLクエリ実行]
-    D --> E[opened_at >= NOW<br/>- 30日]
-    E --> F[新規店舗リスト取得]
-    F --> G[opened_atで降順ソート]
-    G --> H[店舗一覧表示]
-```
-
-```sql
--- new_stores = 30 の場合
-SELECT * FROM stores
-WHERE opened_at >= NOW() - (INTERVAL '1 day' * 30)
-ORDER BY opened_at DESC;
-```
+- GORM モデルと初期マイグレーションの差分（`is_approved` / `updated_at` / `price` など）を補完する追加マイグレーションを作成する。
+- Supabase Storage での署名 URL 有効期限やオブジェクト名の運用ルールを決める。
