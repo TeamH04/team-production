@@ -200,9 +200,13 @@ export default function ShopDetailScreen() {
         ]);
         return;
       }
-      Alert.alert('お気に入りに失敗しました', message);
+      const isCurrentlyFavorite = isFavorite ? isFavorite(shop.id) : false;
+      const title = isCurrentlyFavorite
+        ? 'お気に入りの削除に失敗しました'
+        : 'お気に入りの追加に失敗しました';
+      Alert.alert(title, message);
     }
-  }, [router, shop, toggleFavorite]);
+  }, [router, shop, toggleFavorite, isFavorite]);
 
   if (storesLoading) {
     return (
