@@ -5,27 +5,12 @@ import (
 
 	"github.com/labstack/echo/v4"
 
-	"github.com/TeamH04/team-production/apps/backend/internal/presentation"
 	"github.com/TeamH04/team-production/apps/backend/internal/presentation/presenter"
 	"github.com/TeamH04/team-production/apps/backend/internal/usecase/input"
 )
 
 type MenuHandler struct {
 	menuUseCase input.MenuUseCase
-}
-
-type CreateMenuCommand struct {
-	Name        string
-	Price       *int
-	Description *string
-}
-
-func (c CreateMenuCommand) toInput() input.CreateMenuInput {
-	return input.CreateMenuInput{
-		Name:        c.Name,
-		Price:       c.Price,
-		Description: c.Description,
-	}
 }
 
 func NewMenuHandler(menuUseCase input.MenuUseCase) *MenuHandler {
@@ -52,10 +37,10 @@ func (h *MenuHandler) CreateMenu(c echo.Context) error {
 		return err
 	}
 	var dto createMenuDTO
-	if err := c.Bind(&dto); err != nil {
-		return presentation.NewBadRequest("invalid JSON")
+	if err := bindJSON(c, &dto); err != nil {
+		return err
 	}
-	menu, err := h.menuUseCase.CreateMenu(c.Request().Context(), storeID, dto.toCommand().toInput())
+	menu, err := h.menuUseCase.CreateMenu(c.Request().Context(), storeID, dto.toInput())
 	if err != nil {
 		return err
 	}
@@ -69,8 +54,8 @@ type createMenuDTO struct {
 	Description *string `json:"description"`
 }
 
-func (dto createMenuDTO) toCommand() CreateMenuCommand {
-	return CreateMenuCommand{
+func (dto createMenuDTO) toInput() input.CreateMenuInput {
+	return input.CreateMenuInput{
 		Name:        dto.Name,
 		Price:       dto.Price,
 		Description: dto.Description,

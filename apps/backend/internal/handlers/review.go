@@ -5,11 +5,8 @@ import (
 
 	"github.com/labstack/echo/v4"
 
-	"github.com/TeamH04/team-production/apps/backend/internal/presentation"
 	"github.com/TeamH04/team-production/apps/backend/internal/presentation/presenter"
-	"github.com/TeamH04/team-production/apps/backend/internal/presentation/requestcontext"
 	"github.com/TeamH04/team-production/apps/backend/internal/security"
-	"github.com/TeamH04/team-production/apps/backend/internal/usecase"
 	"github.com/TeamH04/team-production/apps/backend/internal/usecase/input"
 )
 
@@ -49,9 +46,9 @@ func (h *ReviewHandler) GetReviewsByStoreID(c echo.Context) error {
 }
 
 func (h *ReviewHandler) Create(c echo.Context) error {
-	user, err := requestcontext.GetUserFromContext(c.Request().Context())
+	user, err := getRequiredUser(c)
 	if err != nil {
-		return usecase.ErrUnauthorized
+		return err
 	}
 
 	storeID, err := parseUUIDParam(c, "id", "invalid store id")
@@ -59,21 +56,21 @@ func (h *ReviewHandler) Create(c echo.Context) error {
 		return err
 	}
 
-	var input input.CreateReview
-	if err := c.Bind(&input); err != nil {
-		return presentation.NewBadRequest("invalid JSON")
+	var in input.CreateReview
+	if err := bindJSON(c, &in); err != nil {
+		return err
 	}
 
-	if err := h.reviewUseCase.Create(c.Request().Context(), storeID, user.UserID, input); err != nil {
+	if err := h.reviewUseCase.Create(c.Request().Context(), storeID, user.UserID, in); err != nil {
 		return err
 	}
 	return c.NoContent(http.StatusCreated)
 }
 
 func (h *ReviewHandler) LikeReview(c echo.Context) error {
-	user, err := requestcontext.GetUserFromContext(c.Request().Context())
+	user, err := getRequiredUser(c)
 	if err != nil {
-		return usecase.ErrUnauthorized
+		return err
 	}
 
 	reviewID, err := parseUUIDParam(c, "id", "invalid review id")
@@ -88,9 +85,9 @@ func (h *ReviewHandler) LikeReview(c echo.Context) error {
 }
 
 func (h *ReviewHandler) UnlikeReview(c echo.Context) error {
-	user, err := requestcontext.GetUserFromContext(c.Request().Context())
+	user, err := getRequiredUser(c)
 	if err != nil {
-		return usecase.ErrUnauthorized
+		return err
 	}
 
 	reviewID, err := parseUUIDParam(c, "id", "invalid review id")

@@ -6,33 +6,13 @@ import (
 
 	"github.com/labstack/echo/v4"
 
-	"github.com/TeamH04/team-production/apps/backend/internal/presentation"
 	"github.com/TeamH04/team-production/apps/backend/internal/presentation/presenter"
-	"github.com/TeamH04/team-production/apps/backend/internal/presentation/requestcontext"
 	"github.com/TeamH04/team-production/apps/backend/internal/usecase"
 	"github.com/TeamH04/team-production/apps/backend/internal/usecase/input"
 )
 
 type UserHandler struct {
 	userUseCase input.UserUseCase
-}
-
-type UpdateUserCommand struct {
-	Name       *string
-	IconURL    *string
-	IconFileID *string
-	Gender     *string
-	Birthday   *time.Time
-}
-
-func (c UpdateUserCommand) toInput() input.UpdateUserInput {
-	return input.UpdateUserInput{
-		Name:       c.Name,
-		IconURL:    c.IconURL,
-		IconFileID: c.IconFileID,
-		Gender:     c.Gender,
-		Birthday:   c.Birthday,
-	}
 }
 
 func NewUserHandler(userUseCase input.UserUseCase) *UserHandler {
@@ -42,9 +22,9 @@ func NewUserHandler(userUseCase input.UserUseCase) *UserHandler {
 }
 
 func (h *UserHandler) GetMe(c echo.Context) error {
-	userFromCtx, err := requestcontext.GetUserFromContext(c.Request().Context())
+	userFromCtx, err := getRequiredUser(c)
 	if err != nil {
-		return usecase.ErrUnauthorized
+		return err
 	}
 
 	user, err := h.userUseCase.FindByID(c.Request().Context(), userFromCtx.UserID)
@@ -57,20 +37,20 @@ func (h *UserHandler) GetMe(c echo.Context) error {
 }
 
 func (h *UserHandler) UpdateUser(c echo.Context) error {
-	user, err := requestcontext.GetUserFromContext(c.Request().Context())
+	user, err := getRequiredUser(c)
 	if err != nil {
-		return usecase.ErrUnauthorized
+		return err
 	}
 
 	var dto updateUserDTO
-	if err := c.Bind(&dto); err != nil {
-		return presentation.NewBadRequest("invalid body")
+	if err := bindJSON(c, &dto); err != nil {
+		return err
 	}
 	userID := c.Param("id")
 	if userID != user.UserID {
 		return usecase.ErrForbidden
 	}
-	newUser, err := h.userUseCase.UpdateUser(c.Request().Context(), userID, dto.toCommand().toInput())
+	newUser, err := h.userUseCase.UpdateUser(c.Request().Context(), userID, dto.toInput())
 	if err != nil {
 		return err
 	}
@@ -94,8 +74,8 @@ type updateUserDTO struct {
 	Birthday   *time.Time `json:"birthday"`
 }
 
-func (dto updateUserDTO) toCommand() UpdateUserCommand {
-	return UpdateUserCommand{
+func (dto updateUserDTO) toInput() input.UpdateUserInput {
+	return input.UpdateUserInput{
 		Name:       dto.Name,
 		IconURL:    dto.IconURL,
 		IconFileID: dto.IconFileID,

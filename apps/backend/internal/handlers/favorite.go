@@ -5,19 +5,12 @@ import (
 
 	"github.com/labstack/echo/v4"
 
-	"github.com/TeamH04/team-production/apps/backend/internal/presentation"
 	"github.com/TeamH04/team-production/apps/backend/internal/presentation/presenter"
-	"github.com/TeamH04/team-production/apps/backend/internal/presentation/requestcontext"
-	"github.com/TeamH04/team-production/apps/backend/internal/usecase"
 	"github.com/TeamH04/team-production/apps/backend/internal/usecase/input"
 )
 
 type FavoriteHandler struct {
 	favoriteUseCase input.FavoriteUseCase
-}
-
-type AddFavoriteCommand struct {
-	StoreID string
 }
 
 func NewFavoriteHandler(favoriteUseCase input.FavoriteUseCase) *FavoriteHandler {
@@ -35,14 +28,14 @@ func (h *FavoriteHandler) GetUserFavorites(c echo.Context) error {
 }
 
 func (h *FavoriteHandler) AddFavorite(c echo.Context) error {
-	user, err := requestcontext.GetUserFromContext(c.Request().Context())
+	user, err := getRequiredUser(c)
 	if err != nil {
-		return usecase.ErrUnauthorized
+		return err
 	}
 
 	var dto addFavoriteDTO
-	if err := c.Bind(&dto); err != nil {
-		return presentation.NewBadRequest("invalid JSON")
+	if err := bindJSON(c, &dto); err != nil {
+		return err
 	}
 
 	favorite, err := h.favoriteUseCase.AddFavorite(c.Request().Context(), user.UserID, dto.StoreID)
@@ -54,9 +47,9 @@ func (h *FavoriteHandler) AddFavorite(c echo.Context) error {
 }
 
 func (h *FavoriteHandler) RemoveFavorite(c echo.Context) error {
-	user, err := requestcontext.GetUserFromContext(c.Request().Context())
+	user, err := getRequiredUser(c)
 	if err != nil {
-		return usecase.ErrUnauthorized
+		return err
 	}
 
 	storeID, err := parseUUIDParam(c, "store_id", "invalid store_id")

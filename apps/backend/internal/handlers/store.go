@@ -6,69 +6,12 @@ import (
 
 	"github.com/labstack/echo/v4"
 
-	"github.com/TeamH04/team-production/apps/backend/internal/presentation"
 	"github.com/TeamH04/team-production/apps/backend/internal/presentation/presenter"
 	"github.com/TeamH04/team-production/apps/backend/internal/usecase/input"
 )
 
 type StoreHandler struct {
 	storeUseCase input.StoreUseCase
-}
-
-type CreateStoreCommand struct {
-	Name            string
-	Address         string
-	ThumbnailFileID *string
-	OpenedAt        *time.Time
-	Description     *string
-	OpeningHours    *string
-	Latitude        float64
-	Longitude       float64
-	GoogleMapURL    *string
-	PlaceID         string
-}
-
-func (c CreateStoreCommand) toInput() input.CreateStoreInput {
-	return input.CreateStoreInput{
-		Name:            c.Name,
-		Address:         c.Address,
-		ThumbnailFileID: c.ThumbnailFileID,
-		OpenedAt:        c.OpenedAt,
-		Description:     c.Description,
-		OpeningHours:    c.OpeningHours,
-		Latitude:        c.Latitude,
-		Longitude:       c.Longitude,
-		GoogleMapURL:    c.GoogleMapURL,
-		PlaceID:         c.PlaceID,
-	}
-}
-
-type UpdateStoreCommand struct {
-	Name            *string
-	Address         *string
-	ThumbnailFileID *string
-	OpenedAt        *time.Time
-	Description     *string
-	OpeningHours    *string
-	Latitude        *float64
-	Longitude       *float64
-	GoogleMapURL    *string
-	PlaceID         *string
-}
-
-func (c UpdateStoreCommand) toInput() input.UpdateStoreInput {
-	return input.UpdateStoreInput{
-		Name:            c.Name,
-		Address:         c.Address,
-		ThumbnailFileID: c.ThumbnailFileID,
-		OpenedAt:        c.OpenedAt,
-		Description:     c.Description,
-		OpeningHours:    c.OpeningHours,
-		Latitude:        c.Latitude,
-		Longitude:       c.Longitude,
-		GoogleMapURL:    c.GoogleMapURL,
-		PlaceID:         c.PlaceID,
-	}
 }
 
 func NewStoreHandler(storeUseCase input.StoreUseCase) *StoreHandler {
@@ -100,10 +43,10 @@ func (h *StoreHandler) GetStoreByID(c echo.Context) error {
 
 func (h *StoreHandler) CreateStore(c echo.Context) error {
 	var dto createStoreDTO
-	if err := c.Bind(&dto); err != nil {
-		return presentation.NewBadRequest("invalid JSON")
+	if err := bindJSON(c, &dto); err != nil {
+		return err
 	}
-	store, err := h.storeUseCase.CreateStore(c.Request().Context(), dto.toCommand().toInput())
+	store, err := h.storeUseCase.CreateStore(c.Request().Context(), dto.toInput())
 	if err != nil {
 		return err
 	}
@@ -117,10 +60,10 @@ func (h *StoreHandler) UpdateStore(c echo.Context) error {
 		return err
 	}
 	var dto updateStoreDTO
-	if err := c.Bind(&dto); err != nil {
-		return presentation.NewBadRequest("invalid body")
+	if err := bindJSON(c, &dto); err != nil {
+		return err
 	}
-	store, err := h.storeUseCase.UpdateStore(c.Request().Context(), id, dto.toCommand().toInput())
+	store, err := h.storeUseCase.UpdateStore(c.Request().Context(), id, dto.toInput())
 	if err != nil {
 		return err
 	}
@@ -152,8 +95,8 @@ type createStoreDTO struct {
 	PlaceID         string     `json:"place_id"`
 }
 
-func (dto createStoreDTO) toCommand() CreateStoreCommand {
-	return CreateStoreCommand{
+func (dto createStoreDTO) toInput() input.CreateStoreInput {
+	return input.CreateStoreInput{
 		Name:            dto.Name,
 		Address:         dto.Address,
 		ThumbnailFileID: dto.ThumbnailFileID,
@@ -180,8 +123,8 @@ type updateStoreDTO struct {
 	PlaceID         *string    `json:"place_id"`
 }
 
-func (dto updateStoreDTO) toCommand() UpdateStoreCommand {
-	return UpdateStoreCommand{
+func (dto updateStoreDTO) toInput() input.UpdateStoreInput {
+	return input.UpdateStoreInput{
 		Name:            dto.Name,
 		Address:         dto.Address,
 		ThumbnailFileID: dto.ThumbnailFileID,
