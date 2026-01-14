@@ -1,4 +1,5 @@
 import type { ApiFavorite } from '@/lib/api';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import assert from 'node:assert/strict';
 import { afterEach, mock, test } from 'node:test';
 import type { ReactElement } from 'react';
@@ -16,13 +17,26 @@ type RendererHandle = {
 };
 
 const createRenderer = (
-  TestRenderer as unknown as { create: (element: ReactElement) => RendererHandle }
+  TestRenderer as unknown as {
+    create: (element: ReactElement) => RendererHandle;
+  }
 ).create;
 
 const globalForReactAct = globalThis as typeof globalThis & {
   IS_REACT_ACT_ENVIRONMENT?: boolean;
 };
 globalForReactAct.IS_REACT_ACT_ENVIRONMENT = true;
+
+const createSupabaseStub = (): SupabaseClient => {
+  return {
+    auth: {
+      onAuthStateChange: (callback: unknown) => {
+        void callback;
+        return { data: { subscription: { unsubscribe: () => undefined } } };
+      },
+    },
+  } as unknown as SupabaseClient;
+};
 
 const setupRemoteDependencies = () => {
   const userId = 'user-1';
@@ -60,12 +74,14 @@ const setupRemoteDependencies = () => {
       return undefined;
     }
   );
+  const getSupabase = mock.fn(createSupabaseStub);
 
   __setFavoritesDependenciesForTesting({
     resolveAuth,
     fetchUserFavorites,
     addFavoriteApi,
     removeFavoriteApi,
+    getSupabase,
     isSupabaseConfigured: () => false,
   });
 
@@ -103,12 +119,14 @@ const setupUnauthenticatedDependencies = () => {
     void token;
     return undefined;
   });
+  const getSupabase = mock.fn(createSupabaseStub);
 
   __setFavoritesDependenciesForTesting({
     resolveAuth,
     fetchUserFavorites,
     addFavoriteApi,
     removeFavoriteApi,
+    getSupabase,
     isSupabaseConfigured: () => false,
   });
 
@@ -117,6 +135,50 @@ const setupUnauthenticatedDependencies = () => {
     fetchUserFavorites,
     removeFavoriteApi,
     resolveAuth,
+  };
+};
+
+const setupLocalDependencies = () => {
+  const resolveAuth = mock.fn(async () => ({ mode: 'local' }) as const);
+  const fetchUserFavorites = mock.fn(async (userId: string, token?: string) => {
+    void userId;
+    void token;
+    return [];
+  });
+  const addFavoriteApi = mock.fn(
+    async (userId: string, storeId: string, token: string): Promise<ApiFavorite> => {
+      void userId;
+      void storeId;
+      void token;
+      return {
+        user_id: 'local-user',
+        store_id: 'local-store',
+        created_at: '2026-01-01T00:00:00.000Z',
+        store: null,
+      };
+    }
+  );
+  const removeFavoriteApi = mock.fn(async (userId: string, storeId: string, token: string) => {
+    void userId;
+    void storeId;
+    void token;
+    return undefined;
+  });
+  const getSupabase = mock.fn(createSupabaseStub);
+
+  __setFavoritesDependenciesForTesting({
+    resolveAuth,
+    fetchUserFavorites,
+    addFavoriteApi,
+    removeFavoriteApi,
+    getSupabase,
+    isSupabaseConfigured: () => false,
+  });
+
+  return {
+    addFavoriteApi,
+    fetchUserFavorites,
+    removeFavoriteApi,
   };
 };
 
@@ -260,6 +322,97 @@ test('removeFavorite throws auth_required when unauthenticated', async () => {
   );
 
   assert.equal(removeFavoriteApi.mock.calls.length, 0);
+
+  unmount();
+});
+
+test('addFavorite throws auth_required when unauthenticated', async () => {
+  const { addFavoriteApi } = setupUnauthenticatedDependencies();
+  const { getValue, unmount } = createFavoritesHarness();
+
+  await assert.rejects(
+    async () => {
+      await act(async () => {
+        await getValue().addFavorite('shop-5');
+      });
+    },
+    (err: unknown) => err instanceof Error && err.message === 'auth_required'
+  );
+
+  assert.equal(addFavoriteApi.mock.calls.length, 0);
+
+  unmount();
+});
+
+test('toggleFavorite throws auth_required when unauthenticated', async () => {
+  const { addFavoriteApi, removeFavoriteApi } = setupUnauthenticatedDependencies();
+  const { getValue, unmount } = createFavoritesHarness();
+
+  await assert.rejects(
+    async () => {
+      await act(async () => {
+        await getValue().toggleFavorite('shop-6');
+      });
+    },
+    (err: unknown) => err instanceof Error && err.message === 'auth_required'
+  );
+
+  assert.equal(addFavoriteApi.mock.calls.length, 0);
+  assert.equal(removeFavoriteApi.mock.calls.length, 0);
+
+  unmount();
+});
+
+test('addFavorite updates state locally without API calls', async () => {
+  const { addFavoriteApi } = setupLocalDependencies();
+  const { getValue, unmount } = createFavoritesHarness();
+
+  await act(async () => {
+    await getValue().addFavorite('shop-7');
+  });
+
+  assert.equal(addFavoriteApi.mock.calls.length, 0);
+  assert.equal(getValue().isFavorite('shop-7'), true);
+
+  unmount();
+});
+
+test('removeFavorite updates state locally without API calls', async () => {
+  const { addFavoriteApi, removeFavoriteApi } = setupLocalDependencies();
+  const { getValue, unmount } = createFavoritesHarness();
+
+  await act(async () => {
+    await getValue().addFavorite('shop-8');
+  });
+
+  await act(async () => {
+    await getValue().removeFavorite('shop-8');
+  });
+
+  assert.equal(addFavoriteApi.mock.calls.length, 0);
+  assert.equal(removeFavoriteApi.mock.calls.length, 0);
+  assert.equal(getValue().isFavorite('shop-8'), false);
+
+  unmount();
+});
+
+test('toggleFavorite updates state locally without API calls', async () => {
+  const { addFavoriteApi, removeFavoriteApi } = setupLocalDependencies();
+  const { getValue, unmount } = createFavoritesHarness();
+
+  await act(async () => {
+    await getValue().toggleFavorite('shop-9');
+  });
+
+  assert.equal(getValue().isFavorite('shop-9'), true);
+
+  await act(async () => {
+    await getValue().toggleFavorite('shop-9');
+  });
+
+  assert.equal(addFavoriteApi.mock.calls.length, 0);
+  assert.equal(removeFavoriteApi.mock.calls.length, 0);
+  assert.equal(getValue().isFavorite('shop-9'), false);
 
   unmount();
 });

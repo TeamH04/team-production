@@ -7,7 +7,17 @@ import type { Shop } from '@team/shop-core';
 import { withAlpha } from '@team/theme';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
-import { FlatList, Image, Modal, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import {
+  Alert,
+  FlatList,
+  Image,
+  Modal,
+  Pressable,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 
 const BUDGET_LABEL: Record<Shop['budget'], string> = {
   $: '¥',
@@ -44,8 +54,8 @@ export default function FavoritesScreen() {
 
   useFocusEffect(
     useCallback(() => {
-      void loadFavorites().catch(err => {
-        console.warn('[favorites] failed to load favorites', err);
+      void loadFavorites().catch(() => {
+        Alert.alert('お気に入りの取得に失敗しました', '通信環境を確認してもう一度お試しください。');
       });
     }, [loadFavorites])
   );
