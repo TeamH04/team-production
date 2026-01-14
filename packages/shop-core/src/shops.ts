@@ -7,6 +7,16 @@ export type ShopCategory =
   | 'バー・居酒屋'
   | 'ビュッフェ・食べ放題';
 
+export const MENU_TAB_MAP: Record<ShopCategory, string[]> = {
+  レストラン: ['ランチ', 'ディナー', 'ドリンク', 'デザート'],
+  'カフェ・喫茶': ['ドリンク', 'フード', 'スイーツ'],
+  'ベーカリー・パン': ['惣菜パン', '菓子パン', 'ドリンク'],
+  'スイーツ・デザート専門': ['ジェラート', '焼き菓子', 'ドリンク'],
+  'ファストフード・テイクアウト': ['メイン', 'サイド', 'ドリンク'],
+  'バー・居酒屋': ['おつまみ', 'メイン', 'お酒'],
+  'ビュッフェ・食べ放題': ['料理', 'デザート', 'ドリンク'],
+};
+
 export interface Shop {
   id: string;
   name: string;
@@ -21,7 +31,12 @@ export interface Shop {
   imageUrl: string;
   imageUrls?: string[]; // 複数画像対応
   tags: string[];
-  menu?: { id: string; name: string }[];
+  menu?: {
+    id: string;
+    name: string;
+    category: string;
+    price: string;
+  }[];
 }
 
 // NOTE: This is a shared placeholder Google Place ID used for demo/development data.
@@ -49,9 +64,9 @@ export const SHOPS: Shop[] = [
     ],
     tags: ['コーヒー', '静かな空間', 'Wi-Fi'],
     menu: [
-      { id: 'm-1-1', name: 'ハンドドリップ コーヒー' },
-      { id: 'm-1-2', name: 'カフェラテ' },
-      { id: 'm-1-3', name: 'シナモンロール' },
+      { id: 'm-1-1', name: 'ハンドドリップ コーヒー', category: 'ドリンク', price: '¥¥¥' },
+      { id: 'm-1-2', name: 'カフェラテ', category: 'ドリンク', price: '¥¥¥' },
+      { id: 'm-1-3', name: 'シナモンロール', category: 'スイーツ', price: '¥¥¥' },
     ],
   },
   {
@@ -74,9 +89,9 @@ export const SHOPS: Shop[] = [
     ],
     tags: ['寿司', 'カウンター', '記念日'],
     menu: [
-      { id: 'm-2-1', name: 'おまかせコース' },
-      { id: 'm-2-2', name: '白身三昧' },
-      { id: 'm-2-3', name: '穴子一本握り' },
+      { id: 'm-2-1', name: '特選おまかせコース', category: 'ディナー', price: '¥¥¥' },
+      { id: 'm-2-2', name: '白身三昧ランチ', category: 'ランチ', price: '¥¥¥' },
+      { id: 'm-2-3', name: '穴子一本握り', category: 'ランチ', price: '¥¥¥' },
     ],
   },
   {
@@ -99,9 +114,9 @@ export const SHOPS: Shop[] = [
     ],
     tags: ['ジェラート', '季節限定', 'イートイン'],
     menu: [
-      { id: 'm-3-1', name: 'ピスタチオ ジェラート' },
-      { id: 'm-3-2', name: '塩キャラメル クッキーサンド' },
-      { id: 'm-3-3', name: '季節のフルーツパフェ' },
+      { id: 'm-3-1', name: 'ピスタチオ ジェラート', category: 'ジェラート', price: '¥¥¥' },
+      { id: 'm-3-2', name: '塩キャラメル クッキーサンド', category: '焼き菓子', price: '¥¥¥' },
+      { id: 'm-3-3', name: '季節のフルーツパフェ', category: 'ジェラート', price: '¥¥¥' },
     ],
   },
   {
@@ -123,6 +138,10 @@ export const SHOPS: Shop[] = [
       'https://images.unsplash.com/photo-1470337458703-46ad1756a187?auto=format&fit=crop&w=600&q=80',
     ],
     tags: ['ワイン', '大人の雰囲気', '音楽'],
+    menu: [
+      { id: 'm-4-1', name: 'グラスワイン', category: 'お酒', price: '¥¥¥' },
+      { id: 'm-4-2', name: '生ハム盛り合わせ', category: 'おつまみ', price: '¥¥¥' },
+    ],
   },
   {
     id: 'shop-5',
@@ -143,6 +162,10 @@ export const SHOPS: Shop[] = [
       'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=600&q=80',
     ],
     tags: ['ヘルシー', 'テイクアウト', 'ランチ'],
+    menu: [
+      { id: 'm-5-1', name: 'ヴィーガンサラダセット', category: 'ランチ', price: '¥¥¥' },
+      { id: 'm-5-2', name: 'デトックススープ', category: 'ランチ', price: '¥¥¥' },
+    ],
   },
   {
     id: 'shop-6',
@@ -164,9 +187,9 @@ export const SHOPS: Shop[] = [
     ],
     tags: ['パン', 'モーニング', 'テラス席'],
     menu: [
-      { id: 'm-6-1', name: 'クロワッサン' },
-      { id: 'm-6-2', name: 'サワードウ' },
-      { id: 'm-6-3', name: 'チョコレートブレッド' },
+      { id: 'm-6-1', name: '明太フランス', category: '惣菜パン', price: '¥¥¥' },
+      { id: 'm-6-2', name: '焼きたてクロワッサン', category: '菓子パン', price: '¥¥¥' },
+      { id: 'm-6-3', name: 'アイスコーヒー', category: 'ドリンク', price: '¥¥¥' },
     ],
   },
   {
@@ -188,6 +211,10 @@ export const SHOPS: Shop[] = [
       'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=600&q=80',
     ],
     tags: ['ビュッフェ', '野菜たっぷり', 'スパイス'],
+    menu: [
+      { id: 'm-8-1', name: 'ランチ食べ放題', category: '料理', price: '¥¥¥' },
+      { id: 'm-8-2', name: '豆腐のヘルシープリン', category: 'デザート', price: '¥¥¥' },
+    ],
   },
   {
     id: 'shop-10',
@@ -208,6 +235,10 @@ export const SHOPS: Shop[] = [
       'https://images.unsplash.com/photo-1545239351-1141bd82e8a6?auto=format&fit=crop&w=600&q=80',
     ],
     tags: ['ゲーム', 'グループ', '夜遊び'],
+    menu: [
+      { id: 'm-10-1', name: '自家製ナチョス', category: 'おつまみ', price: '¥¥¥' },
+      { id: 'm-10-2', name: 'レトロソーダカクテル', category: 'お酒', price: '¥¥¥' },
+    ],
   },
   {
     id: 'shop-11',
@@ -228,6 +259,10 @@ export const SHOPS: Shop[] = [
       'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=600&q=80',
     ],
     tags: ['シーフード', 'ディナー', '予約制'],
+    menu: [
+      { id: 'm-11-1', name: '本日のお魚グリル', category: 'ディナー', price: '¥¥¥' },
+      { id: 'm-11-2', name: '白ワイン グラス', category: 'ドリンク', price: '¥¥¥' },
+    ],
   },
   {
     id: 'shop-12',
@@ -248,6 +283,10 @@ export const SHOPS: Shop[] = [
       'https://images.unsplash.com/photo-1470337458703-46ad1756a187?auto=format&fit=crop&w=600&q=80',
     ],
     tags: ['ジャズ', 'ライブ', '夜景'],
+    menu: [
+      { id: 'm-12-1', name: 'クラフトジントニック', category: 'お酒', price: '¥¥¥' },
+      { id: 'm-12-2', name: 'ミックスナッツ燻製', category: 'おつまみ', price: '¥¥¥' },
+    ],
   },
   {
     id: 'shop-14',
@@ -268,6 +307,10 @@ export const SHOPS: Shop[] = [
       'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80',
     ],
     tags: ['デリ', 'テイクアウト', 'ヘルシー'],
+    menu: [
+      { id: 'm-14-1', name: 'サーモンPokeボウル', category: 'メイン', price: '¥¥¥' },
+      { id: 'm-14-2', name: 'オレンジジュース', category: 'ドリンク', price: '¥¥¥' },
+    ],
   },
 ];
 
