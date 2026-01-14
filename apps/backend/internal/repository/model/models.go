@@ -15,11 +15,17 @@ type Store struct {
 	GoogleMapURL    *string        `gorm:"column:google_map_url"`
 	PlaceID         string         `gorm:"column:place_id"`
 	IsApproved      bool           `gorm:"column:is_approved;default:false"`
+	Category        string         `gorm:"column:category;default:'カフェ・喫茶'"`
+	Budget          string         `gorm:"column:budget;default:'$$'"`
+	AverageRating   float64        `gorm:"column:average_rating;default:0.0"`
+	DistanceMinutes int            `gorm:"column:distance_minutes;default:5"`
 	CreatedAt       time.Time      `gorm:"column:created_at"`
 	UpdatedAt       time.Time      `gorm:"column:updated_at"`
 	Menus           []Menu         `gorm:"foreignKey:StoreID;references:StoreID"`
 	Reviews         []Review       `gorm:"foreignKey:StoreID;references:StoreID"`
 	ThumbnailFile   *File          `gorm:"foreignKey:ThumbnailFileID;references:FileID"`
+	Tags            []StoreTag     `gorm:"foreignKey:StoreID;references:StoreID"`
+	Files           []File         `gorm:"many2many:store_files;joinForeignKey:StoreID;joinReferences:FileID"`
 }
 
 type Menu struct {
@@ -61,6 +67,14 @@ type StoreFile struct {
 }
 
 func (StoreFile) TableName() string { return "store_files" }
+
+type StoreTag struct {
+	StoreID   string    `gorm:"column:store_id;primaryKey;type:uuid"`
+	Tag       string    `gorm:"column:tag;primaryKey"`
+	CreatedAt time.Time `gorm:"column:created_at"`
+}
+
+func (StoreTag) TableName() string { return "store_tags" }
 
 type ReviewMenu struct {
 	ReviewID  string    `gorm:"column:review_id;primaryKey;type:uuid"`

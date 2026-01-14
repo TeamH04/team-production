@@ -21,6 +21,12 @@ type StoreResponse struct {
 	Longitude       float64          `json:"longitude"`
 	GoogleMapURL    *string          `json:"google_map_url,omitempty"`
 	IsApproved      bool             `json:"is_approved"`
+	Category        string           `json:"category"`
+	Budget          string           `json:"budget"`
+	AverageRating   float64          `json:"average_rating"`
+	DistanceMinutes int              `json:"distance_minutes"`
+	Tags            []string         `json:"tags"`
+	ImageUrls       []string         `json:"image_urls"`
 	CreatedAt       time.Time        `json:"created_at"`
 	UpdatedAt       time.Time        `json:"updated_at"`
 	Menus           []MenuResponse   `json:"menus,omitempty"`
@@ -132,8 +138,20 @@ func NewStoreResponse(store entity.Store) StoreResponse {
 		Longitude:       store.Longitude,
 		GoogleMapURL:    store.GoogleMapURL,
 		IsApproved:      store.IsApproved,
+		Category:        store.Category,
+		Budget:          store.Budget,
+		AverageRating:   store.AverageRating,
+		DistanceMinutes: store.DistanceMinutes,
+		Tags:            store.Tags,
+		ImageUrls:       extractImageUrls(store.Files),
 		CreatedAt:       store.CreatedAt,
 		UpdatedAt:       store.UpdatedAt,
+	}
+	if resp.Tags == nil {
+		resp.Tags = []string{}
+	}
+	if resp.ImageUrls == nil {
+		resp.ImageUrls = []string{}
 	}
 	if store.ThumbnailFile != nil {
 		file := NewFileResponse(*store.ThumbnailFile)
@@ -146,6 +164,17 @@ func NewStoreResponse(store entity.Store) StoreResponse {
 		resp.Reviews = NewReviewResponses(store.Reviews)
 	}
 	return resp
+}
+
+func extractImageUrls(files []entity.File) []string {
+	if len(files) == 0 {
+		return []string{}
+	}
+	urls := make([]string, len(files))
+	for i, file := range files {
+		urls[i] = file.ObjectKey
+	}
+	return urls
 }
 
 func NewStoreResponses(stores []entity.Store) []StoreResponse {

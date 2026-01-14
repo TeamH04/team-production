@@ -35,11 +35,25 @@ func (s Store) Entity() entity.Store {
 		Longitude:       s.Longitude,
 		GoogleMapURL:    s.GoogleMapURL,
 		IsApproved:      s.IsApproved,
+		Category:        s.Category,
+		Budget:          s.Budget,
+		AverageRating:   s.AverageRating,
+		DistanceMinutes: s.DistanceMinutes,
+		Tags:            extractTags(s.Tags),
+		Files:           ToEntities[entity.File, File](s.Files),
 		CreatedAt:       s.CreatedAt,
 		UpdatedAt:       s.UpdatedAt,
 		Menus:           ToEntities[entity.Menu, Menu](s.Menus),
 		Reviews:         ToEntities[entity.Review, Review](s.Reviews),
 	}
+}
+
+func extractTags(tags []StoreTag) []string {
+	result := make([]string, len(tags))
+	for i, t := range tags {
+		result[i] = t.Tag
+	}
+	return result
 }
 
 func (m Menu) Entity() entity.Menu {

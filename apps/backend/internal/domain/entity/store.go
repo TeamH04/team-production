@@ -18,6 +18,12 @@ type Store struct {
 	Longitude       float64
 	GoogleMapURL    *string
 	IsApproved      bool
+	Category        string
+	Budget          string
+	AverageRating   float64
+	DistanceMinutes int
+	Tags            []string
+	Files           []File
 	CreatedAt       time.Time
 	UpdatedAt       time.Time
 	Menus           []Menu

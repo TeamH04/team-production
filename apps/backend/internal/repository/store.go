@@ -25,6 +25,8 @@ func (r *storeRepository) FindAll(ctx context.Context) ([]entity.Store, error) {
 		Preload("Menus").
 		Preload("Reviews.Menus").
 		Preload("Reviews.Files").
+		Preload("Tags").
+		Preload("Files").
 		Order("created_at desc").
 		Find(&stores).Error; err != nil {
 		return nil, mapDBError(err)
@@ -53,6 +55,8 @@ func (r *storeRepository) FindByID(ctx context.Context, id string) (*entity.Stor
 		Preload("Menus").
 		Preload("Reviews.Menus").
 		Preload("Reviews.Files").
+		Preload("Tags").
+		Preload("Files").
 		First(&store, "store_id = ?", id).Error; err != nil {
 		return nil, mapDBError(err)
 	}
@@ -74,6 +78,10 @@ func (r *storeRepository) Create(ctx context.Context, store *entity.Store) error
 		GoogleMapURL:    store.GoogleMapURL,
 		PlaceID:         store.PlaceID,
 		IsApproved:      store.IsApproved,
+		Category:        store.Category,
+		Budget:          store.Budget,
+		AverageRating:   store.AverageRating,
+		DistanceMinutes: store.DistanceMinutes,
 	}
 	if err := r.db.WithContext(ctx).Create(&record).Error; err != nil {
 		return mapDBError(err)
@@ -97,6 +105,10 @@ func (r *storeRepository) Update(ctx context.Context, store *entity.Store) error
 		"google_map_url":    store.GoogleMapURL,
 		"place_id":          store.PlaceID,
 		"is_approved":       store.IsApproved,
+		"category":          store.Category,
+		"budget":            store.Budget,
+		"average_rating":    store.AverageRating,
+		"distance_minutes":  store.DistanceMinutes,
 		"updated_at":        store.UpdatedAt,
 	}
 	return mapDBError(r.db.WithContext(ctx).Model(&model.Store{StoreID: store.StoreID}).Updates(updates).Error)

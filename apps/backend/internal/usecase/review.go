@@ -70,6 +70,17 @@ func (uc *reviewUseCase) Create(ctx context.Context, storeID string, userID stri
 		}
 	}
 
+	fileIDs := dedupeStrings(input.FileIDs)
+	if len(fileIDs) > 0 {
+		files, err := uc.fileRepo.FindByStoreAndIDs(ctx, storeID, fileIDs)
+		if err != nil {
+			return err
+		}
+		if len(files) != len(fileIDs) {
+			return ErrInvalidFileIDs
+		}
+	}
+
 	if uc.transaction == nil {
 		return output.ErrInvalidTransaction
 	}
@@ -81,7 +92,7 @@ func (uc *reviewUseCase) Create(ctx context.Context, storeID string, userID stri
 			Rating:  input.Rating,
 			Content: input.Content,
 			MenuIDs: menuIDs,
-			FileIDs: input.FileIDs,
+			FileIDs: fileIDs,
 		})
 	})
 }

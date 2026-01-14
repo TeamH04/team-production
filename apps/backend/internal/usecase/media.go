@@ -26,6 +26,19 @@ type mediaUseCase struct {
 	bucket    string
 }
 
+// allowedContentTypes は許可されたContent-Typeのホワイトリスト
+var allowedContentTypes = map[string]bool{
+	"image/jpeg": true,
+	"image/png":  true,
+	"image/gif":  true,
+	"image/webp": true,
+}
+
+// isAllowedContentType はContent-Typeが許可されているかを確認します
+func isAllowedContentType(contentType string) bool {
+	return allowedContentTypes[strings.ToLower(contentType)]
+}
+
 // NewMediaUseCase は MediaUseCase の実装を生成します
 func NewMediaUseCase(
 	storage output.StorageProvider,
@@ -58,6 +71,9 @@ func (uc *mediaUseCase) CreateReviewUploads(ctx context.Context, storeID string,
 		contentType := strings.TrimSpace(file.ContentType)
 		if fileName == "" || contentType == "" {
 			return nil, ErrInvalidInput
+		}
+		if !isAllowedContentType(contentType) {
+			return nil, ErrInvalidContentType
 		}
 
 		objectKey := fmt.Sprintf("reviews/%s/%s/%s", storeID, userID, uuid.NewString())
