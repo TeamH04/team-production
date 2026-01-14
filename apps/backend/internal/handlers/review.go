@@ -35,10 +35,10 @@ func (h *ReviewHandler) GetReviewsByStoreID(c echo.Context) error {
 	viewerID := ""
 	if token := bearerTokenFromHeader(c.Request().Header.Get("Authorization")); token != "" {
 		claims, err := h.tokenVerifier.Verify(token)
-		if err != nil {
-			return usecase.ErrUnauthorized
+		if err == nil {
+			viewerID = claims.UserID
 		}
-		viewerID = claims.UserID
+		// 無効なトークンでもエラーを返さず、viewerIDを空のまま続行
 	}
 
 	reviews, err := h.reviewUseCase.GetReviewsByStoreID(c.Request().Context(), storeID, sort, viewerID)
