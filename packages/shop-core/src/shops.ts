@@ -24,11 +24,50 @@ export interface Shop {
   menu?: { id: string; name: string }[];
 }
 
+type ShopVariant = {
+  key: string;
+  label: string;
+  distanceDelta: number;
+  ratingDelta: number;
+  createdOffsetDays: number;
+};
+
 // NOTE: This is a shared placeholder Google Place ID used for demo/development data.
 // In production, each shop should have its own unique and correct Google Place ID.
 const DEFAULT_PLACE_ID = 'ChIJRUjlH92OAGAR6otTD3tUcrg';
 
-export const SHOPS: Shop[] = [
+const shiftDate = (isoDate: string, offsetDays: number) => {
+  const date = new Date(isoDate);
+  date.setDate(date.getDate() + offsetDays);
+  return date.toISOString();
+};
+
+const clampRating = (rating: number) => Number(Math.min(5, Math.max(3.5, rating)).toFixed(1));
+
+const adjustDistance = (distance: number, delta: number) => Math.max(1, distance + delta);
+
+const createVariantShop = (shop: Shop, variant: ShopVariant, offset: number): Shop => {
+  const imageUrls = shop.imageUrls?.map((url, index) => `${url}&sig=${variant.key}-${index}`) ?? [
+    shop.imageUrl,
+  ];
+
+  return {
+    ...shop,
+    id: `${shop.id}-${variant.key}`,
+    name: `${shop.name} ${variant.label}`,
+    distanceMinutes: adjustDistance(
+      shop.distanceMinutes,
+      variant.distanceDelta + (offset % 2 === 0 ? 0 : 1)
+    ),
+    rating: clampRating(shop.rating + variant.ratingDelta),
+    createdAt: shiftDate(shop.createdAt, variant.createdOffsetDays + offset),
+    imageUrl: imageUrls[0] ?? shop.imageUrl,
+    imageUrls,
+    menu: shop.menu?.map(menu => ({ ...menu, id: `${menu.id}-${variant.key}` })),
+  };
+};
+
+const BASE_SHOPS: Shop[] = [
   {
     id: 'shop-1',
     name: 'モーニング ブリュー カフェ',
@@ -270,5 +309,18 @@ export const SHOPS: Shop[] = [
     tags: ['デリ', 'テイクアウト', 'ヘルシー'],
   },
 ];
+
+const VARIANTS: ShopVariant[] = [
+  { key: 'east', label: '東口店', distanceDelta: 1, ratingDelta: -0.1, createdOffsetDays: 5 },
+  { key: 'west', label: '西通り店', distanceDelta: 2, ratingDelta: 0.05, createdOffsetDays: 10 },
+  { key: 'north', label: '北側店', distanceDelta: 3, ratingDelta: 0, createdOffsetDays: 15 },
+  { key: 'south', label: '南広場店', distanceDelta: -1, ratingDelta: -0.05, createdOffsetDays: 20 },
+];
+
+const VARIANT_SHOPS = VARIANTS.flatMap((variant, variantIndex) =>
+  BASE_SHOPS.map((shop, baseIndex) => createVariantShop(shop, variant, variantIndex + baseIndex))
+);
+
+export const SHOPS: Shop[] = [...BASE_SHOPS, ...VARIANT_SHOPS];
 
 export const CATEGORIES: ShopCategory[] = Array.from(new Set(SHOPS.map(shop => shop.category)));
