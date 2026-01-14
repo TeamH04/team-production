@@ -22,6 +22,7 @@ services:
     build:
       context: ./apps/backend
       dockerfile: ./Dockerfile
+      target: dev
     container_name: tp-backend
     environment:
       PORT: ${PORT:-8080}
@@ -38,6 +39,8 @@ services:
         condition: service_healthy
     env_file:
       - ./apps/backend/.env
+    volumes:
+      - ./apps/backend:/app
     restart: unless-stopped
 
   pgadmin:

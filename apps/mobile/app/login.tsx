@@ -4,14 +4,14 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import * as AuthSession from 'expo-auth-session';
 import * as Crypto from 'expo-crypto';
-import { useRouter, type Href } from 'expo-router';
+import { type Href, useRouter } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import React, { useCallback, useLayoutEffect, useState } from 'react';
 import { Alert, Platform, Pressable, StatusBar, StyleSheet, Text, View } from 'react-native';
 
 import KuguriTitle from '@/assets/icons/kaguri.svg';
 import { palette } from '@/constants/palette';
-import { checkIsOwner } from '@/lib/auth';
+import { checkIsOwner, ensureUserExistsInDB } from '@/lib/auth';
 import { DEV_GUEST_FLAG_KEY, DEV_LOGIN_ENABLED } from '@/lib/devMode';
 import { getSupabase, isSupabaseConfigured } from '@/lib/supabase';
 
@@ -31,7 +31,11 @@ function parseParamsFromUrl(url: string) {
     const code = searchParams.get('code') || hashParams.get('code') || undefined;
     return { access_token, refresh_token, code };
   } catch {
-    return {} as { access_token?: string; refresh_token?: string; code?: string };
+    return {} as {
+      access_token?: string;
+      refresh_token?: string;
+      code?: string;
+    };
   }
 }
 
@@ -56,6 +60,18 @@ export default function LoginScreen() {
   }, []);
 
   const finishLogin = useCallback(async () => {
+    try {
+      await ensureUserExistsInDB();
+    } catch (err) {
+      const raw = err instanceof Error ? err.message : 'ログイン処理に失敗しました';
+      const message =
+        raw === 'session_not_found'
+          ? 'セッションを取得できませんでした。もう一度ログインしてください。'
+          : raw;
+      Alert.alert('ログイン失敗', message);
+      return;
+    }
+
     const { isOwner } = await checkIsOwner();
     Alert.alert(
       'ログイン完了',
@@ -317,8 +333,8 @@ export default function LoginScreen() {
             onPress={handleDevGuestLogin}
             style={({ pressed }) => [
               styles.devButton,
-              pressed && { opacity: 0.9 },
-              loading === 'guest' && { opacity: 0.75 },
+              pressed && styles.devButtonPressed,
+              loading === 'guest' && styles.devButtonLoading,
             ]}
           >
             <Text style={styles.devButtonText}>
@@ -393,6 +409,12 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     marginTop: 12,
     paddingVertical: 12,
+  },
+  devButtonLoading: {
+    opacity: 0.75,
+  },
+  devButtonPressed: {
+    opacity: 0.9,
   },
   devButtonText: {
     color: palette.black,

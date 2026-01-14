@@ -1,4 +1,4 @@
-﻿import { Picker } from '@react-native-picker/picker';
+import { Picker } from '@react-native-picker/picker';
 import { useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import {
@@ -419,7 +419,11 @@ const styles = StyleSheet.create({
   primaryBtnDisabled: {
     opacity: 0.5,
   },
-  primaryBtnText: { color: palette.primaryOnAccent, fontWeight: '700', textAlign: 'center' },
+  primaryBtnText: {
+    color: palette.primaryOnAccent,
+    fontWeight: '700',
+    textAlign: 'center',
+  },
 
   // ラジオボタン
   radioCircle: {

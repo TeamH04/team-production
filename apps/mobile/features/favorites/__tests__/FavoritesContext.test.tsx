@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import React, { act, useEffect } from 'react';
+import { act, useEffect } from 'react';
 import TestRenderer from 'react-test-renderer';
 
 import { FavoritesProvider, useFavorites } from '../FavoritesContext';

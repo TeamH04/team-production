@@ -1,9 +1,9 @@
 import * as Linking from 'expo-linking';
-import { useRouter, type Href } from 'expo-router';
-import React, { useEffect, useState } from 'react';
+import { type Href, useRouter } from 'expo-router';
+import { useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, StyleSheet, Text, View } from 'react-native';
 
-import { checkIsOwner } from '@/lib/auth';
+import { checkIsOwner, ensureUserExistsInDB } from '@/lib/auth';
 import { getSupabase } from '@/lib/supabase';
 
 export default function OAuthCallback() {
@@ -26,6 +26,20 @@ export default function OAuthCallback() {
           const { error } = await getSupabase().auth.exchangeCodeForSession(code);
           if (error) throw error;
         }
+        try {
+          await ensureUserExistsInDB();
+        } catch (err) {
+          const raw = err instanceof Error ? err.message : 'ログイン処理に失敗しました';
+          const message =
+            raw === 'session_not_found'
+              ? 'セッションを取得できませんでした。もう一度ログインしてください。'
+              : raw;
+          Alert.alert('ログイン失敗', message);
+          setStatus('error');
+          router.replace('/login' as Href);
+          return;
+        }
+
         setStatus('done');
         const { isOwner } = await checkIsOwner();
         router.replace((isOwner ? '/owner' : '/(tabs)') as Href);
@@ -55,6 +69,11 @@ export default function OAuthCallback() {
 }
 
 const styles = StyleSheet.create({
-  container: { alignItems: 'center', flex: 1, justifyContent: 'center', padding: 24 },
+  container: {
+    alignItems: 'center',
+    flex: 1,
+    justifyContent: 'center',
+    padding: 24,
+  },
   text: { marginTop: 12 },
 });

@@ -1,50 +1,102 @@
 package handlers
 
 import (
-	"context"
+	"net/http"
 
-	"github.com/TeamH04/team-production/apps/backend/internal/domain"
-	"github.com/TeamH04/team-production/apps/backend/internal/usecase"
+	"github.com/labstack/echo/v4"
+
+	"github.com/TeamH04/team-production/apps/backend/internal/presentation/presenter"
+	"github.com/TeamH04/team-production/apps/backend/internal/security"
 	"github.com/TeamH04/team-production/apps/backend/internal/usecase/input"
 )
 
 type ReviewHandler struct {
 	reviewUseCase input.ReviewUseCase
+	tokenVerifier security.TokenVerifier
 }
 
-var _ ReviewController = (*ReviewHandler)(nil)
-
-type CreateReviewCommand struct {
-	MenuID    int64
-	Rating    int
-	Content   *string
-	ImageURLs []string
-}
-
-func (c CreateReviewCommand) toInput(userID string) input.CreateReviewInput {
-	return input.CreateReviewInput{
-		UserID:    userID,
-		MenuID:    c.MenuID,
-		Rating:    c.Rating,
-		Content:   c.Content,
-		ImageURLs: append([]string(nil), c.ImageURLs...),
-	}
-}
-
-func NewReviewHandler(reviewUseCase input.ReviewUseCase) *ReviewHandler {
+func NewReviewHandler(reviewUseCase input.ReviewUseCase, tokenVerifier security.TokenVerifier) *ReviewHandler {
 	return &ReviewHandler{
 		reviewUseCase: reviewUseCase,
+		tokenVerifier: tokenVerifier,
 	}
 }
 
-func (h *ReviewHandler) GetReviewsByStoreID(ctx context.Context, storeID int64) ([]domain.Review, error) {
-	return h.reviewUseCase.GetReviewsByStoreID(ctx, storeID)
-}
-
-func (h *ReviewHandler) CreateReview(ctx context.Context, storeID int64, userID string, cmd CreateReviewCommand) (*domain.Review, error) {
-	if userID == "" {
-		return nil, usecase.ErrUnauthorized
+func (h *ReviewHandler) GetReviewsByStoreID(c echo.Context) error {
+	storeID, err := parseUUIDParam(c, "id", "invalid store id")
+	if err != nil {
+		return err
 	}
 
-	return h.reviewUseCase.CreateReview(ctx, storeID, userID, cmd.toInput(userID))
+	sort := c.QueryParam("sort")
+	viewerID := ""
+	if token := bearerTokenFromHeader(c.Request().Header.Get("Authorization")); token != "" {
+		claims, err := h.tokenVerifier.Verify(token)
+		if err == nil {
+			viewerID = claims.UserID
+		}
+		// 無効なトークンでもエラーを返さず、viewerIDを空のまま続行
+	}
+
+	reviews, err := h.reviewUseCase.GetReviewsByStoreID(c.Request().Context(), storeID, sort, viewerID)
+	if err != nil {
+		return err
+	}
+	return c.JSON(http.StatusOK, presenter.NewReviewResponses(reviews))
+}
+
+func (h *ReviewHandler) Create(c echo.Context) error {
+	user, err := getRequiredUser(c)
+	if err != nil {
+		return err
+	}
+
+	storeID, err := parseUUIDParam(c, "id", "invalid store id")
+	if err != nil {
+		return err
+	}
+
+	var in input.CreateReview
+	if err := bindJSON(c, &in); err != nil {
+		return err
+	}
+
+	if err := h.reviewUseCase.Create(c.Request().Context(), storeID, user.UserID, in); err != nil {
+		return err
+	}
+	return c.NoContent(http.StatusCreated)
+}
+
+func (h *ReviewHandler) LikeReview(c echo.Context) error {
+	user, err := getRequiredUser(c)
+	if err != nil {
+		return err
+	}
+
+	reviewID, err := parseUUIDParam(c, "id", "invalid review id")
+	if err != nil {
+		return err
+	}
+
+	if err := h.reviewUseCase.LikeReview(c.Request().Context(), reviewID, user.UserID); err != nil {
+		return err
+	}
+	return c.NoContent(http.StatusNoContent)
+}
+
+func (h *ReviewHandler) UnlikeReview(c echo.Context) error {
+	user, err := getRequiredUser(c)
+	if err != nil {
+		return err
+	}
+
+	reviewID, err := parseUUIDParam(c, "id", "invalid review id")
+	if err != nil {
+		return err
+	}
+
+	if err := h.reviewUseCase.UnlikeReview(c.Request().Context(), reviewID, user.UserID); err != nil {
+		return err
+	}
+	return c.NoContent(http.StatusNoContent)
 }

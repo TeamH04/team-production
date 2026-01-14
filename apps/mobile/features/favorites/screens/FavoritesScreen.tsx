@@ -1,7 +1,9 @@
 import { palette } from '@/constants/palette';
+import { TAB_BAR_SPACING } from '@/constants/TabBarSpacing';
 import { useFavorites } from '@/features/favorites/FavoritesContext';
+import { useStores } from '@/features/stores/StoresContext';
 import { Ionicons } from '@expo/vector-icons';
-import { SHOPS, type Shop } from '@team/shop-core';
+import type { Shop } from '@team/shop-core';
 import { withAlpha } from '@team/theme';
 import { useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
@@ -12,8 +14,6 @@ const BUDGET_LABEL: Record<Shop['budget'], string> = {
   $$: '¥¥',
   $$$: '¥¥¥',
 };
-
-const TAB_BAR_SPACING = 113;
 
 type SortType = 'newest' | 'rating-high' | 'rating-low';
 
@@ -37,12 +37,13 @@ const SORT_OPTIONS: SortOption[] = [
 export default function FavoritesScreen() {
   const router = useRouter();
   const { favorites } = useFavorites();
+  const { stores, loading, error } = useStores();
   const [searchText, setSearchText] = useState('');
   const [sortType, setSortType] = useState<SortType>('newest');
   const [showSortModal, setShowSortModal] = useState(false);
 
   // お気に入りに登録されている店舗のみをフィルタリング
-  const favoriteShops = SHOPS.filter(shop => favorites.has(shop.id));
+  const favoriteShops = stores.filter(shop => favorites.has(shop.id));
 
   // 検索とソートを適用
   const filteredAndSortedShops = useMemo(() => {
@@ -184,7 +185,15 @@ export default function FavoritesScreen() {
       </Modal>
 
       {/* お気に入り一覧 */}
-      {filteredAndSortedShops.length > 0 ? (
+      {loading ? (
+        <View style={styles.emptyState}>
+          <Text style={styles.emptyTitle}>読み込み中...</Text>
+        </View>
+      ) : error ? (
+        <View style={styles.emptyState}>
+          <Text style={styles.emptyTitle}>店舗情報の取得に失敗しました</Text>
+        </View>
+      ) : filteredAndSortedShops.length > 0 ? (
         <FlatList
           data={filteredAndSortedShops}
           keyExtractor={item => item.id}

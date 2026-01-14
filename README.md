@@ -36,7 +36,7 @@
 | `make backend-db-up` / `make backend-db-down` | DB スタックの起動 / 停止                                                      |
 | `make backend-db-init`                        | ローカル Docker データベースにマイグレーション適用 (`apps/backend`)           |
 | `make backend-test`                           | Go のユニットテスト実行                                                       |
-| `make frontend`                               | Expo Dev Server を起動 (`apps/mobile`)                                        |
+| `make frontend`                               | Expo Dev Client を起動 (`apps/mobile`)                                        |
 | `make dev`                                    | バックエンド + Expo を同時起動 (ポート競合時はログを確認して中断してください) |
 
 ## CI/CD
@@ -91,4 +91,4 @@ CI/CD で使用される環境変数：
 
 - バックエンド: `apps/backend/README.md`
 - モバイル: `apps/mobile/README.md`
-- Expo 開発環境の補足: `apps/mobile/scripts/start-dev.js`（`make dev` で利用する起動スクリプト。Expo CLI の非推奨フラグを排除し、環境変数でポートを制御します）
+- Expo 開発環境の補足: `make frontend` / `make dev` は Expo Dev Client を起動します。
