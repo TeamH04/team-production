@@ -1,12 +1,13 @@
 import { FavoritesProvider } from '@/features/favorites/FavoritesContext';
 import { ReviewsProvider } from '@/features/reviews/ReviewsContext';
-import { UserProvider } from '@/features/user/UserContext';
+import { UserProvider, useUser } from '@/features/user/UserContext';
 import { VisitedProvider } from '@/features/visited/VisitedContext';
 import '@/global.css';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
-import { Stack, useSegments } from 'expo-router';
+import { router, Stack, useSegments, type Href } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
 import 'react-native-reanimated';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -27,26 +28,36 @@ const styles = StyleSheet.create({
 
 function RootStack() {
   const insets = useSafeAreaInsets();
+  const { user, isProfileComplete } = useUser();
   const segments = useSegments();
+
+  useEffect(() => {
+    const path = segments.join('/');
+
+    const isOnProfileRegister = path === 'profile/register';
+
+    if (user && !isProfileComplete && !isOnProfileRegister) {
+      router.replace('/profile/register' as Href);
+    }
+  }, [user, isProfileComplete, segments]);
+
   const first = segments[0] ?? '';
   const isInsideTabs = segments.some(seg => seg === '(tabs)');
   const isExcluded = first === 'shop' || first === 'profile' || first === 'menu';
   const padTop = !isInsideTabs && !isExcluded ? insets.top : 0;
 
   return (
-    <View
-      style={[
-        styles.container,
-        {
-          paddingTop: padTop,
-        },
-      ]}
-    >
+    <View style={[styles.container, { paddingTop: padTop }]}>
       <StatusBar hidden={false} style='dark' backgroundColor='transparent' />
       <Stack>
         <Stack.Screen name='index' options={{ headerShown: false }} />
         <Stack.Screen name='(tabs)' options={{ headerShown: false }} />
-        <Stack.Screen name='login' options={{ title: 'ログイン', headerShown: true }} />
+        <Stack.Screen
+          name='login'
+          options={{
+            headerShown: false,
+          }}
+        />
         <Stack.Screen name='owner/signup' options={{ title: 'オーナー登録', headerShown: true }} />
         <Stack.Screen
           name='owner/register-shop'

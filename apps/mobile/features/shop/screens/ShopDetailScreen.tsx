@@ -1,7 +1,7 @@
 ﻿import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import { Image } from 'expo-image';
-import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
+import { Href, useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useCallback, useLayoutEffect, useMemo, useState } from 'react';
 import {
@@ -94,7 +94,6 @@ export default function ShopDetailScreen() {
     }, [navigation])
   );
 
-  // 依存配列を [shop] に修正
   const mapOpenUrl = useMemo(
     () =>
       shop?.placeId
@@ -202,7 +201,7 @@ export default function ShopDetailScreen() {
                     ))}
                   </View>
                   <Pressable
-                    onPress={() => router.push({ params: { id: shop.id }, pathname: '/menu' })}
+                    onPress={() => router.push(`/shop/${shop.id}/review` as never)}
                     style={styles.moreBtnOutline}
                   >
                     <Ionicons color={palette.primary} name='add-circle-outline' size={18} />
@@ -232,7 +231,7 @@ export default function ShopDetailScreen() {
             <Text style={styles.sectionTitle}>レビュー</Text>
           </View>
           <Pressable
-            onPress={() => router.push(`/shop/${shop.id}/review`)}
+            onPress={() => router.push(`/shop/${shop.id}/review` as Href)}
             style={styles.primaryBtn}
           >
             <Text style={styles.primaryBtnText}>レビューを書く</Text>
@@ -300,8 +299,14 @@ const styles = StyleSheet.create({
     lineHeight: 22,
     marginBottom: 16,
   },
-  favBtn: { marginLeft: 12, padding: 4 },
-  headerActions: { alignItems: 'center', flexDirection: 'row' },
+  favBtn: {
+    marginLeft: 8,
+  },
+  headerActions: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 4,
+  },
   headerRow: {
     alignItems: 'center',
     flexDirection: 'row',
@@ -326,13 +331,14 @@ const styles = StyleSheet.create({
     borderColor: palette.primary,
     borderRadius: 12,
     borderWidth: 1,
-    flexDirection: 'row',
-    gap: 8,
-    justifyContent: 'center',
-    paddingVertical: 12,
+    marginTop: 12,
+    paddingVertical: 14,
   },
-  moreBtnText: { color: palette.primary, fontSize: 15, fontWeight: '700' },
-  muted: { color: palette.muted },
+  moreBtnText: { color: palette.primary, fontWeight: '700' },
+  muted: {
+    color: palette.muted,
+    marginTop: 6,
+  },
   primaryBtn: {
     backgroundColor: palette.accent,
     borderRadius: 12,
