@@ -1,45 +1,37 @@
-import { SHOPS, type Shop } from '@team/shop-core';
+import type { Shop } from '@team/shop-core';
 
 import type { ApiStore } from './api';
 
 const DEFAULT_CATEGORY: Shop['category'] = 'カフェ・喫茶';
 const DEFAULT_BUDGET: Shop['budget'] = '$$';
 const DEFAULT_DISTANCE_MINUTES = 5;
-const DEFAULT_RATING = 4.5;
+const DEFAULT_RATING = 0;
 const DEFAULT_IMAGE_URL =
   'https://images.unsplash.com/photo-1509042239860-f550ce710b93?auto=format&fit=crop&w=600&q=80';
 
-const MOCK_BY_NAME = new Map<string, Shop>(SHOPS.map(shop => [shop.name, shop]));
-
-function normalizeDate(value?: string | null, fallback?: string): string {
+function normalizeDate(value?: string | null): string {
   if (value?.trim()) {
     return value;
-  }
-  if (fallback?.trim()) {
-    return fallback;
   }
   return new Date().toISOString();
 }
 
 export function mapApiStoreToShop(store: ApiStore): Shop {
-  const mock = MOCK_BY_NAME.get(store.name);
-
+  // APIデータを優先使用、フォールバックはデフォルト値のみ
   const apiThumbnailUrl = store.thumbnail_file?.object_key?.trim();
-  const resolvedThumbnailUrl =
-    apiThumbnailUrl && apiThumbnailUrl.length > 0 ? apiThumbnailUrl : undefined;
-  const imageUrl = resolvedThumbnailUrl ?? mock?.imageUrl ?? DEFAULT_IMAGE_URL;
-  const imageUrls = resolvedThumbnailUrl
-    ? [resolvedThumbnailUrl, ...(mock?.imageUrls ?? [])]
-    : (mock?.imageUrls ?? (imageUrl ? [imageUrl] : undefined));
-  const category = mock?.category ?? DEFAULT_CATEGORY;
-  const distanceMinutes = mock?.distanceMinutes ?? DEFAULT_DISTANCE_MINUTES;
-  const rating = mock?.rating ?? DEFAULT_RATING;
-  const budget = mock?.budget ?? DEFAULT_BUDGET;
-  const tags = mock?.tags ?? [];
-  const createdAt = normalizeDate(store.created_at, mock?.createdAt);
-  const openedAt = normalizeDate(store.opened_at, mock?.openedAt ?? createdAt);
-  const description = store.description ?? mock?.description ?? '';
-  const placeId = store.place_id ?? mock?.placeId ?? '';
+  const apiImageUrls = store.image_urls?.length > 0 ? store.image_urls : undefined;
+  const imageUrl = apiThumbnailUrl || apiImageUrls?.[0] || DEFAULT_IMAGE_URL;
+  const imageUrls = apiImageUrls ?? (imageUrl ? [imageUrl] : undefined);
+
+  const category = (store.category as Shop['category']) || DEFAULT_CATEGORY;
+  const distanceMinutes = store.distance_minutes ?? DEFAULT_DISTANCE_MINUTES;
+  const rating = store.average_rating ?? DEFAULT_RATING;
+  const budget = (store.budget as Shop['budget']) || DEFAULT_BUDGET;
+  const tags = store.tags ?? [];
+  const createdAt = normalizeDate(store.created_at);
+  const openedAt = normalizeDate(store.opened_at) || createdAt;
+  const description = store.description ?? '';
+  const placeId = store.place_id ?? '';
   const menu = store.menus?.map(item => ({ id: item.menu_id, name: item.name })) ?? [];
 
   return {

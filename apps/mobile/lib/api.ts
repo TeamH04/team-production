@@ -45,6 +45,12 @@ export type ApiStore = {
   longitude: number;
   google_map_url?: string | null;
   is_approved: boolean;
+  category: string;
+  budget: string;
+  average_rating: number;
+  distance_minutes: number;
+  tags: string[];
+  image_urls: string[];
   created_at: string;
   updated_at: string;
   menus?: ApiMenu[];
