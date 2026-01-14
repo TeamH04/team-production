@@ -5,8 +5,8 @@ import { useStores } from '@/features/stores/StoresContext';
 import { Ionicons } from '@expo/vector-icons';
 import type { Shop } from '@team/shop-core';
 import { withAlpha } from '@team/theme';
-import { useRouter } from 'expo-router';
-import { useMemo, useState } from 'react';
+import { useFocusEffect, useRouter } from 'expo-router';
+import { useCallback, useMemo, useState } from 'react';
 import { FlatList, Image, Modal, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 const BUDGET_LABEL: Record<Shop['budget'], string> = {
@@ -36,11 +36,19 @@ const SORT_OPTIONS: SortOption[] = [
 
 export default function FavoritesScreen() {
   const router = useRouter();
-  const { favorites } = useFavorites();
+  const { favorites, loadFavorites } = useFavorites();
   const { stores, loading, error } = useStores();
   const [searchText, setSearchText] = useState('');
   const [sortType, setSortType] = useState<SortType>('newest');
   const [showSortModal, setShowSortModal] = useState(false);
+
+  useFocusEffect(
+    useCallback(() => {
+      void loadFavorites().catch(err => {
+        console.warn('[favorites] failed to load favorites', err);
+      });
+    }, [loadFavorites])
+  );
 
   // お気に入りに登録されている店舗のみをフィルタリング
   const favoriteShops = stores.filter(shop => favorites.has(shop.id));
