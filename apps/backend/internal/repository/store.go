@@ -18,15 +18,20 @@ func NewStoreRepository(db *gorm.DB) output.StoreRepository {
 	return &storeRepository{db: db}
 }
 
-func (r *storeRepository) FindAll(ctx context.Context) ([]entity.Store, error) {
-	var stores []model.Store
-	if err := r.db.WithContext(ctx).
+// withFullPreload adds all standard preloads for store queries.
+func (r *storeRepository) withFullPreload(db *gorm.DB) *gorm.DB {
+	return db.
 		Preload("ThumbnailFile").
 		Preload("Menus").
 		Preload("Reviews.Menus").
 		Preload("Reviews.Files").
 		Preload("Tags").
-		Preload("Files").
+		Preload("Files")
+}
+
+func (r *storeRepository) FindAll(ctx context.Context) ([]entity.Store, error) {
+	var stores []model.Store
+	if err := r.withFullPreload(r.db.WithContext(ctx)).
 		Order("created_at desc").
 		Find(&stores).Error; err != nil {
 		return nil, mapDBError(err)
@@ -50,13 +55,7 @@ func (r *storeRepository) FindPending(ctx context.Context) ([]entity.Store, erro
 
 func (r *storeRepository) FindByID(ctx context.Context, id string) (*entity.Store, error) {
 	var store model.Store
-	if err := r.db.WithContext(ctx).
-		Preload("ThumbnailFile").
-		Preload("Menus").
-		Preload("Reviews.Menus").
-		Preload("Reviews.Files").
-		Preload("Tags").
-		Preload("Files").
+	if err := r.withFullPreload(r.db.WithContext(ctx)).
 		First(&store, "store_id = ?", id).Error; err != nil {
 		return nil, mapDBError(err)
 	}

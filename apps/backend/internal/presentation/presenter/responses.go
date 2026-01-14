@@ -7,6 +7,18 @@ import (
 	"github.com/TeamH04/team-production/apps/backend/internal/usecase/input"
 )
 
+// toResponses converts a slice of entities to a slice of responses using the provided converter function.
+func toResponses[E any, R any](entities []E, convert func(E) R) []R {
+	if len(entities) == 0 {
+		return []R{}
+	}
+	resp := make([]R, len(entities))
+	for i, e := range entities {
+		resp[i] = convert(e)
+	}
+	return resp
+}
+
 type StoreResponse struct {
 	StoreID         string           `json:"store_id"`
 	ThumbnailFileID *string          `json:"thumbnail_file_id,omitempty"`
@@ -178,14 +190,7 @@ func extractImageUrls(files []entity.File) []string {
 }
 
 func NewStoreResponses(stores []entity.Store) []StoreResponse {
-	if len(stores) == 0 {
-		return []StoreResponse{}
-	}
-	resp := make([]StoreResponse, len(stores))
-	for i, store := range stores {
-		resp[i] = NewStoreResponse(store)
-	}
-	return resp
+	return toResponses(stores, NewStoreResponse)
 }
 
 func NewMenuResponse(menu entity.Menu) MenuResponse {
@@ -200,14 +205,7 @@ func NewMenuResponse(menu entity.Menu) MenuResponse {
 }
 
 func NewMenuResponses(menus []entity.Menu) []MenuResponse {
-	if len(menus) == 0 {
-		return []MenuResponse{}
-	}
-	resp := make([]MenuResponse, len(menus))
-	for i, menu := range menus {
-		resp[i] = NewMenuResponse(menu)
-	}
-	return resp
+	return toResponses(menus, NewMenuResponse)
 }
 
 func NewReviewResponse(review entity.Review) ReviewResponse {
@@ -233,14 +231,7 @@ func NewReviewResponse(review entity.Review) ReviewResponse {
 }
 
 func NewReviewResponses(reviews []entity.Review) []ReviewResponse {
-	if len(reviews) == 0 {
-		return []ReviewResponse{}
-	}
-	resp := make([]ReviewResponse, len(reviews))
-	for i, review := range reviews {
-		resp[i] = NewReviewResponse(review)
-	}
-	return resp
+	return toResponses(reviews, NewReviewResponse)
 }
 
 func NewUserResponse(user entity.User) UserResponse {
@@ -268,14 +259,7 @@ func NewFavoriteResponse(f entity.Favorite) FavoriteResponse {
 }
 
 func NewFavoriteResponses(favorites []entity.Favorite) []FavoriteResponse {
-	if len(favorites) == 0 {
-		return []FavoriteResponse{}
-	}
-	resp := make([]FavoriteResponse, len(favorites))
-	for i, favorite := range favorites {
-		resp[i] = NewFavoriteResponse(favorite)
-	}
-	return resp
+	return toResponses(favorites, NewFavoriteResponse)
 }
 
 func NewFileResponse(file entity.File) FileResponse {
@@ -293,14 +277,7 @@ func NewFileResponse(file entity.File) FileResponse {
 }
 
 func NewFileResponses(files []entity.File) []FileResponse {
-	if len(files) == 0 {
-		return []FileResponse{}
-	}
-	resp := make([]FileResponse, len(files))
-	for i, file := range files {
-		resp[i] = NewFileResponse(file)
-	}
-	return resp
+	return toResponses(files, NewFileResponse)
 }
 
 func collectMenuIDs(menus []entity.Menu) []string {
@@ -354,12 +331,5 @@ func NewReportResponse(report entity.Report) ReportResponse {
 }
 
 func NewReportResponses(reports []entity.Report) []ReportResponse {
-	if len(reports) == 0 {
-		return []ReportResponse{}
-	}
-	resp := make([]ReportResponse, len(reports))
-	for i, report := range reports {
-		resp[i] = NewReportResponse(report)
-	}
-	return resp
+	return toResponses(reports, NewReportResponse)
 }
