@@ -23,6 +23,10 @@ export default function ReviewModalScreen() {
     navigation.setOptions?.({
       title: 'レビュー',
       headerBackTitle: '戻る',
+      headerStyle: { backgroundColor: palette.accent },
+      headerTintColor: palette.textOnAccent,
+      headerShadowVisible: false,
+      headerTitleAlign: 'center',
     });
   }, [navigation]);
 
