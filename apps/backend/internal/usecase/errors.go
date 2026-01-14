@@ -11,7 +11,7 @@ var (
 	ErrStoreNotFound = apperr.New(apperr.CodeNotFound, errors.New("store not found"))
 
 	// ErrUserNotFound はユーザーが見つからない場合のエラー
-	ErrUserNotFound = errors.New("user not found")
+	ErrUserNotFound = apperr.New(apperr.CodeNotFound, errors.New("user not found"))
 
 	// ErrInvalidInput は入力が不正な場合のエラー
 	ErrInvalidInput = apperr.New(apperr.CodeInvalidInput, errors.New("invalid input"))
@@ -31,6 +31,9 @@ var (
 	// ErrFavoriteNotFound はお気に入りが見つからない場合のエラー
 	ErrFavoriteNotFound = apperr.New(apperr.CodeNotFound, errors.New("favorite not found"))
 
+	// ErrReviewNotFound はレビューが見つからない場合のエラー
+	ErrReviewNotFound = apperr.New(apperr.CodeNotFound, errors.New("review not found"))
+
 	// ErrReportNotFound は通報が見つからない場合のエラー
 	ErrReportNotFound = apperr.New(apperr.CodeNotFound, errors.New("report not found"))
 
@@ -48,4 +51,10 @@ var (
 
 	// ErrUserAlreadyExists はメールアドレス重複時のエラー
 	ErrUserAlreadyExists = apperr.New(apperr.CodeConflict, errors.New("user already exists"))
+
+	// ErrInvalidContentType は許可されていないContent-Typeの場合のエラー
+	ErrInvalidContentType = apperr.New(apperr.CodeInvalidInput, errors.New("invalid content type: only image files are allowed"))
+
+	// ErrInvalidFileIDs は無効なファイルIDが指定された場合のエラー
+	ErrInvalidFileIDs = apperr.New(apperr.CodeInvalidInput, errors.New("invalid file IDs"))
 )

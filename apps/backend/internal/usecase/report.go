@@ -3,16 +3,15 @@ package usecase
 import (
 	"context"
 
-	"github.com/TeamH04/team-production/apps/backend/internal/apperr"
-	"github.com/TeamH04/team-production/apps/backend/internal/domain"
+	"github.com/TeamH04/team-production/apps/backend/internal/domain/entity"
 	"github.com/TeamH04/team-production/apps/backend/internal/usecase/input"
 	"github.com/TeamH04/team-production/apps/backend/internal/usecase/output"
 )
 
 // ReportUseCase は通報に関するビジネスロジックを提供します
 type ReportUseCase interface {
-	CreateReport(ctx context.Context, input input.CreateReportInput) (*domain.Report, error)
-	GetAllReports(ctx context.Context) ([]domain.Report, error)
+	CreateReport(ctx context.Context, input input.CreateReportInput) (*entity.Report, error)
+	GetAllReports(ctx context.Context) ([]entity.Report, error)
 	HandleReport(ctx context.Context, reportID int64, action input.HandleReportAction) error
 }
 
@@ -29,12 +28,9 @@ func NewReportUseCase(reportRepo output.ReportRepository, userRepo output.UserRe
 	}
 }
 
-func (uc *reportUseCase) CreateReport(ctx context.Context, req input.CreateReportInput) (*domain.Report, error) {
+func (uc *reportUseCase) CreateReport(ctx context.Context, req input.CreateReportInput) (*entity.Report, error) {
 	// ユーザーの存在確認
-	if _, err := uc.userRepo.FindByID(ctx, req.UserID); err != nil {
-		if apperr.IsCode(err, apperr.CodeNotFound) {
-			return nil, ErrUserNotFound
-		}
+	if err := ensureUserExists(ctx, uc.userRepo, req.UserID); err != nil {
 		return nil, err
 	}
 
@@ -51,7 +47,7 @@ func (uc *reportUseCase) CreateReport(ctx context.Context, req input.CreateRepor
 		return nil, ErrInvalidTargetType
 	}
 
-	report := &domain.Report{
+	report := &entity.Report{
 		UserID:     req.UserID,
 		TargetType: req.TargetType,
 		TargetID:   req.TargetID,
@@ -66,16 +62,13 @@ func (uc *reportUseCase) CreateReport(ctx context.Context, req input.CreateRepor
 	return report, nil
 }
 
-func (uc *reportUseCase) GetAllReports(ctx context.Context) ([]domain.Report, error) {
+func (uc *reportUseCase) GetAllReports(ctx context.Context) ([]entity.Report, error) {
 	return uc.reportRepo.FindAll(ctx)
 }
 
 func (uc *reportUseCase) HandleReport(ctx context.Context, reportID int64, action input.HandleReportAction) error {
 	// 通報の存在確認
-	if _, err := uc.reportRepo.FindByID(ctx, reportID); err != nil {
-		if apperr.IsCode(err, apperr.CodeNotFound) {
-			return ErrReportNotFound
-		}
+	if err := ensureReportExists(ctx, uc.reportRepo, reportID); err != nil {
 		return err
 	}
 

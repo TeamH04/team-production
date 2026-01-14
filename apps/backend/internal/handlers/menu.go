@@ -1,32 +1,16 @@
 package handlers
 
 import (
-	"context"
+	"net/http"
 
-	"github.com/TeamH04/team-production/apps/backend/internal/domain"
+	"github.com/labstack/echo/v4"
+
+	"github.com/TeamH04/team-production/apps/backend/internal/presentation/presenter"
 	"github.com/TeamH04/team-production/apps/backend/internal/usecase/input"
 )
 
 type MenuHandler struct {
 	menuUseCase input.MenuUseCase
-}
-
-var _ MenuController = (*MenuHandler)(nil)
-
-type CreateMenuCommand struct {
-	Name        string
-	Price       *int
-	ImageURL    *string
-	Description *string
-}
-
-func (c CreateMenuCommand) toInput() input.CreateMenuInput {
-	return input.CreateMenuInput{
-		Name:        c.Name,
-		Price:       c.Price,
-		ImageURL:    c.ImageURL,
-		Description: c.Description,
-	}
 }
 
 func NewMenuHandler(menuUseCase input.MenuUseCase) *MenuHandler {
@@ -35,10 +19,45 @@ func NewMenuHandler(menuUseCase input.MenuUseCase) *MenuHandler {
 	}
 }
 
-func (h *MenuHandler) GetMenusByStoreID(ctx context.Context, storeID int64) ([]domain.Menu, error) {
-	return h.menuUseCase.GetMenusByStoreID(ctx, storeID)
+func (h *MenuHandler) GetMenusByStoreID(c echo.Context) error {
+	storeID, err := parseUUIDParam(c, "id", "invalid store id")
+	if err != nil {
+		return err
+	}
+	menus, err := h.menuUseCase.GetMenusByStoreID(c.Request().Context(), storeID)
+	if err != nil {
+		return err
+	}
+	return c.JSON(http.StatusOK, presenter.NewMenuResponses(menus))
 }
 
-func (h *MenuHandler) CreateMenu(ctx context.Context, storeID int64, cmd CreateMenuCommand) (*domain.Menu, error) {
-	return h.menuUseCase.CreateMenu(ctx, storeID, cmd.toInput())
+func (h *MenuHandler) CreateMenu(c echo.Context) error {
+	storeID, err := parseUUIDParam(c, "id", "invalid store id")
+	if err != nil {
+		return err
+	}
+	var dto createMenuDTO
+	if err := bindJSON(c, &dto); err != nil {
+		return err
+	}
+	menu, err := h.menuUseCase.CreateMenu(c.Request().Context(), storeID, dto.toInput())
+	if err != nil {
+		return err
+	}
+	resp := presenter.NewMenuResponse(*menu)
+	return c.JSON(http.StatusCreated, resp)
+}
+
+type createMenuDTO struct {
+	Name        string  `json:"name"`
+	Price       *int    `json:"price"`
+	Description *string `json:"description"`
+}
+
+func (dto createMenuDTO) toInput() input.CreateMenuInput {
+	return input.CreateMenuInput{
+		Name:        dto.Name,
+		Price:       dto.Price,
+		Description: dto.Description,
+	}
 }

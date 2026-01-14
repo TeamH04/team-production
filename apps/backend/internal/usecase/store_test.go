@@ -3,28 +3,29 @@ package usecase_test
 import (
 	"context"
 	"errors"
+	"fmt"
 	"testing"
 
-	"github.com/TeamH04/team-production/apps/backend/internal/domain"
+	"github.com/TeamH04/team-production/apps/backend/internal/domain/entity"
 	"github.com/TeamH04/team-production/apps/backend/internal/usecase"
 	"github.com/TeamH04/team-production/apps/backend/internal/usecase/input"
 )
 
 // モックリポジトリの実装
 type mockStoreRepository struct {
-	stores      []domain.Store
+	stores      []entity.Store
 	createError error
 	findError   error
 }
 
-func (m *mockStoreRepository) FindAll(ctx context.Context) ([]domain.Store, error) {
+func (m *mockStoreRepository) FindAll(ctx context.Context) ([]entity.Store, error) {
 	if m.findError != nil {
 		return nil, m.findError
 	}
 	return m.stores, nil
 }
 
-func (m *mockStoreRepository) FindByID(ctx context.Context, id int64) (*domain.Store, error) {
+func (m *mockStoreRepository) FindByID(ctx context.Context, id string) (*entity.Store, error) {
 	if m.findError != nil {
 		return nil, m.findError
 	}
@@ -36,33 +37,33 @@ func (m *mockStoreRepository) FindByID(ctx context.Context, id int64) (*domain.S
 	return nil, errors.New("not found")
 }
 
-func (m *mockStoreRepository) Create(ctx context.Context, store *domain.Store) error {
+func (m *mockStoreRepository) Create(ctx context.Context, store *entity.Store) error {
 	if m.createError != nil {
 		return m.createError
 	}
-	store.StoreID = int64(len(m.stores) + 1)
+	store.StoreID = fmt.Sprintf("store-%d", len(m.stores)+1)
 	m.stores = append(m.stores, *store)
 	return nil
 }
 
-func (m *mockStoreRepository) Update(ctx context.Context, store *domain.Store) error {
+func (m *mockStoreRepository) Update(ctx context.Context, store *entity.Store) error {
 	return nil
 }
 
-func (m *mockStoreRepository) Delete(ctx context.Context, id int64) error {
+func (m *mockStoreRepository) Delete(ctx context.Context, id string) error {
 	return nil
 }
 
-func (m *mockStoreRepository) FindPending(ctx context.Context) ([]domain.Store, error) {
+func (m *mockStoreRepository) FindPending(ctx context.Context) ([]entity.Store, error) {
 	return nil, nil
 }
 
 // テストケース
 func TestGetAllStores(t *testing.T) {
 	mockRepo := &mockStoreRepository{
-		stores: []domain.Store{
-			{StoreID: 1, Name: "Store 1"},
-			{StoreID: 2, Name: "Store 2"},
+		stores: []entity.Store{
+			{StoreID: "store-1", Name: "Store 1"},
+			{StoreID: "store-2", Name: "Store 2"},
 		},
 	}
 
@@ -81,18 +82,21 @@ func TestGetAllStores(t *testing.T) {
 
 func TestCreateStore_Success(t *testing.T) {
 	mockRepo := &mockStoreRepository{
-		stores: []domain.Store{},
+		stores: []entity.Store{},
 	}
 
 	uc := usecase.NewStoreUseCase(mockRepo)
 
 	req := input.CreateStoreInput{
-		Name:         "Test Store",
-		Address:      "Test Address",
-		ThumbnailURL: "https://example.com/image.jpg",
-		Latitude:     35.6812,
-		Longitude:    139.7671,
-		PlaceID:      "ChIJRUjlH92OAGAR6otTD3tUcrg",
+		Name:      "Test Store",
+		Address:   "Test Address",
+		ThumbnailFileID: func() *string {
+			id := "file-1"
+			return &id
+		}(),
+		Latitude:  35.6812,
+		Longitude: 139.7671,
+		PlaceID:   "ChIJRUjlH92OAGAR6otTD3tUcrg",
 	}
 
 	store, err := uc.CreateStore(context.Background(), req)
@@ -105,7 +109,7 @@ func TestCreateStore_Success(t *testing.T) {
 		t.Errorf("expected name %s, got %s", req.Name, store.Name)
 	}
 
-	if store.StoreID == 0 {
+	if store.StoreID == "" {
 		t.Error("expected store ID to be set")
 	}
 }
@@ -122,36 +126,56 @@ func TestCreateStore_InvalidInput(t *testing.T) {
 		{
 			name: "empty name",
 			input: input.CreateStoreInput{
-				Address:      "Test Address",
-				ThumbnailURL: "https://example.com/image.jpg",
-				Latitude:     35.6812,
-				Longitude:    139.7671,
-				PlaceID:      "ChIJRUjlH92OAGAR6otTD3tUcrg",
+				Address:   "Test Address",
+				Latitude:  35.6812,
+				Longitude: 139.7671,
+				PlaceID:   "ChIJRUjlH92OAGAR6otTD3tUcrg",
+			},
+			want: usecase.ErrInvalidInput,
+		},
+		{
+			name: "missing thumbnail",
+			input: input.CreateStoreInput{
+				Name:      "Test Store",
+				Address:   "Test Address",
+				Latitude:  35.6812,
+				Longitude: 139.7671,
+				PlaceID:   "ChIJRUjlH92OAGAR6otTD3tUcrg",
 			},
 			want: usecase.ErrInvalidInput,
 		},
 		{
 			name: "invalid coordinates",
-			input: input.CreateStoreInput{
-				Name:         "Test Store",
-				Address:      "Test Address",
-				ThumbnailURL: "https://example.com/image.jpg",
-				Latitude:     0,
-				Longitude:    0,
-				PlaceID:      "ChIJRUjlH92OAGAR6otTD3tUcrg",
-			},
+			input: func() input.CreateStoreInput {
+				return input.CreateStoreInput{
+					Name:         "Test Store",
+					Address:      "Test Address",
+					ThumbnailFileID: func() *string {
+						id := "file-1"
+						return &id
+					}(),
+					Latitude:     0,
+					Longitude:    0,
+					PlaceID:      "ChIJRUjlH92OAGAR6otTD3tUcrg",
+				}
+			}(),
 			want: usecase.ErrInvalidCoordinates,
 		},
 		{
 			name: "empty place id",
-			input: input.CreateStoreInput{
-				Name:         "Test Store",
-				Address:      "Test Address",
-				ThumbnailURL: "https://example.com/image.jpg",
-				Latitude:     35.6812,
-				Longitude:    139.7671,
-				PlaceID:      "",
-			},
+			input: func() input.CreateStoreInput {
+				return input.CreateStoreInput{
+					Name:         "Test Store",
+					Address:      "Test Address",
+					ThumbnailFileID: func() *string {
+						id := "file-1"
+						return &id
+					}(),
+					Latitude:     35.6812,
+					Longitude:    139.7671,
+					PlaceID:      "",
+				}
+			}(),
 			want: usecase.ErrInvalidInput,
 		},
 	}

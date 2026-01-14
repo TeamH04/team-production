@@ -15,7 +15,7 @@ const config = getDefaultConfig(projectRoot);
 
 const { assetExts, sourceExts } = config.resolver;
 
-config.watchFolders = [workspaceRoot];
+config.watchFolders = Array.from(new Set([...(config.watchFolders ?? []), workspaceRoot]));
 
 config.transformer = {
   ...config.transformer,
@@ -25,16 +25,17 @@ config.transformer = {
 config.resolver = {
   ...config.resolver,
   extraNodeModules: {
-    ...config.resolver?.extraNodeModules,
+    ...(config.resolver?.extraNodeModules ?? {}),
     'react-native-svg': workspaceSvg,
   },
   assetExts: assetExts.filter(ext => ext !== 'svg'),
-  sourceExts: [...sourceExts, 'svg'],
+  sourceExts: [...new Set([...sourceExts, 'svg'])],
   nodeModulesPaths: [
     path.resolve(projectRoot, 'node_modules'),
     path.resolve(workspaceRoot, 'node_modules'),
   ],
-  disableHierarchicalLookup: true,
+
+  disableHierarchicalLookup: false,
 };
 
 module.exports = withNativeWind(config, {

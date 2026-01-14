@@ -7,8 +7,8 @@
 - **作成者:** 佐野
 - **編集者:**
 - **ステータス:** draft
-- **最終更新日:** 2025/10/08
-- **メモ:** DB設計を変更した場合、SQLも変更すること
+- **最終更新日:** 2026/01/02
+- **メモ:** DB設計を変更した場合、SQLも変更すること。中間テーブル（review_menus / review_files / store_files / review_likes）はORMモデルにも含める。
 
 ---
 
@@ -16,77 +16,135 @@
 
 ### users（ユーザー情報）
 
-| カラム名   | 型                   | 説明                           |
-| :--------- | :------------------- | :----------------------------- |
-| id         | UUID（32桁, 主キー） | Supabase Auth と連携           |
-| name       | string               | ユーザー名                     |
-| email      | string               | メールアドレス（validate付き） |
-| icon_url   | string               | デフォルト null                |
-| gender     | string               | 性別                           |
-| provider   | string               | 認証プロバイダ                 |
-| created_at | time.Time            | 作成日時                       |
-| updated_at | time.Time            | 更新日時                       |
+| カラム名     | 型             | 説明                       |
+| :----------- | :------------- | :------------------------- |
+| user_id      | UUID（主キー） | Supabase Auth と連携       |
+| name         | string         | ユーザー名                 |
+| gender       | string         | 性別                       |
+| birthday     | date           | 生年月日                   |
+| email        | string         | メールアドレス（unique）   |
+| icon_url     | string         | 外部プロフィール画像URL    |
+| icon_file_id | uuid           | アプリ内アップロード画像ID |
+| provider     | string         | 認証プロバイダ             |
+| role         | string         | 権限（user/owner/admin）   |
+| created_at   | time.Time      | 作成日時                   |
+| updated_at   | time.Time      | 更新日時                   |
 
 ---
 
 ### stores（店舗情報）
 
-| カラム名         | 型                  | 説明                               |
-| :--------------- | :------------------ | :--------------------------------- |
-| id               | bigserial（主キー） | 店舗ID                             |
-| thumbnail_url    | string              | サムネイル写真                     |
-| name             | string              | 店舗名                             |
-| opened_at        | date                | オープン日                         |
-| description      | string              | 店舗の説明文                       |
-| landscape_photos | text[]              | 店舗風景写真の配列（複数枚を想定） |
-| address          | string              | 住所                               |
-| opening_hours    | string              | 営業時間（JSON形式も可）           |
-| latitude         | double precision    | 緯度                               |
-| longitude        | double precision    | 経度                               |
-| created_at       | timestamp           | 作成日時                           |
-| update_at        | time.Time           | 更新日時                           |
+| カラム名          | 型               | 説明                        |
+| :---------------- | :--------------- | :-------------------------- |
+| store_id          | uuid（主キー）   | 店舗ID                      |
+| thumbnail_file_id | uuid             | サムネイル画像（files参照） |
+| name              | string           | 店舗名                      |
+| opened_at         | date             | オープン日                  |
+| description       | string           | 店舗の説明文                |
+| address           | string           | 住所                        |
+| opening_hours     | string           | 営業時間（JSON形式も可）    |
+| latitude          | double precision | 緯度                        |
+| longitude         | double precision | 経度                        |
+| google_map_url    | string           | Google Maps URL             |
+| place_id          | string           | Google Place ID             |
+| is_approved       | boolean          | 承認済みかどうか            |
+| created_at        | timestamp        | 作成日時                    |
+| updated_at        | time.Time        | 更新日時                    |
 
 ---
 
 ### favorites（お気に入り）
 
-| カラム名                  | 型                             | 説明           |
-| :------------------------ | :----------------------------- | :------------- |
-| id                        | bigserial（主キー）            | お気に入りID   |
-| user_id                   | uuid（外部キー → users.id）    | ユーザーID     |
-| store_id                  | bigint（外部キー → stores.id） | 店舗ID         |
-| created_at                | timestamp                      | 登録日時       |
-| unique(user_id, store_id) | 制約                           | 重複登録を防ぐ |
+| カラム名                        | 型                                 | 説明           |
+| :------------------------------ | :--------------------------------- | :------------- |
+| user_id                         | uuid（外部キー → users.user_id）   | ユーザーID     |
+| store_id                        | uuid（外部キー → stores.store_id） | 店舗ID         |
+| created_at                      | timestamp                          | 登録日時       |
+| PRIMARY KEY (user_id, store_id) | 制約                               | 重複登録を防ぐ |
 
 ---
 
 ### menus（メニュー）
 
-| カラム名    | 型                             | 説明         |
-| :---------- | :----------------------------- | :----------- |
-| id          | bigserial（主キー）            | メニューID   |
-| store_id    | bigint（外部キー → stores.id） | 店舗ID       |
-| name        | string                         | メニュー名   |
-| price       | integer                        | 価格         |
-| image_url   | string                         | メニュー写真 |
-| description | string                         | 説明文       |
-| created_at  | timestamp                      | 作成日時     |
+| カラム名    | 型                                 | 説明       |
+| :---------- | :--------------------------------- | :--------- |
+| menu_id     | uuid（主キー）                     | メニューID |
+| store_id    | uuid（外部キー → stores.store_id） | 店舗ID     |
+| name        | string                             | メニュー名 |
+| price       | integer                            | 価格       |
+| description | string                             | 説明文     |
+| created_at  | timestamp                          | 作成日時   |
 
 ---
 
 ### reviews（レビュー）
 
-| カラム名   | 型                             | 説明               |
-| :--------- | :----------------------------- | :----------------- |
-| id         | bigserial（主キー）            | レビューID         |
-| store_id   | bigint（外部キー → stores.id） | 店舗ID             |
-| user_id    | uuid（外部キー → users.id）    | ユーザーID         |
-| menu_id    | bigint（外部キー → menus.id）  | メニューID         |
-| rating     | integer（1〜5）                | 評価               |
-| content    | string                         | レビュー内容       |
-| image_urls | text[]（NULL可）               | 写真（複数枚想定） |
-| posted_at  | timestamp                      | 投稿日時           |
-| created_at | timestamp                      | 作成日時           |
+| カラム名   | 型                                 | 説明         |
+| :--------- | :--------------------------------- | :----------- |
+| review_id  | uuid（主キー）                     | レビューID   |
+| store_id   | uuid（外部キー → stores.store_id） | 店舗ID       |
+| user_id    | uuid（外部キー → users.user_id）   | ユーザーID   |
+| rating     | integer（1?5）                     | 評価         |
+| content    | string                             | レビュー内容 |
+| created_at | timestamp                          | 作成日時     |
+
+---
+
+### review_menus（レビューとメニューの中間）
+
+| カラム名    | 型                                   | 説明                           |
+| :---------- | :----------------------------------- | :----------------------------- |
+| review_id   | uuid（外部キー → reviews.review_id） | レビューID                     |
+| menu_id     | uuid（外部キー → menus.menu_id）     | 紐づくメニューID               |
+| PRIMARY KEY | (review_id, menu_id)                 | 同一メニューの重複紐付けを防ぐ |
+
+---
+
+### review_files（レビューとファイルの中間）
+
+| カラム名    | 型                                   | 説明                           |
+| :---------- | :----------------------------------- | :----------------------------- |
+| review_id   | uuid（外部キー → reviews.review_id） | レビューID                     |
+| file_id     | uuid（外部キー → files.file_id）     | 添付ファイルID                 |
+| PRIMARY KEY | (review_id, file_id)                 | 同一ファイルの重複紐付けを防ぐ |
+
+---
+
+### review_likes（レビューいいね）
+
+| カラム名    | 型                                   | 説明             |
+| :---------- | :----------------------------------- | :--------------- |
+| review_id   | uuid（外部キー → reviews.review_id） | レビューID       |
+| user_id     | uuid（外部キー → users.user_id）     | ユーザーID       |
+| created_at  | timestamp                            | いいね日時       |
+| PRIMARY KEY | (review_id, user_id)                 | 重複いいねを防ぐ |
+
+---
+
+### store_files（店舗とファイルの中間）
+
+| カラム名    | 型                                 | 説明                           |
+| :---------- | :--------------------------------- | :----------------------------- |
+| store_id    | uuid（外部キー → stores.store_id） | 店舗ID                         |
+| file_id     | uuid（外部キー → files.file_id）   | 店舗に紐づくファイルID         |
+| created_at  | timestamp                          | 紐付け日時                     |
+| PRIMARY KEY | (store_id, file_id)                | 同一ファイルの重複紐付けを防ぐ |
+
+---
+
+### files（ファイル）
+
+| カラム名     | 型                               | 説明                              |
+| :----------- | :------------------------------- | :-------------------------------- |
+| file_id      | uuid（主キー）                   | ファイルID                        |
+| file_kind    | string                           | 種別（例：thumbnail, reviewなど） |
+| file_name    | string                           | 元ファイル名                      |
+| file_size    | bigint                           | ファイルサイズ                    |
+| object_key   | string                           | Storage上のオブジェクトキー       |
+| content_type | string                           | MIMEタイプ                        |
+| is_deleted   | boolean                          | 論理削除フラグ                    |
+| created_at   | timestamp                        | 作成日時                          |
+| created_by   | uuid（外部キー → users.user_id） | 作成ユーザーID                    |
 
 ---
 
@@ -96,63 +154,105 @@
 erDiagram
     users ||--o{ reviews : "投稿する"
     users ||--o{ favorites : "登録する"
+    users ||--o{ files : "アップロード"
+    users ||--o{ review_likes : "いいねする"
     stores ||--o{ reviews : "受ける"
     stores ||--o{ favorites : "登録される"
     stores ||--o{ menus : "持つ"
-    menus ||--o{ reviews : "受ける"
+    stores ||--o{ store_files : "ファイルを持つ"
+    reviews ||--o{ review_menus : "対象メニュー"
+    menus ||--o{ review_menus : "紐づく"
+    reviews ||--o{ review_files : "添付する"
+    files ||--o{ review_files : "添付される"
+    reviews ||--o{ review_likes : "いいねされる"
+    files ||--o{ store_files : "管理される"
 
     users {
-        uuid id PK
+        uuid user_id PK
         string name
         string email
         string icon_url
+        uuid icon_file_id
         string gender
+        date birthday
         string provider
+        string role
         timestamp created_at
         timestamp updated_at
     }
 
+    files {
+        uuid file_id PK
+        string file_kind
+        string file_name
+        bigint file_size
+        string object_key
+        string content_type
+        boolean is_deleted
+        timestamp created_at
+        uuid created_by FK
+    }
+
     stores {
-        bigserial id PK
-        string thumbnail_url
+        uuid store_id PK
+        uuid thumbnail_file_id FK
         string name
         date opened_at
         string description
-        text[] landscape_photos
         string address
+        string place_id
         string opening_hours
         double_precision latitude
         double_precision longitude
+        string google_map_url
+        boolean is_approved
         timestamp created_at
         timestamp updated_at
     }
 
     favorites {
-        bigserial id PK
         uuid user_id FK
-        bigint store_id FK
+        uuid store_id FK
         timestamp created_at
     }
 
     menus {
-        bigserial id PK
-        bigint store_id FK
+        uuid menu_id PK
+        uuid store_id FK
         string name
         integer price
-        string image_url
         string description
         timestamp created_at
     }
 
     reviews {
-        bigserial id PK
-        bigint store_id FK
+        uuid review_id PK
+        uuid store_id FK
         uuid user_id FK
-        bigint menu_id FK
         integer rating
         string content
-        text[] image_urls
-        timestamp posted_at
+        timestamp created_at
+    }
+
+    review_menus {
+        uuid review_id FK
+        uuid menu_id FK
+    }
+
+    review_files {
+        uuid review_id FK
+        uuid file_id FK
+    }
+
+    review_likes {
+        uuid review_id FK
+        uuid user_id FK
+        timestamp created_at
+    }
+
+    store_files {
+        uuid store_id FK
+        uuid file_id FK
         timestamp created_at
     }
 ```

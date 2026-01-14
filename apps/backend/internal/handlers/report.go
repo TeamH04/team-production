@@ -1,32 +1,16 @@
 package handlers
 
 import (
-	"context"
+	"net/http"
 
-	"github.com/TeamH04/team-production/apps/backend/internal/domain"
-	"github.com/TeamH04/team-production/apps/backend/internal/usecase"
+	"github.com/labstack/echo/v4"
+
+	"github.com/TeamH04/team-production/apps/backend/internal/presentation/presenter"
 	"github.com/TeamH04/team-production/apps/backend/internal/usecase/input"
 )
 
 type ReportHandler struct {
 	reportUseCase input.ReportUseCase
-}
-
-var _ ReportController = (*ReportHandler)(nil)
-
-type CreateReportCommand struct {
-	TargetType string
-	TargetID   int64
-	Reason     string
-}
-
-func (c CreateReportCommand) toInput(userID string) input.CreateReportInput {
-	return input.CreateReportInput{
-		UserID:     userID,
-		TargetType: c.TargetType,
-		TargetID:   c.TargetID,
-		Reason:     c.Reason,
-	}
 }
 
 func NewReportHandler(reportUseCase input.ReportUseCase) *ReportHandler {
@@ -35,10 +19,36 @@ func NewReportHandler(reportUseCase input.ReportUseCase) *ReportHandler {
 	}
 }
 
-func (h *ReportHandler) CreateReport(ctx context.Context, userID string, cmd CreateReportCommand) (*domain.Report, error) {
-	if userID == "" {
-		return nil, usecase.ErrUnauthorized
+func (h *ReportHandler) CreateReport(c echo.Context) error {
+	user, err := getRequiredUser(c)
+	if err != nil {
+		return err
 	}
 
-	return h.reportUseCase.CreateReport(ctx, cmd.toInput(userID))
+	var dto createReportDTO
+	if err := bindJSON(c, &dto); err != nil {
+		return err
+	}
+
+	report, err := h.reportUseCase.CreateReport(c.Request().Context(), dto.toInput(user.UserID))
+	if err != nil {
+		return err
+	}
+	resp := presenter.NewReportResponse(*report)
+	return c.JSON(http.StatusCreated, resp)
+}
+
+type createReportDTO struct {
+	TargetType string `json:"target_type"`
+	TargetID   int64  `json:"target_id"`
+	Reason     string `json:"reason"`
+}
+
+func (dto createReportDTO) toInput(userID string) input.CreateReportInput {
+	return input.CreateReportInput{
+		UserID:     userID,
+		TargetType: dto.TargetType,
+		TargetID:   dto.TargetID,
+		Reason:     dto.Reason,
+	}
 }

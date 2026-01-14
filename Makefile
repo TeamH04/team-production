@@ -27,8 +27,8 @@ BACKEND_DIR := apps/backend
 MOBILE_DIR  := apps/mobile
 
 # Frontend dev command (Expo / mobile)
-# NOTE: Expo をラップする start-dev.js を使う想定
-FRONTEND_CMD := node $(MOBILE_DIR)/scripts/start-dev.js
+# NOTE: Use Expo dev client for local development
+FRONTEND_CMD := cd $(MOBILE_DIR) && $(PNPM) expo start --dev-client
 
 # Backend dev command
 # NOTE: ローカル go run は使わず、Docker Compose の backend サービスを使う
@@ -79,22 +79,27 @@ w: web      ## 🔁 Alias: make w -> make web
 i: install  ## 🔁 Alias: make i -> make install
 
 ## ----- Development Commands -----
-
-dev: db-up ## 🔧 Start dev: DB + backend(Docker) + mobile(Expo)
+dev: db-up ## 📱 Start dev: DB + backend(Docker) + mobile(Expo dev client)
 	@printf '%b\n' "$(BLUE)Starting development servers...$(NC)"
 	@printf '%b\n' "$(YELLOW)Backend (Docker) will run via docker compose up backend$(NC)"
-	@printf '%b\n' "$(YELLOW)Mobile app will start with Expo$(NC)"
+	@printf '%b\n' "$(YELLOW)Mobile app will start with Expo dev client$(NC)"
 	$(CONCURRENT) "$(FRONTEND_CMD)" "$(BACKEND_CMD)"
 
-frontend: ## 📱 Start the Expo app
-	@printf '%b\n' "$(BLUE)Starting frontend (Expo)...$(NC)"
+frontend: ## 📱 Start the Expo app (dev client)
+	@printf '%b\n' "$(BLUE)Starting frontend (Expo dev client)...$(NC)"
 	$(FRONTEND_CMD)
 
+frontend-dev-client: ## 📱 Start the Expo dev client
+	@printf '%b\n' "$(BLUE)Starting frontend (Expo dev client)...$(NC)"
+	$(FRONTEND_CMD)
+
+dev-client: frontend-dev-client ## 📱 Alias: start Expo dev client
+
 frontend-web: ## 🌐 Run Expo in web mode
-	$(PNPM) --dir $(MOBILE_DIR) web
+	cd $(MOBILE_DIR) && $(PNPM) web
 
 frontend-lint: ## 🔍 Lint the mobile app
-	$(PNPM) --dir $(MOBILE_DIR) lint
+	cd $(MOBILE_DIR) && $(PNPM) lint
 
 backend: db-up ## 🐳 Start backend via Docker Compose
 	@printf '%b\n' "$(BLUE)Starting backend (Docker Compose)...$(NC)"

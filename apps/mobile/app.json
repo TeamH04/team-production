@@ -17,7 +17,8 @@
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#F6F5F3"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "package": "com.kuguri.app"
     },
     "web": {
       "bundler": "metro",
@@ -41,6 +42,12 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "e868c2b9-c220-4a95-b62f-3bd1eaf24c62"
+      }
     }
   }
 }
