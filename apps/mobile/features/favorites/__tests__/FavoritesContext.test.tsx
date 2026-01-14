@@ -69,11 +69,11 @@ test('useFavorites throws outside FavoritesProvider', () => {
   }, /useFavorites must be used within FavoritesProvider/);
 });
 
-test('addFavorite marks a shop as favorite', () => {
+test('addFavorite marks a shop as favorite', async () => {
   const { getValue, unmount } = createFavoritesHarness();
 
-  act(() => {
-    getValue().addFavorite('shop-1');
+  await act(async () => {
+    await getValue().addFavorite('shop-1');
   });
 
   assert.equal(getValue().isFavorite('shop-1'), true);
@@ -82,15 +82,15 @@ test('addFavorite marks a shop as favorite', () => {
   unmount();
 });
 
-test('removeFavorite removes a shop from favorites', () => {
+test('removeFavorite removes a shop from favorites', async () => {
   const { getValue, unmount } = createFavoritesHarness();
 
-  act(() => {
-    getValue().addFavorite('shop-2');
+  await act(async () => {
+    await getValue().addFavorite('shop-2');
   });
 
-  act(() => {
-    getValue().removeFavorite('shop-2');
+  await act(async () => {
+    await getValue().removeFavorite('shop-2');
   });
 
   assert.equal(getValue().isFavorite('shop-2'), false);
@@ -99,17 +99,17 @@ test('removeFavorite removes a shop from favorites', () => {
   unmount();
 });
 
-test('toggleFavorite adds and removes a shop', () => {
+test('toggleFavorite adds and removes a shop', async () => {
   const { getValue, unmount } = createFavoritesHarness();
 
-  act(() => {
-    getValue().toggleFavorite('shop-3');
+  await act(async () => {
+    await getValue().toggleFavorite('shop-3');
   });
 
   assert.equal(getValue().isFavorite('shop-3'), true);
 
-  act(() => {
-    getValue().toggleFavorite('shop-3');
+  await act(async () => {
+    await getValue().toggleFavorite('shop-3');
   });
 
   assert.equal(getValue().isFavorite('shop-3'), false);

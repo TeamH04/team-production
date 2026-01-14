@@ -187,6 +187,23 @@ export default function ShopDetailScreen() {
     [router, shop, toggleLike]
   );
 
+  const handleToggleFavorite = useCallback(async () => {
+    if (!shop) return;
+    try {
+      await toggleFavorite(shop.id);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Unknown error';
+      if (message === 'auth_required') {
+        Alert.alert('ログインが必要です', 'お気に入りにはログインが必要です。', [
+          { text: 'キャンセル', style: 'cancel' },
+          { text: 'ログイン', onPress: () => router.push('/login') },
+        ]);
+        return;
+      }
+      Alert.alert('お気に入りに失敗しました', message);
+    }
+  }, [router, shop, toggleFavorite]);
+
   if (storesLoading) {
     return (
       <View style={[styles.screen, styles.centered]}>
@@ -308,7 +325,7 @@ export default function ShopDetailScreen() {
 
               <Pressable
                 accessibilityLabel='お気に入り切り替え'
-                onPress={() => toggleFavorite(shop.id)}
+                onPress={handleToggleFavorite}
                 style={({ pressed }) => [styles.favBtn, pressed && styles.btnPressed]}
               >
                 <Ionicons
