@@ -15,7 +15,8 @@
     "apps/mobile/**/*",
     "apps/web/**/*",
     "packages/shop-core/**/*",
-    "packages/theme/**/*"
+    "packages/theme/**/*",
+    "packages/types/**/*"
   ],
   "exclude": [
     "node_modules",

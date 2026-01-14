@@ -40,15 +40,10 @@ function ShopResultsList({ filteredShops, renderListHeader, renderShop }: ShopRe
     const resetId = setTimeout(() => {
       setIsLoadingMore(false);
       setVisibleCount(Math.min(PAGE_SIZE, filteredShops.length));
-
-      if (listRef.current) {
-        // any を排除して scrollToOffset を呼び出し
-        listRef.current.scrollToOffset({ animated: true, offset: 0 });
-      }
     }, 0);
 
     return () => clearTimeout(resetId);
-  }, [filteredShops, listRef]);
+  }, [filteredShops]);
 
   useEffect(() => {
     return () => {

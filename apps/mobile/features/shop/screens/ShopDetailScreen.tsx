@@ -323,7 +323,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 4,
   },
-
   headerRow: {
     alignItems: 'center',
     flexDirection: 'row',
@@ -345,15 +344,16 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
   },
   mapButtonText: { color: palette.primary, fontWeight: '700' },
+
   mapCard: {
     marginTop: 12,
     padding: 12,
   },
-
   meta: {
     color: palette.muted,
     marginTop: 6,
   },
+
   muted: {
     color: palette.muted,
     marginTop: 6,
@@ -380,7 +380,6 @@ const styles = StyleSheet.create({
     backgroundColor: WHITE, // リテラルを排除
     opacity: 1,
   },
-
   primaryBtn: {
     backgroundColor: palette.accent,
     borderRadius: 12,

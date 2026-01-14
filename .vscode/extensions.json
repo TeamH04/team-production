@@ -1,3 +1,13 @@
 {
-  "recommendations": ["denoland.vscode-deno"]
+  "recommendations": [
+    "denoland.vscode-deno",
+    "golang.go",
+    "dbaeumer.vscode-eslint",
+    "esbenp.prettier-vscode",
+    "ms-vscode.makefile-tools",
+    "bradlc.vscode-tailwindcss",
+    "ms-vscode.js-debug",
+    "GitHub.vscode-pull-request-github",
+    "ms-vscode.vscode-typescript-next"
+  ]
 }
