@@ -3,7 +3,15 @@ import { SHOPS, type Shop } from '@team/shop-core';
 import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactElement } from 'react';
-import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import {
+  ActivityIndicator,
+  FlatList,
+  Platform,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import Animated, { useAnimatedRef } from 'react-native-reanimated';
 
 const PAGE_SIZE = 10;
@@ -197,7 +205,9 @@ const styles = StyleSheet.create({
 
   cardContainer: {
     backgroundColor: palette.surface,
+    borderColor: palette.divider,
     borderRadius: 28,
+    borderWidth: 1,
     overflow: 'hidden',
   },
 
@@ -311,7 +321,11 @@ const styles = StyleSheet.create({
   },
 
   screen: {
-    backgroundColor: palette.background,
+    backgroundColor: Platform.select({
+      android: '#E8E7E5',
+      ios: palette.background,
+      default: palette.background,
+    }),
     flex: 1,
   },
 });
