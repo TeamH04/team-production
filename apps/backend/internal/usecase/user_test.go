@@ -323,7 +323,7 @@ type raceConditionMockUserRepo struct {
 }
 
 func (m *raceConditionMockUserRepo) FindByID(ctx context.Context, userID string) (entity.User, error) {
-	*m.callCount++
+	(*m.callCount)++
 	if *m.callCount == 1 {
 		return entity.User{}, apperr.New(apperr.CodeNotFound, entity.ErrNotFound)
 	}

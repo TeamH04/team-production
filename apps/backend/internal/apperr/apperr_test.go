@@ -72,9 +72,6 @@ func TestCodeOf_WithNilError(t *testing.T) {
 
 func TestCodeOf_WithWrappedAppError(t *testing.T) {
 	originalErr := apperr.New(apperr.CodeNotFound, errors.New("not found"))
-	wrappedErr := errors.New("wrapper: " + originalErr.Error())
-	// Note: This won't preserve the code because we're just creating a new error
-	// Let's test with proper wrapping
 	properlyWrapped := apperr.New(apperr.CodeInternal, originalErr)
 
 	code := apperr.CodeOf(properlyWrapped)
@@ -82,9 +79,6 @@ func TestCodeOf_WithWrappedAppError(t *testing.T) {
 	if code != apperr.CodeInternal {
 		t.Errorf("expected code %s, got %s", apperr.CodeInternal, code)
 	}
-
-	// The original wrapped error should not be detectable as CodeNotFound
-	_ = wrappedErr
 }
 
 func TestIsCode_Match(t *testing.T) {
