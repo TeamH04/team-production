@@ -235,16 +235,16 @@ type MockUserRepository struct {
 	UpdateRoleErr  error
 }
 
-func (m *MockUserRepository) FindByID(ctx context.Context, userID string) (*entity.User, error) {
+func (m *MockUserRepository) FindByID(ctx context.Context, userID string) (entity.User, error) {
 	if m.FindByIDErr != nil {
-		return nil, m.FindByIDErr
+		return entity.User{}, m.FindByIDErr
 	}
 	for i := range m.Users {
 		if m.Users[i].UserID == userID {
-			return &m.Users[i], nil
+			return m.Users[i], nil
 		}
 	}
-	return nil, apperr.New(apperr.CodeNotFound, entity.ErrNotFound)
+	return entity.User{}, apperr.New(apperr.CodeNotFound, entity.ErrNotFound)
 }
 
 func (m *MockUserRepository) FindByEmail(ctx context.Context, email string) (*entity.User, error) {
