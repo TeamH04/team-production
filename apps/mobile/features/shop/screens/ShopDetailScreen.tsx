@@ -496,10 +496,7 @@ const styles = StyleSheet.create({
     marginTop: 12,
     paddingVertical: 14,
   },
-  mapButtonText: {
-    color: palette.primary,
-    fontWeight: '700',
-  },
+  mapButtonText: { color: palette.primary, fontWeight: '700' },
   mapCard: {
     marginTop: 12,
     padding: 12,
@@ -522,7 +519,7 @@ const styles = StyleSheet.create({
     opacity: 0.5,
     width: 6,
   },
-  paginationDotActive: { backgroundColor: palette.primaryOnAccent },
+  paginationDotActive: { backgroundColor: palette.primaryOnAccent, opacity: 1 },
   primaryBtn: {
     backgroundColor: palette.accent,
     borderRadius: 12,

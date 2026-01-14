@@ -45,14 +45,10 @@ function ShopResultsList({
     const resetId = setTimeout(() => {
       setIsLoadingMore(false);
       setVisibleCount(Math.min(PAGE_SIZE, filteredShops.length));
-
-      if (listRef.current) {
-        listRef.current.scrollToOffset({ animated: true, offset: 0 });
-      }
     }, 0);
 
     return () => clearTimeout(resetId);
-  }, [filteredShops, listRef]);
+  }, [filteredShops]);
 
   useEffect(() => {
     return () => {
@@ -83,6 +79,7 @@ function ShopResultsList({
 
   return (
     <Animated.FlatList
+      ref={listRef}
       ListEmptyComponent={emptyState}
       ListFooterComponent={
         isLoadingMore ? (
@@ -97,7 +94,6 @@ function ShopResultsList({
       keyExtractor={KEY_EXTRACTOR}
       onEndReached={handleLoadMore}
       onEndReachedThreshold={0.2}
-      ref={listRef}
       renderItem={renderShop}
       showsVerticalScrollIndicator={false}
     />

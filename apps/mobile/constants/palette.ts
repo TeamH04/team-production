@@ -29,7 +29,7 @@ export const palette = {
   dangerBg: '#FEE2E2',
   dangerBorder: '#FECACA',
   dangerText: '#EF4444',
-  error: '#EF4444',
+  errorText: '#DC2626',
 
   // ステータス / セマンティック
   highlight: withAlpha(secondary, 0.15),
@@ -38,6 +38,16 @@ export const palette = {
   // ブランド / プロバイダ
   google: '#DB4437',
   apple: '#000000',
+
+  // ユーティリティ
+  white: '#FFFFFF',
+  black: '#000000',
+  grayMid: '#999999',
+  grayDark: '#333333',
+  grayLight: '#F6F5F3',
+  transparent: 'transparent',
+  accentButtonBg: '#1daa7dcc',
+  accentSoft: withAlpha(secondary, 0.45),
 
   // 影
   shadow: '#000000',
