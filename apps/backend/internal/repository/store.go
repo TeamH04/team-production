@@ -115,5 +115,5 @@ func (r *storeRepository) Update(ctx context.Context, store *entity.Store) error
 }
 
 func (r *storeRepository) Delete(ctx context.Context, id string) error {
-	return mapDBError(r.db.WithContext(ctx).Delete(&model.Store{}, id).Error)
+	return mapDBError(r.db.WithContext(ctx).Where("store_id = ?", id).Delete(&model.Store{}).Error)
 }

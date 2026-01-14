@@ -47,7 +47,7 @@ func (uc *favoriteUseCase) GetUserFavorites(ctx context.Context, userID string) 
 }
 
 func (uc *favoriteUseCase) AddFavorite(ctx context.Context, userID string, storeID string) (*entity.Favorite, error) {
-	if storeID == "" {
+	if userID == "" || storeID == "" {
 		return nil, ErrInvalidInput
 	}
 	// ユーザーの存在確認
@@ -88,6 +88,10 @@ func (uc *favoriteUseCase) AddFavorite(ctx context.Context, userID string, store
 }
 
 func (uc *favoriteUseCase) RemoveFavorite(ctx context.Context, userID string, storeID string) error {
+	if userID == "" || storeID == "" {
+		return ErrInvalidInput
+	}
+
 	// お気に入りの存在確認
 	if _, err := uc.favoriteRepo.FindByUserAndStore(ctx, userID, storeID); err != nil {
 		if apperr.IsCode(err, apperr.CodeNotFound) {

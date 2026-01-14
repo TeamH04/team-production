@@ -47,6 +47,10 @@ func (uc *reviewUseCase) GetReviewsByStoreID(ctx context.Context, storeID string
 }
 
 func (uc *reviewUseCase) Create(ctx context.Context, storeID string, userID string, input input.CreateReview) error {
+	if storeID == "" || userID == "" {
+		return ErrInvalidInput
+	}
+
 	// ストアの存在確認
 	if _, err := uc.storeRepo.FindByID(ctx, storeID); err != nil {
 		if apperr.IsCode(err, apperr.CodeNotFound) {

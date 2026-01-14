@@ -47,7 +47,7 @@ func (r *favoriteRepository) Create(ctx context.Context, favorite *entity.Favori
 		UserID:  favorite.UserID,
 		StoreID: favorite.StoreID,
 	}
-	if err := r.db.WithContext(ctx).Create(record).Error; err != nil {
+	if err := r.db.WithContext(ctx).Create(&record).Error; err != nil {
 		return mapDBError(err)
 	}
 	favorite.CreatedAt = record.CreatedAt
