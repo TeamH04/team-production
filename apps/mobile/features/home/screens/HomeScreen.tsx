@@ -322,7 +322,7 @@ const styles = StyleSheet.create({
 
   screen: {
     backgroundColor: Platform.select({
-      android: '#E8E7E5',
+      android: palette.backgroundAndroid,
       ios: palette.background,
       default: palette.background,
     }),
