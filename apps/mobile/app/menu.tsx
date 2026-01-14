@@ -13,14 +13,18 @@ const COLORS = {
   BADGE_TEXT: '#FF4D4D',
   BLACK: '#000000',
   BORDER_LIGHT: '#EEEEEE',
-  BORDER_MEDIUM: '#444444',
+  BORDER_MEDIUM: 'rgba(255,255,255,0.2)',
   BORDER_SOFT: '#F8F8F8',
   GRAY_DARK: '#333333',
   GRAY_LIGHT: '#F9F9F9',
   GRAY_MUTED: '#AAAAAA',
   GRAY_TEXT: '#666666',
+  HEADER_GREEN: '#5B6B5A',
   IMAGE_BG: '#F5F5F5',
   SUB_TEXT: '#777777',
+  TAB_BG: 'rgba(255,255,255,0.15)',
+  TAB_BORDER: 'rgba(255,255,255,0.25)',
+  TAB_TEXT: 'rgba(255,255,255,0.8)',
   TAX_TEXT: '#999999',
   WHITE: '#FFFFFF',
 };
@@ -46,28 +50,24 @@ export default function ShopMenuScreen() {
     return ['すべて', 'おすすめ', ...baseCategories];
   }, [shop]);
 
-  // 初期値を空文字にして、useEffectでの更新を廃止
   const [selectedCategory, setSelectedCategory] = useState('');
-
-  // 実際に表示に使うカテゴリ（選択中がなければ最初のカテゴリをデフォルトにする）
   const activeCategory = selectedCategory || categories[0] || '';
 
   useLayoutEffect(() => {
     navigation.setOptions({
       headerStatusBarHeight: 0,
-      headerStyle: { backgroundColor: COLORS.BLACK, height: 50 },
+      headerStyle: { backgroundColor: COLORS.HEADER_GREEN, height: 50 },
       headerTintColor: COLORS.WHITE,
       headerTitleAlign: 'center',
       headerTitleStyle: { fontSize: 18, fontWeight: 'bold' },
       title: 'メニュー',
     });
-  }, [navigation]);
+  }, [navigation, shop]);
 
   const sections = useMemo(() => {
     if (!shop?.menu) return [];
     const menuItems = shop.menu as unknown as ExtendedMenuItem[];
 
-    // activeCategory を使用して判定
     if (activeCategory === 'すべて' || activeCategory === 'おすすめ') {
       const targetItems = activeCategory === 'おすすめ' ? menuItems.slice(0, 2) : menuItems;
 
@@ -105,7 +105,6 @@ export default function ShopMenuScreen() {
           showsHorizontalScrollIndicator={false}
         >
           {categories.map(category => {
-            // activeCategory と比較
             const isSelected = category === activeCategory;
             return (
               <Pressable
@@ -299,34 +298,36 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
   },
   tab: {
-    backgroundColor: COLORS.GRAY_DARK,
-    borderColor: COLORS.BORDER_MEDIUM,
+    alignItems: 'center',
+    backgroundColor: COLORS.TAB_BG,
+    borderColor: COLORS.TAB_BORDER,
     borderRadius: 18,
     borderWidth: 1,
+    height: 34,
+    justifyContent: 'center',
     marginRight: 8,
     paddingHorizontal: 16,
-    paddingVertical: 6,
   },
   tabSelected: {
     backgroundColor: COLORS.WHITE,
     borderColor: COLORS.WHITE,
   },
   tabText: {
-    color: COLORS.GRAY_MUTED,
+    color: COLORS.TAB_TEXT,
     fontSize: 14,
     fontWeight: '600',
   },
   tabTextSelected: {
-    color: COLORS.BLACK,
+    color: COLORS.HEADER_GREEN,
   },
   tabsContainer: {
-    backgroundColor: COLORS.BLACK,
-    paddingBottom: 8,
+    backgroundColor: COLORS.HEADER_GREEN,
   },
   tabsContent: {
     flexDirection: 'row',
+    paddingBottom: 10,
     paddingHorizontal: 12,
-    paddingVertical: 8,
+    paddingTop: 10,
   },
   taxLabel: {
     color: COLORS.TAX_TEXT,

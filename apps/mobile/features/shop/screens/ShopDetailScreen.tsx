@@ -1,7 +1,7 @@
 ﻿import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import { Image } from 'expo-image';
-import { Href, useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
+import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useCallback, useLayoutEffect, useMemo, useState } from 'react';
 import {
@@ -40,7 +40,7 @@ const BUDGET_LABEL: Record<Shop['budget'], string> = {
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
 export default function ShopDetailScreen() {
-  const params = useLocalSearchParams<{ id?: string }>();
+  const params = useLocalSearchParams<{ id: string }>();
   const id = params.id;
   const router = useRouter();
   const navigation = useNavigation();
@@ -52,13 +52,9 @@ export default function ShopDetailScreen() {
   const [isAccordionOpen, setIsAccordionOpen] = useState(false);
 
   const shop = useMemo(() => (SHOPS as ExtendedShop[]).find(s => s.id === id), [id]);
-
   const webBaseUrl = process.env.EXPO_PUBLIC_WEB_BASE_URL?.replace(/\/$/, '');
-
   const reviews = useMemo(() => (shop ? getReviews(shop.id) : []), [shop, getReviews]);
-
   const isFav = useMemo(() => (shop ? isFavorite(shop.id) : false), [shop, isFavorite]);
-
   const isVis = useMemo(() => (shop ? isVisited(shop.id) : false), [shop, isVisited]);
 
   const recommendedMenu = useMemo(() => {
@@ -72,17 +68,10 @@ export default function ShopDetailScreen() {
         headerBackTitle: '戻る',
         headerShadowVisible: false,
         headerShown: true,
-        headerStatusBarHeight: 0,
-        headerStyle: {
-          backgroundColor: COLORS.BLACK,
-          height: 50,
-        },
+        headerStyle: { backgroundColor: '#5B6B5A', height: 50 },
         headerTintColor: COLORS.WHITE,
         headerTitleAlign: 'center',
-        headerTitleStyle: {
-          fontSize: 20,
-          fontWeight: 'bold',
-        },
+        headerTitleStyle: { fontSize: 20, fontWeight: 'bold' },
         title: shop.name,
       });
     }
@@ -97,7 +86,7 @@ export default function ShopDetailScreen() {
   const mapOpenUrl = useMemo(
     () =>
       shop?.placeId
-        ? `https://www.google.com/maps/search/?api=1&query_place_id=${shop.placeId}`
+        ? `https://www.google.com/maps/search/?api=1&query=google&query_place_id=${shop.placeId}`
         : null,
     [shop]
   );
@@ -105,11 +94,7 @@ export default function ShopDetailScreen() {
   const handleShare = useCallback(() => {
     if (!shop || !webBaseUrl) return;
     const url = `${webBaseUrl}/shop/${shop.id}`;
-    Share.share({
-      message: `${shop.name}\n${shop.description}\n${url}`,
-      title: shop.name,
-      url,
-    }).catch(() => Alert.alert('共有に失敗しました'));
+    Share.share({ message: `${shop.name}\n${url}`, title: shop.name, url });
   }, [shop, webBaseUrl]);
 
   const handleOpenMap = useCallback(() => {
@@ -122,6 +107,7 @@ export default function ShopDetailScreen() {
   return (
     <View style={styles.screen}>
       <StatusBar style='light' translucent={true} />
+
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.heroContainer}>
           <Image contentFit='cover' source={{ uri: shop.imageUrl }} style={styles.hero} />
@@ -129,25 +115,23 @@ export default function ShopDetailScreen() {
 
         <View style={styles.container}>
           <View style={styles.headerRow}>
-            <Text style={styles.title}>{shop.name}</Text>
+            <Text numberOfLines={1} style={styles.title}>
+              {shop.name}
+            </Text>
             <View style={styles.headerActions}>
               <Pressable onPress={handleShare} style={styles.shareBtn}>
                 <Ionicons color={palette.muted} name='share-outline' size={22} />
               </Pressable>
-              <Pressable
-                onPress={() => toggleVisited(shop.id)}
-                style={({ pressed }) => [styles.visitedBtn, pressed && styles.btnPressed]}
-              >
+
+              <Pressable onPress={() => toggleVisited(shop.id)} style={styles.visitedBtn}>
                 <Ionicons
                   name={isVis ? 'checkmark-circle' : 'checkmark-circle-outline'}
                   size={24}
                   color={isVis ? palette.visitedActive : palette.muted}
                 />
               </Pressable>
-              <Pressable
-                onPress={() => toggleFavorite(shop.id)}
-                style={({ pressed }) => [styles.favBtn, pressed && styles.btnPressed]}
-              >
+
+              <Pressable onPress={() => toggleFavorite(shop.id)} style={styles.favBtn}>
                 <Ionicons
                   color={isFav ? palette.favoriteActive : palette.muted}
                   name={isFav ? 'heart' : 'heart-outline'}
@@ -184,6 +168,7 @@ export default function ShopDetailScreen() {
                   size={20}
                 />
               </Pressable>
+
               {isAccordionOpen && (
                 <View style={styles.accordionContent}>
                   <View style={styles.recommendedBox}>
@@ -200,12 +185,18 @@ export default function ShopDetailScreen() {
                       </View>
                     ))}
                   </View>
+
                   <Pressable
-                    onPress={() => router.push(`/shop/${shop.id}/review` as never)}
+                    onPress={() =>
+                      router.push({
+                        pathname: '/menu',
+                        params: { id: shop.id },
+                      })
+                    }
                     style={styles.moreBtnOutline}
                   >
                     <Ionicons color={palette.primary} name='add-circle-outline' size={18} />
-                    <Text style={styles.moreBtnText}>もっとみる</Text>
+                    <Text style={styles.moreBtnText}>もっと見る</Text>
                   </Pressable>
                 </View>
               )}
@@ -215,6 +206,7 @@ export default function ShopDetailScreen() {
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>場所</Text>
           </View>
+
           <View style={[styles.card, styles.cardShadow]}>
             <Pressable onPress={handleOpenMap} style={styles.mapButton}>
               <Ionicons
@@ -230,8 +222,14 @@ export default function ShopDetailScreen() {
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>レビュー</Text>
           </View>
+
           <Pressable
-            onPress={() => router.push(`/shop/${shop.id}/review` as Href)}
+            onPress={() =>
+              router.push({
+                pathname: '/shop/[id]/review',
+                params: { id: shop.id },
+              })
+            }
             style={styles.primaryBtn}
           >
             <Text style={styles.primaryBtnText}>レビューを書く</Text>
@@ -275,12 +273,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingVertical: 4,
   },
-  btnPressed: { opacity: 0.7 },
-  card: {
-    backgroundColor: palette.surface,
-    borderRadius: 16,
-    padding: 16,
-  },
+  card: { backgroundColor: palette.surface, borderRadius: 16, padding: 16 },
   cardShadow: {
     elevation: 4,
     marginBottom: 16,
@@ -290,22 +283,19 @@ const styles = StyleSheet.create({
     shadowRadius: 12,
   },
   container: { padding: 16 },
-  content: {
-    backgroundColor: COLORS.WHITE,
-    paddingBottom: 24,
-  },
+  content: { backgroundColor: COLORS.WHITE, paddingBottom: 24 },
   descriptionText: {
     color: palette.primary,
+    fontSize: 16,
     lineHeight: 22,
     marginBottom: 16,
   },
-  favBtn: {
-    marginLeft: 8,
-  },
+  favBtn: { padding: 2 },
   headerActions: {
     alignItems: 'center',
     flexDirection: 'row',
-    gap: 4,
+    gap: -4, // ここを極限まで狭めました
+    marginRight: -4,
   },
   headerRow: {
     alignItems: 'center',
@@ -331,14 +321,13 @@ const styles = StyleSheet.create({
     borderColor: palette.primary,
     borderRadius: 12,
     borderWidth: 1,
+    flexDirection: 'row',
+    justifyContent: 'center',
     marginTop: 12,
     paddingVertical: 14,
   },
-  moreBtnText: { color: palette.primary, fontWeight: '700' },
-  muted: {
-    color: palette.muted,
-    marginTop: 6,
-  },
+  moreBtnText: { color: palette.primary, fontWeight: '700', marginLeft: 6 },
+  muted: { color: palette.muted, marginTop: 6 },
   primaryBtn: {
     backgroundColor: palette.accent,
     borderRadius: 12,
@@ -358,11 +347,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     padding: 12,
   },
-  recommendedItem: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    paddingVertical: 6,
-  },
+  recommendedItem: { alignItems: 'center', flexDirection: 'row', paddingVertical: 6 },
   recommendedLabel: {
     color: palette.accent,
     fontSize: 13,
@@ -379,7 +364,7 @@ const styles = StyleSheet.create({
   screen: { backgroundColor: COLORS.BLACK, flex: 1 },
   sectionHeader: { marginBottom: 8, marginTop: 16 },
   sectionTitle: { color: palette.primary, fontSize: 18, fontWeight: '700' },
-  shareBtn: { padding: 4 },
+  shareBtn: { padding: 2 },
   tagPill: {
     backgroundColor: palette.tagSurface,
     borderRadius: 999,
@@ -390,6 +375,12 @@ const styles = StyleSheet.create({
   },
   tagRow: { flexDirection: 'row', flexWrap: 'wrap', marginBottom: 16 },
   tagText: { color: palette.tagText, fontSize: 12, fontWeight: '600' },
-  title: { color: palette.primary, fontSize: 22, fontWeight: '800' },
-  visitedBtn: { marginLeft: 8 },
+  title: {
+    color: palette.primary,
+    flex: 1,
+    fontSize: 22,
+    fontWeight: '800',
+    marginRight: 0,
+  },
+  visitedBtn: { padding: 2 },
 });
