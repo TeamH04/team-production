@@ -51,6 +51,36 @@ async function resolveAuth(): Promise<AuthState> {
   return { mode: 'remote', userId: user.id, token };
 }
 
+type FavoritesDependencies = {
+  resolveAuth: () => Promise<AuthState>;
+  fetchUserFavorites: typeof fetchUserFavorites;
+  addFavoriteApi: typeof addFavoriteApi;
+  removeFavoriteApi: typeof removeFavoriteApi;
+  isSupabaseConfigured: typeof isSupabaseConfigured;
+  getSupabase: typeof getSupabase;
+};
+
+const defaultDependencies: FavoritesDependencies = {
+  resolveAuth,
+  fetchUserFavorites,
+  addFavoriteApi,
+  removeFavoriteApi,
+  isSupabaseConfigured,
+  getSupabase,
+};
+
+let dependencies = defaultDependencies;
+
+const getDependencies = () => dependencies;
+
+export function __setFavoritesDependenciesForTesting(overrides: Partial<FavoritesDependencies>) {
+  dependencies = { ...dependencies, ...overrides };
+}
+
+export function __resetFavoritesDependenciesForTesting() {
+  dependencies = defaultDependencies;
+}
+
 // Context 本体。初期値は undefined（Provider 内で必ず設定される）
 const FavoritesContext = createContext<FavoritesContextValue | undefined>(undefined);
 
@@ -62,7 +92,7 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
   const [favorites, setFavorites] = useState<FavoritesState>(() => new Set());
 
   const loadFavorites = useCallback(async () => {
-    const auth = await resolveAuth();
+    const auth = await getDependencies().resolveAuth();
     if (auth.mode === 'local') {
       return;
     }
@@ -70,13 +100,13 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
       setFavorites(new Set());
       return;
     }
-    const data = await fetchUserFavorites(auth.userId, auth.token);
+    const data = await getDependencies().fetchUserFavorites(auth.userId, auth.token);
     setFavorites(new Set(data.map(item => item.store_id)));
   }, []);
 
   // --- お気に入りに追加する処理 ---
   const addFavorite = useCallback(async (shopId: string) => {
-    const auth = await resolveAuth();
+    const auth = await getDependencies().resolveAuth();
     if (auth.mode === 'local') {
       setFavorites(prev => new Set(prev).add(shopId));
       return;
@@ -84,13 +114,13 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
     if (auth.mode === 'unauthenticated') {
       throw new Error(AUTH_REQUIRED);
     }
-    await addFavoriteApi(auth.userId, shopId, auth.token);
+    await getDependencies().addFavoriteApi(auth.userId, shopId, auth.token);
     setFavorites(prev => new Set(prev).add(shopId));
   }, []);
 
   // --- お気に入りから削除する処理 ---
   const removeFavorite = useCallback(async (shopId: string) => {
-    const auth = await resolveAuth();
+    const auth = await getDependencies().resolveAuth();
     if (auth.mode === 'local') {
       setFavorites(prev => {
         const next = new Set(prev);
@@ -102,7 +132,7 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
     if (auth.mode === 'unauthenticated') {
       throw new Error(AUTH_REQUIRED);
     }
-    await removeFavoriteApi(auth.userId, shopId, auth.token);
+    await getDependencies().removeFavoriteApi(auth.userId, shopId, auth.token);
     setFavorites(prev => {
       const next = new Set(prev);
       next.delete(shopId);
@@ -123,15 +153,15 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
   );
 
   useEffect(() => {
-    if (!isSupabaseConfigured()) {
+    if (!getDependencies().isSupabaseConfigured()) {
       return;
     }
 
-    const { data } = getSupabase().auth.onAuthStateChange(() => {
-      void loadFavorites().catch(err => {
-        console.warn('[favorites] failed to load favorites', err);
+    const { data } = getDependencies()
+      .getSupabase()
+      .auth.onAuthStateChange(() => {
+        void loadFavorites().catch(() => undefined);
       });
-    });
     return () => {
       data.subscription.unsubscribe();
     };
