@@ -11,10 +11,11 @@ import (
 )
 
 type mockAdminStoreRepo struct {
-	pending   []entity.Store
-	store     *entity.Store
-	findErr   error
-	updateErr error
+	pending        []entity.Store
+	store          *entity.Store
+	findErr        error
+	findPendingErr error
+	updateErr      error
 }
 
 func (m *mockAdminStoreRepo) FindAll(ctx context.Context) ([]entity.Store, error) {
@@ -32,6 +33,9 @@ func (m *mockAdminStoreRepo) FindByID(ctx context.Context, id string) (*entity.S
 }
 
 func (m *mockAdminStoreRepo) FindPending(ctx context.Context) ([]entity.Store, error) {
+	if m.findPendingErr != nil {
+		return nil, m.findPendingErr
+	}
 	return append([]entity.Store(nil), m.pending...), nil
 }
 
@@ -51,36 +55,67 @@ func (m *mockAdminStoreRepo) Delete(ctx context.Context, id string) error {
 	return errors.New("not implemented")
 }
 
-func TestGetPendingStores(t *testing.T) {
+// --- GetPendingStores Tests ---
+
+func TestGetPendingStores_Success(t *testing.T) {
 	repo := &mockAdminStoreRepo{
 		pending: []entity.Store{
-			{StoreID: "store-1", Name: "A"},
+			{StoreID: "store-1", Name: "Store A"},
+			{StoreID: "store-2", Name: "Store B"},
 		},
 	}
 	uc := usecase.NewAdminUseCase(repo)
 
 	stores, err := uc.GetPendingStores(context.Background())
+
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if len(stores) != 1 {
-		t.Fatalf("expected 1 store, got %d", len(stores))
+	if len(stores) != 2 {
+		t.Errorf("expected 2 stores, got %d", len(stores))
 	}
 }
 
-func TestApproveStore_NotFound(t *testing.T) {
-	repo := &mockAdminStoreRepo{findErr: apperr.New(apperr.CodeNotFound, entity.ErrNotFound)}
+func TestGetPendingStores_Empty(t *testing.T) {
+	repo := &mockAdminStoreRepo{
+		pending: []entity.Store{},
+	}
 	uc := usecase.NewAdminUseCase(repo)
-	if err := uc.ApproveStore(context.Background(), "store-1"); !errors.Is(err, usecase.ErrStoreNotFound) {
-		t.Fatalf("expected ErrStoreNotFound, got %v", err)
+
+	stores, err := uc.GetPendingStores(context.Background())
+
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(stores) != 0 {
+		t.Errorf("expected 0 stores, got %d", len(stores))
 	}
 }
+
+func TestGetPendingStores_RepositoryError(t *testing.T) {
+	dbErr := errors.New("database error")
+	repo := &mockAdminStoreRepo{
+		findPendingErr: dbErr,
+	}
+	uc := usecase.NewAdminUseCase(repo)
+
+	_, err := uc.GetPendingStores(context.Background())
+
+	if !errors.Is(err, dbErr) {
+		t.Errorf("expected database error, got %v", err)
+	}
+}
+
+// --- ApproveStore Tests ---
 
 func TestApproveStore_Success(t *testing.T) {
 	store := &entity.Store{StoreID: "store-1", IsApproved: false}
 	repo := &mockAdminStoreRepo{store: store}
 	uc := usecase.NewAdminUseCase(repo)
-	if err := uc.ApproveStore(context.Background(), "store-1"); err != nil {
+
+	err := uc.ApproveStore(context.Background(), "store-1")
+
+	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 	if !repo.store.IsApproved {
@@ -88,14 +123,105 @@ func TestApproveStore_Success(t *testing.T) {
 	}
 }
 
-func TestRejectStore_SetsApprovalFalse(t *testing.T) {
-	store := &entity.Store{StoreID: "store-2", IsApproved: true}
+func TestApproveStore_NotFound(t *testing.T) {
+	repo := &mockAdminStoreRepo{
+		findErr: apperr.New(apperr.CodeNotFound, entity.ErrNotFound),
+	}
+	uc := usecase.NewAdminUseCase(repo)
+
+	err := uc.ApproveStore(context.Background(), "nonexistent")
+
+	if !errors.Is(err, usecase.ErrStoreNotFound) {
+		t.Errorf("expected ErrStoreNotFound, got %v", err)
+	}
+}
+
+func TestApproveStore_FindByIDError(t *testing.T) {
+	dbErr := errors.New("database connection error")
+	repo := &mockAdminStoreRepo{
+		findErr: dbErr,
+	}
+	uc := usecase.NewAdminUseCase(repo)
+
+	err := uc.ApproveStore(context.Background(), "store-1")
+
+	if !errors.Is(err, dbErr) {
+		t.Errorf("expected database error, got %v", err)
+	}
+}
+
+func TestApproveStore_UpdateError(t *testing.T) {
+	updateErr := errors.New("update failed")
+	store := &entity.Store{StoreID: "store-1", IsApproved: false}
+	repo := &mockAdminStoreRepo{
+		store:     store,
+		updateErr: updateErr,
+	}
+	uc := usecase.NewAdminUseCase(repo)
+
+	err := uc.ApproveStore(context.Background(), "store-1")
+
+	if !errors.Is(err, updateErr) {
+		t.Errorf("expected update error, got %v", err)
+	}
+}
+
+// --- RejectStore Tests ---
+
+func TestRejectStore_Success(t *testing.T) {
+	store := &entity.Store{StoreID: "store-1", IsApproved: true}
 	repo := &mockAdminStoreRepo{store: store}
 	uc := usecase.NewAdminUseCase(repo)
-	if err := uc.RejectStore(context.Background(), "store-2"); err != nil {
+
+	err := uc.RejectStore(context.Background(), "store-1")
+
+	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 	if repo.store.IsApproved {
-		t.Fatalf("expected store to be rejected")
+		t.Fatalf("expected store to be rejected (IsApproved=false)")
+	}
+}
+
+func TestRejectStore_NotFound(t *testing.T) {
+	repo := &mockAdminStoreRepo{
+		findErr: apperr.New(apperr.CodeNotFound, entity.ErrNotFound),
+	}
+	uc := usecase.NewAdminUseCase(repo)
+
+	err := uc.RejectStore(context.Background(), "nonexistent")
+
+	if !errors.Is(err, usecase.ErrStoreNotFound) {
+		t.Errorf("expected ErrStoreNotFound, got %v", err)
+	}
+}
+
+func TestRejectStore_FindByIDError(t *testing.T) {
+	dbErr := errors.New("database connection error")
+	repo := &mockAdminStoreRepo{
+		findErr: dbErr,
+	}
+	uc := usecase.NewAdminUseCase(repo)
+
+	err := uc.RejectStore(context.Background(), "store-1")
+
+	if !errors.Is(err, dbErr) {
+		t.Errorf("expected database error, got %v", err)
+	}
+}
+
+func TestRejectStore_UpdateError(t *testing.T) {
+	updateErr := errors.New("update failed")
+	store := &entity.Store{StoreID: "store-1", IsApproved: true}
+	repo := &mockAdminStoreRepo{
+		store:     store,
+		updateErr: updateErr,
+	}
+	uc := usecase.NewAdminUseCase(repo)
+
+	err := uc.RejectStore(context.Background(), "store-1")
+
+	if !errors.Is(err, updateErr) {
+		t.Errorf("expected update error, got %v", err)
 	}
 }
