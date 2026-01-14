@@ -3,8 +3,8 @@ import { SHOPS, type Shop } from '@team/shop-core';
 import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactElement } from 'react';
-import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
-import Animated, { useAnimatedRef } from 'react-native-reanimated';
+import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import Animated from 'react-native-reanimated';
 
 const PAGE_SIZE = 10;
 const TAB_BAR_SPACING = 107;
@@ -28,9 +28,6 @@ function ShopResultsList({ filteredShops, renderListHeader, renderShop }: ShopRe
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const loadMoreTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // 型を正しく指定
-  const listRef = useAnimatedRef<FlatList<Shop>>();
-
   useEffect(() => {
     if (loadMoreTimeout.current) {
       clearTimeout(loadMoreTimeout.current);
@@ -40,15 +37,10 @@ function ShopResultsList({ filteredShops, renderListHeader, renderShop }: ShopRe
     const resetId = setTimeout(() => {
       setIsLoadingMore(false);
       setVisibleCount(Math.min(PAGE_SIZE, filteredShops.length));
-
-      if (listRef.current) {
-        // any を排除して scrollToOffset を呼び出し
-        listRef.current.scrollToOffset({ animated: true, offset: 0 });
-      }
     }, 0);
 
     return () => clearTimeout(resetId);
-  }, [filteredShops, listRef]);
+  }, [filteredShops]);
 
   useEffect(() => {
     return () => {

@@ -5,9 +5,10 @@ import * as AuthSession from 'expo-auth-session';
 import * as Crypto from 'expo-crypto';
 import { useRouter, type Href } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
-import React, { useCallback, useState } from 'react';
-import { Alert, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import React, { useCallback, useLayoutEffect, useState } from 'react';
+import { Alert, Platform, Pressable, StatusBar, StyleSheet, Text, View } from 'react-native';
 
+import KuguriTitle from '@/assets/icons/kaguri.svg';
 import { palette } from '@/constants/palette';
 import { checkIsOwner } from '@/lib/auth';
 import { DEV_GUEST_FLAG_KEY, DEV_LOGIN_ENABLED } from '@/lib/devMode';
@@ -47,6 +48,10 @@ function createNonce(length = 32) {
 export default function LoginScreen() {
   const router = useRouter();
   const [loading, setLoading] = useState<null | 'google' | 'apple' | 'guest'>(null);
+
+  useLayoutEffect(() => {
+    StatusBar.setBarStyle('dark-content');
+  }, []);
 
   const finishLogin = useCallback(async () => {
     const { isOwner } = await checkIsOwner();
@@ -207,90 +212,93 @@ export default function LoginScreen() {
 
   return (
     <View style={styles.screen}>
-      <View style={styles.cardShadow}>
-        <View style={styles.card}>
-          <View style={styles.titleContainer}>
-            <Text style={styles.title}>さぁ、はじめよう</Text>
-            <Ionicons
-              name='sparkles'
-              size={20}
-              color={palette.primaryText}
-              style={styles.sparkleIcon}
-            />
-          </View>
-
-          <View style={styles.actions}>
-            <Pressable
-              disabled={loading !== null}
-              onPress={() => handleOAuth('google')}
-              style={({ pressed }) => [
-                styles.button,
-                styles.buttonOutline,
-                pressed && styles.buttonPressed,
-                loading === 'google' && styles.buttonLoading,
-              ]}
-            >
-              <View style={styles.buttonContent}>
-                <Ionicons name='logo-google' size={20} color={palette.outline} />
-                <Text style={styles.buttonOutlineText}>
-                  {loading === 'google' ? 'Google で処理中…' : 'Google で続行'}
-                </Text>
-              </View>
-            </Pressable>
-            <Pressable
-              disabled={loading !== null}
-              onPress={handleAppleNative}
-              style={({ pressed }) => [
-                styles.button,
-                styles.buttonOutline,
-                pressed && styles.buttonPressed,
-                loading === 'apple' && styles.buttonLoading,
-              ]}
-            >
-              <View style={styles.buttonContent}>
-                <Ionicons
-                  name='logo-apple'
-                  size={20}
-                  color={palette.outline}
-                  style={styles.appleIconAdjust}
-                />
-                <Text style={styles.buttonOutlineText}>
-                  {loading === 'apple' ? 'Apple で処理中…' : 'Apple で続行'}
-                </Text>
-              </View>
-            </Pressable>
-          </View>
-
-          <View style={styles.ownerBox}>
-            <Text style={styles.ownerLead}>オーナーの方はこちら</Text>
-            <Pressable onPress={() => router.push('/owner/login' as Href)}>
-              <Text style={styles.ownerLink}>オーナー用アカウントでログイン</Text>
-            </Pressable>
-          </View>
-
-          {DEV_LOGIN_ENABLED && (
-            <View style={styles.devBox}>
-              <View style={styles.devHeader}>
-                <Ionicons name='construct' size={16} color={palette.action} />
-                <Text style={styles.devLead}>開発者モード</Text>
-              </View>
-              <Pressable
-                disabled={loading !== null}
-                onPress={handleDevGuestLogin}
-                style={({ pressed }) => [
-                  styles.devButton,
-                  pressed && { opacity: 0.9 },
-                  loading === 'guest' && { opacity: 0.75 },
-                ]}
-              >
-                <Text style={styles.devButtonText}>
-                  {loading === 'guest' ? 'ゲストで入場中…' : 'ゲストとして入る（開発用）'}
-                </Text>
-              </Pressable>
+      <View style={styles.logoContainer}>
+        <KuguriTitle
+          width='70%'
+          height='100%'
+          preserveAspectRatio='xMidYMid meet'
+          accessibilityLabel='Kuguriロゴ'
+          fill={palette.white}
+        />
+      </View>
+      <View style={styles.actions}>
+        <View style={styles.buttonFrame}>
+          <Pressable
+            disabled={loading !== null}
+            onPress={() => handleOAuth('google')}
+            style={({ pressed }) => [
+              styles.button,
+              styles.buttonOutline,
+              pressed && styles.buttonPressed,
+              loading === 'google' && styles.buttonLoading,
+            ]}
+          >
+            <View style={styles.buttonContent}>
+              <Ionicons name='logo-google' size={28} color={palette.grayDark} />
+              <Text style={styles.buttonOutlineText}>
+                {loading === 'google' ? 'Google で処理中…' : 'Google でログイン'}
+              </Text>
             </View>
-          )}
+          </Pressable>
+        </View>
+        <View style={styles.buttonFrame}>
+          <Pressable
+            disabled={loading !== null}
+            onPress={handleAppleNative}
+            style={({ pressed }) => [
+              styles.button,
+              styles.buttonOutline,
+              pressed && styles.buttonPressed,
+              loading === 'apple' && styles.buttonLoading,
+            ]}
+          >
+            <View style={styles.buttonContent}>
+              <Ionicons
+                name='logo-apple'
+                size={28}
+                color={palette.grayDark}
+                style={styles.appleIconAdjust}
+              />
+              <Text style={styles.buttonOutlineText}>
+                {loading === 'apple' ? 'Apple で処理中…' : 'Apple でログイン'}
+              </Text>
+            </View>
+          </Pressable>
         </View>
       </View>
+
+      <View style={styles.ownerBox}>
+        <View style={styles.ownerLead}>
+          <View style={styles.ownerLineSide} />
+          <Text style={styles.ownerLeadText}>オーナーの方はこちら</Text>
+          <View style={styles.ownerLineSide} />
+        </View>
+        <Pressable onPress={() => router.push('/owner/login' as Href)}>
+          <Text style={styles.ownerLink}>オーナー用アカウントでログイン</Text>
+        </Pressable>
+      </View>
+
+      {DEV_LOGIN_ENABLED && (
+        <View style={styles.devBox}>
+          <View style={styles.devHeader}>
+            <Ionicons name='construct' size={16} color={palette.action} />
+            <Text style={styles.devLead}>開発者モード</Text>
+          </View>
+          <Pressable
+            disabled={loading !== null}
+            onPress={handleDevGuestLogin}
+            style={({ pressed }) => [
+              styles.devButton,
+              pressed && { opacity: 0.9 },
+              loading === 'guest' && { opacity: 0.75 },
+            ]}
+          >
+            <Text style={styles.devButtonText}>
+              {loading === 'guest' ? 'ゲストで入場中…' : 'ゲストとして入る（開発用）'}
+            </Text>
+          </Pressable>
+        </View>
+      )}
     </View>
   );
 }
@@ -298,8 +306,8 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   actions: {
     alignSelf: 'stretch',
-    gap: 12,
-    marginTop: 12,
+    gap: 40,
+    marginTop: 40,
     width: '100%',
   },
   appleIconAdjust: {
@@ -319,43 +327,33 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: 12,
   },
+  buttonFrame: {
+    alignSelf: 'stretch',
+    backgroundColor: palette.grayLight,
+    borderRadius: 16,
+    paddingHorizontal: 6,
+    paddingVertical: 6,
+  },
   buttonLoading: {
     opacity: 0.75,
   },
   buttonOutline: {
-    backgroundColor: palette.surface,
-    borderColor: palette.outline,
+    backgroundColor: palette.transparent,
+    borderColor: palette.transparent,
     borderRadius: 14,
-    borderWidth: 2,
+    borderWidth: 0,
     overflow: 'hidden',
   },
   buttonOutlineText: {
-    color: palette.outline,
-    fontSize: 17,
+    color: palette.grayDark,
+    fontSize: 20,
     fontWeight: '700',
     textAlign: 'center',
   },
   buttonPressed: {
     opacity: 0.9,
   },
-  card: {
-    backgroundColor: palette.surface,
-    borderColor: palette.border,
-    borderRadius: 16,
-    borderWidth: 1,
-    padding: 24,
-  },
-  cardShadow: {
-    alignSelf: 'center',
-    maxWidth: 480,
-    shadowColor: palette.shadow,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.08,
-    shadowRadius: 16,
-    width: '100%',
-  },
   devBox: {
-    backgroundColor: palette.surface,
     borderColor: palette.border,
     borderRadius: 12,
     borderWidth: 1,
@@ -369,7 +367,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   devButtonText: {
-    color: palette.primaryText,
+    color: palette.black,
     fontWeight: '700',
     textAlign: 'center',
   },
@@ -379,50 +377,52 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   devLead: {
-    color: palette.primaryText,
+    color: palette.black,
     fontSize: 14,
     fontWeight: '700',
     marginLeft: 6,
   },
+  logoContainer: {
+    alignItems: 'center',
+    height: 103,
+    justifyContent: 'center',
+    left: 0,
+    position: 'absolute',
+    right: 0,
+    top: '25%',
+  },
   ownerBox: {
     alignItems: 'center',
-    borderTopColor: palette.border,
-    borderTopWidth: 1,
-    marginTop: 32,
-    paddingTop: 24,
+    marginTop: 90,
+    paddingTop: 20,
   },
   ownerLead: {
-    color: palette.secondaryText,
-    fontSize: 14,
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 12,
+  },
+  ownerLeadText: {
+    color: palette.white,
+    fontSize: 16,
+  },
+  ownerLineSide: {
+    backgroundColor: palette.grayMid,
+    flex: 1,
+    height: 1,
   },
   ownerLink: {
-    color: palette.link,
-    fontSize: 16,
+    color: palette.white,
+    fontSize: 18,
     fontWeight: '700',
-    marginTop: 12,
+    marginTop: 20,
   },
   screen: {
     alignItems: 'stretch',
-    backgroundColor: palette.background,
+    backgroundColor: palette.accent,
     flex: 1,
-    justifyContent: 'center',
-    paddingBottom: 40,
+    justifyContent: 'flex-end',
+    paddingBottom: 180,
     paddingHorizontal: 24,
-    paddingTop: 8,
-  },
-  sparkleIcon: {
-    marginLeft: 8,
-  },
-  title: {
-    color: palette.primaryText,
-    fontSize: 24,
-    fontWeight: '700',
-    textAlign: 'center',
-  },
-  titleContainer: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'center',
-    marginBottom: 8,
+    paddingTop: 0,
   },
 });

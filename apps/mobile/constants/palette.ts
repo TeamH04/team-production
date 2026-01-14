@@ -39,6 +39,16 @@ export const palette = {
   google: '#DB4437',
   apple: '#000000',
 
+  // ユーティリティ
+  white: '#FFFFFF',
+  black: '#000000',
+  grayMid: '#999999',
+  grayDark: '#333333',
+  grayLight: '#F6F5F3',
+  transparent: 'transparent',
+  accentButtonBg: '#1daa7dcc',
+  accentSoft: withAlpha(secondary, 0.45),
+
   // 影
   shadow: '#000000',
   shadowColor: '#000000',
