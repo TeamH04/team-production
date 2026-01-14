@@ -29,7 +29,7 @@ export const palette = {
   dangerBg: '#FEE2E2',
   dangerBorder: '#FECACA',
   dangerText: '#EF4444',
-  error: '#EF4444',
+  errorText: '#DC2626',
 
   // ステータス / セマンティック
   highlight: withAlpha(secondary, 0.15),

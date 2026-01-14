@@ -37,7 +37,7 @@ export default function MyPageScreen({
   const { reviewsByShop, getLikedReviews } = useReviews();
 
   // ユーザー情報
-  const { profile, updateProfile } = useUser();
+  const { user, setUser } = useUser();
 
   // 全店舗のレビューを一つの配列にまとめ、新しい順で最大20件を返す
   const reviews = useMemo(() => {
@@ -141,23 +141,35 @@ export default function MyPageScreen({
   }, []);
 
   const handleGoToProfileEdit = useCallback(() => {
-    setEditName(profile.name);
-    setEditEmail(profile.email);
+    if (!user) {
+      Alert.alert('ユーザー情報が見つかりません', 'ログインし直してください');
+      return;
+    }
+    setEditName(user.name);
+    setEditEmail(user.email);
     setCurrentScreen('profileEdit');
     if (setWasDetailScreen) {
       setWasDetailScreen(true);
     }
-  }, [profile, setWasDetailScreen]);
+  }, [setWasDetailScreen, user]);
 
   const handleSaveProfile = useCallback(() => {
+    if (!user) {
+      Alert.alert('ユーザー情報が見つかりません', 'ログインし直してください');
+      return;
+    }
     const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(editEmail.trim());
     if (editName.trim().length === 0 || !emailOk) {
       Alert.alert('入力エラー', '表示名とメールアドレスを正しく入力してください');
       return;
     }
-    updateProfile({ name: editName.trim(), email: editEmail.trim() });
+    setUser({
+      ...user,
+      email: editEmail.trim(),
+      name: editName.trim(),
+    });
     handleBackPress();
-  }, [editName, editEmail, updateProfile, handleBackPress]);
+  }, [editEmail, editName, handleBackPress, setUser, user]);
 
   // 画面の描画（switch 文で管理）
   switch (currentScreen) {
@@ -450,13 +462,13 @@ export default function MyPageScreen({
               <View style={styles.profileRow}>
                 <View style={styles.avatar}>
                   <Text style={styles.avatarText}>
-                    {profile.name ? profile.name.slice(0, 2).toUpperCase() : ''}
+                    {user?.name ? user.name.slice(0, 2).toUpperCase() : ''}
                   </Text>
                 </View>
 
                 <View style={styles.profileMeta}>
-                  <Text style={styles.profileName}>{profile.name}</Text>
-                  <Text style={styles.profileSub}>{profile.email}</Text>
+                  <Text style={styles.profileName}>{user?.name ?? '未設定'}</Text>
+                  <Text style={styles.profileSub}>{user?.email ?? '未設定'}</Text>
                 </View>
                 <Pressable onPress={handleLogout} style={styles.logoutBtn} hitSlop={8}>
                   <Text style={styles.logoutText}>ログアウト</Text>
@@ -705,7 +717,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 4,
   },
-  logoutText: { color: palette.error, fontSize: 14, fontWeight: '600' },
+  logoutText: { color: palette.errorText, fontSize: 14, fontWeight: '600' },
   menuItem: {
     color: palette.mutedText,
     fontSize: 11,

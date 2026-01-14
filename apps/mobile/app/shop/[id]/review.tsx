@@ -135,7 +135,7 @@ export default function ReviewModalScreen() {
 const styles = StyleSheet.create({
   centered: { alignItems: 'center', justifyContent: 'center' }, // 中央寄せ
   content: { padding: 16 }, // 画面内余白
-  errorText: { color: palette.error, fontSize: 14, marginTop: 4 }, // エラーメッセージ
+  errorText: { color: palette.errorText, fontSize: 14, marginTop: 4 }, // エラーメッセージ
   heading: { color: palette.primary, fontSize: 18, fontWeight: '800', marginBottom: 8 }, // 店舗名
   input: {
     backgroundColor: palette.background,

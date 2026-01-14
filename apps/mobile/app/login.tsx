@@ -1,3 +1,4 @@
+import { useUser } from '@/features/user/UserContext';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as AppleAuthentication from 'expo-apple-authentication';
@@ -47,6 +48,7 @@ function createNonce(length = 32) {
 
 export default function LoginScreen() {
   const router = useRouter();
+  const { setUser } = useUser();
   const [loading, setLoading] = useState<null | 'google' | 'apple' | 'guest'>(null);
 
   useLayoutEffect(() => {
@@ -59,7 +61,11 @@ export default function LoginScreen() {
       'ログイン完了',
       isOwner ? 'オーナーとしてログインしました。' : '正常にログインしました。'
     );
-    router.replace((isOwner ? '/owner' : '/(tabs)') as Href);
+    // オーナーの場合は直接オーナー画面へ遷移（プロフィール登録をスキップ）
+    if (isOwner) {
+      router.replace('/owner' as Href);
+    }
+    // 一般ユーザーの場合は _layout.tsx の useEffect でプロフィール登録画面へリダイレクトされる
   }, [router]);
 
   const handleOAuth = useCallback(
@@ -106,6 +112,12 @@ export default function LoginScreen() {
           } else {
             throw new Error('No tokens found in redirect URL');
           }
+          // ログイン成功後に user をセット
+          setUser({
+            name: 'Google User', // ← 仮。後で Supabase から取得
+            email: 'google@example.com',
+            isProfileRegistered: false,
+          });
 
           await finishLogin();
         } else if (result.type === 'dismiss') {
@@ -127,7 +139,7 @@ export default function LoginScreen() {
         setLoading(null);
       }
     },
-    [finishLogin]
+    [finishLogin, setUser]
   );
 
   const handleAppleNative = useCallback(async () => {
@@ -168,6 +180,22 @@ export default function LoginScreen() {
       }
 
       // TODO: Supabase 側で Apple の Services ID / Team ID / Key ID / 秘密鍵 を設定する必要があり
+      // Apple ログイン成功後
+      const fullName =
+        credential.fullName &&
+        [credential.fullName.familyName, credential.fullName.givenName]
+          .filter(Boolean)
+          .join(' ')
+          .trim();
+
+      setUser({
+        // Apple から取得できた氏名があればそれを優先し、なければ仮の名称を使用
+        name: fullName && fullName.length > 0 ? fullName : 'Appleユーザー',
+        // email は初回ログイン時のみ返る場合があるため、未提供時は仮のメールアドレスを使用
+        email: credential.email ?? 'apple@example.com',
+        isProfileRegistered: false,
+      });
+
       await finishLogin();
     } catch (e: unknown) {
       if (
@@ -194,7 +222,7 @@ export default function LoginScreen() {
     } finally {
       setLoading(null);
     }
-  }, [finishLogin, handleOAuth]);
+  }, [finishLogin, handleOAuth, setUser]);
 
   const handleDevGuestLogin = useCallback(async () => {
     if (!DEV_LOGIN_ENABLED || loading) return;
