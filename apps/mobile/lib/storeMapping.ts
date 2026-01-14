@@ -32,7 +32,13 @@ export function mapApiStoreToShop(store: ApiStore): Shop {
   const openedAt = normalizeDate(store.opened_at) || createdAt;
   const description = store.description ?? '';
   const placeId = store.place_id ?? '';
-  const menu = store.menus?.map(item => ({ id: item.menu_id, name: item.name })) ?? [];
+  const menu =
+    store.menus?.map(item => ({
+      id: item.menu_id,
+      name: item.name,
+      category: item.description?.trim() ?? '',
+      price: item.price != null ? `¥${item.price.toLocaleString()}` : '',
+    })) ?? [];
 
   return {
     id: store.store_id,
