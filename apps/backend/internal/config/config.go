@@ -59,10 +59,29 @@ func Load() (*Config, error) {
 	}
 
 	cfg.SupabaseURL = os.Getenv("SUPABASE_URL")
+	if cfg.SupabaseURL == "" {
+		return nil, errors.New("SUPABASE_URL is not set")
+	}
+
 	cfg.SupabaseAnonKey = os.Getenv("SUPABASE_ANON_KEY")
+	if cfg.SupabaseAnonKey == "" {
+		return nil, errors.New("SUPABASE_ANON_KEY is not set")
+	}
+
 	cfg.SupabaseServiceRoleKey = os.Getenv("SUPABASE_SERVICE_ROLE_KEY")
+	if cfg.SupabaseServiceRoleKey == "" {
+		return nil, errors.New("SUPABASE_SERVICE_ROLE_KEY is not set")
+	}
+
 	cfg.SupabaseJWTSecret = os.Getenv("SUPABASE_JWT_SECRET")
+	if cfg.SupabaseJWTSecret == "" {
+		return nil, errors.New("SUPABASE_JWT_SECRET is not set")
+	}
+
 	cfg.SupabaseStorageBucket = os.Getenv("SUPABASE_STORAGE_BUCKET")
+	if cfg.SupabaseStorageBucket == "" {
+		return nil, errors.New("SUPABASE_STORAGE_BUCKET is not set")
+	}
 
 	return cfg, nil
 }
