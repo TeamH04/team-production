@@ -47,7 +47,7 @@ function RootStack() {
 
   const first = segments[0] ?? '';
   const isInsideTabs = segments.some(seg => seg === '(tabs)');
-  const isExcluded = first === 'shop' || first === 'profile' || first === 'menu';
+  const isExcluded = (['shop', 'profile', 'menu'] as string[]).includes(first);
   const padTop = !isInsideTabs && !isExcluded ? insets.top : 0;
 
   return (

@@ -74,9 +74,14 @@ const polyfilledCrypto: CryptoLike = {
   ...existingCrypto,
   getRandomValues: existingCrypto.getRandomValues ?? ExpoCrypto.getRandomValues,
   randomUUID: existingCrypto.randomUUID ?? ExpoCrypto.randomUUID,
-  subtle,
+  subtle: existingCrypto.subtle ?? subtle,
 };
 
 // Ensure the global crypto object is available for libraries requiring WebCrypto (e.g., PKCE)
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-(globalThis as any).crypto = polyfilledCrypto;
+const globalAny = globalThis as any;
+if (!globalAny.crypto) {
+  globalAny.crypto = polyfilledCrypto;
+} else {
+  Object.assign(globalAny.crypto, polyfilledCrypto);
+}
