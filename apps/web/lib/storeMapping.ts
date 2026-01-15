@@ -30,6 +30,7 @@ export function mapApiStoreToShop(store: ApiStore): Shop {
     createdAt: store.created_at,
     openedAt: store.opened_at ?? store.created_at,
     description: store.description ?? '',
+    address: store.address,
     placeId: store.place_id,
     imageUrl,
     imageUrls,

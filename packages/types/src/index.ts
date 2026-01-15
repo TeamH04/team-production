@@ -29,6 +29,7 @@ export type Shop = {
   createdAt: string;
   openedAt: string;
   description: string;
+  address: string;
   placeId: string;
   imageUrl: string;
   imageUrls?: string[];

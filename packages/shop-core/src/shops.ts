@@ -27,6 +27,7 @@ export interface Shop {
   createdAt: string; // アプリに追加した日
   openedAt: string; // 実際のオープン日
   description: string;
+  address: string;
   placeId: string;
   imageUrl: string;
   imageUrls?: string[]; // 複数画像対応
@@ -138,6 +139,7 @@ const BASE_SHOPS: Shop[] = [
     createdAt: '2025-02-01T00:00:00.000Z',
     openedAt: '2024-10-12T00:00:00.000Z',
     description: '一杯ずつハンドドリップで淹れるコーヒーと、静かな時間を楽しめる朝カフェ。',
+    address: '東京都渋谷区神南1-2-3',
     imageUrl:
       'https://images.unsplash.com/photo-1509042239860-f550ce710b93?auto=format&fit=crop&w=600&q=80',
     placeId: DEFAULT_PLACE_ID,
@@ -163,6 +165,7 @@ const BASE_SHOPS: Shop[] = [
     createdAt: '2025-02-01T00:00:00.000Z',
     openedAt: '2020-08-14T00:00:00.000Z',
     description: '旬の魚を使ったおまかせコースが人気のカウンター寿司。',
+    address: '東京都中央区銀座3-4-5',
     imageUrl:
       'https://images.unsplash.com/photo-1553621042-f6e147245754?auto=format&fit=crop&w=600&q=80',
     placeId: DEFAULT_PLACE_ID,
@@ -188,6 +191,7 @@ const BASE_SHOPS: Shop[] = [
     createdAt: '2025-02-01T00:00:00.000Z',
     openedAt: '2023-09-05T00:00:00.000Z',
     description: '旬のフルーツを使ったジェラートと焼き菓子の専門店。',
+    address: '東京都台東区浅草2-10-4',
     imageUrl:
       'https://images.unsplash.com/photo-1505253758473-96b7015fcd40?auto=format&fit=crop&w=600&q=80',
     placeId: DEFAULT_PLACE_ID,
@@ -213,6 +217,7 @@ const BASE_SHOPS: Shop[] = [
     createdAt: '2025-02-01T00:00:00.000Z',
     openedAt: '2019-11-30T00:00:00.000Z',
     description: '自然派ワインと季節の小皿料理、レコードの音色が心地よい隠れ家バー。',
+    address: '東京都世田谷区三軒茶屋1-8-2',
     imageUrl:
       'https://images.unsplash.com/photo-1470337458703-46ad1756a187?auto=format&fit=crop&w=600&q=80',
     placeId: DEFAULT_PLACE_ID,
@@ -237,6 +242,7 @@ const BASE_SHOPS: Shop[] = [
     createdAt: '2025-02-01T00:00:00.000Z',
     openedAt: '2024-02-18T00:00:00.000Z',
     description: '旬の野菜を使ったボウルとスープが揃うヘルシーランチスポット。',
+    address: '東京都港区南青山5-12-1',
     imageUrl:
       'https://images.unsplash.com/photo-1525755662778-989d0524087e?auto=format&fit=crop&w=600&q=80',
     placeId: DEFAULT_PLACE_ID,
@@ -261,6 +267,7 @@ const BASE_SHOPS: Shop[] = [
     createdAt: '2025-02-01T00:00:00.000Z',
     openedAt: '2025-01-22T00:00:00.000Z',
     description: '焼きたてのクロワッサンとサワードウが並ぶ人気ベーカリー。',
+    address: '東京都目黒区自由が丘2-5-8',
     imageUrl:
       'https://images.unsplash.com/photo-1544984243-ec57ea16fe25?auto=format&fit=crop&w=600&q=80',
     placeId: DEFAULT_PLACE_ID,
@@ -286,6 +293,7 @@ const BASE_SHOPS: Shop[] = [
     createdAt: '2025-02-01T00:00:00.000Z',
     openedAt: '2023-12-01T00:00:00.000Z',
     description: '旬野菜とスパイス料理をビュッフェ形式で楽しめるヘルシーダイニング。',
+    address: '東京都渋谷区代々木3-9-6',
     imageUrl:
       'https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?auto=format&fit=crop&w=600&q=80',
     placeId: DEFAULT_PLACE_ID,
@@ -310,6 +318,7 @@ const BASE_SHOPS: Shop[] = [
     createdAt: '2025-02-01T00:00:00.000Z',
     openedAt: '2021-07-14T00:00:00.000Z',
     description: '懐かしのゲーム機とクラフトドリンクを気軽にできるナイトスポット。',
+    address: '東京都豊島区池袋1-11-4',
     imageUrl:
       'https://images.unsplash.com/photo-1545239351-1141bd82e8a6?auto=format&fit=crop&w=600&q=80',
     placeId: DEFAULT_PLACE_ID,
@@ -334,6 +343,7 @@ const BASE_SHOPS: Shop[] = [
     createdAt: '2025-02-01T00:00:00.000Z',
     openedAt: '2021-12-06T00:00:00.000Z',
     description: '海の幸をつかったグリル料理と景色が素晴らしいダイニング。',
+    address: '東京都港区台場2-7-1',
     imageUrl:
       'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=600&q=80',
     placeId: DEFAULT_PLACE_ID,
@@ -358,6 +368,7 @@ const BASE_SHOPS: Shop[] = [
     createdAt: '2025-02-01T00:00:00.000Z',
     openedAt: '2024-07-30T00:00:00.000Z',
     description: '生演奏のジャズと季節のカクテルを楽しめる大人の社交場。',
+    address: '東京都新宿区神楽坂4-6-9',
     imageUrl:
       'https://images.unsplash.com/photo-1470337458703-46ad1756a187?auto=format&fit=crop&w=600&q=80',
     placeId: DEFAULT_PLACE_ID,
@@ -382,6 +393,7 @@ const BASE_SHOPS: Shop[] = [
     createdAt: '2025-02-01T00:00:00.000Z',
     openedAt: '2023-02-14T00:00:00.000Z',
     description: 'サラダボウルとコールドプレスジュースが並ぶデリスタンド。',
+    address: '東京都千代田区丸の内1-4-2',
     imageUrl:
       'https://images.unsplash.com/photo-1504754524776-8f4f37790ca0?auto=format&fit=crop&w=600&q=80',
     placeId: DEFAULT_PLACE_ID,

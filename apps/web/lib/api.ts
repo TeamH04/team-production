@@ -31,6 +31,7 @@ export type ApiStore = {
   created_at: string;
   opened_at?: string | null;
   description?: string | null;
+  address: string;
   place_id: string;
   image_urls: string[];
   tags: string[];

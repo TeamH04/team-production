@@ -13,7 +13,7 @@ import * as ExpoCrypto from 'expo-crypto';
 
 import {
   normalizeAlgorithm,
-  toUint8Array,
+  toArrayBuffer,
   type CryptoBufferSource,
   type DigestAlgorithm,
 } from './crypto-utils';
@@ -28,7 +28,12 @@ type CryptoLike = {
   subtle: SubtleCryptoLike;
 };
 
-const existingCrypto = (globalThis as { crypto?: CryptoLike }).crypto ?? ({} as CryptoLike);
+type GlobalWithCrypto = {
+  crypto?: Partial<CryptoLike>;
+};
+
+const globalWithCrypto = globalThis as unknown as GlobalWithCrypto;
+const existingCrypto: Partial<CryptoLike> = globalWithCrypto.crypto ?? {};
 
 const polyfillSubtle: SubtleCryptoLike = {
   async digest(algorithm, data) {
@@ -36,7 +41,7 @@ const polyfillSubtle: SubtleCryptoLike = {
     if (normalized !== 'SHA-256' && normalized !== 'SHA256') {
       throw new Error(`Unsupported digest algorithm: ${normalized ?? 'unknown'}`);
     }
-    return ExpoCrypto.digest(ExpoCrypto.CryptoDigestAlgorithm.SHA256, toUint8Array(data));
+    return ExpoCrypto.digest(ExpoCrypto.CryptoDigestAlgorithm.SHA256, toArrayBuffer(data));
   },
 };
 
@@ -51,24 +56,22 @@ const polyfilledCrypto: CryptoLike = {
 };
 
 // Ensure the global crypto object is available for libraries requiring WebCrypto (e.g., PKCE)
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const globalAny = globalThis as any;
-if (!globalAny.crypto) {
+if (!globalWithCrypto.crypto) {
   // cryptoオブジェクトが存在しない場合は、ポリフィル全体を設定
-  globalAny.crypto = polyfilledCrypto;
+  globalWithCrypto.crypto = polyfilledCrypto;
 } else {
   // 既存のcryptoオブジェクトがある場合は、存在しないプロパティのみを設定
   // 注意: subtle等のread-onlyプロパティは上書きできないため、個別に設定する
-  if (!globalAny.crypto.getRandomValues) {
-    globalAny.crypto.getRandomValues = polyfilledCrypto.getRandomValues;
+  if (!globalWithCrypto.crypto.getRandomValues) {
+    globalWithCrypto.crypto.getRandomValues = polyfilledCrypto.getRandomValues;
   }
-  if (!globalAny.crypto.randomUUID) {
-    globalAny.crypto.randomUUID = polyfilledCrypto.randomUUID;
+  if (!globalWithCrypto.crypto.randomUUID) {
+    globalWithCrypto.crypto.randomUUID = polyfilledCrypto.randomUUID;
   }
   // subtleはgetterのみのプロパティの場合があるため、存在しない場合のみ設定を試みる
-  if (!globalAny.crypto.subtle) {
+  if (!globalWithCrypto.crypto.subtle) {
     try {
-      globalAny.crypto.subtle = polyfillSubtle;
+      globalWithCrypto.crypto.subtle = polyfillSubtle;
     } catch {
       // read-onlyの場合は無視（既存のsubtle実装を使用）
     }

@@ -43,6 +43,7 @@ export function mapApiStoreToShop(store: ApiStore): Shop {
   const createdAt = normalizeDate(store.created_at);
   const openedAt = normalizeDate(store.opened_at) || createdAt;
   const description = store.description ?? '';
+  const address = store.address?.trim() ?? '';
   const placeId = store.place_id ?? '';
   const menu =
     store.menus?.map(item => ({
@@ -63,6 +64,7 @@ export function mapApiStoreToShop(store: ApiStore): Shop {
     createdAt,
     openedAt,
     description,
+    address,
     placeId,
     imageUrl,
     imageUrls,
