@@ -10,7 +10,7 @@ import (
 
 // FavoriteUseCase はお気に入りに関するビジネスロジックを提供します
 type FavoriteUseCase interface {
-	GetUserFavorites(ctx context.Context, userID string) ([]entity.Favorite, error)
+	GetMyFavorites(ctx context.Context, userID string) ([]entity.Favorite, error)
 	AddFavorite(ctx context.Context, userID string, storeID string) (*entity.Favorite, error)
 	RemoveFavorite(ctx context.Context, userID string, storeID string) error
 }
@@ -34,7 +34,7 @@ func NewFavoriteUseCase(
 	}
 }
 
-func (uc *favoriteUseCase) GetUserFavorites(ctx context.Context, userID string) ([]entity.Favorite, error) {
+func (uc *favoriteUseCase) GetMyFavorites(ctx context.Context, userID string) ([]entity.Favorite, error) {
 	// ユーザーの存在確認
 	if err := ensureUserExists(ctx, uc.userRepo, userID); err != nil {
 		return nil, err

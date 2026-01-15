@@ -19,8 +19,13 @@ func NewFavoriteHandler(favoriteUseCase input.FavoriteUseCase) *FavoriteHandler 
 	}
 }
 
-func (h *FavoriteHandler) GetUserFavorites(c echo.Context) error {
-	favorites, err := h.favoriteUseCase.GetUserFavorites(c.Request().Context(), c.Param("id"))
+func (h *FavoriteHandler) GetMyFavorites(c echo.Context) error {
+	user, err := getRequiredUser(c)
+	if err != nil {
+		return err
+	}
+
+	favorites, err := h.favoriteUseCase.GetMyFavorites(c.Request().Context(), user.UserID)
 	if err != nil {
 		return err
 	}
