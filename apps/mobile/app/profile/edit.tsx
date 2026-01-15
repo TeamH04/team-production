@@ -63,7 +63,9 @@ export default function EditProfileScreen() {
   }, [email, name, saving]);
 
   const toggleGenre = (genre: string) => {
-    setFavoriteGenres(prev => (prev.includes(genre) ? prev.filter(g => g !== genre) : [...prev, genre]));
+    setFavoriteGenres(prev =>
+      prev.includes(genre) ? prev.filter(g => g !== genre) : [...prev, genre]
+    );
   };
 
   const validateForm = (): boolean => {
@@ -184,7 +186,9 @@ export default function EditProfileScreen() {
                 accessibilityRole='radio'
                 accessibilityState={{ selected: gender === 'male' }}
               >
-                <View style={[styles.radioCircle, gender === 'male' && styles.radioCircleSelected]} />
+                <View
+                  style={[styles.radioCircle, gender === 'male' && styles.radioCircleSelected]}
+                />
                 <Text style={styles.radioOptionText}>男</Text>
               </Pressable>
 
@@ -194,7 +198,9 @@ export default function EditProfileScreen() {
                 accessibilityRole='radio'
                 accessibilityState={{ selected: gender === 'female' }}
               >
-                <View style={[styles.radioCircle, gender === 'female' && styles.radioCircleSelected]} />
+                <View
+                  style={[styles.radioCircle, gender === 'female' && styles.radioCircleSelected]}
+                />
                 <Text style={styles.radioOptionText}>女</Text>
               </Pressable>
 
@@ -204,7 +210,9 @@ export default function EditProfileScreen() {
                 accessibilityRole='radio'
                 accessibilityState={{ selected: gender === 'other' }}
               >
-                <View style={[styles.radioCircle, gender === 'other' && styles.radioCircleSelected]} />
+                <View
+                  style={[styles.radioCircle, gender === 'other' && styles.radioCircleSelected]}
+                />
                 <Text style={styles.radioOptionText}>その他</Text>
               </Pressable>
             </View>
@@ -383,13 +391,6 @@ const styles = StyleSheet.create({
     shadowRadius: 12,
   },
 
-  // コンテンツの余白
-  content: {
-    padding: 16,
-    paddingBottom: TAB_BAR_SPACING,
-    gap: 4,
-  },
-
   // チップ（ジャンル選択）
   chip: {
     borderRadius: 999,
@@ -405,6 +406,13 @@ const styles = StyleSheet.create({
 
   chipTextOn: { color: palette.primaryOnAccent, fontWeight: '700' },
   chipsWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+
+  // コンテンツの余白
+  content: {
+    gap: 4,
+    padding: 16,
+    paddingBottom: TAB_BAR_SPACING,
+  },
 
   dobRow: { flexDirection: 'row', gap: 12, marginBottom: 4 },
 
