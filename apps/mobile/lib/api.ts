@@ -135,17 +135,6 @@ async function request<T>(path: string, options: FetchOptions = {}): Promise<T> 
         } else if (body?.error) {
           message = body.error;
         }
-        console.warn('api request failed', {
-          path,
-          status: res.status,
-          body,
-        });
-      } else {
-        console.warn('api request failed', {
-          path,
-          status: res.status,
-          body: null,
-        });
       }
     } catch {
       // noop

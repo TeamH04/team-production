@@ -110,9 +110,7 @@ export default function ShopDetailScreen() {
   useFocusEffect(
     useCallback(() => {
       if (!id) return;
-      loadReviews(id, reviewSort).catch(err => {
-        console.warn('Failed to load reviews', err);
-      });
+      loadReviews(id, reviewSort).catch(() => undefined);
     }, [id, loadReviews, reviewSort])
   );
 
@@ -142,8 +140,7 @@ export default function ShopDetailScreen() {
       message: `${shop.name}\n${shop.description}\n${url}`,
       title: shop.name,
       url,
-    }).catch(err => {
-      console.warn('Failed to share shop', err);
+    }).catch(() => {
       Alert.alert('共有に失敗しました', 'もう一度お試しください。');
     });
   }, [shop, webBaseUrl]);

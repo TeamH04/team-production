@@ -103,12 +103,6 @@ function mapApiReview(review: ApiReview): Review {
 }
 
 async function uploadToSignedUrl(path: string, token: string, asset: ReviewAsset) {
-  console.warn('upload attempt', {
-    path,
-    contentType: asset.contentType,
-    fileName: asset.fileName,
-    fileSize: asset.fileSize,
-  });
   const source = await fetch(asset.uri);
   let bytes: Uint8Array;
   if (typeof source.arrayBuffer === 'function') {
@@ -143,12 +137,6 @@ async function uploadToSignedUrl(path: string, token: string, asset: ReviewAsset
       upsert: true,
     });
   if (error) {
-    const status = 'status' in error ? (error as { status?: number }).status : undefined;
-    console.warn('upload failed', {
-      path,
-      error: error.message,
-      status,
-    });
     throw new Error('upload failed');
   }
 }
@@ -192,9 +180,6 @@ export function ReviewsProvider({ children }: { children: React.ReactNode }) {
 
       let fileIDs: string[] = [];
       if (assets.length > 0) {
-        console.warn('createReviewUploads start', {
-          assetCount: assets.length,
-        });
         const uploadInputs: UploadFileInput[] = assets.map(asset => ({
           file_name: asset.fileName,
           file_size: asset.fileSize,
@@ -202,11 +187,6 @@ export function ReviewsProvider({ children }: { children: React.ReactNode }) {
         }));
         const uploadResult = await createReviewUploads(shopId, uploadInputs, token);
         const uploads = uploadResult.files;
-        const emptyUploadUrls = uploads.filter(upload => !upload.path || !upload.token).length;
-        console.warn('createReviewUploads response', {
-          fileCount: uploads.length,
-          emptyUploadUrls,
-        });
         if (uploads.length !== assets.length) {
           throw new Error('upload mismatch');
         }

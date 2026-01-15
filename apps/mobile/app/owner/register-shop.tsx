@@ -113,27 +113,10 @@ export default function RegisterShopScreen() {
       return;
     }
 
-    // 空の項目をフィルタリング
-    const filteredMenuItems = menuItems
-      .filter(item => item.value.trim().length > 0)
-      .map(item => item.value);
-    const filteredTagItems = tagItems
-      .filter(tag => tag.value.trim().length > 0)
-      .map(tag => tag.value);
-
     try {
       setLoading(true);
       // TODO: Backend エンドポイントに置き換え予定。現在はモック送信。
-      // 実際のペイロード: { storeName, menuItems: filteredMenuItems, minutesFromStation: parsedMinutes, tags: filteredTagItems, address, minBudget, maxBudget }
-      console.log('Prepared payload:', {
-        storeName,
-        menuItems: filteredMenuItems,
-        minutesFromStation: parsedMinutes,
-        tags: filteredTagItems,
-        address,
-        minBudget,
-        maxBudget,
-      });
+      // 実際のペイロード: { storeName, menuItems, minutesFromStation: parsedMinutes, tags: tagItems, address, minBudget, maxBudget }
       await new Promise(resolve => setTimeout(resolve, 700));
       Alert.alert('送信完了', '店舗登録リクエストを受け付けました');
       router.replace('/owner' as Href);
@@ -143,17 +126,7 @@ export default function RegisterShopScreen() {
     } finally {
       setLoading(false);
     }
-  }, [
-    address,
-    loading,
-    maxBudget,
-    menuItems,
-    minBudget,
-    minutesFromStation,
-    router,
-    storeName,
-    tagItems,
-  ]);
+  }, [address, loading, minutesFromStation, router, storeName, tagItems]);
 
   const steps = useMemo<Step[]>(
     () => [
