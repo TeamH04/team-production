@@ -3,6 +3,7 @@ import { ReviewsProvider } from '@/features/reviews/ReviewsContext';
 import { StoresProvider } from '@/features/stores/StoresContext';
 import { UserProvider, useUser } from '@/features/user/UserContext';
 import { VisitedProvider } from '@/features/visited/VisitedContext';
+import '@/polyfills/crypto';
 import '@/global.css';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
