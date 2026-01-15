@@ -18,6 +18,18 @@ import { TAB_BAR_SPACING } from '@/constants/TabBarSpacing';
 import { useUser, type Gender } from '@/features/user/UserContext';
 
 const modalOverlayOpacity = 0.3;
+const GENRES = [
+  'カフェ',
+  '和食',
+  '居酒屋',
+  'イタリアン',
+  'フレンチ',
+  '中華',
+  'ベーカリー',
+  'バー',
+  'スイーツ',
+  'その他',
+] as const;
 
 // プロフィール編集画面コンポーネント
 export default function EditProfileScreen() {
@@ -30,6 +42,7 @@ export default function EditProfileScreen() {
   const [gender, setGender] = useState<Gender | ''>(user?.gender ?? '');
   const [birthYear, setBirthYear] = useState<string>(user?.birthYear ?? '');
   const [birthMonth, setBirthMonth] = useState<string>(user?.birthMonth ?? '');
+  const [favoriteGenres, setFavoriteGenres] = useState<string[]>(user?.favoriteGenres ?? []);
   const [showYearPicker, setShowYearPicker] = useState(false);
   const [showMonthPicker, setShowMonthPicker] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -48,6 +61,10 @@ export default function EditProfileScreen() {
   const canSave = useMemo(() => {
     return name.trim().length > 0 && email.trim().length > 0 && !saving;
   }, [email, name, saving]);
+
+  const toggleGenre = (genre: string) => {
+    setFavoriteGenres(prev => (prev.includes(genre) ? prev.filter(g => g !== genre) : [...prev, genre]));
+  };
 
   const validateForm = (): boolean => {
     setErrorName('');
@@ -96,6 +113,7 @@ export default function EditProfileScreen() {
       birthYear: birthYear || undefined,
       birthMonth: birthMonth || undefined,
       isProfileRegistered: true,
+      favoriteGenres,
     });
 
     router.back();
@@ -155,121 +173,145 @@ export default function EditProfileScreen() {
           </View>
         </View>
 
-        {/* 性別ラジオボタン */}
-        <Text style={styles.label}>性別（任意） </Text>
-        <View style={styles.radioGroup}>
-          <Pressable
-            onPress={() => setGender('male')}
-            style={styles.radioOption}
-            accessibilityRole='radio'
-            accessibilityState={{ selected: gender === 'male' }}
-          >
-            <View style={[styles.radioCircle, gender === 'male' && styles.radioCircleSelected]} />
-            <Text style={styles.radioOptionText}>男</Text>
-          </Pressable>
+        <View style={styles.cardShadow}>
+          <View style={styles.card}>
+            {/* 性別ラジオボタン */}
+            <Text style={styles.label}>性別（任意） </Text>
+            <View style={styles.radioGroup}>
+              <Pressable
+                onPress={() => setGender('male')}
+                style={styles.radioOption}
+                accessibilityRole='radio'
+                accessibilityState={{ selected: gender === 'male' }}
+              >
+                <View style={[styles.radioCircle, gender === 'male' && styles.radioCircleSelected]} />
+                <Text style={styles.radioOptionText}>男</Text>
+              </Pressable>
 
-          <Pressable
-            onPress={() => setGender('female')}
-            style={styles.radioOption}
-            accessibilityRole='radio'
-            accessibilityState={{ selected: gender === 'female' }}
-          >
-            <View style={[styles.radioCircle, gender === 'female' && styles.radioCircleSelected]} />
-            <Text style={styles.radioOptionText}>女</Text>
-          </Pressable>
+              <Pressable
+                onPress={() => setGender('female')}
+                style={styles.radioOption}
+                accessibilityRole='radio'
+                accessibilityState={{ selected: gender === 'female' }}
+              >
+                <View style={[styles.radioCircle, gender === 'female' && styles.radioCircleSelected]} />
+                <Text style={styles.radioOptionText}>女</Text>
+              </Pressable>
 
-          <Pressable
-            onPress={() => setGender('other')}
-            style={styles.radioOption}
-            accessibilityRole='radio'
-            accessibilityState={{ selected: gender === 'other' }}
-          >
-            <View style={[styles.radioCircle, gender === 'other' && styles.radioCircleSelected]} />
-            <Text style={styles.radioOptionText}>その他</Text>
-          </Pressable>
-        </View>
+              <Pressable
+                onPress={() => setGender('other')}
+                style={styles.radioOption}
+                accessibilityRole='radio'
+                accessibilityState={{ selected: gender === 'other' }}
+              >
+                <View style={[styles.radioCircle, gender === 'other' && styles.radioCircleSelected]} />
+                <Text style={styles.radioOptionText}>その他</Text>
+              </Pressable>
+            </View>
 
-        {/* 生年月日（西暦・月） */}
-        <View style={styles.labelContainer}>
-          <Text style={styles.label}>生年月日（任意） </Text>
-          <Text style={styles.errorText}>{errorBirth}</Text>
-        </View>
-        <View style={styles.dobRow}>
-          <View style={styles.pickerContainer}>
-            <Pressable
-              style={styles.pickerBox}
-              onPress={() => setShowYearPicker(true)}
-              accessibilityRole='button'
-              accessibilityLabel='生年月日の年を選択'
-            >
-              <Text style={birthYear ? styles.pickerText : styles.pickerUnselectedText}>
-                {birthYear ? `${birthYear}年` : '年を選択'}
-              </Text>
-            </Pressable>
-          </View>
-
-          <View style={styles.pickerContainer}>
-            <Pressable
-              style={styles.pickerBox}
-              onPress={() => setShowMonthPicker(true)}
-              accessibilityRole='button'
-              accessibilityLabel='生年月日の月を選択'
-            >
-              <Text style={birthMonth ? styles.pickerText : styles.pickerUnselectedText}>
-                {birthMonth ? `${birthMonth}月` : '月を選択'}
-              </Text>
-            </Pressable>
-          </View>
-
-          <Modal
-            visible={showYearPicker}
-            transparent
-            animationType='slide'
-            onRequestClose={() => setShowYearPicker(false)}
-          >
-            <Pressable style={styles.modalOverlay} onPress={() => setShowYearPicker(false)} />
-            <View style={styles.modalContent}>
-              <View style={styles.modalToolbar}>
-                <Pressable onPress={() => setShowYearPicker(false)}>
-                  <Text style={styles.modalDoneText}>完了</Text>
+            {/* 生年月日（西暦・月） */}
+            <View style={styles.labelContainer}>
+              <Text style={styles.label}>生年月日（任意） </Text>
+              <Text style={styles.errorText}>{errorBirth}</Text>
+            </View>
+            <View style={styles.dobRow}>
+              <View style={styles.pickerContainer}>
+                <Pressable
+                  style={styles.pickerBox}
+                  onPress={() => setShowYearPicker(true)}
+                  accessibilityRole='button'
+                  accessibilityLabel='生年月日の年を選択'
+                >
+                  <Text style={birthYear ? styles.pickerText : styles.pickerUnselectedText}>
+                    {birthYear ? `${birthYear}年` : '年を選択'}
+                  </Text>
                 </Pressable>
               </View>
-              <Picker
-                selectedValue={birthYear}
-                onValueChange={(v: string) => setBirthYear(String(v))}
-              >
-                <Picker.Item label='年を選択' value='' />
-                {years.map(y => (
-                  <Picker.Item key={y} label={`${y}年`} value={y} />
-                ))}
-              </Picker>
-            </View>
-          </Modal>
 
-          <Modal
-            visible={showMonthPicker}
-            transparent
-            animationType='slide'
-            onRequestClose={() => setShowMonthPicker(false)}
-          >
-            <Pressable style={styles.modalOverlay} onPress={() => setShowMonthPicker(false)} />
-            <View style={styles.modalContent}>
-              <View style={styles.modalToolbar}>
-                <Pressable onPress={() => setShowMonthPicker(false)}>
-                  <Text style={styles.modalDoneText}>完了</Text>
+              <View style={styles.pickerContainer}>
+                <Pressable
+                  style={styles.pickerBox}
+                  onPress={() => setShowMonthPicker(true)}
+                  accessibilityRole='button'
+                  accessibilityLabel='生年月日の月を選択'
+                >
+                  <Text style={birthMonth ? styles.pickerText : styles.pickerUnselectedText}>
+                    {birthMonth ? `${birthMonth}月` : '月を選択'}
+                  </Text>
                 </Pressable>
               </View>
-              <Picker
-                selectedValue={birthMonth}
-                onValueChange={(v: string) => setBirthMonth(String(v))}
+
+              <Modal
+                visible={showYearPicker}
+                transparent
+                animationType='slide'
+                onRequestClose={() => setShowYearPicker(false)}
               >
-                <Picker.Item label='月を選択' value='' />
-                {months.map(m => (
-                  <Picker.Item key={m} label={`${m}月`} value={m} />
-                ))}
-              </Picker>
+                <Pressable style={styles.modalOverlay} onPress={() => setShowYearPicker(false)} />
+                <View style={styles.modalContent}>
+                  <View style={styles.modalToolbar}>
+                    <Pressable onPress={() => setShowYearPicker(false)}>
+                      <Text style={styles.modalDoneText}>完了</Text>
+                    </Pressable>
+                  </View>
+                  <Picker
+                    selectedValue={birthYear}
+                    onValueChange={(v: string) => setBirthYear(String(v))}
+                  >
+                    <Picker.Item label='年を選択' value='' />
+                    {years.map(y => (
+                      <Picker.Item key={y} label={`${y}年`} value={y} />
+                    ))}
+                  </Picker>
+                </View>
+              </Modal>
+
+              <Modal
+                visible={showMonthPicker}
+                transparent
+                animationType='slide'
+                onRequestClose={() => setShowMonthPicker(false)}
+              >
+                <Pressable style={styles.modalOverlay} onPress={() => setShowMonthPicker(false)} />
+                <View style={styles.modalContent}>
+                  <View style={styles.modalToolbar}>
+                    <Pressable onPress={() => setShowMonthPicker(false)}>
+                      <Text style={styles.modalDoneText}>完了</Text>
+                    </Pressable>
+                  </View>
+                  <Picker
+                    selectedValue={birthMonth}
+                    onValueChange={(v: string) => setBirthMonth(String(v))}
+                  >
+                    <Picker.Item label='月を選択' value='' />
+                    {months.map(m => (
+                      <Picker.Item key={m} label={`${m}月`} value={m} />
+                    ))}
+                  </Picker>
+                </View>
+              </Modal>
             </View>
-          </Modal>
+          </View>
+        </View>
+
+        <View style={styles.cardShadow}>
+          <View style={styles.card}>
+            <Text style={styles.label}>好きな店舗のジャンル（複数選択可）</Text>
+            <View style={styles.chipsWrap}>
+              {GENRES.map(g => {
+                const on = favoriteGenres.includes(g);
+                return (
+                  <Pressable
+                    key={g}
+                    onPress={() => toggleGenre(g)}
+                    style={[styles.chip, on ? styles.chipOn : styles.chipOff]}
+                  >
+                    <Text style={on ? styles.chipTextOn : styles.chipTextOff}>{g}</Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+          </View>
         </View>
 
         {/* 保存ボタン
@@ -335,7 +377,6 @@ const styles = StyleSheet.create({
   cardShadow: {
     elevation: 4,
     marginBottom: 24,
-    marginTop: 16,
     shadowColor: palette.shadow,
     shadowOffset: { height: 6, width: 0 },
     shadowOpacity: 0.06,
@@ -346,7 +387,24 @@ const styles = StyleSheet.create({
   content: {
     padding: 16,
     paddingBottom: TAB_BAR_SPACING,
+    gap: 4,
   },
+
+  // チップ（ジャンル選択）
+  chip: {
+    borderRadius: 999,
+    marginBottom: 8,
+    marginRight: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  chipOff: { backgroundColor: palette.secondarySurface, borderColor: palette.border },
+  chipOn: { backgroundColor: palette.accent },
+
+  chipTextOff: { color: palette.primaryText, fontWeight: '700' },
+
+  chipTextOn: { color: palette.primaryOnAccent, fontWeight: '700' },
+  chipsWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
 
   dobRow: { flexDirection: 'row', gap: 12, marginBottom: 4 },
 
@@ -404,6 +462,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: 12,
     paddingVertical: 12,
+    width: '100%',
   },
   pickerContainer: { flex: 1 },
   pickerText: { color: palette.primaryText },
