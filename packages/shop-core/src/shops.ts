@@ -148,9 +148,9 @@ const BASE_SHOPS: Shop[] = [
     ],
     tags: ['コーヒー', '静かな空間', 'Wi-Fi'],
     menu: [
-      { id: 'm-1-1', name: 'ハンドドリップ コーヒー', category: 'ドリンク', price: '¥¥¥' },
-      { id: 'm-1-2', name: 'カフェラテ', category: 'ドリンク', price: '¥¥¥' },
-      { id: 'm-1-3', name: 'シナモンロール', category: 'スイーツ', price: '¥¥¥' },
+      { id: 'm-1-1', name: 'ハンドドリップ コーヒー', category: 'ドリンク', price: '¥550' },
+      { id: 'm-1-2', name: 'カフェラテ', category: 'ドリンク', price: '¥620' },
+      { id: 'm-1-3', name: 'シナモンロール', category: 'スイーツ', price: '¥480' },
     ],
   },
   {
@@ -173,9 +173,9 @@ const BASE_SHOPS: Shop[] = [
     ],
     tags: ['寿司', 'カウンター', '記念日'],
     menu: [
-      { id: 'm-2-1', name: '特選おまかせコース', category: 'ディナー', price: '¥¥¥' },
-      { id: 'm-2-2', name: '白身三昧ランチ', category: 'ランチ', price: '¥¥¥' },
-      { id: 'm-2-3', name: '穴子一本握り', category: 'ランチ', price: '¥¥¥' },
+      { id: 'm-2-1', name: '特選おまかせコース', category: 'ディナー', price: '¥18,000' },
+      { id: 'm-2-2', name: '白身三昧ランチ', category: 'ランチ', price: '¥3,500' },
+      { id: 'm-2-3', name: '穴子一本握り', category: 'ランチ', price: '¥1,200' },
     ],
   },
   {
@@ -198,9 +198,9 @@ const BASE_SHOPS: Shop[] = [
     ],
     tags: ['ジェラート', '季節限定', 'イートイン'],
     menu: [
-      { id: 'm-3-1', name: 'ピスタチオ ジェラート', category: 'ジェラート', price: '¥¥¥' },
-      { id: 'm-3-2', name: '塩キャラメル クッキーサンド', category: '焼き菓子', price: '¥¥¥' },
-      { id: 'm-3-3', name: '季節のフルーツパフェ', category: 'ジェラート', price: '¥¥¥' },
+      { id: 'm-3-1', name: 'ピスタチオ ジェラート', category: 'ジェラート', price: '¥750' },
+      { id: 'm-3-2', name: '塩キャラメル クッキーサンド', category: '焼き菓子', price: '¥580' },
+      { id: 'm-3-3', name: '季節のフルーツパフェ', category: 'ジェラート', price: '¥1,650' },
     ],
   },
   {
@@ -223,8 +223,8 @@ const BASE_SHOPS: Shop[] = [
     ],
     tags: ['ワイン', '大人の雰囲気', '音楽'],
     menu: [
-      { id: 'm-4-1', name: 'グラスワイン', category: 'お酒', price: '¥¥¥' },
-      { id: 'm-4-2', name: '生ハム盛り合わせ', category: 'おつまみ', price: '¥¥¥' },
+      { id: 'm-4-1', name: 'グラスワイン', category: 'お酒', price: '¥1,100' },
+      { id: 'm-4-2', name: '生ハム盛り合わせ', category: 'おつまみ', price: '¥1,600' },
     ],
   },
   {
@@ -247,8 +247,8 @@ const BASE_SHOPS: Shop[] = [
     ],
     tags: ['ヘルシー', 'テイクアウト', 'ランチ'],
     menu: [
-      { id: 'm-5-1', name: 'ヴィーガンサラダセット', category: 'ランチ', price: '¥¥¥' },
-      { id: 'm-5-2', name: 'デトックススープ', category: 'ランチ', price: '¥¥¥' },
+      { id: 'm-5-1', name: 'ヴィーガンサラダセット', category: 'ランチ', price: '¥1,450' },
+      { id: 'm-5-2', name: 'デトックススープ', category: 'ランチ', price: '¥980' },
     ],
   },
   {
@@ -271,9 +271,9 @@ const BASE_SHOPS: Shop[] = [
     ],
     tags: ['パン', 'モーニング', 'テラス席'],
     menu: [
-      { id: 'm-6-1', name: '明太フランス', category: '惣菜パン', price: '¥¥¥' },
-      { id: 'm-6-2', name: '焼きたてクロワッサン', category: '菓子パン', price: '¥¥¥' },
-      { id: 'm-6-3', name: 'アイスコーヒー', category: 'ドリンク', price: '¥¥¥' },
+      { id: 'm-6-1', name: '明太フランス', category: '惣菜パン', price: '¥320' },
+      { id: 'm-6-2', name: '焼きたてクロワッサン', category: '菓子パン', price: '¥280' },
+      { id: 'm-6-3', name: 'アイスコーヒー', category: 'ドリンク', price: '¥450' },
     ],
   },
   {
@@ -296,8 +296,8 @@ const BASE_SHOPS: Shop[] = [
     ],
     tags: ['ビュッフェ', '野菜たっぷり', 'スパイス'],
     menu: [
-      { id: 'm-8-1', name: 'ランチ食べ放題', category: '料理', price: '¥¥¥' },
-      { id: 'm-8-2', name: '豆腐のヘルシープリン', category: 'デザート', price: '¥¥¥' },
+      { id: 'm-8-1', name: 'ランチ食べ放題', category: '料理', price: '¥2,800' },
+      { id: 'm-8-2', name: '豆腐のヘルシープリン', category: 'デザート', price: '¥450' },
     ],
   },
   {
@@ -320,8 +320,8 @@ const BASE_SHOPS: Shop[] = [
     ],
     tags: ['ゲーム', 'グループ', '夜遊び'],
     menu: [
-      { id: 'm-10-1', name: '自家製ナチョス', category: 'おつまみ', price: '¥¥¥' },
-      { id: 'm-10-2', name: 'レトロソーダカクテル', category: 'お酒', price: '¥¥¥' },
+      { id: 'm-10-1', name: '自家製ナチョス', category: 'おつまみ', price: '¥850' },
+      { id: 'm-10-2', name: 'レトロソーダカクテル', category: 'お酒', price: '¥750' },
     ],
   },
   {
@@ -344,8 +344,8 @@ const BASE_SHOPS: Shop[] = [
     ],
     tags: ['シーフード', 'ディナー', '予約制'],
     menu: [
-      { id: 'm-11-1', name: '本日のお魚グリル', category: 'ディナー', price: '¥¥¥' },
-      { id: 'm-11-2', name: '白ワイン グラス', category: 'ドリンク', price: '¥¥¥' },
+      { id: 'm-11-1', name: '本日のお魚グリル', category: 'ディナー', price: '¥4,200' },
+      { id: 'm-11-2', name: '白ワイン グラス', category: 'ドリンク', price: '¥950' },
     ],
   },
   {
@@ -368,8 +368,8 @@ const BASE_SHOPS: Shop[] = [
     ],
     tags: ['ジャズ', 'ライブ', '夜景'],
     menu: [
-      { id: 'm-12-1', name: 'クラフトジントニック', category: 'お酒', price: '¥¥¥' },
-      { id: 'm-12-2', name: 'ミックスナッツ燻製', category: 'おつまみ', price: '¥¥¥' },
+      { id: 'm-12-1', name: 'クラフトジントニック', category: 'お酒', price: '¥1,350' },
+      { id: 'm-12-2', name: 'ミックスナッツ燻製', category: 'おつまみ', price: '¥650' },
     ],
   },
   {
@@ -392,8 +392,8 @@ const BASE_SHOPS: Shop[] = [
     ],
     tags: ['デリ', 'テイクアウト', 'ヘルシー'],
     menu: [
-      { id: 'm-14-1', name: 'サーモンPokeボウル', category: 'メイン', price: '¥¥¥' },
-      { id: 'm-14-2', name: 'オレンジジュース', category: 'ドリンク', price: '¥¥¥' },
+      { id: 'm-14-1', name: 'サーモンPokeボウル', category: 'メイン', price: '¥1,580' },
+      { id: 'm-14-2', name: 'オレンジジュース', category: 'ドリンク', price: '¥680' },
     ],
   },
 ];
