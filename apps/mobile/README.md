@@ -1,100 +1,143 @@
-# モバイルアプリ (Expo + React Native)
+# モバイルアプリ（Expo + React Native）
 
 ## 概要
 
-- Expo Router と React Native を用いたスマートフォン向けクライアントです。
-- Supabase を認証・API 連携に採用し、環境変数で設定可能です。
-- Expo Router と React Native を用いたスマートフォン向けクライアントです。
-- Supabase を認証・API 連携に採用し、環境変数で設定可能です。
+- Expo Router を採用した店舗探索アプリ（プロトタイプ）
+- 店舗データは共有パッケージ `@team/shop-core` から取得
+- ローカル状態で以下を管理
+  - 検索 / 絞り込み
+  - お気に入り
+  - 訪問済み
+  - レビュー履歴（ダミー）
+- 認証
+  - Supabase OAuth（Google / Apple）
+  - オーナー用：メール + パスワードログイン
 
-## 前提
+---
 
-- Node.js 20 以上
-- pnpm 10 以上（`corepack enable pnpm` 推奨）
-- Expo CLI は `pnpm exec expo` で利用します。
+## 前提条件
 
-## セットアップ
+- Node.js **24 以上**
+- pnpm **10 以上**（`corepack enable pnpm` 推奨）
+- iOS / Android エミュレータ または 物理端末 + Expo Go
 
-1. リポジトリ直下で `pnpm install` を実行し依存関係を取得します。
-2. `apps/mobile/.env.example` をコピーして `.env` を作成し、Supabase の URL と anon key を設定します。
-3. 端末またはシミュレータで Expo Go をインストールし、QR コードから接続できるようにします。
+---
+
+## セットアップ手順
+
+1. 依存関係のインストール
+
+   ```bash
+   pnpm install
+   ```
+
+2. 環境変数の設定
+
+   ```bash
+   cp apps/mobile/.env.example apps/mobile/.env
+   ```
+
+   最低限設定する項目：
+   - `EXPO_PUBLIC_SUPABASE_URL`
+   - `EXPO_PUBLIC_SUPABASE_ANON_KEY`
+   - `EXPO_PUBLIC_WEB_BASE_URL`
+
+3. アプリ起動
+
+   ```bash
+   pnpm --dir apps/mobile android
+   pnpm --dir apps/mobile ios
+   pnpm --dir apps/mobile web
+   ```
+
+   または Expo Go で QR を読み取る
+
+---
 
 ## 主なコマンド
 
-| コマンド                                         | 説明                                   |
-| ------------------------------------------------ | -------------------------------------- |
-| `pnpm --dir apps/mobile start`                   | Expo Dev Server を起動 (Metro Bundler) |
-| `pnpm --dir apps/mobile android` / `ios` / `web` | 各プラットフォーム向けに Expo を起動   |
-| `pnpm --dir apps/mobile lint`                    | ESLint (expo lint) を実行              |
+| コマンド                         | 説明                                                   |
+| -------------------------------- | ------------------------------------------------------ |
+| `pnpm dev`                       | ルートから Expo をトンネル付き起動（キャッシュクリア） |
+| `pnpm --dir apps/mobile start`   | Metro Bundler を通常起動                               |
+| `pnpm --dir apps/mobile android` | Android エミュレータで起動                             |
+| `pnpm --dir apps/mobile ios`     | iOS エミュレータで起動                                 |
+| `pnpm --dir apps/mobile web`     | Web で起動                                             |
+| `pnpm --dir apps/mobile lint`    | ESLint 実行                                            |
+
+---
+
+## 画面と機能
+
+### ホーム
+
+- 人気 / 近い / 新着 ソート
+- おすすめフィルタ付きカード一覧
+
+### 検索
+
+- キーワード / カテゴリ / タグ / 訪問済みで絞り込み
+- ソート変更
+- 検索履歴保存
+
+### お気に入り
+
+- ローカルの `Set` で管理
+- 店舗詳細からトグル可能
+
+### マイページ
+
+- プロフィール編集
+- ゲスト状態確認
+- サインアウト
+
+### 店舗詳細
+
+- 画像スライダー
+- メニュータブ
+- 地図リンク（Google Maps place ID）
+- お気に入り / 共有ボタン
+
+### オーナー
+
+- メール + パスワードログイン
+- 店舗登録フォーム（UI のみ）
+
+### 認証
+
+- Supabase OAuth 認証後に `/(tabs)` または `/owner` に遷移
+- 開発用ゲストモード：
+
+  ```env
+  EXPO_PUBLIC_ENABLE_DEV_MODE=true
+  ```
+
+---
 
 ## 開発時の補足
 
-- ルートの `make dev` を実行すると、バックエンドと Expo を一括起動します。
-- `make dev` は `scripts/start-dev.js` 経由で Expo を起動し、`CI=1` / `EXPO_NO_INTERACTIVE=1` と `EXPO_DEV_SERVER_PORT` / `EXPO_METRO_LISTEN_PORT` を自動で指定します（Expo CLI 54 で `--non-interactive` / `--metro-port` が廃止されたため）。
-- Expo のデフォルトポートは 19000 系です。競合する場合はポートを変更してください。
-- Expo 終了後は `Ctrl+C`。必要に応じて `make backend-db-down` で DB を停止してください。
+- `make dev` で以下を同時起動可能
+  - Postgres + Go API（Docker Compose）
+  - Expo アプリ
 
-## 環境変数
+- `scripts/start-dev.js` 経由で起動し、以下を自動設定
+  - `EXPO_DEV_SERVER_PORT`
+  - `EXPO_METRO_LISTEN_PORT`
 
-- `.env` の値は `process.env.EXPO_PUBLIC_*` としてクライアントから参照されます。
-- Supabase クライアントはこの値が未設定の場合に初期化エラーとなります。
-- 開発用のゲストログインを有効にする場合は `EXPO_PUBLIC_ENABLE_DEV_MODE=true` を指定してください。ログイン画面に「ゲストとして入る（開発用）」ボタンが表示され、認証なしで `/(tabs)` に入れます（開発用のみ）。
+- 画像はすべてリモート URL
+  - ローカル差し替えは `assets/` に配置
 
-## ディレクトリ構成
+- スタイリング
+  - 基本：`StyleSheet.create`
+  - 一部：NativeWind 併用
 
-- `app/`: Expo Router のルート。`(tabs)` ディレクトリにタブ UI を配置。
-- `features/`: ドメインごとの UI / ロジックをまとめるための層です。
-- `scripts/start-dev.js`: `make dev` で利用される起動スクリプト。Windows でも `pnpm exec expo` を正しく呼び出します。
+---
 
-## 注意
+## 環境変数の注意点
 
-- スタイリングは `StyleSheet` を基本としつつ、NativeWind も併用可能です。Tailwind を使う場合は `nativewind.config.js` を調整してください。
-- 画像は開発用の外部 URL を使用しています。必要に応じて `assets/` に追加し差し替えてください。
+- `.env` の `EXPO_PUBLIC_*` はクライアントから直接参照される
 
-## ログイン（Supabase OAuth）
-
-- 必要な環境変数（`.env` あるいは OS の環境変数）
-  - `EXPO_PUBLIC_SUPABASE_URL`
-  - `EXPO_PUBLIC_SUPABASE_ANON_KEY`
-- リダイレクト設定（Supabase コンソール > Authentication > URL Configuration）
-  - 開発中は Expo の AuthSession プロキシを利用します。`https://auth.expo.dev/...`（プロジェクトで異なる URL）を登録してください。
-    - アプリ側では `makeRedirectUri({ useProxy: true })` でこの URL を生成しています。
-  - 将来のネイティブ（スタンドアロン）向けには `shopmobile://auth/callback` のスキームも登録可能です。
-- プロバイダー設定（Authentication > Providers）
-  - Google / Apple を有効化し、クライアント ID などを設定してください。
-- iOS の Apple サインイン
-  - 端末では `expo-apple-authentication` を使ってネイティブにサインインし、取得した `identityToken + nonce` を Supabase の `signInWithIdToken` (provider: 'apple') に渡しています。
-  - App Store 配布時は Apple Developer コンソールで Services ID / Team ID / Key ID / 秘密鍵を設定し、`app.json` の `ios.bundleIdentifier` と一致させてください。Supabase のリダイレクト URL には `https://auth.expo.dev/...`（開発）と `shopmobile://auth/callback`（スタンドアロン）を登録します。
-
-トラブルシューティング
-
-- 端末で戻れない/白画面: Supabase のリダイレクト URL に `https://auth.expo.dev/...` を登録しているか確認してください。物理端末から `localhost` は使用できません。
-- 401/invalid_client: Provider のクライアント ID/シークレットを確認してください。
-- セッションが作成されない: `auth/callback` は `?code=` と `#access_token=` のどちらでも返り得るため、双方に対応する実装です。
-- `crypto.subtle.digest is not a function`: `expo-standard-web-crypto` を利用しています（内部で `expo-random` が必要）。
-- サインイン前に Supabase の `getUser()` で `AuthSessionMissingError` が出る場合がありますが、アプリ側で未ログインとして扱うようにしています（例外発生時もログアウト状態として継続します）。
-
-## Safe Area の方針
-
-- ルート `app/_layout.tsx` は `SafeAreaProvider` のみを配置し、個々の画面では不要なパディングをしません。
-- タブ配下 `app/(tabs)/_layout.tsx` は `react-native-safe-area-context` の `SafeAreaView` を使用し、`edges={['top','left','right']}` を適用しています。
-- ヘッダー表示のあるスタック（例: `/shop/*`, `/profile/*`）は React Navigation のヘッダーに任せ、二重パディングを避けています。
-- `react-native` 標準の `SafeAreaView` は使用していません。必要に応じて ESLint でインポートを禁止しています。
-
-## ログイン後のリダイレクト（2025-10-15 更新）
-
-ログイン完了後にアプリの画面へ戻らないことがある問題を修正しました。成功時は以下に明示的に遷移します。
-
-- 一般ユーザー: `/(tabs)`（ホームタブ）へ `router.replace()`
-- オーナー: `/owner` へ `router.replace()`
-
-変更ファイル:
-
-- `apps/mobile/app/login.tsx`: 成功時にトークンを保存後、`/(tabs)` または `/owner` へ直接 `replace`。あわせて `WebBrowser.dismissBrowser()` を呼び出してブラウザを確実に閉じ、不要な `console.log` を削除しました。
-- `apps/mobile/app/auth/callback.tsx`: `code` 交換完了後に `/(tabs)` または `/owner` へ `replace` するよう統一。
-
-補足とヒント:
-
-- 物理端末でのテスト時は、Supabase の Authentication > URL Configuration に `https://auth.expo.dev/...`（Expo AuthSession プロキシ）を必ず登録してください。
-- 401/invalid_client の場合は Provider のクライアントID/シークレット設定を確認してください。
-- `auth/callback` はクエリ（`?code=`）とハッシュ（`#access_token=`）の双方に対応できるよう実装済みです。
+- Supabase 設定が必要な項目
+  - Authentication > URL Configuration に Expo のリダイレクト URL を登録
+    - 例：`https://auth.expo.dev/...`
+  - Google / Apple プロバイダーのクライアント情報登録必須
