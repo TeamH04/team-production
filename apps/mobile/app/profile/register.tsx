@@ -11,21 +11,9 @@ import {
   View,
 } from 'react-native';
 
+import { GENRES } from '@/constants/genres';
 import { palette } from '@/constants/palette';
 import { useUser } from '@/features/user/UserContext';
-
-const GENRES = [
-  'カフェ',
-  '和食',
-  '居酒屋',
-  'イタリアン',
-  'フレンチ',
-  '中華',
-  'ベーカリー',
-  'バー',
-  'スイーツ',
-  'その他',
-] as const;
 
 export default function RegisterProfileScreen() {
   const router = useRouter();

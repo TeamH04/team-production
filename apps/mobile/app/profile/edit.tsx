@@ -13,23 +13,12 @@ import {
   View,
 } from 'react-native';
 
+import { GENRES } from '@/constants/genres';
 import { palette } from '@/constants/palette';
 import { TAB_BAR_SPACING } from '@/constants/TabBarSpacing';
 import { type Gender, useUser } from '@/features/user/UserContext';
 
 const modalOverlayOpacity = 0.3;
-const GENRES = [
-  'カフェ',
-  '和食',
-  '居酒屋',
-  'イタリアン',
-  'フレンチ',
-  '中華',
-  'ベーカリー',
-  'バー',
-  'スイーツ',
-  'その他',
-] as const;
 
 // プロフィール編集画面コンポーネント
 export default function EditProfileScreen() {
@@ -62,6 +51,10 @@ export default function EditProfileScreen() {
     return name.trim().length > 0 && email.trim().length > 0 && !saving;
   }, [email, name, saving]);
 
+  /**
+   * ジャンルの選択状態をトグルする
+   * @param genre - トグル対象のジャンル名
+   */
   const toggleGenre = (genre: string) => {
     setFavoriteGenres(prev =>
       prev.includes(genre) ? prev.filter(g => g !== genre) : [...prev, genre]
@@ -385,6 +378,7 @@ const styles = StyleSheet.create({
   cardShadow: {
     elevation: 4,
     marginBottom: 24,
+    marginTop: 16,
     shadowColor: palette.shadow,
     shadowOffset: { height: 6, width: 0 },
     shadowOpacity: 0.06,
