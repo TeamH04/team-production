@@ -165,6 +165,9 @@ importers:
       react-native-reanimated:
         specifier: ~4.2.1
         version: 4.2.1(react-native-worklets@0.7.1(@babel/core@7.28.6)(react-native@0.83.1(@babel/core@7.28.6)(@types/react@19.1.17)(react@19.2.3))(react@19.2.3))(react-native@0.83.1(@babel/core@7.28.6)(@types/react@19.1.17)(react@19.2.3))(react@19.2.3)
+      react-native-safe-area-context:
+        specifier: ^5.6.2
+        version: 5.6.2(react-native@0.83.1(@babel/core@7.28.6)(@types/react@19.1.17)(react@19.2.3))(react@19.2.3)
       react-native-screens:
         specifier: ~4.19.0
         version: 4.19.0(react-native@0.83.1(@babel/core@7.28.6)(@types/react@19.1.17)(react@19.2.3))(react@19.2.3)
@@ -5369,7 +5372,6 @@ packages:
 
   tailwindcss@4.1.18:
     resolution: {integrity: sha512-4+Z+0yiYyEtUVCScyfHCxOYP06L5Ne+JiHhY2IjR2KWMIWhJOYZKLSGZaP5HkZ8+bY0cxfzwDE5uOmzFXyIwxw==}
-    hasBin: true
 
   tapable@2.3.0:
     resolution: {integrity: sha512-g9ljZiwki/LfxmQADO3dEY1CbpmXT5Hm2fJ+QaGKwSXUylMybePR7/67YW7jOrrvjEgL1Fmz5kzyAjWVWLlucg==}
@@ -5387,8 +5389,8 @@ packages:
     resolution: {integrity: sha512-un0FmiRUQNr5PJqy9kP7c40F5BOfpGlYTrxonDChEZB7pzZxRNp/bt+ymiy9/npwXya9KH99nJ/GXFIiUkYGFQ==}
     engines: {node: '>=8'}
 
-  terser@5.44.1:
-    resolution: {integrity: sha512-t/R3R/n0MSwnnazuPpPNVO60LX0SKL45pyl9YlvxIdkH0Of7D5qM2EVe+yASRIlY5pZ73nclYJfNANGWPwFDZw==}
+  terser@5.45.0:
+    resolution: {integrity: sha512-hQ9c+JZEnMug8eqzuU48sCeq95f00lLDAaJ5gWhRkFXsfy3+SUkZXiF/Z66ZO6EomSmgqXnkhVrWXKaQ8K41Ug==}
     engines: {node: '>=10'}
     hasBin: true
 
@@ -10608,7 +10610,7 @@ snapshots:
   metro-minify-terser@0.83.3:
     dependencies:
       flow-enums-runtime: 0.0.6
-      terser: 5.44.1
+      terser: 5.45.0
 
   metro-resolver@0.83.3:
     dependencies:
@@ -11890,7 +11892,7 @@ snapshots:
       ansi-escapes: 4.3.2
       supports-hyperlinks: 2.3.0
 
-  terser@5.44.1:
+  terser@5.45.0:
     dependencies:
       '@jridgewell/source-map': 0.3.11
       acorn: 8.15.0
