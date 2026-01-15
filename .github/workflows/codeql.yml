@@ -9,6 +9,7 @@ on:
       - 'packages/**'
       - '.github/workflows/**'
       - '.github/actions/**'
+      - '.github/codeql/**'
   pull_request:
     branches: [main, develop]
     paths:
@@ -17,6 +18,11 @@ on:
       - 'packages/**'
       - '.github/workflows/**'
       - '.github/actions/**'
+      - '.github/codeql/**'
+  # 定期実行: 毎週月曜 9:00 JST (日曜 24:00 UTC)
+  # 新しいCodeQLルールで過去のコードを再スキャン
+  schedule:
+    - cron: '0 0 * * 1'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -32,13 +38,14 @@ env:
 
 jobs:
   # ----- Detect Changed Paths -----
+  # スケジュール実行時は全ジョブを実行
   changes:
     name: Detect Changes
     runs-on: ubuntu-latest
     outputs:
-      backend: ${{ steps.filter.outputs.backend }}
-      mobile: ${{ steps.filter.outputs.mobile }}
-      actions: ${{ steps.filter.outputs.actions }}
+      backend: ${{ github.event_name == 'schedule' || steps.filter.outputs.backend == 'true' }}
+      mobile: ${{ github.event_name == 'schedule' || steps.filter.outputs.mobile == 'true' }}
+      actions: ${{ github.event_name == 'schedule' || steps.filter.outputs.actions == 'true' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -46,6 +53,7 @@ jobs:
       - name: Filter paths
         uses: dorny/paths-filter@v3
         id: filter
+        if: github.event_name != 'schedule'
         with:
           filters: |
             backend:
@@ -78,7 +86,7 @@ jobs:
         uses: github/codeql-action/init@v4
         with:
           languages: go
-          queries: security-and-quality
+          config-file: .github/codeql/codeql-config-go.yml
 
       - name: Autobuild
         uses: github/codeql-action/autobuild@v4
@@ -117,11 +125,11 @@ jobs:
         uses: github/codeql-action/init@v4
         with:
           languages: javascript-typescript
-          queries: security-and-quality
-          source-root: .
+          config-file: .github/codeql/codeql-config-javascript.yml
 
       - name: Build TypeScript
-        run: pnpm run typecheck || true
+        run: pnpm run typecheck
+        continue-on-error: true
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v4
@@ -131,6 +139,9 @@ jobs:
           upload: always
 
   # ----- CodeQL Analysis for GitHub Actions -----
+  # GitHub Actionsワークフローのセキュリティ分析
+  # 検出対象: スクリプトインジェクション、安全でないアクション使用、
+  #           シークレット露出、不適切なパーミッション設定など
   analyze-actions:
     name: Analyze GitHub Actions
     runs-on: ubuntu-latest
@@ -146,6 +157,7 @@ jobs:
         with:
           languages: actions
           queries: security-and-quality
+          # 分析対象: .github/workflows/*.yml, .github/actions/**/action.yml
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v4

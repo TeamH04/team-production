@@ -1,0 +1,49 @@
+# CodeQL Configuration for Go Backend
+# https://codeql.github.com/codeql-query-help/go/
+name: "Go Backend Security Analysis"
+
+# クエリスイートの選択
+# security-and-quality: セキュリティ + コード品質（推奨）
+# security-extended: より広範なセキュリティクエリ（誤検知増加の可能性）
+queries:
+  - uses: security-and-quality
+
+# クエリパックの指定（最新のCodeQL CLIで使用）
+packs:
+  go:
+    - codeql/go-queries
+
+# 分析から除外するパス
+# テストファイルやモックは誤検知の原因になりやすいため除外
+paths-ignore:
+  # テストファイル
+  - "**/*_test.go"
+  - "**/testdata/**"
+  - "**/test/**"
+  - "**/tests/**"
+  # モック・スタブ
+  - "**/mock/**"
+  - "**/mocks/**"
+  - "**/stub/**"
+  - "**/fake/**"
+  # 生成されたファイル
+  - "**/generated/**"
+  - "**/*.gen.go"
+  - "**/*.pb.go"
+  # ベンダーディレクトリ
+  - "**/vendor/**"
+  # ドキュメント
+  - "**/docs/**"
+  - "**/examples/**"
+
+# 分析対象パス（明示的に指定）
+paths:
+  - "apps/backend"
+
+# 脅威モデル設定
+# remote: ネットワーク経由の入力（API リクエストなど）
+# local: ローカル入力（ファイル、環境変数など）
+# database: データベースからの入力
+threat-models:
+  - remote   # APIサーバーなのでリモート入力を重視
+  - database # データベース入力も考慮
