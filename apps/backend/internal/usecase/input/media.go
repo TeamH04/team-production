@@ -16,6 +16,7 @@ type UploadFileInput struct {
 type SignedUploadFile struct {
 	FileID      string
 	ObjectKey   string
-	UploadURL   string
+	Path        string
+	Token       string
 	ContentType string
 }

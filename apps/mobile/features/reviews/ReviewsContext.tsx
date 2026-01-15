@@ -13,11 +13,14 @@ import {
   type UploadFileInput,
 } from '@/lib/api';
 import { getAccessToken, getCurrentUser } from '@/lib/auth';
+import { SUPABASE_STORAGE_BUCKET } from '@/lib/storage';
+import { getSupabase } from '@/lib/supabase';
 
 export type ReviewFile = {
   id: string;
   fileName: string;
   objectKey: string;
+  url?: string;
   contentType?: string | null;
 };
 
@@ -93,22 +96,47 @@ function mapApiReview(review: ApiReview): Review {
       id: file.file_id,
       fileName: file.file_name,
       objectKey: file.object_key,
+      url: file.url ?? undefined,
       contentType: file.content_type ?? undefined,
     })),
   };
 }
 
-async function uploadToSignedUrl(uploadUrl: string, asset: ReviewAsset) {
+async function uploadToSignedUrl(path: string, token: string, asset: ReviewAsset) {
   const source = await fetch(asset.uri);
-  const blob = await source.blob();
-  const res = await fetch(uploadUrl, {
-    method: 'PUT',
-    headers: {
-      'Content-Type': asset.contentType,
-    },
-    body: blob,
-  });
-  if (!res.ok) {
+  let bytes: Uint8Array;
+  if (typeof source.arrayBuffer === 'function') {
+    bytes = new Uint8Array(await source.arrayBuffer());
+  } else {
+    const blob = await source.blob();
+    if (typeof (blob as { arrayBuffer?: () => Promise<ArrayBuffer> }).arrayBuffer === 'function') {
+      bytes = new Uint8Array(await blob.arrayBuffer());
+    } else if (typeof FileReader !== 'undefined') {
+      const buffer = await new Promise<ArrayBuffer>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onerror = () => reject(reader.error ?? new Error('file read failed'));
+        reader.onload = () => {
+          const result = reader.result;
+          if (result instanceof ArrayBuffer) {
+            resolve(result);
+          } else {
+            reject(new Error('file read failed'));
+          }
+        };
+        reader.readAsArrayBuffer(blob);
+      });
+      bytes = new Uint8Array(buffer);
+    } else {
+      throw new Error('file read failed');
+    }
+  }
+  const { error } = await getSupabase()
+    .storage.from(SUPABASE_STORAGE_BUCKET)
+    .uploadToSignedUrl(path, token, bytes, {
+      contentType: asset.contentType,
+      upsert: true,
+    });
+  if (error) {
     throw new Error('upload failed');
   }
 }
@@ -163,7 +191,9 @@ export function ReviewsProvider({ children }: { children: React.ReactNode }) {
           throw new Error('upload mismatch');
         }
         await Promise.all(
-          uploads.map((upload, index) => uploadToSignedUrl(upload.upload_url, assets[index]))
+          uploads.map((upload, index) =>
+            uploadToSignedUrl(upload.path, upload.token, assets[index])
+          )
         );
         fileIDs = uploads.map(upload => upload.file_id);
       }
