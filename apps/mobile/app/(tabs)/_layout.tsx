@@ -6,6 +6,7 @@ import { palette } from '@/constants/palette';
 import { Tabs } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { Platform, StyleSheet, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function TabLayout() {
   const headerLogo = (
@@ -22,7 +23,7 @@ export default function TabLayout() {
   );
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
       <StatusBar style='light' backgroundColor={palette.accent} />
       <Tabs
         screenOptions={{
@@ -77,7 +78,7 @@ export default function TabLayout() {
           }}
         />
       </Tabs>
-    </View>
+    </SafeAreaView>
   );
 }
 

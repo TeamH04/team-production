@@ -77,6 +77,7 @@ func (uc *mediaUseCase) CreateReviewUploads(ctx context.Context, storeID string,
 		}
 
 		objectKey := fmt.Sprintf("reviews/%s/%s/%s", storeID, userID, uuid.NewString())
+
 		createdBy := userID
 		record := entity.File{
 			FileKind:    "review",
@@ -94,7 +95,7 @@ func (uc *mediaUseCase) CreateReviewUploads(ctx context.Context, storeID string,
 			return nil, err
 		}
 
-		signed, err := uc.storage.GenerateSignedUploadURL(ctx, uc.bucket, objectKey, contentType, 15*time.Minute)
+		signed, err := uc.storage.CreateSignedUpload(ctx, uc.bucket, objectKey, contentType, 15*time.Minute, false)
 		if err != nil {
 			return nil, err
 		}
@@ -102,7 +103,8 @@ func (uc *mediaUseCase) CreateReviewUploads(ctx context.Context, storeID string,
 		results = append(results, input.SignedUploadFile{
 			FileID:      record.FileID,
 			ObjectKey:   objectKey,
-			UploadURL:   signed.URL,
+			Path:        signed.Path,
+			Token:       signed.Token,
 			ContentType: contentType,
 		})
 	}

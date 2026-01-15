@@ -9,15 +9,20 @@ import (
 	"github.com/TeamH04/team-production/apps/backend/internal/presentation/presenter"
 	"github.com/TeamH04/team-production/apps/backend/internal/usecase"
 	"github.com/TeamH04/team-production/apps/backend/internal/usecase/input"
+	"github.com/TeamH04/team-production/apps/backend/internal/usecase/output"
 )
 
 type UserHandler struct {
 	userUseCase input.UserUseCase
+	storage     output.StorageProvider
+	bucket      string
 }
 
-func NewUserHandler(userUseCase input.UserUseCase) *UserHandler {
+func NewUserHandler(userUseCase input.UserUseCase, storage output.StorageProvider, bucket string) *UserHandler {
 	return &UserHandler{
 		userUseCase: userUseCase,
+		storage:     storage,
+		bucket:      bucket,
 	}
 }
 
@@ -63,7 +68,9 @@ func (h *UserHandler) GetUserReviews(c echo.Context) error {
 	if err != nil {
 		return err
 	}
-	return c.JSON(http.StatusOK, presenter.NewReviewResponses(reviews))
+	resp := presenter.NewReviewResponses(reviews)
+	attachSignedURLsToReviewResponses(c.Request().Context(), h.storage, h.bucket, resp)
+	return c.JSON(http.StatusOK, resp)
 }
 
 type updateUserDTO struct {

@@ -42,8 +42,7 @@ export async function getCurrentUser(): Promise<User | null> {
       return null;
     }
     return data.user ?? null;
-  } catch (err) {
-    console.warn('[auth] failed to fetch current user', err);
+  } catch {
     return null;
   }
 }
@@ -55,8 +54,7 @@ export async function getAccessToken(): Promise<string | null> {
       return null;
     }
     return data.session?.access_token ?? null;
-  } catch (err) {
-    console.warn('[auth] failed to fetch session', err);
+  } catch {
     return null;
   }
 }

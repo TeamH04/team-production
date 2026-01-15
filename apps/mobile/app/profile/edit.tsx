@@ -330,8 +330,7 @@ export default function EditProfileScreen() {
             setSaving(true);
             try {
               await saveProfile();
-            } catch (e) {
-              console.error('saveProfile failed', e);
+            } catch {
               setSaveError('保存に失敗しました。もう一度お試しください。');
             } finally {
               setSaving(false);
