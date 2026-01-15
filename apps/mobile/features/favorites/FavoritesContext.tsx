@@ -1,5 +1,13 @@
 import type React from 'react';
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 
 import {
   addFavorite as addFavoriteApi,
@@ -20,6 +28,7 @@ type FavoritesState = Set<string>;
 type FavoritesContextValue = {
   favorites: FavoritesState; // 現在のお気に入り一覧
   isFavorite: (shopId: string) => boolean; // お気に入りかどうか判定
+  isOperationPending: (shopId: string) => boolean; // 操作中かどうか判定
   toggleFavorite: (shopId: string) => Promise<void>; // お気に入りの追加/解除
   addFavorite: (shopId: string) => Promise<void>; // お気に入りに追加
   removeFavorite: (shopId: string) => Promise<void>; // お気に入りから削除
@@ -79,10 +88,18 @@ let dependencies = defaultDependencies;
 
 const getDependencies = () => dependencies;
 
+/**
+ * @internal テスト専用 - 本番コードで使用しないこと
+ * 依存関係をモックに差し替える
+ */
 export function __setFavoritesDependenciesForTesting(overrides: Partial<FavoritesDependencies>) {
   dependencies = { ...dependencies, ...overrides };
 }
 
+/**
+ * @internal テスト専用 - 本番コードで使用しないこと
+ * 依存関係をデフォルトにリセットする
+ */
 export function __resetFavoritesDependenciesForTesting() {
   dependencies = defaultDependencies;
 }
@@ -96,6 +113,37 @@ const FavoritesContext = createContext<FavoritesContextValue | undefined>(undefi
 export function FavoritesProvider({ children }: { children: React.ReactNode }) {
   // お気に入りの状態を保持（Set を使用）
   const [favorites, setFavorites] = useState<FavoritesState>(() => new Set());
+  // 操作中のshopIdを追跡（ダブルポスト防止）
+  const [pendingOps, setPendingOps] = useState<Set<string>>(() => new Set());
+  // メモリリーク対策: マウント状態を追跡
+  const isMountedRef = useRef(true);
+  // レースコンディション対策: 最新のfavoritesを参照
+  const favoritesRef = useRef(favorites);
+  favoritesRef.current = favorites;
+
+  // 安全にsetFavoritesを呼ぶヘルパー
+  const safeSetFavorites = useCallback((updater: (prev: FavoritesState) => FavoritesState) => {
+    if (isMountedRef.current) {
+      setFavorites(updater);
+    }
+  }, []);
+
+  // 安全にsetPendingOpsを呼ぶヘルパー
+  const safeSetPendingOps = useCallback((updater: (prev: Set<string>) => Set<string>) => {
+    if (isMountedRef.current) {
+      setPendingOps(updater);
+    }
+  }, []);
+
+  // 操作中かどうかを判定
+  const isOperationPending = useCallback((shopId: string) => pendingOps.has(shopId), [pendingOps]);
+
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
 
   const loadFavorites = useCallback(async () => {
     const auth = await getDependencies().resolveAuth();
@@ -103,59 +151,112 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
       return;
     }
     if (auth.mode === 'unauthenticated') {
-      setFavorites(new Set());
+      safeSetFavorites(() => new Set());
       return;
     }
     const data = await getDependencies().fetchUserFavorites(auth.token);
-    setFavorites(new Set(data.map(item => item.store_id)));
-  }, []);
+    safeSetFavorites(() => new Set(data.map(item => item.store_id)));
+  }, [safeSetFavorites]);
 
-  // --- お気に入りに追加する処理 ---
-  const addFavorite = useCallback(async (shopId: string) => {
-    const auth = await getDependencies().resolveAuth();
-    if (auth.mode === 'local') {
-      setFavorites(prev => new Set(prev).add(shopId));
-      return;
-    }
-    if (auth.mode === 'unauthenticated') {
-      throw new Error(AUTH_REQUIRED);
-    }
-    await getDependencies().addFavoriteApi(shopId, auth.token);
-    setFavorites(prev => new Set(prev).add(shopId));
-  }, []);
+  // --- お気に入りに追加する処理（楽観的更新） ---
+  const addFavorite = useCallback(
+    async (shopId: string) => {
+      // 操作中の場合は無視（ダブルポスト防止）
+      if (pendingOps.has(shopId)) {
+        return;
+      }
 
-  // --- お気に入りから削除する処理 ---
-  const removeFavorite = useCallback(async (shopId: string) => {
-    const auth = await getDependencies().resolveAuth();
-    if (auth.mode === 'local') {
-      setFavorites(prev => {
+      const auth = await getDependencies().resolveAuth();
+      if (auth.mode === 'local') {
+        safeSetFavorites(prev => new Set(prev).add(shopId));
+        return;
+      }
+      if (auth.mode === 'unauthenticated') {
+        throw new Error(AUTH_REQUIRED);
+      }
+
+      // 楽観的更新: 先にUIを更新
+      safeSetFavorites(prev => new Set(prev).add(shopId));
+      safeSetPendingOps(prev => new Set(prev).add(shopId));
+
+      try {
+        await getDependencies().addFavoriteApi(shopId, auth.token);
+      } catch (error) {
+        // ロールバック: 失敗時は元に戻す
+        safeSetFavorites(prev => {
+          const next = new Set(prev);
+          next.delete(shopId);
+          return next;
+        });
+        throw error;
+      } finally {
+        safeSetPendingOps(prev => {
+          const next = new Set(prev);
+          next.delete(shopId);
+          return next;
+        });
+      }
+    },
+    [pendingOps, safeSetFavorites, safeSetPendingOps]
+  );
+
+  // --- お気に入りから削除する処理（楽観的更新） ---
+  const removeFavorite = useCallback(
+    async (shopId: string) => {
+      // 操作中の場合は無視（ダブルポスト防止）
+      if (pendingOps.has(shopId)) {
+        return;
+      }
+
+      const auth = await getDependencies().resolveAuth();
+      if (auth.mode === 'local') {
+        safeSetFavorites(prev => {
+          const next = new Set(prev);
+          next.delete(shopId);
+          return next;
+        });
+        return;
+      }
+      if (auth.mode === 'unauthenticated') {
+        throw new Error(AUTH_REQUIRED);
+      }
+
+      // 楽観的更新: 先にUIを更新
+      safeSetFavorites(prev => {
         const next = new Set(prev);
         next.delete(shopId);
         return next;
       });
-      return;
-    }
-    if (auth.mode === 'unauthenticated') {
-      throw new Error(AUTH_REQUIRED);
-    }
-    await getDependencies().removeFavoriteApi(shopId, auth.token);
-    setFavorites(prev => {
-      const next = new Set(prev);
-      next.delete(shopId);
-      return next;
-    });
-  }, []);
+      safeSetPendingOps(prev => new Set(prev).add(shopId));
+
+      try {
+        await getDependencies().removeFavoriteApi(shopId, auth.token);
+      } catch (error) {
+        // ロールバック: 失敗時は元に戻す
+        safeSetFavorites(prev => new Set(prev).add(shopId));
+        throw error;
+      } finally {
+        safeSetPendingOps(prev => {
+          const next = new Set(prev);
+          next.delete(shopId);
+          return next;
+        });
+      }
+    },
+    [pendingOps, safeSetFavorites, safeSetPendingOps]
+  );
 
   // --- お気に入りを追加/削除を切り替える処理 ---
+  // レースコンディション対策: favoritesRefを使用して最新の状態を参照
   const toggleFavorite = useCallback(
     async (shopId: string) => {
-      if (favorites.has(shopId)) {
+      if (favoritesRef.current.has(shopId)) {
         await removeFavorite(shopId);
         return;
       }
       await addFavorite(shopId);
     },
-    [favorites, addFavorite, removeFavorite]
+    [addFavorite, removeFavorite]
   );
 
   useEffect(() => {
@@ -180,12 +281,13 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
     () => ({
       favorites,
       isFavorite: (id: string) => favorites.has(id),
+      isOperationPending,
       toggleFavorite,
       addFavorite,
       removeFavorite,
       loadFavorites,
     }),
-    [favorites, addFavorite, removeFavorite, toggleFavorite, loadFavorites]
+    [favorites, isOperationPending, addFavorite, removeFavorite, toggleFavorite, loadFavorites]
   );
 
   // Provider でラップして子コンポーネントが利用できるようにする
