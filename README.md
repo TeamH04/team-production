@@ -106,7 +106,7 @@ pnpm run format:mobile
 
 # バックエンドテスト
 cd apps/backend
-go test -v -race ./...
+go test -v -race -cover -coverprofile=coverage.out -count=1 ./...
 
 # 依存関係セキュリティ監査
 pnpm audit --audit-level moderate

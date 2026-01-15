@@ -1,3 +1,6 @@
+// ポリフィルは他のモジュールより先にロードする必要がある
+import '@/polyfills/crypto';
+
 import { FavoritesProvider } from '@/features/favorites/FavoritesContext';
 import { ReviewsProvider } from '@/features/reviews/ReviewsContext';
 import { StoresProvider } from '@/features/stores/StoresContext';
@@ -44,7 +47,7 @@ function RootStack() {
 
   const first = segments[0] ?? '';
   const isInsideTabs = segments.some(seg => seg === '(tabs)');
-  const isExcluded = first === 'shop' || first === 'profile' || first === 'menu';
+  const isExcluded = (['shop', 'profile', 'menu'] as string[]).includes(first);
   const padTop = !isInsideTabs && !isExcluded ? insets.top : 0;
 
   return (

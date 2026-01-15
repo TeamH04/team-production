@@ -1,4 +1,4 @@
-import type { Shop } from '@team/shop-core';
+import type { Shop } from '@team/types';
 
 import type { ApiStore } from './api';
 import { getPublicStorageUrl } from './storage';
@@ -49,8 +49,9 @@ export function mapApiStoreToShop(store: ApiStore): Shop {
     store.menus?.map(item => ({
       id: item.menu_id,
       name: item.name,
-      category: item.description?.trim() ?? '',
+      category: item.category?.trim() ?? item.description?.trim() ?? '',
       price: item.price != null ? `¥${item.price.toLocaleString()}` : '',
+      description: item.description ?? undefined,
     })) ?? [];
 
   return {
