@@ -11,20 +11,12 @@ import 'react-native-get-random-values';
 
 import * as ExpoCrypto from 'expo-crypto';
 
-type DigestAlgorithm = 'SHA-256' | 'SHA256' | { name?: string };
-type ArrayBufferViewLike =
-  | Int8Array
-  | Uint8Array
-  | Uint8ClampedArray
-  | Int16Array
-  | Uint16Array
-  | Int32Array
-  | Uint32Array
-  | Float32Array
-  | Float64Array
-  | DataView;
-
-type CryptoBufferSource = ArrayBuffer | SharedArrayBuffer | ArrayBufferViewLike;
+import {
+  normalizeAlgorithm,
+  toArrayBuffer,
+  type CryptoBufferSource,
+  type DigestAlgorithm,
+} from './crypto-utils';
 
 type SubtleCryptoLike = {
   digest(algorithm: DigestAlgorithm, data: CryptoBufferSource): Promise<ArrayBuffer>;
@@ -36,45 +28,26 @@ type CryptoLike = {
   subtle: SubtleCryptoLike;
 };
 
-function normalizeAlgorithm(algorithm: DigestAlgorithm) {
-  if (typeof algorithm === 'string') return algorithm.toUpperCase();
-  if (typeof algorithm === 'object' && 'name' in algorithm && algorithm.name) {
-    return String(algorithm.name).toUpperCase();
-  }
-  return undefined;
-}
-
-function toArrayBuffer(data: CryptoBufferSource): ArrayBuffer {
-  if (ArrayBuffer.isView(data)) {
-    const view = new Uint8Array(data.buffer, data.byteOffset, data.byteLength);
-    return new Uint8Array(view).buffer;
-  }
-  if (data instanceof ArrayBuffer) return data;
-  if (typeof SharedArrayBuffer !== 'undefined' && data instanceof SharedArrayBuffer) {
-    return new Uint8Array(data).slice().buffer;
-  }
-  throw new TypeError('Unsupported BufferSource type');
-}
-
 const existingCrypto = (globalThis as { crypto?: CryptoLike }).crypto ?? ({} as CryptoLike);
 
-const subtle: SubtleCryptoLike =
-  existingCrypto.subtle ??
-  ({
-    async digest(algorithm, data) {
-      const normalized = normalizeAlgorithm(algorithm);
-      if (normalized !== 'SHA-256' && normalized !== 'SHA256') {
-        throw new Error(`Unsupported digest algorithm: ${normalized ?? 'unknown'}`);
-      }
-      return ExpoCrypto.digest(ExpoCrypto.CryptoDigestAlgorithm.SHA256, toArrayBuffer(data));
-    },
-  } as SubtleCryptoLike);
+const polyfillSubtle: SubtleCryptoLike = {
+  async digest(algorithm, data) {
+    const normalized = normalizeAlgorithm(algorithm);
+    if (normalized !== 'SHA-256' && normalized !== 'SHA256') {
+      throw new Error(`Unsupported digest algorithm: ${normalized ?? 'unknown'}`);
+    }
+    return ExpoCrypto.digest(ExpoCrypto.CryptoDigestAlgorithm.SHA256, toArrayBuffer(data));
+  },
+};
 
+// 既存のcryptoオブジェクトのプロパティを展開し、存在しないプロパティのみポリフィルで補完する
+// スプレッド演算子で展開した後、個別のプロパティを指定することで、
+// 既存の実装がある場合はそれを優先し、ない場合のみポリフィルを使用する
 const polyfilledCrypto: CryptoLike = {
   ...existingCrypto,
   getRandomValues: existingCrypto.getRandomValues ?? ExpoCrypto.getRandomValues,
   randomUUID: existingCrypto.randomUUID ?? ExpoCrypto.randomUUID,
-  subtle: existingCrypto.subtle ?? subtle,
+  subtle: existingCrypto.subtle ?? polyfillSubtle,
 };
 
 // Ensure the global crypto object is available for libraries requiring WebCrypto (e.g., PKCE)
