@@ -29,7 +29,8 @@ type createUploadDTO struct {
 type uploadFileResponse struct {
 	FileID      string `json:"file_id"`
 	ObjectKey   string `json:"object_key"`
-	UploadURL   string `json:"upload_url"`
+	Path        string `json:"path"`
+	Token       string `json:"token"`
 	ContentType string `json:"content_type"`
 }
 
@@ -74,7 +75,8 @@ func (h *MediaHandler) CreateReviewUploads(c echo.Context) error {
 		resp[i] = uploadFileResponse{
 			FileID:      upload.FileID,
 			ObjectKey:   upload.ObjectKey,
-			UploadURL:   upload.UploadURL,
+			Path:        upload.Path,
+			Token:       upload.Token,
 			ContentType: upload.ContentType,
 		}
 	}

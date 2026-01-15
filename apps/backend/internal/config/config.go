@@ -62,7 +62,7 @@ func Load() (*Config, error) {
 	cfg.SupabaseAnonKey = os.Getenv("SUPABASE_ANON_KEY")
 	cfg.SupabaseServiceRoleKey = os.Getenv("SUPABASE_SERVICE_ROLE_KEY")
 	cfg.SupabaseJWTSecret = os.Getenv("SUPABASE_JWT_SECRET")
-	cfg.SupabaseStorageBucket = getenv("SUPABASE_STORAGE_BUCKET", "media")
+	cfg.SupabaseStorageBucket = os.Getenv("SUPABASE_STORAGE_BUCKET")
 
 	return cfg, nil
 }
