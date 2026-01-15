@@ -6,8 +6,8 @@ import { Pressable, ScrollView, SectionList, StyleSheet, Text, View } from 'reac
 
 import { useStores } from '@/features/stores/StoresContext';
 import { fetchStoreMenus } from '@/lib/api';
-import { MENU_TAB_MAP } from '@team/shop-core';
 import { colors as themeColors, withAlpha } from '@team/theme';
+import { MENU_TAB_MAP, type ShopMenuItem } from '@team/types';
 
 // --- 定数 ---
 const COLORS = {
@@ -120,7 +120,7 @@ export default function ShopMenuScreen() {
           if (active) setLoading(false);
         }
       } else if (shop?.menu && shop.menu.length > 0) {
-        const normalized: ExtendedMenuItem[] = shop.menu.map(item => ({
+        const normalized: ExtendedMenuItem[] = shop.menu.map((item: ShopMenuItem) => ({
           id: item.id,
           name: item.name,
           category: item.category,
