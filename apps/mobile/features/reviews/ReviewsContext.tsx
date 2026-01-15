@@ -20,6 +20,7 @@ export type ReviewFile = {
   id: string;
   fileName: string;
   objectKey: string;
+  url?: string;
   contentType?: string | null;
 };
 
@@ -95,6 +96,7 @@ function mapApiReview(review: ApiReview): Review {
       id: file.file_id,
       fileName: file.file_name,
       objectKey: file.object_key,
+      url: file.url ?? undefined,
       contentType: file.content_type ?? undefined,
     })),
   };

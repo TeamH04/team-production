@@ -7,6 +7,7 @@ export type ApiFile = {
   file_id: string;
   file_name: string;
   object_key: string;
+  url?: string | null;
   content_type?: string | null;
 };
 

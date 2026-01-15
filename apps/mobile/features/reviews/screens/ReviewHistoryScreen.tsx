@@ -99,7 +99,7 @@ export default function ReviewHistoryScreen() {
             {review.files.length > 0 && (
               <View style={styles.reviewImages}>
                 {review.files.map(file => {
-                  const url = getPublicStorageUrl(file.objectKey);
+                  const url = file.url ?? getPublicStorageUrl(file.objectKey);
                   if (!url) return null;
                   return (
                     <Image

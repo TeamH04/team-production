@@ -50,14 +50,14 @@ func buildRouterDependencies(cfg *config.Config, db *gorm.DB) *router.Dependenci
 
 	// Application handlers (use case adapters)
 	log.Println("  - Initializing handlers...")
-	storeHandler := handlers.NewStoreHandler(storeUseCase)
+	storeHandler := handlers.NewStoreHandler(storeUseCase, supabaseClient, cfg.SupabaseStorageBucket)
 	menuHandler := handlers.NewMenuHandler(menuUseCase)
-	userHandler := handlers.NewUserHandler(userUseCase)
+	userHandler := handlers.NewUserHandler(userUseCase, supabaseClient, cfg.SupabaseStorageBucket)
 	favoriteHandler := handlers.NewFavoriteHandler(favoriteUseCase)
 	reportHandler := handlers.NewReportHandler(reportUseCase)
 	authHandler := handlers.NewAuthHandler(authUseCase, userUseCase)
 	adminHandler := handlers.NewAdminHandler(adminUseCase, reportUseCase, userUseCase)
-	reviewHandler := handlers.NewReviewHandler(reviewUseCase, supabaseClient)
+	reviewHandler := handlers.NewReviewHandler(reviewUseCase, supabaseClient, supabaseClient, cfg.SupabaseStorageBucket)
 	mediaHandler := handlers.NewMediaHandler(mediaUseCase)
 
 	log.Println("Dependencies setup completed!")

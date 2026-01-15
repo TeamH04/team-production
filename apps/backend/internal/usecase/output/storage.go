@@ -13,6 +13,7 @@ type StorageProvider interface {
 		expiresIn time.Duration,
 		upsert bool,
 	) (*SignedUpload, error)
+	CreateSignedDownload(ctx context.Context, bucket, objectPath string, expiresIn time.Duration) (*SignedDownload, error)
 }
 
 type SignedUpload struct {
@@ -22,4 +23,11 @@ type SignedUpload struct {
 	ExpiresIn   time.Duration
 	ContentType string
 	Upsert      bool
+}
+
+type SignedDownload struct {
+	Bucket    string
+	Path      string
+	URL       string
+	ExpiresIn time.Duration
 }

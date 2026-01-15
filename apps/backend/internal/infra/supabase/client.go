@@ -70,6 +70,20 @@ func (e supabaseError) Error() string {
 	}
 }
 
+func (c *Client) storageKey() string {
+	if strings.TrimSpace(c.serviceKey) != "" {
+		return strings.TrimSpace(c.serviceKey)
+	}
+	return strings.TrimSpace(c.anonKey)
+}
+
+func (c *Client) authKey() string {
+	if strings.TrimSpace(c.anonKey) != "" {
+		return strings.TrimSpace(c.anonKey)
+	}
+	return strings.TrimSpace(c.serviceKey)
+}
+
 func decodeSupabaseErrorFromBody(status int, body []byte) error {
 	var supErr supabaseError
 	if err := json.Unmarshal(body, &supErr); err != nil {
@@ -149,7 +163,8 @@ func (c *Client) Signup(ctx context.Context, input output.AuthSignupInput) (*out
 
 // Login executes the password grant flow against Supabase Auth.
 func (c *Client) Login(ctx context.Context, input output.AuthLoginInput) (*output.AuthSession, error) {
-	if c.baseURL == "" || (c.anonKey == "" && c.serviceKey == "") {
+	key := c.authKey()
+	if c.baseURL == "" || key == "" {
 		return nil, errors.New("supabase auth api not configured")
 	}
 
@@ -169,10 +184,6 @@ func (c *Client) Login(ctx context.Context, input output.AuthLoginInput) (*outpu
 	}
 	req.Header.Set("Content-Type", "application/json")
 
-	key := c.anonKey
-	if key == "" {
-		key = c.serviceKey
-	}
 	req.Header.Set("apikey", key)
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", key))
 
@@ -355,8 +366,8 @@ func (c *Client) CreateSignedUpload(
 	expiresIn time.Duration,
 	upsert bool,
 ) (*output.SignedUpload, error) {
-
-	if c.baseURL == "" || c.serviceKey == "" {
+	key := c.storageKey()
+	if c.baseURL == "" || key == "" {
 		return nil, errors.New("supabase storage api not configured")
 	}
 	if strings.TrimSpace(bucket) == "" {
@@ -369,13 +380,14 @@ func (c *Client) CreateSignedUpload(
 	if expiresIn <= 0 {
 		return nil, errors.New("expiresIn must be positive")
 	}
+	ct := strings.TrimSpace(contentType)
 
 	escapedPath := escapePathPreserveSlash(objectPath)
 	target := fmt.Sprintf("/object/upload/sign/%s/%s", bucket, escapedPath)
 
 	payload := map[string]any{
 		"expiresIn":   int(expiresIn.Seconds()),
-		"contentType": strings.TrimSpace(contentType),
+		"contentType": ct,
 		"upsert":      upsert,
 	}
 	body, err := json.Marshal(payload)
@@ -388,8 +400,8 @@ func (c *Client) CreateSignedUpload(
 		return nil, err
 	}
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("apikey", c.serviceKey)
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", c.serviceKey))
+	req.Header.Set("apikey", key)
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", key))
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
@@ -408,7 +420,6 @@ func (c *Client) CreateSignedUpload(
 
 	var result struct {
 		Token string `json:"token"`
-		URL   string `json:"url"`
 		Path  string `json:"path"`
 	}
 	if err := json.Unmarshal(respBody, &result); err != nil {
@@ -432,7 +443,89 @@ func (c *Client) CreateSignedUpload(
 		Path:        objectPath,
 		Token:       result.Token,
 		ExpiresIn:   expiresIn,
-		ContentType: payload["contentType"].(string),
+		ContentType: ct,
 		Upsert:      upsert,
+	}, nil
+}
+
+func (c *Client) CreateSignedDownload(ctx context.Context, bucket, objectPath string, expiresIn time.Duration) (*output.SignedDownload, error) {
+	key := c.storageKey()
+	if c.baseURL == "" || key == "" {
+		return nil, errors.New("supabase storage api not configured")
+	}
+	if strings.TrimSpace(bucket) == "" {
+		return nil, errors.New("bucket is required")
+	}
+	objectPath = strings.TrimSpace(objectPath)
+	if objectPath == "" {
+		return nil, errors.New("objectPath is required")
+	}
+	if expiresIn <= 0 {
+		return nil, errors.New("expiresIn must be positive")
+	}
+
+	escapedPath := escapePathPreserveSlash(objectPath)
+	target := fmt.Sprintf("/object/sign/%s/%s", bucket, escapedPath)
+	payload := map[string]any{
+		"expiresIn": int(expiresIn.Seconds()),
+	}
+	body, err := json.Marshal(payload)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.storageEndpoint(target), bytes.NewReader(body))
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("apikey", key)
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", key))
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	respBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	if resp.StatusCode >= 300 {
+		return nil, decodeSupabaseErrorFromBody(resp.StatusCode, respBody)
+	}
+
+	var result struct {
+		SignedURL string `json:"signedURL"`
+	}
+	if err := json.Unmarshal(respBody, &result); err != nil {
+		return nil, err
+	}
+	signedURL := strings.TrimSpace(result.SignedURL)
+	if signedURL == "" {
+		var raw map[string]any
+		if err := json.Unmarshal(respBody, &raw); err == nil {
+			keys := make([]string, 0, len(raw))
+			for k := range raw {
+				keys = append(keys, k)
+			}
+			sort.Strings(keys)
+			return nil, fmt.Errorf("supabase signed download missing url (bucket=%s path=%s keys=%v)", bucket, objectPath, keys)
+		}
+		return nil, fmt.Errorf("supabase signed download missing url (bucket=%s path=%s)", bucket, objectPath)
+	}
+
+	urlStr := signedURL
+	if strings.HasPrefix(urlStr, "/") {
+		urlStr = c.storageEndpoint(urlStr)
+	}
+
+	return &output.SignedDownload{
+		Bucket:    bucket,
+		Path:      objectPath,
+		URL:       urlStr,
+		ExpiresIn: expiresIn,
 	}, nil
 }

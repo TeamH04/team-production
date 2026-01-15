@@ -493,7 +493,7 @@ export default function ShopDetailScreen() {
                     style={styles.reviewFiles}
                   >
                     {review.files.map(file => {
-                      const url = getPublicStorageUrl(file.objectKey);
+                      const url = file.url ?? getPublicStorageUrl(file.objectKey);
                       if (!url) return null;
                       return (
                         <Image

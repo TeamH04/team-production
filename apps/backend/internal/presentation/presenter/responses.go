@@ -116,6 +116,7 @@ type FileResponse struct {
 	FileName    string    `json:"file_name"`
 	FileSize    *int64    `json:"file_size,omitempty"`
 	ObjectKey   string    `json:"object_key"`
+	URL         *string   `json:"url,omitempty"`
 	ContentType *string   `json:"content_type,omitempty"`
 	IsDeleted   bool      `json:"is_deleted"`
 	CreatedAt   time.Time `json:"created_at"`

@@ -1,6 +1,7 @@
 import type { Shop } from '@team/shop-core';
 
 import type { ApiStore } from './api';
+import { getPublicStorageUrl } from './storage';
 
 const DEFAULT_CATEGORY: Shop['category'] = 'カフェ・喫茶';
 const DEFAULT_BUDGET: Shop['budget'] = '$$';
@@ -16,10 +17,21 @@ function normalizeDate(value?: string | null): string {
   return new Date().toISOString();
 }
 
+function normalizeImageUrl(value?: string | null): string | undefined {
+  const trimmed = value?.trim();
+  if (!trimmed) return undefined;
+  if (trimmed.startsWith('http')) return trimmed;
+  return getPublicStorageUrl(trimmed) || undefined;
+}
+
 export function mapApiStoreToShop(store: ApiStore): Shop {
   // APIデータを優先使用、フォールバックはデフォルト値のみ
-  const apiThumbnailUrl = store.thumbnail_file?.object_key?.trim();
-  const apiImageUrls = store.image_urls?.length > 0 ? store.image_urls : undefined;
+  const apiThumbnailUrl = normalizeImageUrl(
+    store.thumbnail_file?.url ?? store.thumbnail_file?.object_key
+  );
+  const apiImageUrls = store.image_urls?.map(normalizeImageUrl).filter(Boolean) as
+    | string[]
+    | undefined;
   const imageUrl = apiThumbnailUrl || apiImageUrls?.[0] || DEFAULT_IMAGE_URL;
   const imageUrls = apiImageUrls ?? (imageUrl ? [imageUrl] : undefined);
 
