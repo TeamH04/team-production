@@ -44,3 +44,18 @@ export function toArrayBuffer(data: CryptoBufferSource): ArrayBuffer {
   }
   throw new TypeError('Unsupported BufferSource type');
 }
+
+/**
+ * 様々なバッファ形式をUint8Arrayに変換する
+ */
+export function toUint8Array(data: CryptoBufferSource): Uint8Array {
+  if (data instanceof Uint8Array) return data;
+  if (ArrayBuffer.isView(data)) {
+    return new Uint8Array(data.buffer, data.byteOffset, data.byteLength);
+  }
+  if (data instanceof ArrayBuffer) return new Uint8Array(data);
+  if (typeof SharedArrayBuffer !== 'undefined' && data instanceof SharedArrayBuffer) {
+    return new Uint8Array(data);
+  }
+  throw new TypeError('Unsupported BufferSource type');
+}

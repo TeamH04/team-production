@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, test } from 'node:test';
 
-import { normalizeAlgorithm, toArrayBuffer } from '../crypto-utils';
+import { normalizeAlgorithm, toArrayBuffer, toUint8Array } from '../crypto-utils';
 
 describe('normalizeAlgorithm', () => {
   const testCases: Array<{
@@ -87,5 +87,28 @@ describe('toArrayBuffer', () => {
       () => toArrayBuffer('invalid'),
       { name: 'TypeError', message: 'Unsupported BufferSource type' }
     );
+  });
+});
+
+describe('toUint8Array', () => {
+  test('Uint8Arrayをそのまま返す', () => {
+    const uint8 = new Uint8Array([1, 2, 3]);
+    assert.equal(toUint8Array(uint8), uint8);
+  });
+
+  test('ArrayBufferをUint8Arrayに変換', () => {
+    const buffer = new ArrayBuffer(4);
+    const result = toUint8Array(buffer);
+    assert.ok(result instanceof Uint8Array);
+    assert.equal(result.byteLength, 4);
+  });
+
+  test('オフセット付きTypedArrayを正しく変換', () => {
+    const buffer = new ArrayBuffer(8);
+    const view = new Uint8Array(buffer, 2, 4);
+    view.set([5, 6, 7, 8]);
+    const result = toUint8Array(view);
+    assert.equal(result.byteLength, 4);
+    assert.deepEqual([...result], [5, 6, 7, 8]);
   });
 });
