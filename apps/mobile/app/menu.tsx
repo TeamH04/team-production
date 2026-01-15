@@ -108,7 +108,7 @@ export default function ShopMenuScreen() {
             id: menu.menu_id,
             name: menu.name,
             category: menu.category?.trim() ?? '',
-            price: menu.price != null ? `¥${menu.price.toLocaleString()}` : '',
+            price: menu.price != null ? `¥${menu.price.toLocaleString()}` : '---',
             description: menu.description ?? undefined,
           }));
           setMenuItems(mapped);
@@ -124,7 +124,7 @@ export default function ShopMenuScreen() {
           id: item.id,
           name: item.name,
           category: item.category,
-          price: item.price ?? '',
+          price: item.price || '---',
           description: item.description,
         }));
         setMenuItems(normalized);
@@ -145,7 +145,7 @@ export default function ShopMenuScreen() {
       headerTintColor: COLORS.WHITE,
       headerTitleAlign: 'center',
       headerTitleStyle: { fontSize: 18, fontWeight: 'bold' },
-      title: '',
+      title: shop?.name ?? 'メニュー',
     });
   }, [navigation, shop]);
 
@@ -208,7 +208,7 @@ export default function ShopMenuScreen() {
                 </View>
 
                 <View style={styles.priceContainer}>
-                  <Text style={styles.menuPrice}>{item.price || '---'}</Text>
+                  <Text style={styles.menuPrice}>{item.price}</Text>
                   <Text style={styles.taxLabel}>(税込)</Text>
                 </View>
               </View>
