@@ -13,7 +13,7 @@ import {
   View,
 } from 'react-native';
 
-import { GENRES } from '@/constants/genres';
+import { GENRES, toggleGenre as toggleGenreUtil } from '@/constants/genres';
 import { palette } from '@/constants/palette';
 import { TAB_BAR_SPACING } from '@/constants/TabBarSpacing';
 import { type Gender, useUser } from '@/features/user/UserContext';
@@ -51,14 +51,9 @@ export default function EditProfileScreen() {
     return name.trim().length > 0 && email.trim().length > 0 && !saving;
   }, [email, name, saving]);
 
-  /**
-   * ジャンルの選択状態をトグルする
-   * @param genre - トグル対象のジャンル名
-   */
+  /** ジャンルの選択状態をトグルする */
   const toggleGenre = (genre: string) => {
-    setFavoriteGenres(prev =>
-      prev.includes(genre) ? prev.filter(g => g !== genre) : [...prev, genre]
-    );
+    setFavoriteGenres(prev => toggleGenreUtil(prev, genre));
   };
 
   const validateForm = (): boolean => {
@@ -395,6 +390,7 @@ const styles = StyleSheet.create({
   chipOff: {
     backgroundColor: palette.secondarySurface,
     borderColor: palette.border,
+    borderWidth: 1,
   },
   chipOn: { backgroundColor: palette.accent },
 
