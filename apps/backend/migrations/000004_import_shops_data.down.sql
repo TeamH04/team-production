@@ -1,40 +1,39 @@
 BEGIN;
 
--- Delete seeded stores (menus/store_files/store_tags are removed by ON DELETE CASCADE)
 DELETE FROM public.stores
-WHERE name IN (
-  'モーニング ブリュー カフェ',
-  '夕焼け寿司割烹',
-  'グロウ ジェラート ラボ',
-  'ルーメン ワインバー',
-  'アーバングリーンズ キッチン',
-  'ベイカーズ レーン',
-  'ロータス ベジビュッフェ',
-  'レトロ アーケード ロフト',
-  'ハーバー シーフード グリル',
-  'リバーサイド ジャズクラブ',
-  'フレッシュ ボウル マーケット'
+WHERE store_id IN (
+  '1ebef6bc-9dd4-4c74-862f-53a1728322a3',
+  'ef9c168b-c258-41af-80a6-747a7802e0b4',
+  'babedee5-6044-4ff7-adf7-ab211ce47201',
+  '0459a380-3fb0-452e-b246-858a0f83da06',
+  '90b44899-12d9-4b0d-8cc7-57cb2ccb4bca',
+  'a6c4d00c-eb5a-4f67-a230-d819dd63f7d9',
+  'a3caea16-843a-4e7b-8c77-f41a79810048',
+  'b29e60ce-6fec-4ffa-9055-b510b18fe0d7',
+  '67b63f0e-a1df-407e-8cf8-61d4657f0659',
+  'eddcf927-6f88-447e-9e22-d1f68ecf99e8',
+  '7c5255e4-2e2d-4192-991f-5b10c57dcc8c'
 );
 
 -- Delete seeded files inserted by the up migration
 DELETE FROM public.files
-WHERE object_key IN (
-  'https://images.unsplash.com/photo-1509042239860-f550ce710b93?auto=format&fit=crop&w=600&q=80',
-  'https://images.unsplash.com/photo-1495521821757-a1efb6729352?auto=format&fit=crop&w=600&q=80',
-  'https://images.unsplash.com/photo-1553621042-f6e147245754?auto=format&fit=crop&w=600&q=80',
-  'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80',
-  'https://images.unsplash.com/photo-1505253758473-96b7015fcd40?auto=format&fit=crop&w=600&q=80',
-  'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=600&q=80',
-  'https://images.unsplash.com/photo-1470337458703-46ad1756a187?auto=format&fit=crop&w=600&q=80',
-  'https://images.unsplash.com/photo-1525755662778-989d0524087e?auto=format&fit=crop&w=600&q=80',
-  'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=600&q=80',
-  'https://images.unsplash.com/photo-1544984243-ec57ea16fe25?auto=format&fit=crop&w=600&q=80',
-  'https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?auto=format&fit=crop&w=600&q=80',
-  'https://images.unsplash.com/photo-1545239351-1141bd82e8a6?auto=format&fit=crop&w=600&q=80',
-  'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=600&q=80',
-  'https://images.unsplash.com/photo-1559827260-dc66d52bef19?auto=format&fit=crop&w=600&q=80',
-  'https://images.unsplash.com/photo-1504754524776-8f4f37790ca0?auto=format&fit=crop&w=600&q=80',
-  'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=600&q=80'
+WHERE file_id IN (
+  'ebc53e26-915c-4175-8015-256399c9b081',
+  '59d605f7-e856-4905-9b5b-4ce009c0858f',
+  '0a165096-d715-4a60-a032-84ba714f1cbf',
+  '55c81da6-8a15-4388-9c47-358fd4b9d39b',
+  '0868938e-719b-4c06-8a85-71ded5db162f',
+  '1b445de7-f493-4f58-8753-0651caaa197e',
+  '650de8fa-0fcf-4af9-921c-c73933771835',
+  'fe68d11c-990d-4fb5-95b0-fc900238d657',
+  'fbd3b170-2834-4666-a866-3bf273869a1c',
+  '00611bc1-3ae4-45d7-821f-72f3104eff92',
+  'd4d4ec38-5625-4afa-a5f6-6436cc8be673',
+  'bda40189-1cf1-406e-9133-6aef5811957e',
+  '4eea9782-9d06-417a-af79-78e0bc61d684',
+  '7c06d7b8-89ea-410f-8127-b7a719f6d00d',
+  'ee55dbcb-e1d3-4b73-b46d-51a6bd85246c',
+  '0cc07d31-a220-4b0f-971d-5e857e040afb'
 );
 
 COMMIT;
