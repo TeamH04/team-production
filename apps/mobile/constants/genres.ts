@@ -24,7 +24,5 @@ export type Genre = (typeof GENRES)[number];
  * @returns 新しいジャンル配列
  */
 export const toggleGenre = (genres: string[], genre: string): string[] => {
-  return genres.includes(genre)
-    ? genres.filter(g => g !== genre)
-    : [...genres, genre];
+  return genres.includes(genre) ? genres.filter(g => g !== genre) : [...genres, genre];
 };
