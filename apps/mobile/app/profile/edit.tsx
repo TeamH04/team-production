@@ -15,7 +15,7 @@ import {
 
 import { palette } from '@/constants/palette';
 import { TAB_BAR_SPACING } from '@/constants/TabBarSpacing';
-import { useUser, type Gender } from '@/features/user/UserContext';
+import { type Gender, useUser } from '@/features/user/UserContext';
 
 const modalOverlayOpacity = 0.3;
 const GENRES = [
@@ -399,7 +399,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 8,
   },
-  chipOff: { backgroundColor: palette.secondarySurface, borderColor: palette.border },
+  chipOff: {
+    backgroundColor: palette.secondarySurface,
+    borderColor: palette.border,
+  },
   chipOn: { backgroundColor: palette.accent },
 
   chipTextOff: { color: palette.primaryText, fontWeight: '700' },
@@ -454,7 +457,11 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 12,
   },
   modalDoneText: { color: palette.accent, fontWeight: '700' },
-  modalOverlay: { backgroundColor: palette.shadow, flex: 1, opacity: modalOverlayOpacity },
+  modalOverlay: {
+    backgroundColor: palette.shadow,
+    flex: 1,
+    opacity: modalOverlayOpacity,
+  },
   modalToolbar: {
     alignItems: 'flex-end',
     borderBottomWidth: 1,
@@ -520,7 +527,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 12,
   },
-  secondaryBtnText: { color: palette.primaryText, fontWeight: '700', textAlign: 'center' },
+  secondaryBtnText: {
+    color: palette.primaryText,
+    fontWeight: '700',
+    textAlign: 'center',
+  },
 
   // タイトル
   title: {
