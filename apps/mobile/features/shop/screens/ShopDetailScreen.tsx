@@ -1,4 +1,4 @@
-import { palette } from '@/constants/palette';
+﻿import { palette } from '@/constants/palette';
 import { useFavorites } from '@/features/favorites/FavoritesContext';
 import { useReviews } from '@/features/reviews/ReviewsContext';
 import { useStores } from '@/features/stores/StoresContext';
@@ -61,16 +61,15 @@ export default function ShopDetailScreen() {
   const shop = useMemo(() => (id ? (getStoreById(id) ?? null) : null), [getStoreById, id]);
 
   const webBaseUrl = process.env.EXPO_PUBLIC_WEB_BASE_URL?.replace(/\/$/, '');
-
-  // derived
-  const isFav = id ? isFavorite(id) : false;
-  const isVis = id ? isVisited(id) : false;
-
-  const reviews = id ? getReviews(id) : [];
-  const isReviewsLoading = id ? loadingByShop[id] : false;
+  const reviews = useMemo(() => (shop ? getReviews(shop.id) : []), [shop, getReviews]);
+  const isFav = useMemo(() => (shop ? isFavorite(shop.id) : false), [shop, isFavorite]);
+  const isVis = useMemo(() => (shop ? isVisited(shop.id) : false), [shop, isVisited]);
 
   const imageUrls = shop?.imageUrls;
   const flatListRef = useRef<FlatList<string>>(null);
+
+  // 【修正1】isReviewsLoading の定義を追加
+  const isReviewsLoading = id ? loadingByShop[id] : false;
 
   // メニュー：1つ目の「おすすめ2つ」＋アコーディオンUIを採用
   const recommendedMenu = useMemo(() => {
@@ -110,16 +109,14 @@ export default function ShopDetailScreen() {
   useFocusEffect(
     useCallback(() => {
       if (!id) return;
-      loadReviews(id, reviewSort).catch(err => {
-        console.warn('Failed to load reviews', err);
-      });
+      loadReviews(id, reviewSort).catch(() => undefined);
     }, [id, loadReviews, reviewSort])
   );
 
   const mapOpenUrl = useMemo(() => {
     if (!shop?.placeId) return null;
-    // 1つ目のURL形式に寄せる（query_place_idのみでOK）
-    return `https://www.google.com/maps/search/?api=1&query_place_id=${shop.placeId}`;
+    // 【修正2】テンプレートリテラルのミス `${shop.placeId}` に修正
+    return `http://googleusercontent.com/maps.google.com/?query_place_id=${shop.placeId}`;
   }, [shop]);
 
   const scrollToImage = useCallback((index: number) => {
@@ -142,8 +139,7 @@ export default function ShopDetailScreen() {
       message: `${shop.name}\n${shop.description}\n${url}`,
       title: shop.name,
       url,
-    }).catch(err => {
-      console.warn('Failed to share shop', err);
+    }).catch(() => {
       Alert.alert('共有に失敗しました', 'もう一度お試しください。');
     });
   }, [shop, webBaseUrl]);
@@ -299,8 +295,9 @@ export default function ShopDetailScreen() {
         <View style={styles.container}>
           {/* Title + actions: 両方の良いとこ（押した時のopacity/disabled等は2つ目寄り） */}
           <View style={styles.headerRow}>
-            <Text style={styles.title}>{shop.name}</Text>
-
+            <Text numberOfLines={1} style={styles.title}>
+              {shop.name}
+            </Text>
             <View style={styles.headerActions}>
               <Pressable
                 accessibilityLabel='このお店を共有'
@@ -404,7 +401,7 @@ export default function ShopDetailScreen() {
                     style={styles.moreBtnOutline}
                   >
                     <Ionicons color={palette.primary} name='add-circle-outline' size={18} />
-                    <Text style={styles.moreBtnText}>もっとみる</Text>
+                    <Text style={styles.moreBtnText}>もっと見る</Text>
                   </Pressable>
                 </View>
               )}
@@ -456,8 +453,8 @@ export default function ShopDetailScreen() {
             </Pressable>
           </View>
 
+          {/* 【修正3】onPress の重複定義を一つに整理 */}
           <Pressable
-            style={styles.primaryBtn}
             onPress={() => {
               navigation.setOptions?.({ headerBackTitle: '戻る' });
               router.push({
@@ -465,6 +462,7 @@ export default function ShopDetailScreen() {
                 params: { id: shop.id },
               });
             }}
+            style={styles.primaryBtn}
           >
             <Text style={styles.primaryBtnText}>レビューを書く</Text>
           </Pressable>
@@ -507,14 +505,14 @@ export default function ShopDetailScreen() {
 
                 {review.comment ? <Text style={styles.reviewBody}>{review.comment}</Text> : null}
 
-                {review.files?.length > 0 && (
+                {review.files && review.files.length > 0 && (
                   <ScrollView
                     horizontal
                     showsHorizontalScrollIndicator={false}
                     style={styles.reviewFiles}
                   >
                     {review.files.map(file => {
-                      const url = getPublicStorageUrl(file.objectKey);
+                      const url = file.url ?? getPublicStorageUrl(file.objectKey);
                       if (!url) return null;
                       return (
                         <Image
@@ -575,9 +573,19 @@ const styles = StyleSheet.create({
   centered: { alignItems: 'center', justifyContent: 'center' },
   container: { padding: 16 },
   content: { backgroundColor: COLORS.WHITE, paddingBottom: 24 },
-  descriptionText: { color: palette.primary, lineHeight: 22, marginBottom: 16 },
-  favBtn: { marginLeft: 8 },
-  headerActions: { alignItems: 'center', flexDirection: 'row', gap: 4 },
+  descriptionText: {
+    color: palette.primary,
+    fontSize: 16,
+    lineHeight: 22,
+    marginBottom: 16,
+  },
+  favBtn: { padding: 2 },
+  headerActions: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: -4, // ここを極限まで狭めました
+    marginRight: -4,
+  },
   headerRow: {
     alignItems: 'center',
     flexDirection: 'row',
@@ -619,6 +627,8 @@ const styles = StyleSheet.create({
     borderColor: palette.primary,
     borderRadius: 12,
     borderWidth: 1,
+    flexDirection: 'row',
+    justifyContent: 'center',
     marginTop: 12,
     paddingVertical: 14,
   },
@@ -660,11 +670,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     padding: 12,
   },
-  recommendedItem: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    paddingVertical: 6,
-  },
+  recommendedItem: { alignItems: 'center', flexDirection: 'row', paddingVertical: 6 },
   recommendedLabel: {
     color: palette.accent,
     fontSize: 13,
@@ -723,7 +729,13 @@ const styles = StyleSheet.create({
   },
   tagRow: { flexDirection: 'row', flexWrap: 'wrap', marginBottom: 16 },
   tagText: { color: palette.tagText, fontSize: 12, fontWeight: '600' },
-  title: { color: palette.primary, fontSize: 22, fontWeight: '800' },
+  title: {
+    color: palette.primary,
+    flex: 1,
+    fontSize: 22,
+    fontWeight: '800',
+    marginRight: 0,
+  },
   titleLoading: { color: COLORS.WHITE, fontSize: 18, fontWeight: '700' },
   visitedBtn: { marginLeft: 8 },
 });

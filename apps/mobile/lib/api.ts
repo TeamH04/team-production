@@ -7,6 +7,7 @@ export type ApiFile = {
   file_id: string;
   file_name: string;
   object_key: string;
+  url?: string | null;
   content_type?: string | null;
 };
 
@@ -88,7 +89,8 @@ export type UploadFileInput = {
 export type SignedUploadFile = {
   file_id: string;
   object_key: string;
-  upload_url: string;
+  path: string;
+  token: string;
   content_type: string;
 };
 
@@ -135,9 +137,11 @@ async function request<T>(path: string, options: FetchOptions = {}): Promise<T> 
     try {
       const text = await res.text();
       if (text) {
-        const body = JSON.parse(text) as { message?: string };
+        const body = JSON.parse(text) as { message?: string; error?: string };
         if (body?.message) {
           message = body.message;
+        } else if (body?.error) {
+          message = body.error;
         }
       }
     } catch {

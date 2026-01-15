@@ -33,8 +33,7 @@ export default function Entry() {
         } else {
           setDest('/login');
         }
-      } catch (error) {
-        console.error('[Entry] Failed to check auth status:', error);
+      } catch {
         setDest('/login');
       }
     };

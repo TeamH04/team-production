@@ -693,7 +693,9 @@ const styles = StyleSheet.create({
   },
   shopCard: {
     backgroundColor: palette.surface,
+    borderColor: palette.divider,
     borderRadius: 12,
+    borderWidth: 1,
     flexDirection: 'row',
     marginBottom: 12,
     overflow: 'hidden',

@@ -39,11 +39,95 @@ export interface Shop {
   }[];
 }
 
-// NOTE: This is a shared placeholder Google Place ID used for demo/development data.
-// In production, each shop should have its own unique and correct Google Place ID.
+/**
+ * ベースとなる店舗データから派生店舗を生成するための設定。
+ * - `key`: 派生店舗のIDや画像シグネチャに付与する一意な接尾辞。
+ * - `label`: 店舗名に追加するラベル（例: 東口店）。
+ * - `distanceDelta`: ベース店舗の所要時間に加算・減算する分数。生成時に奇数番目の派生には +1 分がさらに足され、距離分布をばらけさせる。
+ * - `ratingDelta`: ベース店舗の評価に加算・減算する値。生成時に 3.5〜5.0 の範囲にクランプされる。
+ * - `createdOffsetDays`: `createdAt` を何日ずらすかを示す日数。生成順のオフセットと合算し、追加日時の重複を避ける。
+ */
+type ShopVariant = {
+  key: string;
+  label: string;
+  distanceDelta: number;
+  ratingDelta: number;
+  createdOffsetDays: number;
+};
+
+// 注意：これはデモ・開発用データとして共有されているプレースホルダー用のGoogle Place ID。
+// 本番環境では、各店舗ごとに固有の正しいGoogle Place IDを設定する必要がある。
 const DEFAULT_PLACE_ID = 'ChIJRUjlH92OAGAR6otTD3tUcrg';
 
-export const SHOPS: Shop[] = [
+/**
+ * ISO 文字列の日付を指定日数だけ前後にずらし、ISO 文字列で返す。
+ * @param isoDate 基準となる日付（ISO 8601 文字列）
+ * @param offsetDays 基準日付からの加減日数（負数も可）
+ * @returns オフセット後の日付（ISO 8601 文字列）
+ */
+const shiftDate = (isoDate: string, offsetDays: number) => {
+  const date = new Date(isoDate);
+  date.setDate(date.getDate() + offsetDays);
+  return date.toISOString();
+};
+
+/**
+ * 評価値を 3.5〜5.0 の範囲に丸め、1 桁小数に整形する。
+ * @param rating 元の評価値
+ * @returns 許容範囲に収めた評価値
+ */
+const clampRating = (rating: number) => Number(Math.min(5, Math.max(3.5, rating)).toFixed(1));
+
+/**
+ * 距離（分）をオフセットし、最低 1 分を保証する。
+ * @param distance 基準の距離（分）
+ * @param delta 加減する距離（分）
+ * @returns オフセット後の距離（1 以上）
+ */
+const adjustDistance = (distance: number, delta: number) => Math.max(1, distance + delta);
+
+/**
+ * ベース店舗とバリアント設定、生成順オフセットから派生店舗を生成する。
+ * - `id` と `menu` の ID にバリアントキーを付与し一意化する。
+ * - 店舗名にバリアントラベルを付与する。
+ * - 距離はバリアントの `distanceDelta` と、奇数オフセット時の +1 を加えたうえで 1 分以上に補正する。
+ * - 評価は `ratingDelta` を適用後、3.5〜5.0 にクランプする。
+ * - `createdAt` と `openedAt` は `createdOffsetDays` と生成順 `offset` を合算してずらす。
+ * - 画像 URL には `sig` パラメータを付与してバリアントごとに一意化する。
+ * - `placeId` はデモ/開発用の共有プレースホルダーをそのまま利用する（実運用では各店舗固有の ID を設定）。
+ * @param shop ベースとなる店舗データ
+ * @param variant バリアント設定（距離・評価・日付の変化量など）
+ * @param offset 生成順を示すオフセット（`variantIndex + baseIndex` を渡し、距離・日付の被りを避けるために使用）
+ * @returns 派生後の店舗データ
+ */
+const createVariantShop = (shop: Shop, variant: ShopVariant, offset: number): Shop => {
+  // NOTE: `sig` は外部の画像サービス（例: Unsplash）では解釈されませんが、
+  // デモデータでバリアントごとの URL を一意にしてキャッシュバスティング・識別を行うために付与しています。
+  // `imageUrls` が未定義でも `imageUrl` を含む配列に正規化してから付与するため、
+  // 常に `sig` 付きの URL が利用され、フォールバック条件は不要になります。
+  const baseImageUrls = shop.imageUrls ?? [shop.imageUrl];
+  const imageUrls = baseImageUrls.map((url, index) => `${url}&sig=${variant.key}-${index}`);
+
+  return {
+    ...shop,
+    id: `${shop.id}-${variant.key}`,
+    name: `${shop.name} ${variant.label}`,
+    // 奇数オフセットだけ +1 することで、距離が完全に重ならないようにわずかにばらけさせ、
+    // バリアント生成時にリスト表示の並び方を変えやすくしている。
+    distanceMinutes: adjustDistance(
+      shop.distanceMinutes,
+      variant.distanceDelta + (offset % 2 === 0 ? 0 : 1)
+    ),
+    rating: clampRating(shop.rating + variant.ratingDelta),
+    createdAt: shiftDate(shop.createdAt, variant.createdOffsetDays + offset),
+    openedAt: shiftDate(shop.openedAt, variant.createdOffsetDays + offset),
+    imageUrl: imageUrls[0],
+    imageUrls,
+    menu: shop.menu?.map(menu => ({ ...menu, id: `${menu.id}-${variant.key}` })),
+  };
+};
+
+const BASE_SHOPS: Shop[] = [
   {
     id: 'shop-1',
     name: 'モーニング ブリュー カフェ',
@@ -64,9 +148,9 @@ export const SHOPS: Shop[] = [
     ],
     tags: ['コーヒー', '静かな空間', 'Wi-Fi'],
     menu: [
-      { id: 'm-1-1', name: 'ハンドドリップ コーヒー', category: 'ドリンク', price: '¥¥¥' },
-      { id: 'm-1-2', name: 'カフェラテ', category: 'ドリンク', price: '¥¥¥' },
-      { id: 'm-1-3', name: 'シナモンロール', category: 'スイーツ', price: '¥¥¥' },
+      { id: 'm-1-1', name: 'ハンドドリップ コーヒー', category: 'ドリンク', price: '¥550' },
+      { id: 'm-1-2', name: 'カフェラテ', category: 'ドリンク', price: '¥620' },
+      { id: 'm-1-3', name: 'シナモンロール', category: 'スイーツ', price: '¥480' },
     ],
   },
   {
@@ -89,9 +173,9 @@ export const SHOPS: Shop[] = [
     ],
     tags: ['寿司', 'カウンター', '記念日'],
     menu: [
-      { id: 'm-2-1', name: '特選おまかせコース', category: 'ディナー', price: '¥¥¥' },
-      { id: 'm-2-2', name: '白身三昧ランチ', category: 'ランチ', price: '¥¥¥' },
-      { id: 'm-2-3', name: '穴子一本握り', category: 'ランチ', price: '¥¥¥' },
+      { id: 'm-2-1', name: '特選おまかせコース', category: 'ディナー', price: '¥18,000' },
+      { id: 'm-2-2', name: '白身三昧ランチ', category: 'ランチ', price: '¥3,500' },
+      { id: 'm-2-3', name: '穴子一本握り', category: 'ランチ', price: '¥1,200' },
     ],
   },
   {
@@ -114,9 +198,9 @@ export const SHOPS: Shop[] = [
     ],
     tags: ['ジェラート', '季節限定', 'イートイン'],
     menu: [
-      { id: 'm-3-1', name: 'ピスタチオ ジェラート', category: 'ジェラート', price: '¥¥¥' },
-      { id: 'm-3-2', name: '塩キャラメル クッキーサンド', category: '焼き菓子', price: '¥¥¥' },
-      { id: 'm-3-3', name: '季節のフルーツパフェ', category: 'ジェラート', price: '¥¥¥' },
+      { id: 'm-3-1', name: 'ピスタチオ ジェラート', category: 'ジェラート', price: '¥750' },
+      { id: 'm-3-2', name: '塩キャラメル クッキーサンド', category: '焼き菓子', price: '¥580' },
+      { id: 'm-3-3', name: '季節のフルーツパフェ', category: 'ジェラート', price: '¥1,650' },
     ],
   },
   {
@@ -139,8 +223,8 @@ export const SHOPS: Shop[] = [
     ],
     tags: ['ワイン', '大人の雰囲気', '音楽'],
     menu: [
-      { id: 'm-4-1', name: 'グラスワイン', category: 'お酒', price: '¥¥¥' },
-      { id: 'm-4-2', name: '生ハム盛り合わせ', category: 'おつまみ', price: '¥¥¥' },
+      { id: 'm-4-1', name: 'グラスワイン', category: 'お酒', price: '¥1,100' },
+      { id: 'm-4-2', name: '生ハム盛り合わせ', category: 'おつまみ', price: '¥1,600' },
     ],
   },
   {
@@ -163,8 +247,8 @@ export const SHOPS: Shop[] = [
     ],
     tags: ['ヘルシー', 'テイクアウト', 'ランチ'],
     menu: [
-      { id: 'm-5-1', name: 'ヴィーガンサラダセット', category: 'ランチ', price: '¥¥¥' },
-      { id: 'm-5-2', name: 'デトックススープ', category: 'ランチ', price: '¥¥¥' },
+      { id: 'm-5-1', name: 'ヴィーガンサラダセット', category: 'ランチ', price: '¥1,450' },
+      { id: 'm-5-2', name: 'デトックススープ', category: 'ランチ', price: '¥980' },
     ],
   },
   {
@@ -187,9 +271,9 @@ export const SHOPS: Shop[] = [
     ],
     tags: ['パン', 'モーニング', 'テラス席'],
     menu: [
-      { id: 'm-6-1', name: '明太フランス', category: '惣菜パン', price: '¥¥¥' },
-      { id: 'm-6-2', name: '焼きたてクロワッサン', category: '菓子パン', price: '¥¥¥' },
-      { id: 'm-6-3', name: 'アイスコーヒー', category: 'ドリンク', price: '¥¥¥' },
+      { id: 'm-6-1', name: '明太フランス', category: '惣菜パン', price: '¥320' },
+      { id: 'm-6-2', name: '焼きたてクロワッサン', category: '菓子パン', price: '¥280' },
+      { id: 'm-6-3', name: 'アイスコーヒー', category: 'ドリンク', price: '¥450' },
     ],
   },
   {
@@ -212,8 +296,8 @@ export const SHOPS: Shop[] = [
     ],
     tags: ['ビュッフェ', '野菜たっぷり', 'スパイス'],
     menu: [
-      { id: 'm-8-1', name: 'ランチ食べ放題', category: '料理', price: '¥¥¥' },
-      { id: 'm-8-2', name: '豆腐のヘルシープリン', category: 'デザート', price: '¥¥¥' },
+      { id: 'm-8-1', name: 'ランチ食べ放題', category: '料理', price: '¥2,800' },
+      { id: 'm-8-2', name: '豆腐のヘルシープリン', category: 'デザート', price: '¥450' },
     ],
   },
   {
@@ -236,8 +320,8 @@ export const SHOPS: Shop[] = [
     ],
     tags: ['ゲーム', 'グループ', '夜遊び'],
     menu: [
-      { id: 'm-10-1', name: '自家製ナチョス', category: 'おつまみ', price: '¥¥¥' },
-      { id: 'm-10-2', name: 'レトロソーダカクテル', category: 'お酒', price: '¥¥¥' },
+      { id: 'm-10-1', name: '自家製ナチョス', category: 'おつまみ', price: '¥850' },
+      { id: 'm-10-2', name: 'レトロソーダカクテル', category: 'お酒', price: '¥750' },
     ],
   },
   {
@@ -260,8 +344,8 @@ export const SHOPS: Shop[] = [
     ],
     tags: ['シーフード', 'ディナー', '予約制'],
     menu: [
-      { id: 'm-11-1', name: '本日のお魚グリル', category: 'ディナー', price: '¥¥¥' },
-      { id: 'm-11-2', name: '白ワイン グラス', category: 'ドリンク', price: '¥¥¥' },
+      { id: 'm-11-1', name: '本日のお魚グリル', category: 'ディナー', price: '¥4,200' },
+      { id: 'm-11-2', name: '白ワイン グラス', category: 'ドリンク', price: '¥950' },
     ],
   },
   {
@@ -284,8 +368,8 @@ export const SHOPS: Shop[] = [
     ],
     tags: ['ジャズ', 'ライブ', '夜景'],
     menu: [
-      { id: 'm-12-1', name: 'クラフトジントニック', category: 'お酒', price: '¥¥¥' },
-      { id: 'm-12-2', name: 'ミックスナッツ燻製', category: 'おつまみ', price: '¥¥¥' },
+      { id: 'm-12-1', name: 'クラフトジントニック', category: 'お酒', price: '¥1,350' },
+      { id: 'm-12-2', name: 'ミックスナッツ燻製', category: 'おつまみ', price: '¥650' },
     ],
   },
   {
@@ -308,10 +392,28 @@ export const SHOPS: Shop[] = [
     ],
     tags: ['デリ', 'テイクアウト', 'ヘルシー'],
     menu: [
-      { id: 'm-14-1', name: 'サーモンPokeボウル', category: 'メイン', price: '¥¥¥' },
-      { id: 'm-14-2', name: 'オレンジジュース', category: 'ドリンク', price: '¥¥¥' },
+      { id: 'm-14-1', name: 'サーモンPokeボウル', category: 'メイン', price: '¥1,580' },
+      { id: 'm-14-2', name: 'オレンジジュース', category: 'ドリンク', price: '¥680' },
     ],
   },
 ];
+
+// NOTE: デモ/開発用のダミー分岐設定。本番でのデータシードには使用しない。
+const VARIANTS: ShopVariant[] = [
+  { key: 'east', label: '東口店', distanceDelta: 1, ratingDelta: -0.1, createdOffsetDays: 5 },
+  { key: 'west', label: '西通り店', distanceDelta: 2, ratingDelta: 0.05, createdOffsetDays: 10 },
+  { key: 'north', label: '北側店', distanceDelta: 3, ratingDelta: 0, createdOffsetDays: 15 },
+  { key: 'south', label: '南広場店', distanceDelta: -1, ratingDelta: -0.05, createdOffsetDays: 20 },
+];
+
+// NOTE: デモ用の派生店舗データ。本番では固有のデータソースを利用する。
+// offset には `variantIndex + baseIndex` を渡し、
+// 同じバリアントでも店舗ごとに距離・日付の微調整量がずれるようにして
+// 完全に同一の値が並ばないよう分散させている（デモデータの見栄え用）。
+const VARIANT_SHOPS = VARIANTS.flatMap((variant, variantIndex) =>
+  BASE_SHOPS.map((shop, baseIndex) => createVariantShop(shop, variant, variantIndex + baseIndex))
+);
+
+export const SHOPS: Shop[] = [...BASE_SHOPS, ...VARIANT_SHOPS];
 
 export const CATEGORIES: ShopCategory[] = Array.from(new Set(SHOPS.map(shop => shop.category)));
