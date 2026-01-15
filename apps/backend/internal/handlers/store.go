@@ -8,15 +8,20 @@ import (
 
 	"github.com/TeamH04/team-production/apps/backend/internal/presentation/presenter"
 	"github.com/TeamH04/team-production/apps/backend/internal/usecase/input"
+	"github.com/TeamH04/team-production/apps/backend/internal/usecase/output"
 )
 
 type StoreHandler struct {
 	storeUseCase input.StoreUseCase
+	storage      output.StorageProvider
+	bucket       string
 }
 
-func NewStoreHandler(storeUseCase input.StoreUseCase) *StoreHandler {
+func NewStoreHandler(storeUseCase input.StoreUseCase, storage output.StorageProvider, bucket string) *StoreHandler {
 	return &StoreHandler{
 		storeUseCase: storeUseCase,
+		storage:      storage,
+		bucket:       bucket,
 	}
 }
 
@@ -25,7 +30,9 @@ func (h *StoreHandler) GetStores(c echo.Context) error {
 	if err != nil {
 		return err
 	}
-	return c.JSON(http.StatusOK, presenter.NewStoreResponses(stores))
+	resp := presenter.NewStoreResponses(stores)
+	attachSignedURLsToStoreResponses(c.Request().Context(), h.storage, h.bucket, resp)
+	return c.JSON(http.StatusOK, resp)
 }
 
 func (h *StoreHandler) GetStoreByID(c echo.Context) error {
@@ -38,6 +45,9 @@ func (h *StoreHandler) GetStoreByID(c echo.Context) error {
 		return err
 	}
 	resp := presenter.NewStoreResponse(*store)
+	responses := []presenter.StoreResponse{resp}
+	attachSignedURLsToStoreResponses(c.Request().Context(), h.storage, h.bucket, responses)
+	resp = responses[0]
 	return c.JSON(http.StatusOK, resp)
 }
 
@@ -51,6 +61,9 @@ func (h *StoreHandler) CreateStore(c echo.Context) error {
 		return err
 	}
 	resp := presenter.NewStoreResponse(*store)
+	responses := []presenter.StoreResponse{resp}
+	attachSignedURLsToStoreResponses(c.Request().Context(), h.storage, h.bucket, responses)
+	resp = responses[0]
 	return c.JSON(http.StatusCreated, resp)
 }
 
@@ -68,6 +81,9 @@ func (h *StoreHandler) UpdateStore(c echo.Context) error {
 		return err
 	}
 	resp := presenter.NewStoreResponse(*store)
+	responses := []presenter.StoreResponse{resp}
+	attachSignedURLsToStoreResponses(c.Request().Context(), h.storage, h.bucket, responses)
+	resp = responses[0]
 	return c.JSON(http.StatusOK, resp)
 }
 
