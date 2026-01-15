@@ -24,11 +24,6 @@ import {
   View,
 } from 'react-native';
 
-const COLORS = {
-  BLACK: '#000000',
-  WHITE: '#FFFFFF',
-};
-
 const BUDGET_LABEL: Record<Shop['budget'], string> = {
   $: '¥',
   $$: '¥¥',
@@ -55,6 +50,8 @@ export default function ShopDetailScreen() {
 
   // UI state
   const [isAccordionOpen, setIsAccordionOpen] = useState(false);
+  const [isMapOpen, setIsMapOpen] = useState(false);
+  const [isReviewsOpen, setIsReviewsOpen] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [reviewSort, setReviewSort] = useState<ReviewSort>('new');
 
@@ -86,12 +83,13 @@ export default function ShopDetailScreen() {
       headerShown: true,
       headerStatusBarHeight: 0,
       headerStyle: {
-        backgroundColor: COLORS.BLACK,
+        backgroundColor: palette.accent,
         height: 50,
       },
-      headerTintColor: COLORS.WHITE,
+      headerTintColor: palette.textOnAccent,
       headerTitleAlign: 'center',
       headerTitleStyle: {
+        color: palette.textOnAccent,
         fontSize: 20,
         fontWeight: 'bold',
       },
@@ -376,7 +374,7 @@ export default function ShopDetailScreen() {
                     onPress={() => {
                       navigation.setOptions?.({ headerBackTitle: '戻る' });
                       router.push({
-                        pathname: '/shop/[id]/review',
+                        pathname: '/menu',
                         params: { id: shop.id },
                       });
                     }}
@@ -392,124 +390,162 @@ export default function ShopDetailScreen() {
 
           {/* Map: 1つ目のカードUI + 2つ目の存在チェック */}
           {mapOpenUrl ? (
-            <>
-              <View style={styles.sectionHeader}>
+            <View style={[styles.card, styles.cardShadow, styles.menuSection]}>
+              <Pressable style={styles.accordionHeader} onPress={() => setIsMapOpen(v => !v)}>
                 <Text style={styles.sectionTitle}>場所</Text>
-              </View>
-              <View style={[styles.card, styles.cardShadow]}>
-                <Pressable onPress={handleOpenMap} style={styles.mapButton}>
-                  <Ionicons
-                    color={palette.primary}
-                    name='map-outline'
-                    size={18}
-                    style={styles.mapIcon}
-                  />
-                  <Text style={styles.mapButtonText}>Googleマップで確認</Text>
-                </Pressable>
-              </View>
-            </>
+                <Ionicons
+                  color={palette.muted}
+                  name={isMapOpen ? 'chevron-up' : 'chevron-down'}
+                  size={20}
+                />
+              </Pressable>
+
+              {isMapOpen && (
+                <View style={styles.accordionContent}>
+                  <View style={styles.menuAddressBlock}>
+                    <Text style={styles.menuAddressLabel}>住所</Text>
+                    <Text style={styles.menuAddressText}>
+                      {shop.address?.trim() ? shop.address : '住所情報がありません'}
+                    </Text>
+                  </View>
+                  <Pressable onPress={handleOpenMap} style={styles.moreBtnOutline}>
+                    <Ionicons
+                      color={palette.primary}
+                      name='map-outline'
+                      size={18}
+                      style={styles.mapIcon}
+                    />
+                    <Text style={styles.moreBtnText}>Googleマップで確認</Text>
+                  </Pressable>
+                </View>
+              )}
+            </View>
           ) : null}
 
           {/* Reviews: 2つ目（sort + like + files + loading）を採用 */}
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>レビュー</Text>
-            <Text style={styles.sectionSub}>みんなの感想や体験談</Text>
-          </View>
-
-          <View style={styles.sortRow}>
-            <Pressable
-              onPress={() => setReviewSort('new')}
-              style={[styles.sortPill, reviewSort === 'new' && styles.sortPillActive]}
-            >
-              <Text style={[styles.sortText, reviewSort === 'new' && styles.sortTextActive]}>
-                新しい順
-              </Text>
+          <View style={[styles.card, styles.cardShadow, styles.menuSection]}>
+            <Pressable style={styles.accordionHeader} onPress={() => setIsReviewsOpen(v => !v)}>
+              <Text style={styles.sectionTitle}>レビュー</Text>
+              <Ionicons
+                color={palette.muted}
+                name={isReviewsOpen ? 'chevron-up' : 'chevron-down'}
+                size={20}
+              />
             </Pressable>
-            <Pressable
-              onPress={() => setReviewSort('liked')}
-              style={[styles.sortPill, reviewSort === 'liked' && styles.sortPillActive]}
-            >
-              <Text style={[styles.sortText, reviewSort === 'liked' && styles.sortTextActive]}>
-                高評価順
-              </Text>
-            </Pressable>
-          </View>
 
-          {/* 【修正3】onPress の重複定義を一つに整理 */}
-          <Pressable
-            onPress={() => {
-              navigation.setOptions?.({ headerBackTitle: '戻る' });
-              router.push({
-                pathname: '/shop/[id]/review',
-                params: { id: shop.id },
-              });
-            }}
-            style={styles.primaryBtn}
-          >
-            <Text style={styles.primaryBtnText}>レビューを書く</Text>
-          </Pressable>
+            {isReviewsOpen && (
+              <View style={styles.accordionContent}>
+                <View style={styles.reviewIntro}>
+                  <Text style={styles.reviewSub}>みんなの感想や体験談</Text>
+                </View>
 
-          {isReviewsLoading ? (
-            <View style={[styles.card, styles.cardShadow]}>
-              <Text style={styles.muted}>レビューを読み込み中...</Text>
-            </View>
-          ) : reviews.length === 0 ? (
-            <View style={[styles.card, styles.cardShadow]}>
-              <Text style={styles.muted}>
-                まだレビューがありません。最初のレビューを投稿しましょう！
-              </Text>
-            </View>
-          ) : (
-            reviews.map(review => (
-              <View key={review.id} style={[styles.card, styles.cardShadow]}>
-                <View style={styles.reviewHeaderRow}>
-                  <Text style={styles.reviewTitle}>
-                    ★ {review.rating}
-                    {' ・ '}
-                    {review.createdAt ? new Date(review.createdAt).toLocaleDateString('ja-JP') : ''}
-                  </Text>
-
+                <View style={[styles.sortRow, styles.reviewSortRow]}>
                   <Pressable
-                    onPress={() => handleToggleLike(review.id)}
-                    style={[styles.likeButton, review.likedByMe && styles.likeButtonActive]}
+                    onPress={() => setReviewSort('new')}
+                    style={[styles.sortPill, reviewSort === 'new' && styles.sortPillActive]}
                   >
-                    <Text style={[styles.likeText, review.likedByMe && styles.likeTextActive]}>
-                      いいね {review.likesCount}
+                    <Text style={[styles.sortText, reviewSort === 'new' && styles.sortTextActive]}>
+                      新しい順
+                    </Text>
+                  </Pressable>
+                  <Pressable
+                    onPress={() => setReviewSort('liked')}
+                    style={[styles.sortPill, reviewSort === 'liked' && styles.sortPillActive]}
+                  >
+                    <Text
+                      style={[styles.sortText, reviewSort === 'liked' && styles.sortTextActive]}
+                    >
+                      高評価順
                     </Text>
                   </Pressable>
                 </View>
 
-                {(() => {
-                  const menuName = resolveMenuName(review);
-                  if (!menuName) return null;
-                  return <Text style={styles.reviewMenu}>メニュー: {menuName}</Text>;
-                })()}
+                {/* 【修正3】onPress の重複定義を一つに整理 */}
+                <Pressable
+                  onPress={() => {
+                    navigation.setOptions?.({ headerBackTitle: '戻る' });
+                    router.push({
+                      pathname: '/shop/[id]/review',
+                      params: { id: shop.id },
+                    });
+                  }}
+                  style={[styles.primaryBtn, styles.reviewPrimaryBtn]}
+                >
+                  <Text style={styles.primaryBtnText}>レビューを書く</Text>
+                </Pressable>
 
-                {review.comment ? <Text style={styles.reviewBody}>{review.comment}</Text> : null}
+                <View style={styles.reviewDivider} />
 
-                {review.files && review.files.length > 0 && (
-                  <ScrollView
-                    horizontal
-                    showsHorizontalScrollIndicator={false}
-                    style={styles.reviewFiles}
-                  >
-                    {review.files.map(file => {
-                      const url = getPublicStorageUrl(file.objectKey);
-                      if (!url) return null;
-                      return (
-                        <Image
-                          key={file.id}
-                          source={{ uri: url }}
-                          style={styles.reviewImage}
-                          contentFit='cover'
-                        />
-                      );
-                    })}
-                  </ScrollView>
+                {isReviewsLoading ? (
+                  <View style={[styles.card, styles.cardShadow]}>
+                    <Text style={styles.muted}>レビューを読み込み中...</Text>
+                  </View>
+                ) : reviews.length === 0 ? (
+                  <View style={[styles.card, styles.cardShadow]}>
+                    <Text style={styles.muted}>
+                      まだレビューがありません。最初のレビューを投稿しましょう！
+                    </Text>
+                  </View>
+                ) : (
+                  reviews.map(review => (
+                    <View key={review.id} style={[styles.card, styles.cardShadow]}>
+                      <View style={styles.reviewHeaderRow}>
+                        <Text style={styles.reviewTitle}>
+                          ★ {review.rating}
+                          {' ・ '}
+                          {review.createdAt
+                            ? new Date(review.createdAt).toLocaleDateString('ja-JP')
+                            : ''}
+                        </Text>
+
+                        <Pressable
+                          onPress={() => handleToggleLike(review.id)}
+                          style={[styles.likeButton, review.likedByMe && styles.likeButtonActive]}
+                        >
+                          <Text
+                            style={[styles.likeText, review.likedByMe && styles.likeTextActive]}
+                          >
+                            いいね {review.likesCount}
+                          </Text>
+                        </Pressable>
+                      </View>
+
+                      {(() => {
+                        const menuName = resolveMenuName(review);
+                        if (!menuName) return null;
+                        return <Text style={styles.reviewMenu}>メニュー: {menuName}</Text>;
+                      })()}
+
+                      {review.comment ? (
+                        <Text style={styles.reviewBody}>{review.comment}</Text>
+                      ) : null}
+
+                      {review.files && review.files.length > 0 && (
+                        <ScrollView
+                          horizontal
+                          showsHorizontalScrollIndicator={false}
+                          style={styles.reviewFiles}
+                        >
+                          {review.files.map(file => {
+                            const url = getPublicStorageUrl(file.objectKey);
+                            if (!url) return null;
+                            return (
+                              <Image
+                                key={file.id}
+                                source={{ uri: url }}
+                                style={styles.reviewImage}
+                                contentFit='cover'
+                              />
+                            );
+                          })}
+                        </ScrollView>
+                      )}
+                    </View>
+                  ))
                 )}
               </View>
-            ))
-          )}
+            )}
+          </View>
         </View>
       </ScrollView>
     </View>
@@ -520,9 +556,12 @@ const styles = StyleSheet.create({
   accordionContent: { marginTop: 16 },
   accordionHeader: {
     alignItems: 'center',
+    backgroundColor: palette.white,
+    borderRadius: 12,
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingVertical: 4,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
   },
   arrowButton: {
     alignItems: 'center',
@@ -543,7 +582,7 @@ const styles = StyleSheet.create({
   arrowButtonLeft: { left: 12 },
   arrowButtonRight: { right: 12 },
   btnPressed: { opacity: 0.85 },
-  card: { backgroundColor: palette.surface, borderRadius: 16, padding: 16 },
+  card: { backgroundColor: palette.white, borderRadius: 16, padding: 16 },
   cardShadow: {
     elevation: 4,
     marginBottom: 16,
@@ -554,7 +593,10 @@ const styles = StyleSheet.create({
   },
   centered: { alignItems: 'center', justifyContent: 'center' },
   container: { padding: 16 },
-  content: { backgroundColor: COLORS.WHITE, paddingBottom: 24 },
+  content: {
+    backgroundColor: palette.background,
+    paddingBottom: 24,
+  },
   descriptionText: {
     color: palette.primary,
     fontSize: 16,
@@ -592,16 +634,17 @@ const styles = StyleSheet.create({
   },
   likeText: { color: palette.muted, fontSize: 12, fontWeight: '600' },
   likeTextActive: { color: palette.accent },
-  mapButton: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'center',
-    paddingVertical: 10,
-  },
-  mapButtonText: { color: palette.primary, fontWeight: '700' },
   mapIcon: { marginRight: 8 },
+  menuAddressBlock: {
+    backgroundColor: palette.grayLight,
+    borderRadius: 12,
+    marginBottom: 12,
+    padding: 12,
+  },
+  menuAddressLabel: { color: palette.secondaryText, fontSize: 12, fontWeight: '700' },
+  menuAddressText: { color: palette.primaryText, fontSize: 14, fontWeight: '600', marginTop: 6 },
   menuIcon: { marginRight: 10 },
-  menuItemText: { color: palette.primary, fontSize: 15, fontWeight: '500' },
+  menuItemText: { color: palette.primaryText, fontSize: 15, fontWeight: '700' },
   menuSection: { marginTop: 8 },
   meta: { color: palette.muted, marginBottom: 12, marginTop: 4 },
   moreBtnOutline: {
@@ -645,21 +688,31 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   recommendedBox: {
-    backgroundColor: palette.secondarySurface,
-    borderColor: palette.border,
+    backgroundColor: palette.grayLight,
     borderRadius: 12,
-    borderWidth: 1,
     marginBottom: 16,
     padding: 12,
   },
-  recommendedItem: { alignItems: 'center', flexDirection: 'row', paddingVertical: 6 },
+  recommendedItem: {
+    alignItems: 'center',
+    borderBottomColor: palette.divider,
+    borderBottomWidth: 1,
+    flexDirection: 'row',
+    paddingVertical: 8,
+  },
   recommendedLabel: {
-    color: palette.accent,
+    color: palette.primaryText,
     fontSize: 13,
     fontWeight: '800',
     marginBottom: 8,
   },
   reviewBody: { color: palette.primaryText, marginTop: 8 },
+  reviewDivider: {
+    borderBottomColor: palette.divider,
+    borderBottomWidth: 1,
+    marginBottom: 12,
+    marginTop: 4,
+  },
   reviewFiles: { marginTop: 12 },
   reviewHeaderRow: {
     alignItems: 'center',
@@ -667,9 +720,13 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   reviewImage: { borderRadius: 12, height: 88, marginRight: 10, width: 88 },
+  reviewIntro: { marginBottom: 8 },
   reviewMenu: { color: palette.muted, marginTop: 6 },
+  reviewPrimaryBtn: { marginBottom: 12, marginTop: 4 },
+  reviewSortRow: { marginBottom: 12 },
+  reviewSub: { color: palette.secondaryText, fontSize: 13, marginTop: 2 },
   reviewTitle: { color: palette.primary, fontWeight: '700' },
-  screen: { backgroundColor: COLORS.BLACK, flex: 1 },
+  screen: { backgroundColor: palette.background, flex: 1 },
   secondaryBtn: {
     backgroundColor: palette.secondarySurface,
     borderColor: palette.border,
@@ -680,8 +737,6 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   secondaryBtnText: { color: palette.textOnSecondary, fontWeight: '700' },
-  sectionHeader: { marginBottom: 8, marginTop: 16 },
-  sectionSub: { color: palette.secondaryText, marginTop: 2 },
   sectionTitle: { color: palette.primary, fontSize: 18, fontWeight: '700' },
   shareBtn: { marginLeft: 8, padding: 4 },
   shareBtnDisabled: { opacity: 0.4 },
@@ -718,6 +773,6 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     marginRight: 0,
   },
-  titleLoading: { color: COLORS.WHITE, fontSize: 18, fontWeight: '700' },
+  titleLoading: { color: palette.secondaryText, fontSize: 18, fontWeight: '700' },
   visitedBtn: { marginLeft: 8 },
 });
