@@ -12,6 +12,7 @@
     "@tailwindcss/postcss": "^4.1.18",
     "@team/shop-core": "workspace:*",
     "@team/theme": "workspace:*",
+    "@team/types": "workspace:*",
     "next": "16.1.2",
     "react": "19.2.3",
     "react-dom": "19.2.3",

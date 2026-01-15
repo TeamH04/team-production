@@ -13,7 +13,7 @@ import * as ExpoCrypto from 'expo-crypto';
 
 import {
   normalizeAlgorithm,
-  toArrayBuffer,
+  toUint8Array,
   type CryptoBufferSource,
   type DigestAlgorithm,
 } from './crypto-utils';
@@ -36,7 +36,7 @@ const polyfillSubtle: SubtleCryptoLike = {
     if (normalized !== 'SHA-256' && normalized !== 'SHA256') {
       throw new Error(`Unsupported digest algorithm: ${normalized ?? 'unknown'}`);
     }
-    return ExpoCrypto.digest(ExpoCrypto.CryptoDigestAlgorithm.SHA256, toArrayBuffer(data));
+    return ExpoCrypto.digest(ExpoCrypto.CryptoDigestAlgorithm.SHA256, toUint8Array(data));
   },
 };
 

@@ -25,6 +25,7 @@
     "@supabase/supabase-js": "^2.90.1",
     "@team/shop-core": "workspace:*",
     "@team/theme": "workspace:*",
+    "@team/types": "workspace:*",
     "expo": "~54.0.31",
     "expo-apple-authentication": "~8.0.8",
     "expo-auth-session": "^7.0.10",
@@ -53,6 +54,7 @@
     "react-native-svg": "^15.15.1",
     "react-native-web": "~0.21.2",
     "react-native-webview": "13.16.0",
+    "react-native-worklets-core": "^1.6.2",
     "tslib": "^2.8.1"
   },
   "devDependencies": {
