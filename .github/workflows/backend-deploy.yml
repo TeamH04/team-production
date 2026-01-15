@@ -6,6 +6,7 @@ on:
     paths:
       - 'apps/backend/**'
       - '.github/workflows/backend-deploy.yml'
+      - '.github/actions/go-setup/**'
   workflow_dispatch:
     inputs:
       environment:

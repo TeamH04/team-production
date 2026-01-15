@@ -41,6 +41,7 @@ jobs:
               - 'apps/backend/**'
             mobile:
               - 'apps/mobile/**'
+              - 'packages/**'
             root:
               - 'package.json'
               - 'pnpm-lock.yaml'
