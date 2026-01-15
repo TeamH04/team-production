@@ -57,7 +57,7 @@ type mockTokenVerifier struct {
 	err    error
 }
 
-func (m *mockTokenVerifier) Verify(token string) (*security.TokenClaims, error) {
+func (m *mockTokenVerifier) Verify(ctx context.Context, token string) (*security.TokenClaims, error) {
 	if m.err != nil {
 		return nil, m.err
 	}

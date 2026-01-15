@@ -51,7 +51,7 @@ func (m *AuthMiddleware) JWTAuth(verifier security.TokenVerifier) echo.Middlewar
 
 			token := parts[1]
 
-			claims, err := verifier.Verify(token)
+			claims, err := verifier.Verify(c.Request().Context(), token)
 			if err != nil {
 				return presentation.NewUnauthorized(err.Error())
 			}
@@ -60,9 +60,9 @@ func (m *AuthMiddleware) JWTAuth(verifier security.TokenVerifier) echo.Middlewar
 			if err != nil {
 				if errors.Is(err, usecase.ErrUserNotFound) {
 					user, err = m.userUC.EnsureUser(c.Request().Context(), input.EnsureUserInput{
-						UserID: claims.UserID,
-						Email:  claims.Email,
-						Role:   claims.Role,
+						UserID:   claims.UserID,
+						Email:    claims.Email,
+						Role:     claims.Role,
 						Provider: claims.Provider,
 					})
 				}
@@ -117,7 +117,7 @@ func (m *AuthMiddleware) OptionalAuth(verifier security.TokenVerifier) echo.Midd
 				if len(parts) == 2 && parts[0] == "Bearer" {
 					token := parts[1]
 					if verifier != nil {
-						if claims, err := verifier.Verify(token); err == nil {
+						if claims, err := verifier.Verify(c.Request().Context(), token); err == nil {
 							user, err := m.userUC.FindByID(c.Request().Context(), claims.UserID)
 							if err == nil {
 								requestcontext.SetToContext(c, user, claims.Role)
