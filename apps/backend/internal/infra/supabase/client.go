@@ -3,6 +3,7 @@ package supabase
 import (
 	"bytes"
 	"context"
+	"crypto/ecdh"
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"encoding/base64"
@@ -64,12 +65,33 @@ func (c *Client) jwksURL() string {
 	return fmt.Sprintf("%s/auth/v1/.well-known/jwks.json", c.baseURL)
 }
 
-func base64URLDecodeBigInt(s string) (*big.Int, error) {
-	b, err := base64.RawURLEncoding.DecodeString(s)
+func jwkP256ToPublicKey(xB64, yB64 string) (*ecdsa.PublicKey, error) {
+	xBytes, err := base64.RawURLEncoding.DecodeString(xB64)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("decode x: %w", err)
 	}
-	return new(big.Int).SetBytes(b), nil
+	yBytes, err := base64.RawURLEncoding.DecodeString(yB64)
+	if err != nil {
+		return nil, fmt.Errorf("decode y: %w", err)
+	}
+
+	b := make([]byte, 1+len(xBytes)+len(yBytes))
+	b[0] = 0x04
+	copy(b[1:], xBytes)
+	copy(b[1+len(xBytes):], yBytes)
+
+	if _, err := ecdh.P256().NewPublicKey(b); err != nil {
+		return nil, fmt.Errorf("invalid P-256 public key: %w", err)
+	}
+
+	X := new(big.Int).SetBytes(xBytes)
+	Y := new(big.Int).SetBytes(yBytes)
+
+	return &ecdsa.PublicKey{
+		Curve: elliptic.P256(),
+		X:     X,
+		Y:     Y,
+	}, nil
 }
 
 func (c *Client) fetchJWKS(ctx context.Context) (map[string]*ecdsa.PublicKey, error) {
@@ -106,20 +128,8 @@ func (c *Client) fetchJWKS(ctx context.Context) (map[string]*ecdsa.PublicKey, er
 		if k.Kty != "EC" || k.Crv != "P-256" || k.Kid == "" || k.X == "" || k.Y == "" {
 			continue
 		}
-		x, err := base64URLDecodeBigInt(k.X)
+		pub, err := jwkP256ToPublicKey(k.X, k.Y)
 		if err != nil {
-			continue
-		}
-		y, err := base64URLDecodeBigInt(k.Y)
-		if err != nil {
-			continue
-		}
-		pub := &ecdsa.PublicKey{
-			Curve: elliptic.P256(),
-			X:     x,
-			Y:     y,
-		}
-		if !pub.Curve.IsOnCurve(pub.X, pub.Y) {
 			continue
 		}
 		keys[k.Kid] = pub
@@ -372,8 +382,7 @@ type supabaseClaims struct {
 	jwt.RegisteredClaims
 }
 
-// Verify validates a Supabase JWT using the configured secret.
-func (c *Client) Verify(token string) (*security.TokenClaims, error) {
+func (c *Client) Verify(ctx context.Context, token string) (*security.TokenClaims, error) {
 	if c.baseURL == "" {
 		return nil, errors.New("supabase base url not configured")
 	}
@@ -389,7 +398,7 @@ func (c *Client) Verify(token string) (*security.TokenClaims, error) {
 		if kid == "" {
 			return nil, fmt.Errorf("token missing kid header")
 		}
-		return c.getPublicKey(context.Background(), kid)
+		return c.getPublicKey(ctx, kid)
 	})
 	if err != nil {
 		return nil, fmt.Errorf("token verify failed: %w", err)
