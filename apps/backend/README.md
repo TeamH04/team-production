@@ -27,9 +27,8 @@
    ```
 
    - `SUPABASE_URL`
-   - `SUPABASE_ANON_KEY`
-   - `SUPABASE_SERVICE_ROLE_KEY`
-   - `SUPABASE_JWT_SECRET`
+   - `SUPABASE_PUBLISHABLE_KEY`
+   - `SUPABASE_SECRET_KEY`
 
 3. ローカルで起動する。
 
@@ -62,7 +61,7 @@
 - ポート: `PORT`（デフォルト 8080。占有時は空きポートに自動フォールバック）。
 - DB: `DATABASE_URL`（未設定時は `postgres://postgres:postgres@localhost:5432/app?sslmode=disable`）。
 - CORS: `CORS_ALLOW_ORIGIN`（カンマ区切り。未設定は `*`）。
-- Supabase: `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_JWT_SECRET`。
+- Supabase: `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SECRET_KEY`。
 - Storage: `SUPABASE_STORAGE_BUCKET`（任意。デフォルト `media`）。
 
 ## API 概要

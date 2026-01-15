@@ -1,4 +1,9 @@
+import KuguriTitle from '@/assets/icons/kaguri.svg';
+import { palette } from '@/constants/palette';
 import { useUser } from '@/features/user/UserContext';
+import { checkIsOwner, ensureUserExistsInDB } from '@/lib/auth';
+import { DEV_GUEST_FLAG_KEY, DEV_LOGIN_ENABLED } from '@/lib/devMode';
+import { getSupabase, isSupabaseConfigured } from '@/lib/supabase';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as AppleAuthentication from 'expo-apple-authentication';
@@ -6,14 +11,8 @@ import * as AuthSession from 'expo-auth-session';
 import * as Crypto from 'expo-crypto';
 import { type Href, useRouter } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
-import React, { useCallback, useLayoutEffect, useState } from 'react';
+import { useCallback, useLayoutEffect, useState } from 'react';
 import { Alert, Platform, Pressable, StatusBar, StyleSheet, Text, View } from 'react-native';
-
-import KuguriTitle from '@/assets/icons/kaguri.svg';
-import { palette } from '@/constants/palette';
-import { checkIsOwner, ensureUserExistsInDB } from '@/lib/auth';
-import { DEV_GUEST_FLAG_KEY, DEV_LOGIN_ENABLED } from '@/lib/devMode';
-import { getSupabase, isSupabaseConfigured } from '@/lib/supabase';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -89,7 +88,7 @@ export default function LoginScreen() {
       if (!isSupabaseConfigured()) {
         Alert.alert(
           '未設定',
-          'Supabaseの環境変数が未設定です。EXPO_PUBLIC_SUPABASE_URL と EXPO_PUBLIC_SUPABASE_ANON_KEY を設定してください。'
+          'Supabaseの環境変数が未設定です。EXPO_PUBLIC_SUPABASE_URL と EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY を設定してください。'
         );
         return;
       }
@@ -162,7 +161,7 @@ export default function LoginScreen() {
     if (!isSupabaseConfigured()) {
       Alert.alert(
         '未設定',
-        'Supabaseの環境変数が未設定です。EXPO_PUBLIC_SUPABASE_URL と EXPO_PUBLIC_SUPABASE_ANON_KEY を設定してください。'
+        'Supabaseの環境変数が未設定です。EXPO_PUBLIC_SUPABASE_URL と EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY を設定してください。'
       );
       return;
     }

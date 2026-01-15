@@ -3,18 +3,18 @@ import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 
 // Environment variables must be provided via Expo's EXPO_PUBLIC_* mechanism.
 const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
-const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
+const supabasePublishableKey = process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
 
 let client: SupabaseClient | null = null;
 
 export function getSupabase(): SupabaseClient {
   if (!client) {
-    if (!supabaseUrl || !supabaseAnonKey) {
+    if (!supabaseUrl || !supabasePublishableKey) {
       throw new Error(
-        'Supabase is not configured. Set EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_ANON_KEY before starting Expo.'
+        'Supabase is not configured. Set EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY before starting Expo.'
       );
     }
-    client = createClient(supabaseUrl, supabaseAnonKey, {
+    client = createClient(supabaseUrl, supabasePublishableKey, {
       auth: {
         storage: AsyncStorage,
         autoRefreshToken: true,
@@ -28,5 +28,5 @@ export function getSupabase(): SupabaseClient {
 }
 
 export function isSupabaseConfigured() {
-  return Boolean(supabaseUrl && supabaseAnonKey);
+  return Boolean(supabaseUrl && supabasePublishableKey);
 }

@@ -22,9 +22,8 @@ type Config struct {
 	GoogleMapsKey          string
 	DBURL                  string
 	SupabaseURL            string
-	SupabaseAnonKey        string
-	SupabaseServiceRoleKey string
-	SupabaseJWTSecret      string
+	SupabasePublishableKey string
+	SupabaseSecretKey      string
 	SupabaseStorageBucket  string
 }
 
@@ -63,19 +62,14 @@ func Load() (*Config, error) {
 		return nil, errors.New("SUPABASE_URL is not set")
 	}
 
-	cfg.SupabaseAnonKey = os.Getenv("SUPABASE_ANON_KEY")
-	if cfg.SupabaseAnonKey == "" {
-		return nil, errors.New("SUPABASE_ANON_KEY is not set")
+	cfg.SupabasePublishableKey = os.Getenv("SUPABASE_PUBLISHABLE_KEY")
+	if cfg.SupabasePublishableKey == "" {
+		return nil, errors.New("SUPABASE_PUBLISHABLE_KEY is not set")
 	}
 
-	cfg.SupabaseServiceRoleKey = os.Getenv("SUPABASE_SERVICE_ROLE_KEY")
-	if cfg.SupabaseServiceRoleKey == "" {
-		return nil, errors.New("SUPABASE_SERVICE_ROLE_KEY is not set")
-	}
-
-	cfg.SupabaseJWTSecret = os.Getenv("SUPABASE_JWT_SECRET")
-	if cfg.SupabaseJWTSecret == "" {
-		return nil, errors.New("SUPABASE_JWT_SECRET is not set")
+	cfg.SupabaseSecretKey = os.Getenv("SUPABASE_SECRET_KEY")
+	if cfg.SupabaseSecretKey == "" {
+		return nil, errors.New("SUPABASE_SECRET_KEY is not set")
 	}
 
 	cfg.SupabaseStorageBucket = os.Getenv("SUPABASE_STORAGE_BUCKET")

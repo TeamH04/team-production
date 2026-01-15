@@ -31,9 +31,8 @@ func buildRouterDependencies(cfg *config.Config, db *gorm.DB) *router.Dependenci
 	// External services
 	supabaseClient := supabase.NewClient(
 		cfg.SupabaseURL,
-		cfg.SupabaseAnonKey,
-		cfg.SupabaseServiceRoleKey,
-		cfg.SupabaseJWTSecret,
+		cfg.SupabasePublishableKey,
+		cfg.SupabaseSecretKey,
 	)
 
 	// Use cases

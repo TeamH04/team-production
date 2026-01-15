@@ -3,14 +3,19 @@ package supabase
 import (
 	"bytes"
 	"context"
+	"crypto/ecdsa"
+	"crypto/elliptic"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
+	"math/big"
 	"net/http"
 	"net/url"
 	"sort"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -24,19 +29,135 @@ type Client struct {
 	baseURL    string
 	anonKey    string
 	serviceKey string
-	jwtSecret  string
 	httpClient *http.Client
+	jwksMu     sync.Mutex
+	jwksCached *jwksCache
 }
 
 // NewClient creates a Supabase client. Empty values keep the client inert but callable (it will return errors on usage).
-func NewClient(baseURL, anonKey, serviceKey, jwtSecret string) *Client {
+func NewClient(baseURL, publishableKey, secretKey string) *Client {
 	return &Client{
 		baseURL:    strings.TrimRight(strings.TrimSpace(baseURL), "/"),
-		anonKey:    strings.TrimSpace(anonKey),
-		serviceKey: strings.TrimSpace(serviceKey),
-		jwtSecret:  strings.TrimSpace(jwtSecret),
+		anonKey:    strings.TrimSpace(publishableKey),
+		serviceKey: strings.TrimSpace(secretKey),
 		httpClient: &http.Client{Timeout: 10 * time.Second},
 	}
+}
+
+type jwksCache struct {
+	fetchedAt time.Time
+	keysByKID map[string]*ecdsa.PublicKey
+}
+
+type jwksDocument struct {
+	Keys []struct {
+		Kty string `json:"kty"`
+		Kid string `json:"kid"`
+		Crv string `json:"crv"`
+		X   string `json:"x"`
+		Y   string `json:"y"`
+		// ほかのフィールドが来ても無視
+	} `json:"keys"`
+}
+
+func (c *Client) jwksURL() string {
+	return fmt.Sprintf("%s/auth/v1/.well-known/jwks.json", c.baseURL)
+}
+
+func base64URLDecodeBigInt(s string) (*big.Int, error) {
+	b, err := base64.RawURLEncoding.DecodeString(s)
+	if err != nil {
+		return nil, err
+	}
+	return new(big.Int).SetBytes(b), nil
+}
+
+func (c *Client) fetchJWKS(ctx context.Context) (map[string]*ecdsa.PublicKey, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, c.jwksURL(), nil)
+	if err != nil {
+		return nil, err
+	}
+	key := c.authKey()
+	if key != "" {
+		req.Header.Set("apikey", key)
+	}
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+	if resp.StatusCode >= 300 {
+		return nil, fmt.Errorf("jwks fetch failed: status=%d body=%s", resp.StatusCode, string(body))
+	}
+
+	var doc jwksDocument
+	if err := json.Unmarshal(body, &doc); err != nil {
+		return nil, err
+	}
+
+	keys := map[string]*ecdsa.PublicKey{}
+	for _, k := range doc.Keys {
+		if k.Kty != "EC" || k.Crv != "P-256" || k.Kid == "" || k.X == "" || k.Y == "" {
+			continue
+		}
+		x, err := base64URLDecodeBigInt(k.X)
+		if err != nil {
+			continue
+		}
+		y, err := base64URLDecodeBigInt(k.Y)
+		if err != nil {
+			continue
+		}
+		pub := &ecdsa.PublicKey{
+			Curve: elliptic.P256(),
+			X:     x,
+			Y:     y,
+		}
+		if !pub.Curve.IsOnCurve(pub.X, pub.Y) {
+			continue
+		}
+		keys[k.Kid] = pub
+	}
+
+	if len(keys) == 0 {
+		return nil, fmt.Errorf("jwks contains no usable P-256 keys")
+	}
+	return keys, nil
+}
+
+func (c *Client) getPublicKey(ctx context.Context, kid string) (*ecdsa.PublicKey, error) {
+	const ttl = 10 * time.Minute
+
+	c.jwksMu.Lock()
+	cached := c.jwksCached
+	c.jwksMu.Unlock()
+
+	if cached != nil && time.Since(cached.fetchedAt) < ttl {
+		if pub, ok := cached.keysByKID[kid]; ok {
+			return pub, nil
+		}
+	}
+
+	keys, err := c.fetchJWKS(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	c.jwksMu.Lock()
+	c.jwksCached = &jwksCache{fetchedAt: time.Now(), keysByKID: keys}
+	c.jwksMu.Unlock()
+
+	pub, ok := keys[kid]
+	if !ok {
+		return nil, fmt.Errorf("jwks key not found for kid=%s", kid)
+	}
+	return pub, nil
 }
 
 func (c *Client) authEndpoint(p string) string {
@@ -253,16 +374,22 @@ type supabaseClaims struct {
 
 // Verify validates a Supabase JWT using the configured secret.
 func (c *Client) Verify(token string) (*security.TokenClaims, error) {
-	if c.jwtSecret == "" {
-		return nil, errors.New("supabase jwt secret not configured")
+	if c.baseURL == "" {
+		return nil, errors.New("supabase base url not configured")
 	}
 
 	claims := &supabaseClaims{}
+
 	parsed, err := jwt.ParseWithClaims(token, claims, func(t *jwt.Token) (interface{}, error) {
-		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, fmt.Errorf("unexpected signing method %s", t.Header["alg"])
+		alg, _ := t.Header["alg"].(string)
+		if alg != "ES256" {
+			return nil, fmt.Errorf("unexpected signing method %v", t.Header["alg"])
 		}
-		return []byte(c.jwtSecret), nil
+		kid, _ := t.Header["kid"].(string)
+		if kid == "" {
+			return nil, fmt.Errorf("token missing kid header")
+		}
+		return c.getPublicKey(context.Background(), kid)
 	})
 	if err != nil {
 		return nil, fmt.Errorf("token verify failed: %w", err)
