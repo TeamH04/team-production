@@ -6,6 +6,7 @@ import (
 	"github.com/labstack/echo/v4"
 
 	"github.com/TeamH04/team-production/apps/backend/internal/presentation/presenter"
+	"github.com/TeamH04/team-production/apps/backend/internal/usecase"
 	"github.com/TeamH04/team-production/apps/backend/internal/usecase/input"
 )
 
@@ -20,7 +21,17 @@ func NewFavoriteHandler(favoriteUseCase input.FavoriteUseCase) *FavoriteHandler 
 }
 
 func (h *FavoriteHandler) GetUserFavorites(c echo.Context) error {
-	favorites, err := h.favoriteUseCase.GetUserFavorites(c.Request().Context(), c.Param("id"))
+	user, err := getRequiredUser(c)
+	if err != nil {
+		return err
+	}
+
+	userID := c.Param("id")
+	if userID != user.UserID {
+		return usecase.ErrForbidden
+	}
+
+	favorites, err := h.favoriteUseCase.GetUserFavorites(c.Request().Context(), userID)
 	if err != nil {
 		return err
 	}
