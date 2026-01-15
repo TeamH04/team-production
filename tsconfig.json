@@ -1,20 +1,4 @@
 {
-  "compilerOptions": {
-    "strict": true,
-    "skipLibCheck": true,
-    "esModuleInterop": true,
-    "module": "ESNext",
-    "moduleResolution": "bundler",
-    "resolveJsonModule": true,
-    "isolatedModules": true,
-    "noEmit": true
-  },
-  "files": [],
-  "references": [
-    { "path": "./apps/mobile" },
-    { "path": "./apps/web" },
-    { "path": "./packages/shop-core" },
-    { "path": "./packages/theme" },
-    { "path": "./packages/types" }
-  ]
+  "compilerOptions": {},
+  "extends": "expo/tsconfig.base"
 }

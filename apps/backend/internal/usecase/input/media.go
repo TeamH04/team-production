@@ -1,30 +1,21 @@
 package input
 
-import (
-	"context"
-	"time"
+import "context"
 
-	"github.com/TeamH04/team-production/apps/backend/internal/domain"
-)
-
-// MediaUseCase defines inbound port for media operations.
+// MediaUseCase defines inbound port for media uploads.
 type MediaUseCase interface {
-	GetMediaByID(ctx context.Context, mediaID int64) (*domain.Media, error)
-	CreateMedia(ctx context.Context, input CreateMediaInput) (*domain.Media, error)
-	GenerateUploadURL(ctx context.Context, userID string, fileType string) (*SignedUploadURL, error)
+	CreateReviewUploads(ctx context.Context, storeID string, userID string, files []UploadFileInput) ([]SignedUploadFile, error)
 }
 
-type CreateMediaInput struct {
-	UserID   string
-	URL      string
-	FileType string
-	FileSize int64
+type UploadFileInput struct {
+	FileName    string
+	FileSize    *int64
+	ContentType string
 }
 
-type SignedUploadURL struct {
-	URL         string
-	Path        string
-	Token       string
-	ExpiresIn   time.Duration
+type SignedUploadFile struct {
+	FileID      string
+	ObjectKey   string
+	UploadURL   string
 	ContentType string
 }

@@ -1,9 +1,12 @@
 package handlers
 
 import (
-	"context"
+	"net/http"
 
-	"github.com/TeamH04/team-production/apps/backend/internal/domain"
+	"github.com/labstack/echo/v4"
+
+	"github.com/TeamH04/team-production/apps/backend/internal/presentation"
+	"github.com/TeamH04/team-production/apps/backend/internal/presentation/requestcontext"
 	"github.com/TeamH04/team-production/apps/backend/internal/usecase"
 	"github.com/TeamH04/team-production/apps/backend/internal/usecase/input"
 )
@@ -12,26 +15,69 @@ type MediaHandler struct {
 	mediaUseCase input.MediaUseCase
 }
 
-var _ MediaController = (*MediaHandler)(nil)
+type uploadFileDTO struct {
+	FileName    string `json:"file_name"`
+	FileSize    *int64 `json:"file_size"`
+	ContentType string `json:"content_type"`
+}
 
-type UploadMediaCommand struct {
-	FileType string
+type createUploadDTO struct {
+	StoreID string          `json:"store_id"`
+	Files   []uploadFileDTO `json:"files"`
+}
+
+type uploadFileResponse struct {
+	FileID      string `json:"file_id"`
+	ObjectKey   string `json:"object_key"`
+	UploadURL   string `json:"upload_url"`
+	ContentType string `json:"content_type"`
+}
+
+type uploadResponse struct {
+	Files []uploadFileResponse `json:"files"`
 }
 
 func NewMediaHandler(mediaUseCase input.MediaUseCase) *MediaHandler {
-	return &MediaHandler{
-		mediaUseCase: mediaUseCase,
-	}
+	return &MediaHandler{mediaUseCase: mediaUseCase}
 }
 
-func (h *MediaHandler) GetMedia(ctx context.Context, mediaID int64) (*domain.Media, error) {
-	return h.mediaUseCase.GetMediaByID(ctx, mediaID)
-}
-
-func (h *MediaHandler) UploadMedia(ctx context.Context, userID string, cmd UploadMediaCommand) (*input.SignedUploadURL, error) {
-	if userID == "" {
-		return nil, usecase.ErrUnauthorized
+func (h *MediaHandler) CreateReviewUploads(c echo.Context) error {
+	user, err := requestcontext.GetUserFromContext(c.Request().Context())
+	if err != nil {
+		return usecase.ErrUnauthorized
 	}
 
-	return h.mediaUseCase.GenerateUploadURL(ctx, userID, cmd.FileType)
+	var dto createUploadDTO
+	if err := c.Bind(&dto); err != nil {
+		return presentation.NewBadRequest("invalid JSON")
+	}
+	if dto.StoreID == "" || len(dto.Files) == 0 {
+		return usecase.ErrInvalidInput
+	}
+
+	inputs := make([]input.UploadFileInput, len(dto.Files))
+	for i, f := range dto.Files {
+		inputs[i] = input.UploadFileInput{
+			FileName:    f.FileName,
+			FileSize:    f.FileSize,
+			ContentType: f.ContentType,
+		}
+	}
+
+	uploads, err := h.mediaUseCase.CreateReviewUploads(c.Request().Context(), dto.StoreID, user.UserID, inputs)
+	if err != nil {
+		return err
+	}
+
+	resp := make([]uploadFileResponse, len(uploads))
+	for i, upload := range uploads {
+		resp[i] = uploadFileResponse{
+			FileID:      upload.FileID,
+			ObjectKey:   upload.ObjectKey,
+			UploadURL:   upload.UploadURL,
+			ContentType: upload.ContentType,
+		}
+	}
+
+	return c.JSON(http.StatusOK, uploadResponse{Files: resp})
 }

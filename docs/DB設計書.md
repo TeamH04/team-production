@@ -127,6 +127,18 @@ erDiagram
         timestamptz updated_at
     }
 
+    files {
+        uuid file_id PK
+        string file_kind
+        string file_name
+        bigint file_size
+        string object_key
+        string content_type
+        boolean is_deleted
+        timestamp created_at
+        uuid created_by FK
+    }
+
     stores {
         bigserial store_id PK
         text thumbnail_url
@@ -158,7 +170,6 @@ erDiagram
         bigserial review_id PK
         bigint store_id FK
         uuid user_id FK
-        bigint menu_id FK
         integer rating
         text content
         text[] image_urls

@@ -1,13 +1,14 @@
 import { palette } from '@/constants/palette';
-import { SHOPS, type Shop } from '@team/shop-core';
+import { TAB_BAR_SPACING } from '@/constants/TabBarSpacing';
+import { useStores } from '@/features/stores/StoresContext';
+import type { Shop } from '@team/shop-core';
 import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactElement } from 'react';
-import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { type ReactElement, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { ActivityIndicator, type FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, { useAnimatedRef } from 'react-native-reanimated';
 
 const PAGE_SIZE = 10;
-const TAB_BAR_SPACING = 107;
 
 const BUDGET_LABEL: Record<Shop['budget'], string> = {
   $: '¥',
@@ -18,17 +19,21 @@ const BUDGET_LABEL: Record<Shop['budget'], string> = {
 const KEY_EXTRACTOR = (item: Shop) => item.id;
 
 type ShopResultsListProps = {
+  emptyState: ReactElement;
   filteredShops: Shop[];
   renderListHeader: ReactElement;
   renderShop: ({ item }: { item: Shop }) => ReactElement;
 };
 
-function ShopResultsList({ filteredShops, renderListHeader, renderShop }: ShopResultsListProps) {
+function ShopResultsList({
+  emptyState,
+  filteredShops,
+  renderListHeader,
+  renderShop,
+}: ShopResultsListProps) {
   const [visibleCount, setVisibleCount] = useState(() => Math.min(PAGE_SIZE, filteredShops.length));
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const loadMoreTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  // 型を正しく指定
   const listRef = useAnimatedRef<FlatList<Shop>>();
 
   useEffect(() => {
@@ -75,11 +80,7 @@ function ShopResultsList({ filteredShops, renderListHeader, renderShop }: ShopRe
   return (
     <Animated.FlatList
       ref={listRef}
-      ListEmptyComponent={
-        <View style={styles.emptyState}>
-          <Text style={styles.emptyTitle}>条件に合うお店が見つかりませんでした</Text>
-        </View>
-      }
+      ListEmptyComponent={emptyState}
       ListFooterComponent={
         isLoadingMore ? (
           <View style={styles.footerLoader}>
@@ -101,26 +102,28 @@ function ShopResultsList({ filteredShops, renderListHeader, renderShop }: ShopRe
 
 export default function HomeScreen() {
   const router = useRouter();
-
-  const params = useLocalSearchParams<{ tag?: string; category?: string }>();
-  const activeTag = params.tag;
-  const activeCategory = params.category;
+  const { stores, loading, error } = useStores();
+  const params = useLocalSearchParams<{
+    tag?: string | string[];
+    category?: string | string[];
+  }>();
+  const activeTag = Array.isArray(params.tag) ? params.tag[0] : params.tag;
+  const activeCategory = Array.isArray(params.category) ? params.category[0] : params.category;
 
   const listKey = `${activeTag ?? 'all'}-${activeCategory ?? 'all'}`;
 
   const filteredShops = useMemo(() => {
     if (!activeTag && !activeCategory) {
-      return SHOPS;
+      return stores;
     }
 
-    return SHOPS.filter(shop => {
+    return stores.filter(shop => {
       const matchesTag = activeTag ? shop.tags?.includes(activeTag) : true;
-
       const matchesCategory = activeCategory ? shop.category === activeCategory : true;
 
       return matchesTag && matchesCategory;
     });
-  }, [activeTag, activeCategory]);
+  }, [activeCategory, activeTag, stores]);
 
   const renderShop = useCallback(
     ({ item }: { item: Shop }) => (
@@ -175,12 +178,39 @@ export default function HomeScreen() {
         </View>
       </View>
     );
-  }, [activeTag, activeCategory, filteredShops.length, router]);
+  }, [activeCategory, activeTag, filteredShops.length, router]);
+
+  const renderEmptyState = useMemo(() => {
+    if (loading) {
+      return (
+        <View style={styles.emptyState}>
+          <ActivityIndicator color={palette.accent} />
+        </View>
+      );
+    }
+    if (error) {
+      return (
+        <View style={styles.emptyState}>
+          <Text style={styles.emptyTitle}>店舗情報の取得に失敗しました</Text>
+          <Text style={styles.emptySubtitle}>{error}</Text>
+        </View>
+      );
+    }
+    return (
+      <View style={styles.emptyState}>
+        <Text style={styles.emptyTitle}>条件に合うお店が見つかりませんでした</Text>
+        <Text style={styles.emptySubtitle}>
+          キーワードを変えるか、カテゴリを切り替えて別の候補もチェックしてみてください。
+        </Text>
+      </View>
+    );
+  }, [error, loading]);
 
   return (
     <View style={styles.screen}>
       <ShopResultsList
         key={listKey}
+        emptyState={renderEmptyState}
         filteredShops={filteredShops}
         renderListHeader={renderListHeader}
         renderShop={renderShop}
@@ -249,12 +279,21 @@ const styles = StyleSheet.create({
 
   emptyState: {
     alignItems: 'center',
+    paddingHorizontal: 24,
     paddingTop: 80,
+  },
+
+  emptySubtitle: {
+    color: palette.secondaryText,
+    fontSize: 13,
+    marginTop: 8,
+    textAlign: 'center',
   },
 
   emptyTitle: {
     color: palette.secondaryText,
     fontSize: 16,
+    fontWeight: '600',
   },
 
   filterInfo: {

@@ -1,49 +1,18 @@
 package handlers
 
 import (
-	"context"
-	"fmt"
+	"net/http"
 
-	"github.com/TeamH04/team-production/apps/backend/internal/domain"
-	"github.com/TeamH04/team-production/apps/backend/internal/usecase"
+	"github.com/labstack/echo/v4"
+
+	"github.com/TeamH04/team-production/apps/backend/internal/presentation"
+	"github.com/TeamH04/team-production/apps/backend/internal/presentation/presenter"
 	"github.com/TeamH04/team-production/apps/backend/internal/usecase/input"
 )
 
 type AuthHandler struct {
 	authUseCase input.AuthUseCase
 	userUseCase input.UserUseCase
-}
-
-var _ AuthController = (*AuthHandler)(nil)
-
-type SignupCommand struct {
-	Email    string
-	Password string
-	Name     string
-}
-
-func (c SignupCommand) toInput() input.AuthSignupInput {
-	return input.AuthSignupInput{
-		Email:    c.Email,
-		Password: c.Password,
-		Name:     c.Name,
-	}
-}
-
-type LoginCommand struct {
-	Email    string
-	Password string
-}
-
-func (c LoginCommand) toInput() input.AuthLoginInput {
-	return input.AuthLoginInput{
-		Email:    c.Email,
-		Password: c.Password,
-	}
-}
-
-type UpdateRoleCommand struct {
-	Role string
 }
 
 // NewAuthHandler は AuthHandler を生成します
@@ -54,26 +23,91 @@ func NewAuthHandler(authUseCase input.AuthUseCase, userUseCase input.UserUseCase
 	}
 }
 
-func (h *AuthHandler) GetMe(ctx context.Context, userID string) (*domain.User, error) {
-	if userID == "" {
-		return nil, fmt.Errorf("%w: user_id is required", usecase.ErrInvalidInput)
+// GetMe returns the current authenticated user.
+// Note: This delegates to UserHandler.GetMe for consistency.
+func (h *AuthHandler) GetMe(c echo.Context) error {
+	userFromCtx, err := getRequiredUser(c)
+	if err != nil {
+		return err
 	}
 
-	return h.userUseCase.GetUserByID(ctx, userID)
+	user, err := h.userUseCase.FindByID(c.Request().Context(), userFromCtx.UserID)
+	if err != nil {
+		return err
+	}
+	resp := presenter.NewUserResponse(user)
+	return c.JSON(http.StatusOK, resp)
 }
 
-func (h *AuthHandler) UpdateRole(ctx context.Context, userID string, cmd UpdateRoleCommand) error {
-	if userID == "" {
-		return usecase.ErrUnauthorized
+func (h *AuthHandler) UpdateRole(c echo.Context) error {
+	user, err := getRequiredUser(c)
+	if err != nil {
+		return err
 	}
 
-	return h.userUseCase.UpdateUserRole(ctx, userID, cmd.Role)
+	var dto updateRoleDTO
+	if err := bindJSON(c, &dto); err != nil {
+		return err
+	}
+
+	if err := h.userUseCase.UpdateUserRole(c.Request().Context(), user.UserID, dto.Role); err != nil {
+		return err
+	}
+	return c.JSON(http.StatusOK, presentation.NewMessageResponse("role updated successfully"))
 }
 
-func (h *AuthHandler) Signup(ctx context.Context, cmd SignupCommand) (*domain.User, error) {
-	return h.authUseCase.Signup(ctx, cmd.toInput())
+func (h *AuthHandler) Signup(c echo.Context) error {
+	var dto signupDTO
+	if err := bindJSON(c, &dto); err != nil {
+		return err
+	}
+
+	user, err := h.authUseCase.Signup(c.Request().Context(), dto.toInput())
+	if err != nil {
+		return err
+	}
+	resp := presenter.NewUserResponse(*user)
+	return c.JSON(http.StatusCreated, resp)
 }
 
-func (h *AuthHandler) Login(ctx context.Context, cmd LoginCommand) (*input.AuthSession, error) {
-	return h.authUseCase.Login(ctx, cmd.toInput())
+func (h *AuthHandler) Login(c echo.Context) error {
+	var dto loginDTO
+	if err := bindJSON(c, &dto); err != nil {
+		return err
+	}
+	session, err := h.authUseCase.Login(c.Request().Context(), dto.toInput())
+	if err != nil {
+		return err
+	}
+	return c.JSON(http.StatusOK, presenter.NewAuthSessionResponse(session))
+}
+
+type signupDTO struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
+	Name     string `json:"name"`
+}
+
+func (dto signupDTO) toInput() input.AuthSignupInput {
+	return input.AuthSignupInput{
+		Email:    dto.Email,
+		Password: dto.Password,
+		Name:     dto.Name,
+	}
+}
+
+type loginDTO struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
+}
+
+func (dto loginDTO) toInput() input.AuthLoginInput {
+	return input.AuthLoginInput{
+		Email:    dto.Email,
+		Password: dto.Password,
+	}
+}
+
+type updateRoleDTO struct {
+	Role string `json:"role"`
 }

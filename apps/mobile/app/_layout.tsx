@@ -1,5 +1,6 @@
 import { FavoritesProvider } from '@/features/favorites/FavoritesContext';
 import { ReviewsProvider } from '@/features/reviews/ReviewsContext';
+import { StoresProvider } from '@/features/stores/StoresContext';
 import { UserProvider, useUser } from '@/features/user/UserContext';
 import { VisitedProvider } from '@/features/visited/VisitedContext';
 import '@/global.css';
@@ -89,13 +90,15 @@ export default function RootLayout() {
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <SafeAreaProvider>
         <UserProvider>
-          <FavoritesProvider>
-            <VisitedProvider>
-              <ReviewsProvider>
-                <RootStack />
-              </ReviewsProvider>
-            </VisitedProvider>
-          </FavoritesProvider>
+          <StoresProvider>
+            <FavoritesProvider>
+              <VisitedProvider>
+                <ReviewsProvider>
+                  <RootStack />
+                </ReviewsProvider>
+              </VisitedProvider>
+            </FavoritesProvider>
+          </StoresProvider>
         </UserProvider>
       </SafeAreaProvider>
     </ThemeProvider>

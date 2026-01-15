@@ -3,7 +3,7 @@ package repository
 import (
 	"context"
 
-	"github.com/TeamH04/team-production/apps/backend/internal/domain"
+	"github.com/TeamH04/team-production/apps/backend/internal/domain/entity"
 	"github.com/TeamH04/team-production/apps/backend/internal/repository/model"
 	"github.com/TeamH04/team-production/apps/backend/internal/usecase/output"
 	"gorm.io/gorm"
@@ -18,7 +18,7 @@ func NewMenuRepository(db *gorm.DB) output.MenuRepository {
 	return &menuRepository{db: db}
 }
 
-func (r *menuRepository) FindByStoreID(ctx context.Context, storeID int64) ([]domain.Menu, error) {
+func (r *menuRepository) FindByStoreID(ctx context.Context, storeID string) ([]entity.Menu, error) {
 	var menus []model.Menu
 	if err := r.db.WithContext(ctx).
 		Where("store_id = ?", storeID).
@@ -26,19 +26,35 @@ func (r *menuRepository) FindByStoreID(ctx context.Context, storeID int64) ([]do
 		Find(&menus).Error; err != nil {
 		return nil, mapDBError(err)
 	}
-	result := make([]domain.Menu, len(menus))
-	for i, menu := range menus {
-		result[i] = model.MenuModelToDomain(menu)
-	}
-	return result, nil
+	return model.ToEntities[entity.Menu, model.Menu](menus), nil
 }
 
-func (r *menuRepository) Create(ctx context.Context, menu *domain.Menu) error {
-	record := model.MenuModelFromDomain(menu)
-	if err := r.db.WithContext(ctx).Create(record).Error; err != nil {
+func (r *menuRepository) Create(ctx context.Context, menu *entity.Menu) error {
+	record := model.Menu{
+		StoreID:     menu.StoreID,
+		Name:        menu.Name,
+		Description: menu.Description,
+		Price:       menu.Price,
+	}
+	if err := r.db.WithContext(ctx).Create(&record).Error; err != nil {
 		return mapDBError(err)
 	}
 	menu.MenuID = record.MenuID
 	menu.CreatedAt = record.CreatedAt
 	return nil
+}
+
+func (r *menuRepository) FindByStoreAndIDs(ctx context.Context, storeID string, menuIDs []string) ([]entity.Menu, error) {
+	if len(menuIDs) == 0 {
+		return nil, nil
+	}
+
+	var menus []model.Menu
+	if err := r.db.WithContext(ctx).
+		Where("store_id = ? AND menu_id IN ?", storeID, menuIDs).
+		Find(&menus).Error; err != nil {
+		return nil, mapDBError(err)
+	}
+
+	return model.ToEntities[entity.Menu, model.Menu](menus), nil
 }

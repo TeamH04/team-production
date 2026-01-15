@@ -1,9 +1,9 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import React, { act, useEffect } from 'react';
+import { act, useEffect } from 'react';
 import TestRenderer from 'react-test-renderer';
 
-import { VisitedProvider, useVisited } from '../VisitedContext';
+import { useVisited, VisitedProvider } from '../VisitedContext';
 
 const globalForReactAct = globalThis as typeof globalThis & {
   IS_REACT_ACT_ENVIRONMENT?: boolean;
