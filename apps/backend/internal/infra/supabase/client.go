@@ -348,6 +348,10 @@ func getStringSliceFromMap(values map[string]any, key string) []string {
 	return result
 }
 
+// escapePathPreserveSlash は objectPath を URL エンコードするが、階層区切りの "/" は保持する。
+// Supabase Storage のエンドポイントは "reviews/xxx/file name.jpg" のような階層パスを "/" 区切りで受け取るため、
+// 全体に url.PathEscape をかけると "/" まで "%2F" になって階層が壊れてしまう。
+// そこで "/" で分割し、各セグメントのみを PathEscape してから "/" で結合する。
 func escapePathPreserveSlash(p string) string {
 	p = strings.TrimPrefix(strings.TrimSpace(p), "/")
 	if p == "" {

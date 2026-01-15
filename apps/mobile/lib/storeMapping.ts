@@ -29,9 +29,9 @@ export function mapApiStoreToShop(store: ApiStore): Shop {
   const apiThumbnailUrl = normalizeImageUrl(
     store.thumbnail_file?.url ?? store.thumbnail_file?.object_key
   );
-  const apiImageUrls = store.image_urls?.map(normalizeImageUrl).filter(Boolean) as
-    | string[]
-    | undefined;
+  const apiImageUrls = store.image_urls
+    ?.map(normalizeImageUrl)
+    .filter((url): url is string => !!url);
   const imageUrl = apiThumbnailUrl || apiImageUrls?.[0] || DEFAULT_IMAGE_URL;
   const imageUrls = apiImageUrls ?? (imageUrl ? [imageUrl] : undefined);
 

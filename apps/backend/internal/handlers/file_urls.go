@@ -158,7 +158,12 @@ func attachSignedURLsToReviewResponses(
 		return
 	}
 
-	all := make([]presenter.FileResponse, 0)
+	total := 0
+	for i := range reviews {
+		total += len(reviews[i].Files)
+	}
+
+	all := make([]presenter.FileResponse, 0, total)
 	for i := range reviews {
 		if len(reviews[i].Files) == 0 {
 			continue

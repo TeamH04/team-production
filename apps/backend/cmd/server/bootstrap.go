@@ -57,6 +57,8 @@ func buildRouterDependencies(cfg *config.Config, db *gorm.DB) *router.Dependenci
 	reportHandler := handlers.NewReportHandler(reportUseCase)
 	authHandler := handlers.NewAuthHandler(authUseCase, userUseCase)
 	adminHandler := handlers.NewAdminHandler(adminUseCase, reportUseCase, userUseCase)
+	// supabaseClient は TokenVerifier（JWT検証）と StorageProvider（署名付きURL生成）の両方を実装しているため、
+	// 同一インスタンスをそれぞれの依存として注入する。
 	reviewHandler := handlers.NewReviewHandler(reviewUseCase, supabaseClient, supabaseClient, cfg.SupabaseStorageBucket)
 	mediaHandler := handlers.NewMediaHandler(mediaUseCase)
 
