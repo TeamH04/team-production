@@ -33,6 +33,12 @@ type AuthState =
   | { mode: 'unauthenticated' }
   | { mode: 'remote'; token: string };
 
+/**
+ * 認証状態を判定し、各モードの意味を返す。
+ * - local: Supabase 未設定のため、ローカル状態のみを使用する。
+ * - unauthenticated: Supabase は設定済みだが、未ログインまたはトークンが取得できない。
+ * - remote: 認証済みで、API 呼び出しに利用できるアクセストークンを保持している。
+ */
 async function resolveAuth(): Promise<AuthState> {
   if (!isSupabaseConfigured()) {
     return { mode: 'local' };

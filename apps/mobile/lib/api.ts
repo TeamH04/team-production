@@ -201,7 +201,7 @@ export async function fetchUserReviews(userId: string, accessToken?: string) {
   return reviews ?? [];
 }
 
-export async function fetchUserFavorites(accessToken?: string) {
+export async function fetchUserFavorites(accessToken: string) {
   const favorites = await request<FavoritesResponse | null>('/users/me/favorites', {
     headers: buildHeaders(accessToken),
   });
