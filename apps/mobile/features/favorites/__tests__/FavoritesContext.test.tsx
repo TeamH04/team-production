@@ -39,41 +39,35 @@ const createSupabaseStub = (): SupabaseClient => {
 };
 
 const setupRemoteDependencies = () => {
-  const userId = 'user-1';
   const token = 'token-1';
   const loadFavoriteId = 'shop-2';
 
-  const resolveAuth = mock.fn(async () => ({ mode: 'remote', userId, token }) as const);
-  const fetchUserFavorites = mock.fn(async (requestedUserId: string, requestedToken?: string) => {
+  const resolveAuth = mock.fn(async () => ({ mode: 'remote', token }) as const);
+  const fetchUserFavorites = mock.fn(async (requestedToken?: string) => {
     void requestedToken;
     return [
       {
-        user_id: requestedUserId,
+        user_id: 'remote-user',
         store_id: loadFavoriteId,
         created_at: '2026-01-01T00:00:00.000Z',
         store: null,
       },
     ];
   });
-  const addFavoriteApi = mock.fn(
-    async (requestedUserId: string, storeId: string, requestedToken: string) => {
-      void requestedToken;
-      return {
-        user_id: requestedUserId,
-        store_id: storeId,
-        created_at: '2026-01-01T00:00:00.000Z',
-        store: null,
-      };
-    }
-  );
-  const removeFavoriteApi = mock.fn(
-    async (requestedUserId: string, storeId: string, requestedToken: string) => {
-      void requestedUserId;
-      void storeId;
-      void requestedToken;
-      return undefined;
-    }
-  );
+  const addFavoriteApi = mock.fn(async (storeId: string, requestedToken: string) => {
+    void requestedToken;
+    return {
+      user_id: 'remote-user',
+      store_id: storeId,
+      created_at: '2026-01-01T00:00:00.000Z',
+      store: null,
+    };
+  });
+  const removeFavoriteApi = mock.fn(async (storeId: string, requestedToken: string) => {
+    void storeId;
+    void requestedToken;
+    return undefined;
+  });
   const getSupabase = mock.fn(createSupabaseStub);
 
   __setFavoritesDependenciesForTesting({
@@ -91,30 +85,25 @@ const setupRemoteDependencies = () => {
     loadFavoriteId,
     removeFavoriteApi,
     token,
-    userId,
   };
 };
 
 const setupUnauthenticatedDependencies = () => {
   const resolveAuth = mock.fn(async () => ({ mode: 'unauthenticated' }) as const);
-  const fetchUserFavorites = mock.fn(async (userId: string, token?: string) => {
-    void userId;
+  const fetchUserFavorites = mock.fn(async (token?: string) => {
     void token;
     return [];
   });
-  const addFavoriteApi = mock.fn(
-    async (userId: string, storeId: string, token: string): Promise<ApiFavorite> => {
-      void token;
-      return {
-        user_id: userId,
-        store_id: storeId,
-        created_at: '2026-01-01T00:00:00.000Z',
-        store: null,
-      };
-    }
-  );
-  const removeFavoriteApi = mock.fn(async (userId: string, storeId: string, token: string) => {
-    void userId;
+  const addFavoriteApi = mock.fn(async (storeId: string, token: string): Promise<ApiFavorite> => {
+    void token;
+    return {
+      user_id: 'unauth-user',
+      store_id: storeId,
+      created_at: '2026-01-01T00:00:00.000Z',
+      store: null,
+    };
+  });
+  const removeFavoriteApi = mock.fn(async (storeId: string, token: string) => {
     void storeId;
     void token;
     return undefined;
@@ -140,26 +129,21 @@ const setupUnauthenticatedDependencies = () => {
 
 const setupLocalDependencies = () => {
   const resolveAuth = mock.fn(async () => ({ mode: 'local' }) as const);
-  const fetchUserFavorites = mock.fn(async (userId: string, token?: string) => {
-    void userId;
+  const fetchUserFavorites = mock.fn(async (token?: string) => {
     void token;
     return [];
   });
-  const addFavoriteApi = mock.fn(
-    async (userId: string, storeId: string, token: string): Promise<ApiFavorite> => {
-      void userId;
-      void storeId;
-      void token;
-      return {
-        user_id: 'local-user',
-        store_id: 'local-store',
-        created_at: '2026-01-01T00:00:00.000Z',
-        store: null,
-      };
-    }
-  );
-  const removeFavoriteApi = mock.fn(async (userId: string, storeId: string, token: string) => {
-    void userId;
+  const addFavoriteApi = mock.fn(async (storeId: string, token: string): Promise<ApiFavorite> => {
+    void storeId;
+    void token;
+    return {
+      user_id: 'local-user',
+      store_id: 'local-store',
+      created_at: '2026-01-01T00:00:00.000Z',
+      store: null,
+    };
+  });
+  const removeFavoriteApi = mock.fn(async (storeId: string, token: string) => {
     void storeId;
     void token;
     return undefined;
@@ -247,7 +231,7 @@ test('useFavorites throws outside FavoritesProvider', () => {
 });
 
 test('addFavorite marks a shop as favorite', async () => {
-  const { addFavoriteApi, token, userId } = setupRemoteDependencies();
+  const { addFavoriteApi, token } = setupRemoteDependencies();
   const { getValue, unmount } = createFavoritesHarness();
 
   await act(async () => {
@@ -255,7 +239,7 @@ test('addFavorite marks a shop as favorite', async () => {
   });
 
   assert.equal(addFavoriteApi.mock.calls.length, 1);
-  assert.deepEqual(addFavoriteApi.mock.calls[0].arguments, [userId, 'shop-1', token]);
+  assert.deepEqual(addFavoriteApi.mock.calls[0].arguments, ['shop-1', token]);
   assert.equal(getValue().isFavorite('shop-1'), true);
   assert.equal(getValue().favorites.has('shop-1'), true);
 
@@ -263,7 +247,7 @@ test('addFavorite marks a shop as favorite', async () => {
 });
 
 test('removeFavorite removes a shop from favorites', async () => {
-  const { fetchUserFavorites, loadFavoriteId, removeFavoriteApi, token, userId } =
+  const { fetchUserFavorites, loadFavoriteId, removeFavoriteApi, token } =
     setupRemoteDependencies();
   const { getValue, unmount } = createFavoritesHarness();
 
@@ -276,9 +260,9 @@ test('removeFavorite removes a shop from favorites', async () => {
   });
 
   assert.equal(fetchUserFavorites.mock.calls.length, 1);
-  assert.deepEqual(fetchUserFavorites.mock.calls[0].arguments, [userId, token]);
+  assert.deepEqual(fetchUserFavorites.mock.calls[0].arguments, [token]);
   assert.equal(removeFavoriteApi.mock.calls.length, 1);
-  assert.deepEqual(removeFavoriteApi.mock.calls[0].arguments, [userId, loadFavoriteId, token]);
+  assert.deepEqual(removeFavoriteApi.mock.calls[0].arguments, [loadFavoriteId, token]);
   assert.equal(getValue().isFavorite(loadFavoriteId), false);
   assert.equal(getValue().favorites.has(loadFavoriteId), false);
 
@@ -286,7 +270,7 @@ test('removeFavorite removes a shop from favorites', async () => {
 });
 
 test('toggleFavorite adds and removes a shop', async () => {
-  const { addFavoriteApi, removeFavoriteApi, token, userId } = setupRemoteDependencies();
+  const { addFavoriteApi, removeFavoriteApi, token } = setupRemoteDependencies();
   const { getValue, unmount } = createFavoritesHarness();
 
   await act(async () => {
@@ -295,7 +279,7 @@ test('toggleFavorite adds and removes a shop', async () => {
 
   assert.equal(getValue().isFavorite('shop-3'), true);
   assert.equal(addFavoriteApi.mock.calls.length, 1);
-  assert.deepEqual(addFavoriteApi.mock.calls[0].arguments, [userId, 'shop-3', token]);
+  assert.deepEqual(addFavoriteApi.mock.calls[0].arguments, ['shop-3', token]);
 
   await act(async () => {
     await getValue().toggleFavorite('shop-3');
@@ -303,7 +287,7 @@ test('toggleFavorite adds and removes a shop', async () => {
 
   assert.equal(getValue().isFavorite('shop-3'), false);
   assert.equal(removeFavoriteApi.mock.calls.length, 1);
-  assert.deepEqual(removeFavoriteApi.mock.calls[0].arguments, [userId, 'shop-3', token]);
+  assert.deepEqual(removeFavoriteApi.mock.calls[0].arguments, ['shop-3', token]);
 
   unmount();
 });

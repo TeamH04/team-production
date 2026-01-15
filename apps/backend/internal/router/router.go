@@ -116,12 +116,12 @@ func setupUserRoutes(api *echo.Group, deps *Dependencies) {
 // setupFavoriteRoutes はお気に入り関連のルーティングを設定します
 func setupFavoriteRoutes(api *echo.Group, deps *Dependencies) {
 	api.GET(
-		"/users/:id/favorites",
-		deps.FavoriteHandler.GetUserFavorites,
+		"/users/me/favorites",
+		deps.FavoriteHandler.GetMyFavorites,
 		mw.NewAuthMiddleware(deps.UserUC).JWTAuth(deps.TokenVerifier),
 	)
-	api.POST("/users/:id/favorites", deps.FavoriteHandler.AddFavorite, mw.NewAuthMiddleware(deps.UserUC).JWTAuth(deps.TokenVerifier))
-	api.DELETE("/users/:id/favorites/:store_id", deps.FavoriteHandler.RemoveFavorite, mw.NewAuthMiddleware(deps.UserUC).JWTAuth(deps.TokenVerifier))
+	api.POST("/users/me/favorites", deps.FavoriteHandler.AddFavorite, mw.NewAuthMiddleware(deps.UserUC).JWTAuth(deps.TokenVerifier))
+	api.DELETE("/users/me/favorites/:store_id", deps.FavoriteHandler.RemoveFavorite, mw.NewAuthMiddleware(deps.UserUC).JWTAuth(deps.TokenVerifier))
 }
 
 // setupReportRoutes は通報関連のルーティングを設定します

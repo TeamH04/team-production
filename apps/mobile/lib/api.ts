@@ -197,23 +197,23 @@ export async function fetchUserReviews(userId: string, accessToken?: string) {
   return reviews ?? [];
 }
 
-export async function fetchUserFavorites(userId: string, accessToken?: string) {
-  const favorites = await request<FavoritesResponse | null>(`/users/${userId}/favorites`, {
+export async function fetchUserFavorites(accessToken?: string) {
+  const favorites = await request<FavoritesResponse | null>('/users/me/favorites', {
     headers: buildHeaders(accessToken),
   });
   return favorites ?? [];
 }
 
-export async function addFavorite(userId: string, storeId: string, accessToken: string) {
-  return request<ApiFavorite>(`/users/${userId}/favorites`, {
+export async function addFavorite(storeId: string, accessToken: string) {
+  return request<ApiFavorite>('/users/me/favorites', {
     method: 'POST',
     headers: buildHeaders(accessToken),
     body: JSON.stringify({ store_id: storeId }),
   });
 }
 
-export async function removeFavorite(userId: string, storeId: string, accessToken: string) {
-  await request<void>(`/users/${userId}/favorites/${storeId}`, {
+export async function removeFavorite(storeId: string, accessToken: string) {
+  await request<void>(`/users/me/favorites/${storeId}`, {
     method: 'DELETE',
     headers: buildHeaders(accessToken),
   });

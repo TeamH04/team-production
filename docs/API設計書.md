@@ -25,15 +25,15 @@
 
 ### ユーザー関連
 
-| Method   | Endpoint                             | 概要                                 | 作成   |
-| :------- | :----------------------------------- | :----------------------------------- | :----- |
-| `GET`    | `/api/users/:id`                     | 特定ユーザーのプロフィールを取得     | 進行中 |
-| `PUT`    | `/api/users/:id`                     | プロフィール更新（ユーザー本人のみ） | 進行中 |
-| `GET`    | `/api/users/me`                      | ログインユーザー自身の情報を返す     | 進行中 |
-| `GET`    | `/api/users/:id/favorites`           | お気に入り店舗一覧を取得             | 進行中 |
-| `POST`   | `/api/users/:id/favorites`           | 店舗をお気に入り登録                 | 進行中 |
-| `DELETE` | `/api/users/:id/favorites/:store_id` | お気に入り解除                       | 進行中 |
-| `GET`    | `/api/users/:id/reviews`             | ユーザーのレビュー一覧を取得         | 完了   |
+| Method   | Endpoint                            | 概要                                 | 作成   |
+| :------- | :---------------------------------- | :----------------------------------- | :----- |
+| `GET`    | `/api/users/:id`                    | 特定ユーザーのプロフィールを取得     | 進行中 |
+| `PUT`    | `/api/users/:id`                    | プロフィール更新（ユーザー本人のみ） | 進行中 |
+| `GET`    | `/api/users/me`                     | ログインユーザー自身の情報を返す     | 進行中 |
+| `GET`    | `/api/users/me/favorites`           | お気に入り店舗一覧を取得             | 進行中 |
+| `POST`   | `/api/users/me/favorites`           | 店舗をお気に入り登録                 | 進行中 |
+| `DELETE` | `/api/users/me/favorites/:store_id` | お気に入り解除                       | 進行中 |
+| `GET`    | `/api/users/:id/reviews`            | ユーザーのレビュー一覧を取得         | 完了   |
 
 ---
 

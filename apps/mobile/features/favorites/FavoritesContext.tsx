@@ -31,7 +31,7 @@ const AUTH_REQUIRED = 'auth_required';
 type AuthState =
   | { mode: 'local' }
   | { mode: 'unauthenticated' }
-  | { mode: 'remote'; userId: string; token: string };
+  | { mode: 'remote'; token: string };
 
 async function resolveAuth(): Promise<AuthState> {
   if (!isSupabaseConfigured()) {
@@ -48,7 +48,7 @@ async function resolveAuth(): Promise<AuthState> {
     return { mode: 'unauthenticated' };
   }
 
-  return { mode: 'remote', userId: user.id, token };
+  return { mode: 'remote', token };
 }
 
 type FavoritesDependencies = {
@@ -100,7 +100,7 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
       setFavorites(new Set());
       return;
     }
-    const data = await getDependencies().fetchUserFavorites(auth.userId, auth.token);
+    const data = await getDependencies().fetchUserFavorites(auth.token);
     setFavorites(new Set(data.map(item => item.store_id)));
   }, []);
 
@@ -114,7 +114,7 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
     if (auth.mode === 'unauthenticated') {
       throw new Error(AUTH_REQUIRED);
     }
-    await getDependencies().addFavoriteApi(auth.userId, shopId, auth.token);
+    await getDependencies().addFavoriteApi(shopId, auth.token);
     setFavorites(prev => new Set(prev).add(shopId));
   }, []);
 
@@ -132,7 +132,7 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
     if (auth.mode === 'unauthenticated') {
       throw new Error(AUTH_REQUIRED);
     }
-    await getDependencies().removeFavoriteApi(auth.userId, shopId, auth.token);
+    await getDependencies().removeFavoriteApi(shopId, auth.token);
     setFavorites(prev => {
       const next = new Set(prev);
       next.delete(shopId);

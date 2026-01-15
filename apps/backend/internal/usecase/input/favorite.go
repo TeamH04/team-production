@@ -8,7 +8,7 @@ import (
 
 // FavoriteUseCase defines inbound port for favorite operations.
 type FavoriteUseCase interface {
-	GetUserFavorites(ctx context.Context, userID string) ([]entity.Favorite, error)
+	GetMyFavorites(ctx context.Context, userID string) ([]entity.Favorite, error)
 	AddFavorite(ctx context.Context, userID string, storeID string) (*entity.Favorite, error)
 	RemoveFavorite(ctx context.Context, userID string, storeID string) error
 }
