@@ -54,7 +54,23 @@ const polyfilledCrypto: CryptoLike = {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const globalAny = globalThis as any;
 if (!globalAny.crypto) {
+  // cryptoオブジェクトが存在しない場合は、ポリフィル全体を設定
   globalAny.crypto = polyfilledCrypto;
 } else {
-  Object.assign(globalAny.crypto, polyfilledCrypto);
+  // 既存のcryptoオブジェクトがある場合は、存在しないプロパティのみを設定
+  // 注意: subtle等のread-onlyプロパティは上書きできないため、個別に設定する
+  if (!globalAny.crypto.getRandomValues) {
+    globalAny.crypto.getRandomValues = polyfilledCrypto.getRandomValues;
+  }
+  if (!globalAny.crypto.randomUUID) {
+    globalAny.crypto.randomUUID = polyfilledCrypto.randomUUID;
+  }
+  // subtleはgetterのみのプロパティの場合があるため、存在しない場合のみ設定を試みる
+  if (!globalAny.crypto.subtle) {
+    try {
+      globalAny.crypto.subtle = polyfillSubtle;
+    } catch {
+      // read-onlyの場合は無視（既存のsubtle実装を使用）
+    }
+  }
 }
