@@ -1,3 +1,12 @@
+/**
+ * React Native / Expo 向け Web Crypto API ポリフィル
+ *
+ * このモジュールは React Native 環境で Web Crypto API を利用可能にするポリフィルです
+ * PKCE認証などで必要な crypto.subtle.digest (SHA-256) やその他の暗号関数を提供します
+ *
+ * 重要: react-native-get-random-values は crypto.getRandomValues を使用する
+ * コードより先にインポートする必要がある
+ */
 import 'react-native-get-random-values';
 
 import * as ExpoCrypto from 'expo-crypto';
