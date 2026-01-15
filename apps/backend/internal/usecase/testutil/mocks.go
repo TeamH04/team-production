@@ -267,13 +267,13 @@ func (m *MockUserRepository) Create(ctx context.Context, user *entity.User) erro
 	return nil
 }
 
-func (m *MockUserRepository) Update(ctx context.Context, user *entity.User) error {
+func (m *MockUserRepository) Update(ctx context.Context, user entity.User) error {
 	if m.UpdateErr != nil {
 		return m.UpdateErr
 	}
 	for i := range m.Users {
 		if m.Users[i].UserID == user.UserID {
-			m.Users[i] = *user
+			m.Users[i] = user
 			return nil
 		}
 	}
