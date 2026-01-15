@@ -2,7 +2,7 @@
 
 ## 概要
 
-- Go 1.24.6 / Echo / GORM / PostgreSQL の API サーバー。
+- Go 1.24 / Echo / GORM / PostgreSQL の API サーバー。
 - Supabase Auth/Storage 連携と JWT 検証ミドルウェアで RBAC を適用。
 - 主要ルーティング: `/api/auth`、`/api/stores`、`/api/menus`、`/api/reviews`、`/api/users`、`/api/favorites`、`/api/reports`、`/api/admin/*`、`/api/media/*`。
 
