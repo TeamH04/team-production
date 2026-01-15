@@ -49,9 +49,7 @@ export default function ReviewModalScreen() {
         }));
         setMenuOptions(mapped);
       })
-      .catch(err => {
-        console.warn('Failed to load menus', err);
-      })
+      .catch(() => undefined)
       .finally(() => {
         if (active) {
           setMenuLoading(false);

@@ -7,6 +7,7 @@ export type ApiFile = {
   file_id: string;
   file_name: string;
   object_key: string;
+  url?: string | null;
   content_type?: string | null;
 };
 
@@ -70,6 +71,13 @@ export type ApiReview = {
   files?: ApiFile[];
 };
 
+export type ApiFavorite = {
+  user_id: string;
+  store_id: string;
+  created_at: string;
+  store?: ApiStore | null;
+};
+
 export type ReviewSort = 'new' | 'liked';
 
 export type UploadFileInput = {
@@ -81,7 +89,8 @@ export type UploadFileInput = {
 export type SignedUploadFile = {
   file_id: string;
   object_key: string;
-  upload_url: string;
+  path: string;
+  token: string;
   content_type: string;
 };
 
@@ -91,6 +100,7 @@ type UploadResponse = {
 
 type ReviewsResponse = ApiReview[];
 type StoresResponse = ApiStore[];
+type FavoritesResponse = ApiFavorite[];
 
 type FetchOptions = Parameters<typeof fetch>[1];
 type HeaderInit = NonNullable<FetchOptions>['headers'];
@@ -127,9 +137,11 @@ async function request<T>(path: string, options: FetchOptions = {}): Promise<T> 
     try {
       const text = await res.text();
       if (text) {
-        const body = JSON.parse(text) as { message?: string };
+        const body = JSON.parse(text) as { message?: string; error?: string };
         if (body?.message) {
           message = body.message;
+        } else if (body?.error) {
+          message = body.error;
         }
       }
     } catch {
@@ -187,6 +199,28 @@ export async function fetchUserReviews(userId: string, accessToken?: string) {
     headers: buildHeaders(accessToken),
   });
   return reviews ?? [];
+}
+
+export async function fetchUserFavorites(accessToken: string) {
+  const favorites = await request<FavoritesResponse | null>('/users/me/favorites', {
+    headers: buildHeaders(accessToken),
+  });
+  return favorites ?? [];
+}
+
+export async function addFavorite(storeId: string, accessToken: string) {
+  return request<ApiFavorite>('/users/me/favorites', {
+    method: 'POST',
+    headers: buildHeaders(accessToken),
+    body: JSON.stringify({ store_id: storeId }),
+  });
+}
+
+export async function removeFavorite(storeId: string, accessToken: string) {
+  await request<void>(`/users/me/favorites/${storeId}`, {
+    method: 'DELETE',
+    headers: buildHeaders(accessToken),
+  });
 }
 
 export async function fetchAuthMe(accessToken: string) {

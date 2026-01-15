@@ -8,17 +8,27 @@ import (
 	"github.com/TeamH04/team-production/apps/backend/internal/presentation/presenter"
 	"github.com/TeamH04/team-production/apps/backend/internal/security"
 	"github.com/TeamH04/team-production/apps/backend/internal/usecase/input"
+	"github.com/TeamH04/team-production/apps/backend/internal/usecase/output"
 )
 
 type ReviewHandler struct {
 	reviewUseCase input.ReviewUseCase
 	tokenVerifier security.TokenVerifier
+	storage       output.StorageProvider
+	bucket        string
 }
 
-func NewReviewHandler(reviewUseCase input.ReviewUseCase, tokenVerifier security.TokenVerifier) *ReviewHandler {
+func NewReviewHandler(
+	reviewUseCase input.ReviewUseCase,
+	tokenVerifier security.TokenVerifier,
+	storage output.StorageProvider,
+	bucket string,
+) *ReviewHandler {
 	return &ReviewHandler{
 		reviewUseCase: reviewUseCase,
 		tokenVerifier: tokenVerifier,
+		storage:       storage,
+		bucket:        bucket,
 	}
 }
 
@@ -42,7 +52,9 @@ func (h *ReviewHandler) GetReviewsByStoreID(c echo.Context) error {
 	if err != nil {
 		return err
 	}
-	return c.JSON(http.StatusOK, presenter.NewReviewResponses(reviews))
+	resp := presenter.NewReviewResponses(reviews)
+	attachSignedURLsToReviewResponses(c.Request().Context(), h.storage, h.bucket, resp)
+	return c.JSON(http.StatusOK, resp)
 }
 
 func (h *ReviewHandler) Create(c echo.Context) error {

@@ -109,9 +109,7 @@ export default function ShopDetailScreen() {
   useFocusEffect(
     useCallback(() => {
       if (!id) return;
-      loadReviews(id, reviewSort).catch(err => {
-        console.warn('Failed to load reviews', err);
-      });
+      loadReviews(id, reviewSort).catch(() => undefined);
     }, [id, loadReviews, reviewSort])
   );
 
@@ -141,8 +139,7 @@ export default function ShopDetailScreen() {
       message: `${shop.name}\n${shop.description}\n${url}`,
       title: shop.name,
       url,
-    }).catch(err => {
-      console.warn('Failed to share shop', err);
+    }).catch(() => {
       Alert.alert('共有に失敗しました', 'もう一度お試しください。');
     });
   }, [shop, webBaseUrl]);
@@ -185,6 +182,27 @@ export default function ShopDetailScreen() {
     },
     [router, shop, toggleLike]
   );
+
+  const handleToggleFavorite = useCallback(async () => {
+    if (!shop) return;
+    try {
+      await toggleFavorite(shop.id);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Unknown error';
+      if (message === 'auth_required') {
+        Alert.alert('ログインが必要です', 'お気に入りにはログインが必要です。', [
+          { text: 'キャンセル', style: 'cancel' },
+          { text: 'ログイン', onPress: () => router.push('/login') },
+        ]);
+        return;
+      }
+      const isCurrentlyFavorite = isFavorite ? isFavorite(shop.id) : false;
+      const title = isCurrentlyFavorite
+        ? 'お気に入りの削除に失敗しました'
+        : 'お気に入りの追加に失敗しました';
+      Alert.alert(title, message);
+    }
+  }, [router, shop, toggleFavorite, isFavorite]);
 
   if (storesLoading) {
     return (
@@ -308,7 +326,7 @@ export default function ShopDetailScreen() {
 
               <Pressable
                 accessibilityLabel='お気に入り切り替え'
-                onPress={() => toggleFavorite(shop.id)}
+                onPress={handleToggleFavorite}
                 style={({ pressed }) => [styles.favBtn, pressed && styles.btnPressed]}
               >
                 <Ionicons
@@ -494,7 +512,7 @@ export default function ShopDetailScreen() {
                     style={styles.reviewFiles}
                   >
                     {review.files.map(file => {
-                      const url = getPublicStorageUrl(file.objectKey);
+                      const url = file.url ?? getPublicStorageUrl(file.objectKey);
                       if (!url) return null;
                       return (
                         <Image
