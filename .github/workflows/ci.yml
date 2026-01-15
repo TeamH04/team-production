@@ -16,7 +16,6 @@ permissions:
 
 env:
   NODE_VERSION: '24.x'
-  GO_VERSION: '1.25'
 
 jobs:
   # ----- Detect Changed Paths -----
@@ -42,6 +41,7 @@ jobs:
               - 'apps/backend/**'
             mobile:
               - 'apps/mobile/**'
+              - 'packages/**'
             root:
               - 'package.json'
               - 'pnpm-lock.yaml'
@@ -107,8 +107,6 @@ jobs:
 
       - name: Setup Go
         uses: ./.github/actions/go-setup
-        with:
-          go-version: ${{ env.GO_VERSION }}
 
       - name: Wait for PostgreSQL
         uses: ./.github/actions/wait-for-postgres
@@ -207,8 +205,6 @@ jobs:
 
       - name: Setup Go
         uses: ./.github/actions/go-setup
-        with:
-          go-version: ${{ env.GO_VERSION }}
 
       - name: Build binary
         run: |
@@ -313,14 +309,12 @@ jobs:
 
       - name: Setup Go
         uses: ./.github/actions/go-setup
-        with:
-          go-version: ${{ env.GO_VERSION }}
 
       - name: Cache security tools
         uses: actions/cache@v4
         with:
           path: ~/go/bin
-          key: go-security-tools-${{ runner.os }}-${{ env.GO_VERSION }}
+          key: go-security-tools-${{ runner.os }}-${{ hashFiles('apps/backend/go.mod') }}
 
       - name: Install security tools
         run: |

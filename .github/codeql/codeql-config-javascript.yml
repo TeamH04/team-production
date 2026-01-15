@@ -1,0 +1,55 @@
+# CodeQL Configuration for JavaScript/TypeScript (React Native)
+# https://codeql.github.com/codeql-query-help/javascript/
+name: "JavaScript/TypeScript Security Analysis"
+
+# クエリスイートの選択
+queries:
+  - uses: security-and-quality
+
+# クエリパックの指定
+packs:
+  javascript:
+    - codeql/javascript-queries
+
+# 分析から除外するパス
+paths-ignore:
+  # テストファイル
+  - "**/*.test.ts"
+  - "**/*.test.tsx"
+  - "**/*.spec.ts"
+  - "**/*.spec.tsx"
+  - "**/__tests__/**"
+  - "**/test/**"
+  - "**/tests/**"
+  # モック・スタブ
+  - "**/__mocks__/**"
+  - "**/mock/**"
+  - "**/mocks/**"
+  - "**/fixtures/**"
+  # 生成されたファイル
+  - "**/generated/**"
+  - "**/*.generated.ts"
+  - "**/dist/**"
+  - "**/build/**"
+  - "**/.expo/**"
+  # 依存関係
+  - "**/node_modules/**"
+  # 設定ファイル（誤検知の原因になりやすい）
+  - "**/metro.config.js"
+  - "**/babel.config.js"
+  - "**/jest.config.js"
+  - "**/*.config.js"
+  - "**/*.config.ts"
+  # ドキュメント
+  - "**/docs/**"
+  - "**/examples/**"
+
+# 分析対象パス
+paths:
+  - "apps/mobile"
+  - "packages"
+
+# 脅威モデル設定
+# React Nativeアプリはリモート入力（API応答）が主な脅威
+threat-models:
+  - remote

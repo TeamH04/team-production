@@ -6,6 +6,7 @@ on:
     paths:
       - 'apps/backend/**'
       - '.github/workflows/backend-deploy.yml'
+      - '.github/actions/go-setup/**'
   workflow_dispatch:
     inputs:
       environment:
@@ -22,7 +23,6 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  GO_VERSION: '1.25'
   DOCKER_REGISTRY: 'ghcr.io'
   IMAGE_NAME: '${{ github.repository }}/backend'
 
@@ -107,8 +107,6 @@ jobs:
 
       - name: Setup Go
         uses: ./.github/actions/go-setup
-        with:
-          go-version: ${{ env.GO_VERSION }}
 
       - name: Install migrate tool
         run: go install -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@latest
