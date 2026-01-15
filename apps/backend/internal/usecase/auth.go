@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/TeamH04/team-production/apps/backend/internal/apperr"
-	"github.com/TeamH04/team-production/apps/backend/internal/domain"
+	"github.com/TeamH04/team-production/apps/backend/internal/domain/entity"
 	"github.com/TeamH04/team-production/apps/backend/internal/usecase/input"
 	"github.com/TeamH04/team-production/apps/backend/internal/usecase/output"
 )
@@ -15,7 +15,7 @@ type AuthProvider = output.AuthProvider
 
 // AuthUseCase は認証フローを司るユースケースです。
 type AuthUseCase interface {
-	Signup(ctx context.Context, input input.AuthSignupInput) (*domain.User, error)
+	Signup(ctx context.Context, input input.AuthSignupInput) (*entity.User, error)
 	Login(ctx context.Context, input input.AuthLoginInput) (*input.AuthSession, error)
 }
 
@@ -32,7 +32,7 @@ func NewAuthUseCase(authProvider AuthProvider, userRepo output.UserRepository) A
 	}
 }
 
-func (uc *authUseCase) Signup(ctx context.Context, input input.AuthSignupInput) (*domain.User, error) {
+func (uc *authUseCase) Signup(ctx context.Context, input input.AuthSignupInput) (*entity.User, error) {
 	if err := validateSignupInput(input); err != nil {
 		return nil, err
 	}
@@ -55,10 +55,11 @@ func (uc *authUseCase) Signup(ctx context.Context, input input.AuthSignupInput) 
 	}
 
 	now := time.Now()
-	user := &domain.User{
+	user := &entity.User{
 		UserID:    authUser.ID,
 		Name:      input.Name,
 		Email:     strings.ToLower(authUser.Email),
+		Provider:  "email",
 		Role:      authUser.Role,
 		CreatedAt: now,
 		UpdatedAt: now,

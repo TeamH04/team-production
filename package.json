@@ -1,7 +1,7 @@
 {
   "name": "team-production",
   "private": true,
-  "packageManager": "pnpm@10.27.0",
+  "packageManager": "pnpm@10.28.0+sha512.05df71d1421f21399e053fde567cea34d446fa02c76571441bfc1c7956e98e363088982d940465fd34480d4d90a0668bc12362f8aa88000a64e83d0b0e47be48",
   "engines": {
     "node": "24.x",
     "pnpm": ">=10"
@@ -16,6 +16,7 @@
     "lint:report:json": "node scripts/run-eslint-json.mjs",
     "lint:report:md": "node scripts/eslint-to-md.mjs",
     "lint:report": "pnpm run lint:report:prep && pnpm run lint:report:json && pnpm run lint:report:md",
+    "conflict:report": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/conflict-report.ps1",
     "fix": "eslint \"**/*.{ts,tsx,js,jsx}\" --fix",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
     "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md}\"",
@@ -47,7 +48,12 @@
     "overrides": {
       "@types/react": "~19.1.0",
       "@types/react-dom": "~19.1.0"
-    }
+    },
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "sharp",
+      "unrs-resolver"
+    ]
   },
   "type": "module",
   "version": "1.0.0"

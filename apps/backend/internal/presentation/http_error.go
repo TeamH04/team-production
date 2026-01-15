@@ -30,3 +30,7 @@ func NewUnauthorized(message string) error {
 func NewForbidden(message string) error {
 	return NewHTTPError(http.StatusForbidden, NewErrorResponse(message))
 }
+
+func NewInternalServerError(message string) error {
+	return NewHTTPError(http.StatusInternalServerError, NewErrorResponse(message))
+}

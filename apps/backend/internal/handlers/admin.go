@@ -1,11 +1,15 @@
 package handlers
 
 import (
-	"context"
 	"fmt"
+	"net/http"
 	"strings"
 
-	"github.com/TeamH04/team-production/apps/backend/internal/domain"
+	"github.com/labstack/echo/v4"
+
+	"github.com/TeamH04/team-production/apps/backend/internal/presentation"
+	"github.com/TeamH04/team-production/apps/backend/internal/presentation/presenter"
+	"github.com/TeamH04/team-production/apps/backend/internal/presentation/requestcontext"
 	"github.com/TeamH04/team-production/apps/backend/internal/usecase"
 	"github.com/TeamH04/team-production/apps/backend/internal/usecase/input"
 )
@@ -15,8 +19,6 @@ type AdminHandler struct {
 	reportUseCase input.ReportUseCase
 	userUseCase   input.UserUseCase
 }
-
-var _ AdminController = (*AdminHandler)(nil)
 
 type HandleReportCommand struct {
 	Action string
@@ -37,32 +39,82 @@ func NewAdminHandler(adminUseCase input.AdminUseCase, reportUseCase input.Report
 	}
 }
 
-func (h *AdminHandler) GetPendingStores(ctx context.Context) ([]domain.Store, error) {
-	return h.adminUseCase.GetPendingStores(ctx)
+func (h *AdminHandler) GetPendingStores(c echo.Context) error {
+	stores, err := h.adminUseCase.GetPendingStores(c.Request().Context())
+	if err != nil {
+		return err
+	}
+	return c.JSON(http.StatusOK, presenter.NewStoreResponses(stores))
 }
 
-func (h *AdminHandler) ApproveStore(ctx context.Context, storeID int64) error {
-	return h.adminUseCase.ApproveStore(ctx, storeID)
+func (h *AdminHandler) ApproveStore(c echo.Context) error {
+	storeID, err := parseUUIDParam(c, "id", "invalid store id")
+	if err != nil {
+		return err
+	}
+	if err := h.adminUseCase.ApproveStore(c.Request().Context(), storeID); err != nil {
+		return err
+	}
+	return c.JSON(http.StatusOK, presentation.NewMessageResponse("store approved successfully"))
 }
 
-func (h *AdminHandler) RejectStore(ctx context.Context, storeID int64) error {
-	return h.adminUseCase.RejectStore(ctx, storeID)
+func (h *AdminHandler) RejectStore(c echo.Context) error {
+	storeID, err := parseUUIDParam(c, "id", "invalid store id")
+	if err != nil {
+		return err
+	}
+	if err := h.adminUseCase.RejectStore(c.Request().Context(), storeID); err != nil {
+		return err
+	}
+	return c.JSON(http.StatusOK, presentation.NewMessageResponse("store rejected successfully"))
 }
 
-func (h *AdminHandler) GetReports(ctx context.Context) ([]domain.Report, error) {
-	return h.reportUseCase.GetAllReports(ctx)
+func (h *AdminHandler) GetReports(c echo.Context) error {
+	reports, err := h.reportUseCase.GetAllReports(c.Request().Context())
+	if err != nil {
+		return err
+	}
+	return c.JSON(http.StatusOK, presenter.NewReportResponses(reports))
 }
 
-func (h *AdminHandler) HandleReport(ctx context.Context, reportID int64, cmd HandleReportCommand) error {
+func (h *AdminHandler) HandleReport(c echo.Context) error {
+	reportID, err := parseInt64Param(c, "id", "invalid report id")
+	if err != nil {
+		return err
+	}
+	var dto handleReportDTO
+	if err := c.Bind(&dto); err != nil {
+		return presentation.NewBadRequest("invalid JSON")
+	}
+	cmd := dto.toCommand()
 	if err := cmd.Validate(); err != nil {
 		return err
 	}
-	return h.reportUseCase.HandleReport(ctx, reportID, input.HandleReportAction(cmd.Action))
+	if err := h.reportUseCase.HandleReport(c.Request().Context(), reportID, input.HandleReportAction(cmd.Action)); err != nil {
+		return err
+	}
+	return c.JSON(http.StatusOK, presentation.NewMessageResponse("report handled successfully"))
 }
 
-func (h *AdminHandler) GetUserByID(ctx context.Context, userID string) (*domain.User, error) {
-	if userID == "" {
-		return nil, usecase.ErrInvalidInput
+func (h *AdminHandler) GetUserByID(c echo.Context) error {
+	userFromCtx, err := requestcontext.GetUserFromContext(c.Request().Context())
+	if err != nil {
+		return usecase.ErrUnauthorized
 	}
-	return h.userUseCase.GetUserByID(ctx, userID)
+
+	user, err := h.userUseCase.FindByID(c.Request().Context(), userFromCtx.UserID)
+	if err != nil {
+		return err
+	}
+
+	resp := presenter.NewUserResponse(user)
+	return c.JSON(http.StatusOK, resp)
+}
+
+type handleReportDTO struct {
+	Action string `json:"action"`
+}
+
+func (dto handleReportDTO) toCommand() HandleReportCommand {
+	return HandleReportCommand{Action: dto.Action}
 }

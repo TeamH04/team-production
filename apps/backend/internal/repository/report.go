@@ -3,7 +3,7 @@ package repository
 import (
 	"context"
 
-	"github.com/TeamH04/team-production/apps/backend/internal/domain"
+	"github.com/TeamH04/team-production/apps/backend/internal/domain/entity"
 	"github.com/TeamH04/team-production/apps/backend/internal/repository/model"
 	"github.com/TeamH04/team-production/apps/backend/internal/usecase/output"
 	"gorm.io/gorm"
@@ -18,37 +18,38 @@ func NewReportRepository(db *gorm.DB) output.ReportRepository {
 	return &reportRepository{db: db}
 }
 
-func (r *reportRepository) FindAll(ctx context.Context) ([]domain.Report, error) {
+func (r *reportRepository) FindAll(ctx context.Context) ([]entity.Report, error) {
 	var reports []model.Report
 	if err := r.db.WithContext(ctx).
 		Order("created_at desc").
 		Find(&reports).Error; err != nil {
 		return nil, mapDBError(err)
 	}
-	result := make([]domain.Report, len(reports))
-	for i, report := range reports {
-		result[i] = model.ReportModelToDomain(report)
-	}
-	return result, nil
+	return model.ToEntities[entity.Report, model.Report](reports), nil
 }
 
-func (r *reportRepository) FindByID(ctx context.Context, reportID int64) (*domain.Report, error) {
+func (r *reportRepository) FindByID(ctx context.Context, reportID int64) (*entity.Report, error) {
 	var report model.Report
 	if err := r.db.WithContext(ctx).First(&report, reportID).Error; err != nil {
 		return nil, mapDBError(err)
 	}
-	domainReport := model.ReportModelToDomain(report)
-	return &domainReport, nil
+
+	entityReport := report.Entity()
+	return &entityReport, nil
 }
 
-func (r *reportRepository) Create(ctx context.Context, report *domain.Report) error {
-	record := model.ReportModelFromDomain(report)
+func (r *reportRepository) Create(ctx context.Context, report *entity.Report) error {
+	record := model.Report{
+		ReportID:   report.ReportID,
+		UserID:     report.UserID,
+		TargetType: report.TargetType,
+		TargetID:   report.TargetID,
+		Reason:     report.Reason,
+		Status:     report.Status,
+	}
 	if err := r.db.WithContext(ctx).Create(record).Error; err != nil {
 		return mapDBError(err)
 	}
-	report.ReportID = record.ReportID
-	report.CreatedAt = record.CreatedAt
-	report.UpdatedAt = record.UpdatedAt
 	return nil
 }
 

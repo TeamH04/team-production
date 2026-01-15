@@ -2,6 +2,7 @@ package router
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
@@ -16,21 +17,38 @@ func configureErrorHandler(e *echo.Echo) {
 			return
 		}
 
+		requestInfo := fmt.Sprintf("http %s %s", c.Request().Method, c.Request().URL.Path)
+
 		var presErr *presentation.HTTPError
 		if errors.As(err, &presErr) {
+			logged := fmt.Errorf("%s: %w", requestInfo, err)
+			if presErr.Status >= http.StatusInternalServerError {
+				c.Logger().Error(logged)
+			} else {
+				c.Logger().Warn(logged)
+			}
 			sendHTTPError(c, presErr.Status, presErr.Body)
 			return
 		}
 
 		var httpErr *echo.HTTPError
 		if errors.As(err, &httpErr) {
+			logged := fmt.Errorf("%s: %w", requestInfo, err)
+			if httpErr.Code >= http.StatusInternalServerError {
+				c.Logger().Error(logged)
+			} else {
+				c.Logger().Warn(logged)
+			}
 			sendHTTPError(c, httpErr.Code, httpErr.Message)
 			return
 		}
 
 		status := presentation.StatusFromError(err)
+		logged := fmt.Errorf("%s: %w", requestInfo, err)
 		if status >= http.StatusInternalServerError {
-			c.Logger().Error(err)
+			c.Logger().Error(logged)
+		} else {
+			c.Logger().Warn(logged)
 		}
 		sendHTTPError(c, status, presentation.NewErrorResponse(err.Error()))
 	}

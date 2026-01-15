@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import { type Href, useRouter } from 'expo-router';
+import { useEffect, useState } from 'react';
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
-import { useRouter, type Href } from 'expo-router';
 
 import { palette } from '@/constants/palette';
 import { checkIsOwner } from '@/lib/auth';
@@ -79,7 +79,12 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     padding: 16,
   },
-  cardTitle: { color: palette.primaryText, fontSize: 16, fontWeight: '700', marginBottom: 12 },
+  cardTitle: {
+    color: palette.primaryText,
+    fontSize: 16,
+    fontWeight: '700',
+    marginBottom: 12,
+  },
   center: { alignItems: 'center', flex: 1, justifyContent: 'center' },
   linkBtn: {
     backgroundColor: palette.secondarySurface,
@@ -88,7 +93,12 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   linkText: { color: palette.textOnSecondary, fontWeight: '700' },
-  screen: { backgroundColor: palette.background, flex: 1, paddingHorizontal: 24, paddingTop: 24 },
+  screen: {
+    backgroundColor: palette.background,
+    flex: 1,
+    paddingHorizontal: 24,
+    paddingTop: 24,
+  },
   subtitle: { color: palette.secondaryText, marginBottom: 20, marginTop: 8 },
   title: { color: palette.primaryText, fontSize: 24, fontWeight: '700' },
 });

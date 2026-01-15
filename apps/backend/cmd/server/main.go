@@ -7,6 +7,7 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/TeamH04/team-production/apps/backend/internal/config"
+	"github.com/TeamH04/team-production/apps/backend/internal/repository/model"
 	"github.com/TeamH04/team-production/apps/backend/internal/router"
 )
 
@@ -21,6 +22,13 @@ func main() {
 	db, err := gorm.Open(postgres.Open(cfg.DBURL), &gorm.Config{})
 	if err != nil {
 		log.Fatalf("failed to connect database: %v", err)
+	}
+
+	if err := db.SetupJoinTable(&model.Review{}, "Menus", &model.ReviewMenu{}); err != nil {
+		log.Fatalf("failed to setup join table review_menus: %v", err)
+	}
+	if err := db.SetupJoinTable(&model.Review{}, "Files", &model.ReviewFile{}); err != nil {
+		log.Fatalf("failed to setup join table review_files: %v", err)
 	}
 
 	// 依存性の構築

@@ -3,7 +3,7 @@ package input
 import (
 	"context"
 
-	"github.com/TeamH04/team-production/apps/backend/internal/domain"
+	"github.com/TeamH04/team-production/apps/backend/internal/domain/entity"
 )
 
 type AuthSignupInput struct {
@@ -33,6 +33,6 @@ type AuthSession struct {
 
 // AuthUseCase defines inbound port for authentication flows.
 type AuthUseCase interface {
-	Signup(ctx context.Context, input AuthSignupInput) (*domain.User, error)
+	Signup(ctx context.Context, input AuthSignupInput) (*entity.User, error)
 	Login(ctx context.Context, input AuthLoginInput) (*AuthSession, error)
 }
