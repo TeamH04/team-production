@@ -1,5 +1,4 @@
 import { Ionicons } from '@expo/vector-icons';
-import { Image } from 'expo-image';
 import { useLocalSearchParams, useNavigation } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useState } from 'react';
@@ -43,7 +42,6 @@ interface ExtendedMenuItem {
   category: string;
   description?: string;
   id: string;
-  imageUrl?: string;
   name: string;
   price: string;
 }
@@ -73,70 +71,72 @@ export default function ShopMenuScreen() {
     return Array.from(new Set(categoriesFromMenus));
   }, [menuItems]);
 
-  const availableCategories = useMemo(() => {
-    return apiCategories;
-  }, [apiCategories]);
-
-  const hasCategoryTabs = availableCategories.length > 0;
+  const hasCategoryTabs = apiCategories.length > 0;
 
   const categories = useMemo(() => {
     if (!hasCategoryTabs) return ['すべて'];
 
-    const orderedFromMap = mappedCategories.filter(category =>
-      availableCategories.includes(category)
-    );
-    const remainingCategories = availableCategories.filter(
+    const orderedFromMap = mappedCategories.filter(category => apiCategories.includes(category));
+    const remainingCategories = apiCategories.filter(
       category => !orderedFromMap.includes(category)
     );
 
     return ['すべて', 'おすすめ', ...orderedFromMap, ...remainingCategories];
-  }, [availableCategories, hasCategoryTabs, mappedCategories]);
+  }, [apiCategories, hasCategoryTabs, mappedCategories]);
 
   const [selectedCategory, setSelectedCategory] = useState('');
-  const activeCategory = selectedCategory || categories[0] || '';
+
+  // Calculate activeCategory directly during render.
+  // If selectedCategory is valid and in the list, use it.
+  // Otherwise, default to the first category (or empty string).
+  const activeCategory =
+    selectedCategory && categories.includes(selectedCategory)
+      ? selectedCategory
+      : categories[0] || '';
 
   useEffect(() => {
-    if (selectedCategory && !categories.includes(selectedCategory)) {
-      setSelectedCategory('');
-    }
-  }, [categories, selectedCategory]);
+    let active = true;
 
-  const loadMenus = useCallback(async (storeId: string) => {
-    setLoading(true);
-    setError(null);
+    const fetchData = async () => {
+      if (id && (!shop?.menu || shop.menu.length === 0)) {
+        setLoading(true);
+        setError(null);
+        try {
+          const menus = await fetchStoreMenus(id);
+          if (!active) return;
+          const mapped: ExtendedMenuItem[] = menus.map(menu => ({
+            id: menu.menu_id,
+            name: menu.name,
+            category: menu.category?.trim() ?? '',
+            price: menu.price != null ? `¥${menu.price.toLocaleString()}` : '',
+            description: menu.description ?? undefined,
+          }));
+          setMenuItems(mapped);
+        } catch (err) {
+          if (!active) return;
+          const message = err instanceof Error ? err.message : 'メニューの取得に失敗しました';
+          setError(message);
+        } finally {
+          if (active) setLoading(false);
+        }
+      } else if (shop?.menu && shop.menu.length > 0) {
+        const normalized: ExtendedMenuItem[] = shop.menu.map(item => ({
+          id: item.id,
+          name: item.name,
+          category: item.category,
+          price: item.price ?? '',
+          description: item.description,
+        }));
+        setMenuItems(normalized);
+      }
+    };
 
-    try {
-      const menus = await fetchStoreMenus(storeId);
-      const mapped: ExtendedMenuItem[] = menus.map(menu => ({
-        id: menu.menu_id,
-        name: menu.name,
-        category: (menu as { category?: string | null }).category?.trim() ?? '',
-        price: menu.price != null ? `¥${menu.price.toLocaleString()}` : '',
-        description: menu.description ?? undefined,
-      }));
-      setMenuItems(mapped);
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'メニューの取得に失敗しました';
-      setError(message);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+    void fetchData();
 
-  useEffect(() => {
-    if (!shop?.menu && id) {
-      void loadMenus(id);
-    } else if (shop?.menu) {
-      const normalized: ExtendedMenuItem[] = shop.menu.map(item => ({
-        id: item.id,
-        name: item.name,
-        category: item.category,
-        price: item.price ?? '',
-        description: undefined,
-      }));
-      setMenuItems(normalized);
-    }
-  }, [id, loadMenus, shop]);
+    return () => {
+      active = false;
+    };
+  }, [id, shop]);
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -160,8 +160,9 @@ export default function ShopMenuScreen() {
 
       const groups = targetItems.reduce(
         (acc, item) => {
-          if (!acc[item.category]) acc[item.category] = [];
-          acc[item.category].push(item);
+          const key = item.category || 'その他';
+          if (!acc[key]) acc[key] = [];
+          acc[key].push(item);
           return acc;
         },
         {} as Record<string, ExtendedMenuItem[]>
@@ -176,6 +177,78 @@ export default function ShopMenuScreen() {
     const filtered = items.filter(item => item.category === activeCategory);
     return filtered.length > 0 ? [{ data: filtered, title: activeCategory }] : [];
   }, [menuItems, activeCategory]);
+
+  const renderItem = useCallback(
+    ({
+      item,
+      index,
+      section,
+    }: {
+      item: ExtendedMenuItem;
+      index: number;
+      section: { title: string };
+    }) => {
+      const showBadge =
+        activeCategory === 'すべて' && index === 0 && item.category === section.title;
+
+      return (
+        <View style={styles.menuCard}>
+          <View style={styles.cardInner}>
+            <View style={styles.menuInfo}>
+              <View style={styles.menuHeaderRow}>
+                <View style={styles.nameContainer}>
+                  <Text numberOfLines={1} style={styles.menuName}>
+                    {item.name}
+                  </Text>
+                  {showBadge && (
+                    <View style={styles.recommendBadge}>
+                      <Text style={styles.recommendText}>人気</Text>
+                    </View>
+                  )}
+                </View>
+
+                <View style={styles.priceContainer}>
+                  <Text style={styles.menuPrice}>{item.price || '---'}</Text>
+                  <Text style={styles.taxLabel}>(税込)</Text>
+                </View>
+              </View>
+
+              {(item.category || item.description) && (
+                <View style={styles.metaRow}>
+                  {item.category &&
+                  (activeCategory === 'すべて' || activeCategory === 'おすすめ') ? (
+                    <View style={styles.categoryBadge}>
+                      <Text style={styles.categoryBadgeText}>{item.category}</Text>
+                    </View>
+                  ) : null}
+                  {item.description ? (
+                    <Text numberOfLines={2} style={styles.menuDescription}>
+                      {item.description}
+                    </Text>
+                  ) : null}
+                </View>
+              )}
+            </View>
+          </View>
+        </View>
+      );
+    },
+    [activeCategory]
+  );
+
+  const renderSectionHeader = useCallback(
+    ({ section: { title } }: { section: { title: string } }) => {
+      if (activeCategory !== 'すべて' && activeCategory !== 'おすすめ') {
+        return null;
+      }
+      return (
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>{title}</Text>
+        </View>
+      );
+    },
+    [activeCategory]
+  );
 
   if (loading) {
     return (
@@ -210,7 +283,7 @@ export default function ShopMenuScreen() {
       <View style={styles.pageTitleWrapper}>
         <View style={styles.pageTitleCard}>
           <Text style={styles.pageTitle}>メニュー</Text>
-          {shop?.name ? <Text style={styles.pageSubtitle}>{shop.name}</Text> : null}
+          {shop.name ? <Text style={styles.pageSubtitle}>{shop.name}</Text> : null}
           <Text style={styles.pageHint}>提供中のメニューからお選びください</Text>
         </View>
       </View>
@@ -253,70 +326,8 @@ export default function ShopMenuScreen() {
         }
         contentContainerStyle={styles.listContent}
         keyExtractor={item => item.id}
-        renderItem={({ item, index }) => {
-          const showBadge =
-            activeCategory === 'すべて' && index === 0 && item.category === sections[0]?.title;
-
-          return (
-            <View style={styles.menuCard}>
-              <View style={styles.cardInner}>
-                {item.imageUrl && (
-                  <Image
-                    contentFit='cover'
-                    source={{ uri: item.imageUrl }}
-                    style={styles.menuImage}
-                  />
-                )}
-
-                <View style={styles.menuInfo}>
-                  <View style={styles.menuHeaderRow}>
-                    <View style={styles.nameContainer}>
-                      <Text numberOfLines={1} style={styles.menuName}>
-                        {item.name}
-                      </Text>
-                      {showBadge && (
-                        <View style={styles.recommendBadge}>
-                          <Text style={styles.recommendText}>人気</Text>
-                        </View>
-                      )}
-                    </View>
-
-                    <View style={styles.priceContainer}>
-                      <Text style={styles.menuPrice}>{item.price || '---'}</Text>
-                      <Text style={styles.taxLabel}>(税込)</Text>
-                    </View>
-                  </View>
-
-                  {(item.category || item.description) && (
-                    <View style={styles.metaRow}>
-                      {item.category ? (
-                        <View style={styles.categoryChip}>
-                          <Text style={styles.categoryChipText}>{item.category}</Text>
-                        </View>
-                      ) : null}
-                      {item.description ? (
-                        <Text numberOfLines={2} style={styles.menuDescription}>
-                          {item.description}
-                        </Text>
-                      ) : null}
-                    </View>
-                  )}
-                </View>
-              </View>
-            </View>
-          );
-        }}
-        renderSectionHeader={({ section: { title } }) => {
-          if (activeCategory !== 'すべて' && activeCategory !== 'おすすめ') {
-            return null;
-          }
-          if (!title) return null;
-          return (
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>{title}</Text>
-            </View>
-          );
-        }}
+        renderItem={renderItem}
+        renderSectionHeader={renderSectionHeader}
         sections={sections}
         stickySectionHeadersEnabled={true}
       />
@@ -330,7 +341,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     paddingVertical: 16,
   },
-  categoryChip: {
+  categoryBadge: {
     backgroundColor: COLORS.BADGE_BG,
     borderRadius: 12,
     marginRight: 8,
@@ -338,7 +349,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 4,
   },
-  categoryChipText: {
+  categoryBadgeText: {
     color: COLORS.BADGE_TEXT,
     fontSize: 11,
     fontWeight: '700',
@@ -385,13 +396,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginBottom: 4,
-  },
-  menuImage: {
-    backgroundColor: COLORS.IMAGE_BG,
-    borderRadius: 6,
-    height: 64,
-    marginRight: 12,
-    width: 64,
   },
   menuInfo: {
     flex: 1,

@@ -30,6 +30,7 @@ export type ApiMenu = {
   name: string;
   price?: number | null;
   description?: string | null;
+  category?: string | null;
 };
 
 export type ApiStore = {
