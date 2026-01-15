@@ -1,11 +1,11 @@
+BEGIN;
+
 CREATE EXTENSION IF NOT EXISTS postgis;
 
-DROP TABLE IF EXISTS stations;
-
-CREATE TABLE stations (
+CREATE TABLE IF NOT EXISTS stations (
   id   BIGSERIAL PRIMARY KEY,      -- 連番ID
   name TEXT NOT NULL,              -- 駅名
-  kana TEXT NOT NULL,
+  kana TEXT NOT NULL,              -- 駅名のかな表記
   kind TEXT NOT NULL,              -- 区分け（三宮・元町 / 須磨 など）
   lat  DOUBLE PRECISION NULL,
   lng  DOUBLE PRECISION NULL,
@@ -159,3 +159,5 @@ INSERT INTO stations (name, kana, kind, lat, lng) VALUES
 ('総合運動公園駅','そうごううんどうこうえん','西神(西区)',34.681703,135.075783),
 ('名谷駅','みょうだに','西神(西区)',34.679328,135.094211),
 ('妙法寺駅','みょうほうじ','西神(西区)',34.675044,135.110119);
+
+COMMIT;
