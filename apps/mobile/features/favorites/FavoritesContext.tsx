@@ -1,4 +1,3 @@
-import type React from 'react';
 import {
   createContext,
   useCallback,
@@ -16,6 +15,8 @@ import {
 } from '@/lib/api';
 import { getAccessToken, getCurrentUser } from '@/lib/auth';
 import { getSupabase, isSupabaseConfigured } from '@/lib/supabase';
+
+import type { ReactNode } from 'react';
 
 // ---------------------------------------------
 // 型定義
@@ -110,7 +111,7 @@ const FavoritesContext = createContext<FavoritesContextValue | undefined>(undefi
 // ---------------------------------------------
 // Provider コンポーネント
 // ---------------------------------------------
-export function FavoritesProvider({ children }: { children: React.ReactNode }) {
+export function FavoritesProvider({ children }: { children: ReactNode }) {
   // お気に入りの状態を保持（Set を使用）
   const [favorites, setFavorites] = useState<FavoritesState>(() => new Set());
   // 操作中のshopIdを追跡（ダブルポスト防止）
@@ -197,7 +198,7 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
         });
       }
     },
-    [pendingOps, safeSetFavorites, safeSetPendingOps]
+    [pendingOps, safeSetFavorites, safeSetPendingOps],
   );
 
   // --- お気に入りから削除する処理（楽観的更新） ---
@@ -243,7 +244,7 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
         });
       }
     },
-    [pendingOps, safeSetFavorites, safeSetPendingOps]
+    [pendingOps, safeSetFavorites, safeSetPendingOps],
   );
 
   // --- お気に入りを追加/削除を切り替える処理 ---
@@ -256,7 +257,7 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
       }
       await addFavorite(shopId);
     },
-    [addFavorite, removeFavorite]
+    [addFavorite, removeFavorite],
   );
 
   useEffect(() => {
@@ -287,7 +288,7 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
       removeFavorite,
       loadFavorites,
     }),
-    [favorites, isOperationPending, addFavorite, removeFavorite, toggleFavorite, loadFavorites]
+    [favorites, isOperationPending, addFavorite, removeFavorite, toggleFavorite, loadFavorites],
   );
 
   // Provider でラップして子コンポーネントが利用できるようにする

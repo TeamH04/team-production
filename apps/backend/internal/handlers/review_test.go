@@ -28,7 +28,7 @@ func TestReviewHandler_GetReviewsByStoreID_Success(t *testing.T) {
 		},
 	}
 	mockVerifier := &testutil.MockTokenVerifier{}
-	h := handlers.NewReviewHandler(mockUC, mockVerifier)
+	h := handlers.NewReviewHandler(mockUC, mockVerifier, &testutil.MockStorageProvider{}, "test-bucket")
 
 	err := h.GetReviewsByStoreID(tc.Context)
 
@@ -47,7 +47,7 @@ func TestReviewHandler_GetReviewsByStoreID_WithAuth(t *testing.T) {
 	mockVerifier := &testutil.MockTokenVerifier{
 		Claims: &security.TokenClaims{UserID: "user-1"},
 	}
-	h := handlers.NewReviewHandler(mockUC, mockVerifier)
+	h := handlers.NewReviewHandler(mockUC, mockVerifier, &testutil.MockStorageProvider{}, "test-bucket")
 
 	err := h.GetReviewsByStoreID(tc.Context)
 
@@ -60,7 +60,7 @@ func TestReviewHandler_GetReviewsByStoreID_InvalidUUID(t *testing.T) {
 
 	mockUC := &testutil.MockReviewUseCase{}
 	mockVerifier := &testutil.MockTokenVerifier{}
-	h := handlers.NewReviewHandler(mockUC, mockVerifier)
+	h := handlers.NewReviewHandler(mockUC, mockVerifier, &testutil.MockStorageProvider{}, "test-bucket")
 
 	err := h.GetReviewsByStoreID(tc.Context)
 
@@ -76,7 +76,7 @@ func TestReviewHandler_GetReviewsByStoreID_UseCaseError(t *testing.T) {
 		GetByStoreIDErr: usecase.ErrStoreNotFound,
 	}
 	mockVerifier := &testutil.MockTokenVerifier{}
-	h := handlers.NewReviewHandler(mockUC, mockVerifier)
+	h := handlers.NewReviewHandler(mockUC, mockVerifier, &testutil.MockStorageProvider{}, "test-bucket")
 
 	err := h.GetReviewsByStoreID(tc.Context)
 
@@ -95,7 +95,7 @@ func TestReviewHandler_GetReviewsByStoreID_InvalidTokenContinues(t *testing.T) {
 	mockVerifier := &testutil.MockTokenVerifier{
 		Err: errors.New("invalid token"),
 	}
-	h := handlers.NewReviewHandler(mockUC, mockVerifier)
+	h := handlers.NewReviewHandler(mockUC, mockVerifier, &testutil.MockStorageProvider{}, "test-bucket")
 
 	err := h.GetReviewsByStoreID(tc.Context)
 
@@ -115,7 +115,7 @@ func TestReviewHandler_Create_Success(t *testing.T) {
 
 	mockUC := &testutil.MockReviewUseCase{}
 	mockVerifier := &testutil.MockTokenVerifier{}
-	h := handlers.NewReviewHandler(mockUC, mockVerifier)
+	h := handlers.NewReviewHandler(mockUC, mockVerifier, &testutil.MockStorageProvider{}, "test-bucket")
 
 	err := h.Create(tc.Context)
 
@@ -130,7 +130,7 @@ func TestReviewHandler_Create_Unauthorized(t *testing.T) {
 
 	mockUC := &testutil.MockReviewUseCase{}
 	mockVerifier := &testutil.MockTokenVerifier{}
-	h := handlers.NewReviewHandler(mockUC, mockVerifier)
+	h := handlers.NewReviewHandler(mockUC, mockVerifier, &testutil.MockStorageProvider{}, "test-bucket")
 
 	err := h.Create(tc.Context)
 
@@ -147,7 +147,7 @@ func TestReviewHandler_Create_InvalidUUID(t *testing.T) {
 
 	mockUC := &testutil.MockReviewUseCase{}
 	mockVerifier := &testutil.MockTokenVerifier{}
-	h := handlers.NewReviewHandler(mockUC, mockVerifier)
+	h := handlers.NewReviewHandler(mockUC, mockVerifier, &testutil.MockStorageProvider{}, "test-bucket")
 
 	err := h.Create(tc.Context)
 
@@ -164,7 +164,7 @@ func TestReviewHandler_Create_InvalidJSON(t *testing.T) {
 
 	mockUC := &testutil.MockReviewUseCase{}
 	mockVerifier := &testutil.MockTokenVerifier{}
-	h := handlers.NewReviewHandler(mockUC, mockVerifier)
+	h := handlers.NewReviewHandler(mockUC, mockVerifier, &testutil.MockStorageProvider{}, "test-bucket")
 
 	err := h.Create(tc.Context)
 
@@ -184,7 +184,7 @@ func TestReviewHandler_Create_UseCaseError(t *testing.T) {
 		CreateErr: usecase.ErrInvalidInput,
 	}
 	mockVerifier := &testutil.MockTokenVerifier{}
-	h := handlers.NewReviewHandler(mockUC, mockVerifier)
+	h := handlers.NewReviewHandler(mockUC, mockVerifier, &testutil.MockStorageProvider{}, "test-bucket")
 
 	err := h.Create(tc.Context)
 
@@ -203,7 +203,7 @@ func TestReviewHandler_LikeReview_Success(t *testing.T) {
 
 	mockUC := &testutil.MockReviewUseCase{}
 	mockVerifier := &testutil.MockTokenVerifier{}
-	h := handlers.NewReviewHandler(mockUC, mockVerifier)
+	h := handlers.NewReviewHandler(mockUC, mockVerifier, &testutil.MockStorageProvider{}, "test-bucket")
 
 	err := h.LikeReview(tc.Context)
 
@@ -217,7 +217,7 @@ func TestReviewHandler_LikeReview_Unauthorized(t *testing.T) {
 
 	mockUC := &testutil.MockReviewUseCase{}
 	mockVerifier := &testutil.MockTokenVerifier{}
-	h := handlers.NewReviewHandler(mockUC, mockVerifier)
+	h := handlers.NewReviewHandler(mockUC, mockVerifier, &testutil.MockStorageProvider{}, "test-bucket")
 
 	err := h.LikeReview(tc.Context)
 
@@ -233,7 +233,7 @@ func TestReviewHandler_LikeReview_InvalidUUID(t *testing.T) {
 
 	mockUC := &testutil.MockReviewUseCase{}
 	mockVerifier := &testutil.MockTokenVerifier{}
-	h := handlers.NewReviewHandler(mockUC, mockVerifier)
+	h := handlers.NewReviewHandler(mockUC, mockVerifier, &testutil.MockStorageProvider{}, "test-bucket")
 
 	err := h.LikeReview(tc.Context)
 
@@ -252,7 +252,7 @@ func TestReviewHandler_LikeReview_UseCaseError(t *testing.T) {
 		LikeErr: usecase.ErrReviewNotFound,
 	}
 	mockVerifier := &testutil.MockTokenVerifier{}
-	h := handlers.NewReviewHandler(mockUC, mockVerifier)
+	h := handlers.NewReviewHandler(mockUC, mockVerifier, &testutil.MockStorageProvider{}, "test-bucket")
 
 	err := h.LikeReview(tc.Context)
 
@@ -271,7 +271,7 @@ func TestReviewHandler_UnlikeReview_Success(t *testing.T) {
 
 	mockUC := &testutil.MockReviewUseCase{}
 	mockVerifier := &testutil.MockTokenVerifier{}
-	h := handlers.NewReviewHandler(mockUC, mockVerifier)
+	h := handlers.NewReviewHandler(mockUC, mockVerifier, &testutil.MockStorageProvider{}, "test-bucket")
 
 	err := h.UnlikeReview(tc.Context)
 
@@ -285,7 +285,7 @@ func TestReviewHandler_UnlikeReview_Unauthorized(t *testing.T) {
 
 	mockUC := &testutil.MockReviewUseCase{}
 	mockVerifier := &testutil.MockTokenVerifier{}
-	h := handlers.NewReviewHandler(mockUC, mockVerifier)
+	h := handlers.NewReviewHandler(mockUC, mockVerifier, &testutil.MockStorageProvider{}, "test-bucket")
 
 	err := h.UnlikeReview(tc.Context)
 
@@ -301,7 +301,7 @@ func TestReviewHandler_UnlikeReview_InvalidUUID(t *testing.T) {
 
 	mockUC := &testutil.MockReviewUseCase{}
 	mockVerifier := &testutil.MockTokenVerifier{}
-	h := handlers.NewReviewHandler(mockUC, mockVerifier)
+	h := handlers.NewReviewHandler(mockUC, mockVerifier, &testutil.MockStorageProvider{}, "test-bucket")
 
 	err := h.UnlikeReview(tc.Context)
 

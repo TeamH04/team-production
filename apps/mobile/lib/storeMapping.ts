@@ -1,8 +1,8 @@
-import type { Shop } from '@team/types';
-
-import type { ApiStore } from './api';
 import { AREA_OPTIONS, getAreaForCoordinates } from './stationArea';
 import { getPublicStorageUrl } from './storage';
+
+import type { ApiStore } from './api';
+import type { Shop } from '@team/types';
 
 const DEFAULT_CATEGORY: Shop['category'] = 'カフェ・喫茶';
 const DEFAULT_BUDGET: Shop['budget'] = '$$';
@@ -42,7 +42,7 @@ function normalizeImageUrl(value?: string | null): string | undefined {
 export function mapApiStoreToShop(store: ApiStore): Shop {
   // APIデータを優先使用、フォールバックはデフォルト値のみ
   const apiThumbnailUrl = normalizeImageUrl(
-    store.thumbnail_file?.url ?? store.thumbnail_file?.object_key
+    store.thumbnail_file?.url ?? store.thumbnail_file?.object_key,
   );
   const apiImageUrls = store.image_urls
     ?.map(normalizeImageUrl)

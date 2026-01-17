@@ -1,15 +1,15 @@
-﻿import { palette } from '@/constants/palette';
-import { TAB_BAR_SPACING } from '@/constants/TabBarSpacing';
-import { useReviews } from '@/features/reviews/ReviewsContext';
-import { useUser } from '@/features/user/UserContext';
-import { getSupabase } from '@/lib/supabase';
-import Ionicons from '@expo/vector-icons/Ionicons';
+﻿import Ionicons from '@expo/vector-icons/Ionicons';
 import { SHOPS } from '@team/shop-core';
 import { useRouter } from 'expo-router';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { Alert, Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { BackButton } from '@/components/BackButton';
+import { palette } from '@/constants/palette';
+import { TAB_BAR_SPACING } from '@/constants/TabBarSpacing';
+import { useReviews } from '@/features/reviews/ReviewsContext';
+import { useUser } from '@/features/user/UserContext';
+import { getSupabase } from '@/lib/supabase';
 
 /**
  * マイページ画面コンポーネント

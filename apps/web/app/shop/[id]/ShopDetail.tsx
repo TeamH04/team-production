@@ -1,19 +1,14 @@
 'use client';
 
+import { BUDGET_LABEL } from '@team/shop-core';
+import { colors } from '@team/theme';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 
 import type { Shop } from '@team/shop-core';
-import { colors } from '@team/theme';
 
 const FAVORITE_STORAGE_KEY = 'shop-web-favorites';
-
-const BUDGET_LABEL: Record<Shop['budget'], string> = {
-  $: '\u00a5',
-  $$: '\u00a5\u00a5',
-  $$$: '\u00a5\u00a5\u00a5',
-};
 
 type ShopDetailProps = {
   shop: Shop;
@@ -45,12 +40,12 @@ export default function ShopDetail({ shop }: ShopDetailProps) {
 
   const images = useMemo(
     () => (shop.imageUrls?.length ? shop.imageUrls : [shop.imageUrl]),
-    [shop.imageUrl, shop.imageUrls]
+    [shop.imageUrl, shop.imageUrls],
   );
 
   const mapOpenUrl = useMemo(
     () => `https://www.google.com/maps/search/?api=1&query=Google&query_place_id=${shop.placeId}`,
-    [shop.placeId]
+    [shop.placeId],
   );
 
   useEffect(() => {
@@ -102,7 +97,7 @@ export default function ShopDetail({ shop }: ShopDetailProps) {
 
   const toggleFavorite = () => {
     setFavorites(prev =>
-      prev.includes(shop.id) ? prev.filter(id => id !== shop.id) : [...prev, shop.id]
+      prev.includes(shop.id) ? prev.filter(id => id !== shop.id) : [...prev, shop.id],
     );
   };
 

@@ -11,7 +11,7 @@ export function getSupabase(): SupabaseClient {
   if (!client) {
     if (!supabaseUrl || !supabasePublishableKey) {
       throw new Error(
-        'Supabase is not configured. Set EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY before starting Expo.'
+        'Supabase is not configured. Set EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY before starting Expo.',
       );
     }
     client = createClient(supabaseUrl, supabasePublishableKey, {

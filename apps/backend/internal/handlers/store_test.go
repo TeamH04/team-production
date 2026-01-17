@@ -7,6 +7,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
@@ -15,6 +16,7 @@ import (
 	"github.com/TeamH04/team-production/apps/backend/internal/handlers"
 	"github.com/TeamH04/team-production/apps/backend/internal/usecase"
 	"github.com/TeamH04/team-production/apps/backend/internal/usecase/input"
+	"github.com/TeamH04/team-production/apps/backend/internal/usecase/output"
 )
 
 // mockStoreUseCase implements input.StoreUseCase for testing
@@ -68,6 +70,17 @@ func (m *mockStoreUseCase) DeleteStore(ctx context.Context, id string) error {
 	return m.deleteErr
 }
 
+// mockStorageProviderForStore implements output.StorageProvider for testing
+type mockStorageProviderForStore struct{}
+
+func (m *mockStorageProviderForStore) CreateSignedUpload(ctx context.Context, bucket, objectPath, contentType string, expiresIn time.Duration, upsert bool) (*output.SignedUpload, error) {
+	return nil, nil
+}
+
+func (m *mockStorageProviderForStore) CreateSignedDownload(ctx context.Context, bucket, objectPath string, expiresIn time.Duration) (*output.SignedDownload, error) {
+	return &output.SignedDownload{URL: "https://example.com/signed-url"}, nil
+}
+
 // --- GetStores Tests ---
 
 func TestStoreHandler_GetStores_Success(t *testing.T) {
@@ -82,7 +95,7 @@ func TestStoreHandler_GetStores_Success(t *testing.T) {
 			{StoreID: "store-2", Name: "Store 2"},
 		},
 	}
-	h := handlers.NewStoreHandler(mockUC)
+	h := handlers.NewStoreHandler(mockUC, &mockStorageProviderForStore{}, "test-bucket")
 
 	err := h.GetStores(c)
 
@@ -111,7 +124,7 @@ func TestStoreHandler_GetStores_Empty(t *testing.T) {
 	mockUC := &mockStoreUseCase{
 		stores: []entity.Store{},
 	}
-	h := handlers.NewStoreHandler(mockUC)
+	h := handlers.NewStoreHandler(mockUC, &mockStorageProviderForStore{}, "test-bucket")
 
 	err := h.GetStores(c)
 
@@ -132,7 +145,7 @@ func TestStoreHandler_GetStores_UseCaseError(t *testing.T) {
 	mockUC := &mockStoreUseCase{
 		getAllErr: usecase.ErrStoreNotFound,
 	}
-	h := handlers.NewStoreHandler(mockUC)
+	h := handlers.NewStoreHandler(mockUC, &mockStorageProviderForStore{}, "test-bucket")
 
 	err := h.GetStores(c)
 
@@ -156,7 +169,7 @@ func TestStoreHandler_GetStoreByID_Success(t *testing.T) {
 	mockUC := &mockStoreUseCase{
 		store: &entity.Store{StoreID: storeID, Name: "Test Store"},
 	}
-	h := handlers.NewStoreHandler(mockUC)
+	h := handlers.NewStoreHandler(mockUC, &mockStorageProviderForStore{}, "test-bucket")
 
 	err := h.GetStoreByID(c)
 
@@ -178,7 +191,7 @@ func TestStoreHandler_GetStoreByID_InvalidUUID(t *testing.T) {
 	c.SetParamValues("invalid-uuid")
 
 	mockUC := &mockStoreUseCase{}
-	h := handlers.NewStoreHandler(mockUC)
+	h := handlers.NewStoreHandler(mockUC, &mockStorageProviderForStore{}, "test-bucket")
 
 	err := h.GetStoreByID(c)
 
@@ -200,7 +213,7 @@ func TestStoreHandler_GetStoreByID_NotFound(t *testing.T) {
 	mockUC := &mockStoreUseCase{
 		getByIDErr: usecase.ErrStoreNotFound,
 	}
-	h := handlers.NewStoreHandler(mockUC)
+	h := handlers.NewStoreHandler(mockUC, &mockStorageProviderForStore{}, "test-bucket")
 
 	err := h.GetStoreByID(c)
 
@@ -226,7 +239,7 @@ func TestStoreHandler_CreateStore_Success(t *testing.T) {
 			Address: "New Address",
 		},
 	}
-	h := handlers.NewStoreHandler(mockUC)
+	h := handlers.NewStoreHandler(mockUC, &mockStorageProviderForStore{}, "test-bucket")
 
 	err := h.CreateStore(c)
 
@@ -247,7 +260,7 @@ func TestStoreHandler_CreateStore_InvalidJSON(t *testing.T) {
 	c := e.NewContext(req, rec)
 
 	mockUC := &mockStoreUseCase{}
-	h := handlers.NewStoreHandler(mockUC)
+	h := handlers.NewStoreHandler(mockUC, &mockStorageProviderForStore{}, "test-bucket")
 
 	err := h.CreateStore(c)
 
@@ -267,7 +280,7 @@ func TestStoreHandler_CreateStore_UseCaseError(t *testing.T) {
 	mockUC := &mockStoreUseCase{
 		createErr: usecase.ErrInvalidInput,
 	}
-	h := handlers.NewStoreHandler(mockUC)
+	h := handlers.NewStoreHandler(mockUC, &mockStorageProviderForStore{}, "test-bucket")
 
 	err := h.CreateStore(c)
 
@@ -293,7 +306,7 @@ func TestStoreHandler_UpdateStore_Success(t *testing.T) {
 	mockUC := &mockStoreUseCase{
 		store: &entity.Store{StoreID: storeID, Name: "Updated Store"},
 	}
-	h := handlers.NewStoreHandler(mockUC)
+	h := handlers.NewStoreHandler(mockUC, &mockStorageProviderForStore{}, "test-bucket")
 
 	err := h.UpdateStore(c)
 
@@ -317,7 +330,7 @@ func TestStoreHandler_UpdateStore_InvalidUUID(t *testing.T) {
 	c.SetParamValues("invalid-uuid")
 
 	mockUC := &mockStoreUseCase{}
-	h := handlers.NewStoreHandler(mockUC)
+	h := handlers.NewStoreHandler(mockUC, &mockStorageProviderForStore{}, "test-bucket")
 
 	err := h.UpdateStore(c)
 
@@ -339,7 +352,7 @@ func TestStoreHandler_UpdateStore_InvalidJSON(t *testing.T) {
 	c.SetParamValues(storeID)
 
 	mockUC := &mockStoreUseCase{}
-	h := handlers.NewStoreHandler(mockUC)
+	h := handlers.NewStoreHandler(mockUC, &mockStorageProviderForStore{}, "test-bucket")
 
 	err := h.UpdateStore(c)
 
@@ -361,7 +374,7 @@ func TestStoreHandler_DeleteStore_Success(t *testing.T) {
 	c.SetParamValues(storeID)
 
 	mockUC := &mockStoreUseCase{}
-	h := handlers.NewStoreHandler(mockUC)
+	h := handlers.NewStoreHandler(mockUC, &mockStorageProviderForStore{}, "test-bucket")
 
 	err := h.DeleteStore(c)
 
@@ -383,7 +396,7 @@ func TestStoreHandler_DeleteStore_InvalidUUID(t *testing.T) {
 	c.SetParamValues("invalid-uuid")
 
 	mockUC := &mockStoreUseCase{}
-	h := handlers.NewStoreHandler(mockUC)
+	h := handlers.NewStoreHandler(mockUC, &mockStorageProviderForStore{}, "test-bucket")
 
 	err := h.DeleteStore(c)
 
@@ -405,7 +418,7 @@ func TestStoreHandler_DeleteStore_NotFound(t *testing.T) {
 	mockUC := &mockStoreUseCase{
 		deleteErr: usecase.ErrStoreNotFound,
 	}
-	h := handlers.NewStoreHandler(mockUC)
+	h := handlers.NewStoreHandler(mockUC, &mockStorageProviderForStore{}, "test-bucket")
 
 	err := h.DeleteStore(c)
 

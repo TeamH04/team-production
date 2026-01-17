@@ -1,6 +1,7 @@
 package security_test
 
 import (
+	"context"
 	"testing"
 
 	"github.com/TeamH04/team-production/apps/backend/internal/security"
@@ -51,7 +52,7 @@ type mockTokenVerifier struct {
 	err    error
 }
 
-func (m *mockTokenVerifier) Verify(token string) (*security.TokenClaims, error) {
+func (m *mockTokenVerifier) Verify(ctx context.Context, token string) (*security.TokenClaims, error) {
 	if m.err != nil {
 		return nil, m.err
 	}
@@ -69,7 +70,7 @@ func TestTokenVerifier_Interface(t *testing.T) {
 		},
 	}
 
-	claims, err := verifier.Verify("test-token")
+	claims, err := verifier.Verify(context.Background(), "test-token")
 
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)

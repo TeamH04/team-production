@@ -44,7 +44,7 @@ export default function OwnerLoginScreen() {
       if (!isSupabaseConfigured()) {
         Alert.alert(
           '未設定',
-          'Supabaseの環境変数が未設定です。EXPO_PUBLIC_SUPABASE_URL と EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY を設定してください。'
+          'Supabaseの環境変数が未設定です。EXPO_PUBLIC_SUPABASE_URL と EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY を設定してください。',
         );
         return;
       }

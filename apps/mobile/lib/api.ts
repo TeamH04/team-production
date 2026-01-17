@@ -1,15 +1,11 @@
+import type { ApiFile, ApiMenu, ApiReview, ApiStore } from '@team/types';
+
+export type { ApiFile, ApiMenu, ApiReview, ApiStore };
+
 const API_BASE_URL = (process.env.EXPO_PUBLIC_API_BASE_URL ?? 'http://localhost:8080/api').replace(
   /\/$/,
-  ''
+  '',
 );
-
-export type ApiFile = {
-  file_id: string;
-  file_name: string;
-  object_key: string;
-  url?: string | null;
-  content_type?: string | null;
-};
 
 export type ApiUser = {
   user_id: string;
@@ -23,53 +19,6 @@ export type ApiUser = {
   role: string;
   created_at: string;
   updated_at: string;
-};
-
-export type ApiMenu = {
-  menu_id: string;
-  name: string;
-  price?: number | null;
-  description?: string | null;
-  category?: string | null;
-};
-
-export type ApiStore = {
-  store_id: string;
-  thumbnail_file_id?: string | null;
-  thumbnail_file?: ApiFile | null;
-  name: string;
-  opened_at?: string | null;
-  description?: string | null;
-  address: string;
-  place_id: string;
-  opening_hours?: string | null;
-  latitude: number;
-  longitude: number;
-  google_map_url?: string | null;
-  is_approved: boolean;
-  category: string;
-  budget: string;
-  average_rating: number;
-  distance_minutes: number;
-  tags: string[];
-  image_urls: string[];
-  created_at: string;
-  updated_at: string;
-  menus?: ApiMenu[];
-};
-
-export type ApiReview = {
-  review_id: string;
-  store_id: string;
-  user_id: string;
-  rating: number;
-  content?: string | null;
-  created_at: string;
-  likes_count?: number;
-  liked_by_me?: boolean;
-  menus?: ApiMenu[];
-  menu_ids?: string[];
-  files?: ApiFile[];
 };
 
 export type ApiFavorite = {
@@ -170,7 +119,7 @@ export async function fetchStoreReviews(storeId: string, sort: ReviewSort, acces
     `/stores/${storeId}/reviews${q ? `?${q}` : ''}`,
     {
       headers: buildHeaders(accessToken),
-    }
+    },
   );
   return reviews ?? [];
 }
@@ -233,7 +182,7 @@ export async function fetchAuthMe(accessToken: string) {
 export async function createReview(
   storeId: string,
   input: { rating: number; content?: string | null; file_ids?: string[]; menu_ids?: string[] },
-  accessToken: string
+  accessToken: string,
 ) {
   return request<ApiReview>(`/stores/${storeId}/reviews`, {
     method: 'POST',
@@ -250,7 +199,7 @@ export async function createReview(
 export async function createReviewUploads(
   storeId: string,
   files: UploadFileInput[],
-  accessToken: string
+  accessToken: string,
 ) {
   const payload = {
     store_id: storeId,

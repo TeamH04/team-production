@@ -53,7 +53,7 @@ setup: ## 🚀 Initial project setup (run from Git Bash on Windows)
 	$(PNPM) install
 	@printf '%b\n' "$(YELLOW)Setting up Git hooks...$(NC)"
 	@if [ ! -f .git/hooks/pre-commit ]; then \
-		printf '#!/bin/sh\npnpm run lint && pnpm run format:check\n' > .git/hooks/pre-commit; \
+		printf '#!/bin/sh\n# Pre-commit hook: フォーマット → リント → 型チェック\npnpm run format:check && pnpm run lint && pnpm run typecheck\n' > .git/hooks/pre-commit; \
 		chmod +x .git/hooks/pre-commit; \
 		printf '%b\n' "$(GREEN)✅ Pre-commit hook installed$(NC)"; \
 	fi

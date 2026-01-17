@@ -910,7 +910,7 @@ const getDistanceKm = (lat1: number, lon1: number, lat2: number, lon2: number) =
 
 export function getAreaForCoordinates(
   latitude?: number | null,
-  longitude?: number | null
+  longitude?: number | null,
 ): string | undefined {
   if (latitude == null || longitude == null) return undefined;
   let closestArea: string | undefined;

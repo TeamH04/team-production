@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
-import { ComponentProps, useEffect, useLayoutEffect, useMemo, useState } from 'react';
+import { type ComponentProps, useEffect, useLayoutEffect, useMemo, useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { palette } from '@/constants/palette';
@@ -77,7 +77,7 @@ export default function ReviewModalScreen() {
       { key: 'speed', label: '提供速度' },
       { key: 'cleanliness', label: '清潔感' },
     ],
-    []
+    [],
   );
   const ratingOptions = useMemo<RatingOption[]>(
     () => [
@@ -85,10 +85,10 @@ export default function ReviewModalScreen() {
       { value: 2, label: '普通', icon: 'remove-outline' },
       { value: 1, label: '不満', icon: 'sad-outline' },
     ],
-    []
+    [],
   );
   const [categoryRatings, setCategoryRatings] = useState<Record<string, number>>(() =>
-    Object.fromEntries(ratingCategories.map(category => [category.key, 0]))
+    Object.fromEntries(ratingCategories.map(category => [category.key, 0])),
   );
   const [comment, setComment] = useState(''); // コメント
   const [suggestion, setSuggestion] = useState('');
@@ -189,7 +189,7 @@ export default function ReviewModalScreen() {
           fileName: asset.fileName ?? `review-${Date.now()}-${index}.jpg`,
           contentType: asset.mimeType ?? 'image/jpeg',
           fileSize: asset.fileSize ?? undefined,
-        }))
+        })),
       );
       router.back();
     } catch (err) {
@@ -351,7 +351,7 @@ export default function ReviewModalScreen() {
                           key={item.id}
                           onPress={() =>
                             setSelectedMenuIds(prev =>
-                              selected ? prev.filter(id => id !== item.id) : [...prev, item.id]
+                              selected ? prev.filter(id => id !== item.id) : [...prev, item.id],
                             )
                           }
                           style={[styles.menuItem, selected && styles.menuItemSelected]}

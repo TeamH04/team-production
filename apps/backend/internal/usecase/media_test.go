@@ -15,15 +15,19 @@ import (
 
 // mockStorageProvider implements output.StorageProvider for testing
 type mockStorageProvider struct {
-	generateSignedUploadURLResult *output.SignedUploadURL
-	generateSignedUploadURLErr    error
+	createSignedUploadResult *output.SignedUpload
+	createSignedUploadErr    error
 }
 
-func (m *mockStorageProvider) GenerateSignedUploadURL(ctx context.Context, bucket, objectPath, contentType string, expiresIn time.Duration) (*output.SignedUploadURL, error) {
-	if m.generateSignedUploadURLErr != nil {
-		return nil, m.generateSignedUploadURLErr
+func (m *mockStorageProvider) CreateSignedUpload(ctx context.Context, bucket, objectPath, contentType string, expiresIn time.Duration, upsert bool) (*output.SignedUpload, error) {
+	if m.createSignedUploadErr != nil {
+		return nil, m.createSignedUploadErr
 	}
-	return m.generateSignedUploadURLResult, nil
+	return m.createSignedUploadResult, nil
+}
+
+func (m *mockStorageProvider) CreateSignedDownload(ctx context.Context, bucket, objectPath string, expiresIn time.Duration) (*output.SignedDownload, error) {
+	return nil, nil
 }
 
 // mockFileRepository implements output.FileRepository for testing
@@ -90,9 +94,9 @@ func (m *mockStoreRepoForMedia) Delete(ctx context.Context, id string) error {
 
 func TestCreateReviewUploads_Success(t *testing.T) {
 	storage := &mockStorageProvider{
-		generateSignedUploadURLResult: &output.SignedUploadURL{
-			URL:       "https://example.com/upload",
+		createSignedUploadResult: &output.SignedUpload{
 			Path:      "/path/to/file",
+			Token:     "test-token",
 			ExpiresIn: 15 * time.Minute,
 		},
 	}
@@ -110,8 +114,8 @@ func TestCreateReviewUploads_Success(t *testing.T) {
 	if len(result) != 1 {
 		t.Errorf("expected 1 result, got %d", len(result))
 	}
-	if result[0].UploadURL != "https://example.com/upload" {
-		t.Errorf("expected UploadURL https://example.com/upload, got %s", result[0].UploadURL)
+	if result[0].Path != "/path/to/file" {
+		t.Errorf("expected Path /path/to/file, got %s", result[0].Path)
 	}
 }
 
@@ -212,8 +216,8 @@ func TestCreateReviewUploads_ValidContentTypes(t *testing.T) {
 	for _, contentType := range validTypes {
 		t.Run(contentType, func(t *testing.T) {
 			storage := &mockStorageProvider{
-				generateSignedUploadURLResult: &output.SignedUploadURL{
-					URL: "https://example.com/upload",
+				createSignedUploadResult: &output.SignedUpload{
+					Path: "/path/to/file",
 				},
 			}
 			fileRepo := &mockFileRepository{}
@@ -310,7 +314,7 @@ func TestCreateReviewUploads_LinkToStoreError(t *testing.T) {
 
 func TestCreateReviewUploads_StorageProviderError(t *testing.T) {
 	storageErr := errors.New("storage error")
-	storage := &mockStorageProvider{generateSignedUploadURLErr: storageErr}
+	storage := &mockStorageProvider{createSignedUploadErr: storageErr}
 	fileRepo := &mockFileRepository{}
 	storeRepo := &mockStoreRepoForMedia{findByIDResult: &entity.Store{StoreID: "store-1"}}
 
@@ -326,8 +330,8 @@ func TestCreateReviewUploads_StorageProviderError(t *testing.T) {
 
 func TestCreateReviewUploads_MultipleFiles(t *testing.T) {
 	storage := &mockStorageProvider{
-		generateSignedUploadURLResult: &output.SignedUploadURL{
-			URL: "https://example.com/upload",
+		createSignedUploadResult: &output.SignedUpload{
+			Path: "/path/to/file",
 		},
 	}
 	fileRepo := &mockFileRepository{}

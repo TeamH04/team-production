@@ -15,38 +15,31 @@ import {
 
 import { HEADER_HEIGHT } from '@/constants/layout';
 import { palette } from '@/constants/palette';
+import {
+  toStepData,
+  validateStep,
+  type BudgetRangeStep,
+  type ItemWithId,
+  type MultiValueStep,
+  type SingleValueStep,
+} from '@/features/owner/logic/shop-registration';
 
-type ItemWithId = { id: string; value: string };
-
-type StepBase = {
-  key: string;
-  title: string;
-  description: string;
-  required: boolean;
-  keyboardType: 'default' | 'number-pad';
-};
-
-type SingleValueStep = StepBase & {
-  value: string;
+type SingleValueStepUI = SingleValueStep & {
   onChange: (text: string) => void;
   placeholder: string;
 };
 
-type MultiValueStep = StepBase & {
-  value: ItemWithId[];
+type MultiValueStepUI = MultiValueStep & {
   onChange: (items: ItemWithId[]) => void;
   placeholder: string;
-  isMultiple: true;
 };
 
-type BudgetRangeStep = StepBase & {
-  value: { min: string; max: string };
+type BudgetRangeStepUI = BudgetRangeStep & {
   onChange: { min: (text: string) => void; max: (text: string) => void };
   placeholder: { min: string; max: string };
-  isBudgetRange: true;
 };
 
-type Step = SingleValueStep | MultiValueStep | BudgetRangeStep;
+type Step = SingleValueStepUI | MultiValueStepUI | BudgetRangeStepUI;
 
 export default function RegisterShopScreen() {
   const router = useRouter();
@@ -194,85 +187,22 @@ export default function RegisterShopScreen() {
         isBudgetRange: true,
       },
     ],
-    [address, minBudget, maxBudget, menuItems, minutesFromStation, storeName, tagItems]
+    [address, minBudget, maxBudget, menuItems, minutesFromStation, storeName, tagItems],
   );
 
   const totalSteps = steps.length;
   const currentStep = steps[stepIndex];
 
   const validateCurrent = useCallback(() => {
-    if (currentStep.required) {
-      if (Array.isArray(currentStep.value)) {
-        const hasValue = (currentStep.value as ItemWithId[]).some(
-          (v: ItemWithId) => v.value.trim().length > 0
-        );
-        if (!hasValue) {
-          Alert.alert('入力不足', `${currentStep.title} は必須です`);
-          return false;
-        }
-      } else if (currentStep.key !== 'budget' && typeof currentStep.value === 'string') {
-        if (!currentStep.value.trim()) {
-          Alert.alert('入力不足', `${currentStep.title} は必須です`);
-          return false;
-        }
-      }
+    const result = validateStep(toStepData(currentStep));
+
+    if (!result.isValid) {
+      Alert.alert(
+        result.errorTitle ?? '入力エラー',
+        result.errorMessage ?? '入力内容を確認してください',
+      );
+      return false;
     }
-
-    if (currentStep.key === 'minutesFromStation') {
-      const value = typeof currentStep.value === 'string' ? currentStep.value.trim() : '';
-      if (value) {
-        if (!/^\d{1,3}$/.test(value)) {
-          Alert.alert('入力エラー', '最寄り駅からの分数は半角数字で入力してください');
-          return false;
-        }
-        if (Number(value) <= 0) {
-          Alert.alert('入力エラー', '最寄り駅からの分数は1以上で入力してください');
-          return false;
-        }
-      }
-    }
-
-    if (currentStep.key === 'budget') {
-      const budgetValue = currentStep.value as { min: string; max: string };
-      const minVal = budgetValue.min.trim();
-      const maxVal = budgetValue.max.trim();
-
-      // 少なくとも片方が入力されている場合は検証
-      if (minVal || maxVal) {
-        // 最小値の検証
-        if (minVal) {
-          if (!/^\d+$/.test(minVal)) {
-            Alert.alert('入力エラー', '最小値は半角数字のみで入力してください');
-            return false;
-          }
-          if (Number(minVal) <= 0) {
-            Alert.alert('入力エラー', '最小値は1以上で入力してください');
-            return false;
-          }
-        }
-
-        // 最大値の検証
-        if (maxVal) {
-          if (!/^\d+$/.test(maxVal)) {
-            Alert.alert('入力エラー', '最大値は半角数字のみで入力してください');
-            return false;
-          }
-          if (Number(maxVal) <= 0) {
-            Alert.alert('入力エラー', '最大値は1以上で入力してください');
-            return false;
-          }
-        }
-
-        // 最小値と最大値の大小関係の検証
-        if (minVal && maxVal) {
-          if (Number(minVal) > Number(maxVal)) {
-            Alert.alert('入力エラー', '最小値は最大値以下で入力してください');
-            return false;
-          }
-        }
-      }
-    }
-
     return true;
   }, [currentStep]);
 

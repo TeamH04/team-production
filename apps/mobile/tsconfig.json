@@ -2,6 +2,7 @@
   "extends": "expo/tsconfig.base",
   "compilerOptions": {
     "strict": true,
+    "jsx": "react-jsx",
     "baseUrl": ".",
     "paths": {
       "@/*": ["./*"],
@@ -10,7 +11,8 @@
       "@team/theme": ["../../packages/theme/src"],
       "@team/theme/*": ["../../packages/theme/src/*"],
       "@team/types": ["../../packages/types/src"],
-      "@team/types/*": ["../../packages/types/src/*"]
+      "@team/types/*": ["../../packages/types/src/*"],
+      "@team/test-utils": ["../../packages/test-utils/src"]
     }
   },
   "include": [

@@ -1,8 +1,5 @@
-import { palette } from '@/constants/palette';
-import { TAB_BAR_SPACING } from '@/constants/TabBarSpacing';
-import { useStores } from '@/features/stores/StoresContext';
 import { Ionicons } from '@expo/vector-icons';
-import type { Shop } from '@team/shop-core';
+import { BUDGET_LABEL } from '@team/shop-core';
 import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { type ReactElement, useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -16,6 +13,12 @@ import {
   View,
 } from 'react-native';
 import Animated, { useAnimatedRef } from 'react-native-reanimated';
+
+import { palette } from '@/constants/palette';
+import { TAB_BAR_SPACING } from '@/constants/TabBarSpacing';
+import { useStores } from '@/features/stores/StoresContext';
+
+import type { Shop } from '@team/shop-core';
 
 const PAGE_SIZE = 10;
 const FEATURED_REACTIONS = ['味', '接客', '雰囲気', '提供速度', '価格'];
@@ -34,12 +37,6 @@ const normalizeCategoryLabel = (category?: string) => {
   if (category.includes('・')) return category.split('・')[0];
 
   return CATEGORY_LABELS[category] ?? category;
-};
-
-const BUDGET_LABEL: Record<Shop['budget'], string> = {
-  $: '¥',
-  $$: '¥¥',
-  $$$: '¥¥¥',
 };
 
 const KEY_EXTRACTOR = (item: Shop) => item.id;
@@ -161,7 +158,7 @@ export default function HomeScreen() {
       scored
         .sort((a, b) => b.score - a.score)
         .slice(0, BOOST_COUNT)
-        .map(entry => entry.id)
+        .map(entry => entry.id),
     );
   }, [filteredShops]);
 
@@ -233,7 +230,7 @@ export default function HomeScreen() {
         </View>
       );
     },
-    [boostedShopIds, router]
+    [boostedShopIds, router],
   );
 
   const renderListHeader = useMemo(() => {

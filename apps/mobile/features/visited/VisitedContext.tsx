@@ -67,7 +67,7 @@ export function VisitedProvider({ children }: { children: ReactNode }) {
       addVisited,
       removeVisited,
     }),
-    [visited, addVisited, removeVisited, toggleVisited]
+    [visited, addVisited, removeVisited, toggleVisited],
   );
 
   // Provider でラップして子コンポーネントが利用できるようにする

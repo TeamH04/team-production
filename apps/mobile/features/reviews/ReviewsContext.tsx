@@ -1,20 +1,72 @@
-import type React from 'react';
-import { createContext, useCallback, useContext, useMemo, useState } from 'react';
+import React, { createContext, useCallback, useContext, useMemo, useState } from 'react';
 
 import {
   type ApiReview,
-  createReview,
-  createReviewUploads,
-  fetchStoreReviews,
-  fetchUserReviews,
-  likeReview,
+  createReview as createReviewApi,
+  createReviewUploads as createReviewUploadsApi,
+  fetchStoreReviews as fetchStoreReviewsApi,
+  fetchUserReviews as fetchUserReviewsApi,
+  likeReview as likeReviewApi,
   type ReviewSort,
-  unlikeReview,
+  unlikeReview as unlikeReviewApi,
   type UploadFileInput,
 } from '@/lib/api';
-import { getAccessToken, getCurrentUser } from '@/lib/auth';
+import {
+  getAccessToken as getAccessTokenApi,
+  getCurrentUser as getCurrentUserApi,
+} from '@/lib/auth';
 import { SUPABASE_STORAGE_BUCKET } from '@/lib/storage';
-import { getSupabase } from '@/lib/supabase';
+import { getSupabase as getSupabaseApi } from '@/lib/supabase';
+
+// テスト可能なSupabaseストレージの最小限のインターフェース
+type UploadToSignedUrlResult = { error: Error | null };
+type StorageBucket = {
+  uploadToSignedUrl: (
+    path: string,
+    token: string,
+    bytes: Uint8Array,
+    options: { contentType: string; upsert: boolean },
+  ) => Promise<UploadToSignedUrlResult>;
+};
+type SupabaseStorageClient = {
+  storage: {
+    from: (bucket: string) => StorageBucket;
+  };
+};
+
+type ReviewsDependencies = {
+  getAccessToken: typeof getAccessTokenApi;
+  getCurrentUser: typeof getCurrentUserApi;
+  fetchStoreReviews: typeof fetchStoreReviewsApi;
+  fetchUserReviews: typeof fetchUserReviewsApi;
+  createReview: typeof createReviewApi;
+  createReviewUploads: typeof createReviewUploadsApi;
+  likeReview: typeof likeReviewApi;
+  unlikeReview: typeof unlikeReviewApi;
+  getSupabase: () => SupabaseStorageClient;
+};
+
+const defaultDependencies: ReviewsDependencies = {
+  getAccessToken: getAccessTokenApi,
+  getCurrentUser: getCurrentUserApi,
+  fetchStoreReviews: fetchStoreReviewsApi,
+  fetchUserReviews: fetchUserReviewsApi,
+  createReview: createReviewApi,
+  createReviewUploads: createReviewUploadsApi,
+  likeReview: likeReviewApi,
+  unlikeReview: unlikeReviewApi,
+  getSupabase: getSupabaseApi,
+};
+
+let dependencies = defaultDependencies;
+
+export function __setReviewsDependenciesForTesting(overrides: Partial<ReviewsDependencies>): void {
+  dependencies = { ...defaultDependencies, ...overrides };
+}
+
+export function __resetReviewsDependenciesForTesting(): void {
+  dependencies = defaultDependencies;
+}
 
 export type ReviewFile = {
   id: string;
@@ -61,7 +113,7 @@ type ReviewsContextValue = {
       menuItemIds?: string[];
       menuItemName?: string;
     },
-    assets: ReviewAsset[]
+    assets: ReviewAsset[],
   ) => Promise<void>;
   deleteReview: (reviewId: string) => void;
   toggleReviewLike: (reviewId: string) => Promise<void>;
@@ -130,7 +182,8 @@ async function uploadToSignedUrl(path: string, token: string, asset: ReviewAsset
       throw new Error('file read failed');
     }
   }
-  const { error } = await getSupabase()
+  const { error } = await dependencies
+    .getSupabase()
     .storage.from(SUPABASE_STORAGE_BUCKET)
     .uploadToSignedUrl(path, token, bytes, {
       contentType: asset.contentType,
@@ -151,8 +204,8 @@ export function ReviewsProvider({ children }: { children: React.ReactNode }) {
   const loadReviews = useCallback(async (shopId: string, sort: ReviewSort) => {
     setLoadingByShop(prev => ({ ...prev, [shopId]: true }));
     try {
-      const token = await getAccessToken();
-      const reviews = await fetchStoreReviews(shopId, sort, token ?? undefined);
+      const token = await dependencies.getAccessToken();
+      const reviews = await dependencies.fetchStoreReviews(shopId, sort, token ?? undefined);
       setReviewsByShop(prev => ({
         ...prev,
         [shopId]: reviews.map(mapApiReview),
@@ -171,9 +224,9 @@ export function ReviewsProvider({ children }: { children: React.ReactNode }) {
         menuItemIds?: string[];
         menuItemName?: string;
       },
-      assets: ReviewAsset[]
+      assets: ReviewAsset[],
     ) => {
-      const token = await getAccessToken();
+      const token = await dependencies.getAccessToken();
       if (!token) {
         throw new Error(AUTH_REQUIRED);
       }
@@ -185,20 +238,20 @@ export function ReviewsProvider({ children }: { children: React.ReactNode }) {
           file_size: asset.fileSize,
           content_type: asset.contentType,
         }));
-        const uploadResult = await createReviewUploads(shopId, uploadInputs, token);
+        const uploadResult = await dependencies.createReviewUploads(shopId, uploadInputs, token);
         const uploads = uploadResult.files;
         if (uploads.length !== assets.length) {
           throw new Error('upload mismatch');
         }
         await Promise.all(
           uploads.map((upload, index) =>
-            uploadToSignedUrl(upload.path, upload.token, assets[index])
-          )
+            uploadToSignedUrl(upload.path, upload.token, assets[index]),
+          ),
         );
         fileIDs = uploads.map(upload => upload.file_id);
       }
 
-      await createReview(
+      await dependencies.createReview(
         shopId,
         {
           rating: input.rating,
@@ -206,16 +259,16 @@ export function ReviewsProvider({ children }: { children: React.ReactNode }) {
           file_ids: fileIDs,
           menu_ids: input.menuItemIds ?? [],
         },
-        token
+        token,
       );
 
       await loadReviews(shopId, 'new');
     },
-    [loadReviews]
+    [loadReviews],
   );
 
   const toggleLike = useCallback(async (shopId: string, reviewId: string) => {
-    const token = await getAccessToken();
+    const token = await dependencies.getAccessToken();
     if (!token) {
       throw new Error(AUTH_REQUIRED);
     }
@@ -237,9 +290,9 @@ export function ReviewsProvider({ children }: { children: React.ReactNode }) {
 
     try {
       if (wasLiked) {
-        await unlikeReview(reviewId, token);
+        await dependencies.unlikeReview(reviewId, token);
       } else {
-        await likeReview(reviewId, token);
+        await dependencies.likeReview(reviewId, token);
       }
     } catch (err) {
       setReviewsByShop(prev => {
@@ -283,7 +336,7 @@ export function ReviewsProvider({ children }: { children: React.ReactNode }) {
       if (!targetShopId) return;
       await toggleLike(targetShopId, reviewId);
     },
-    [reviewsByShop, toggleLike]
+    [reviewsByShop, toggleLike],
   );
 
   const isReviewLiked = useCallback(
@@ -292,7 +345,7 @@ export function ReviewsProvider({ children }: { children: React.ReactNode }) {
       const review = all.find(item => item.id === reviewId);
       return review?.likedByMe ?? false;
     },
-    [reviewsByShop]
+    [reviewsByShop],
   );
 
   const getReviewLikesCount = useCallback(
@@ -301,7 +354,7 @@ export function ReviewsProvider({ children }: { children: React.ReactNode }) {
       const review = all.find(item => item.id === reviewId);
       return review?.likesCount ?? 0;
     },
-    [reviewsByShop]
+    [reviewsByShop],
   );
 
   const getLikedReviews = useCallback(() => {
@@ -310,15 +363,15 @@ export function ReviewsProvider({ children }: { children: React.ReactNode }) {
   }, [reviewsByShop]);
 
   const loadUserReviews = useCallback(async () => {
-    const user = await getCurrentUser();
+    const user = await dependencies.getCurrentUser();
     if (!user) {
       throw new Error(AUTH_REQUIRED);
     }
-    const token = await getAccessToken();
+    const token = await dependencies.getAccessToken();
     if (!token) {
       throw new Error(AUTH_REQUIRED);
     }
-    const reviews = await fetchUserReviews(user.id, token);
+    const reviews = await dependencies.fetchUserReviews(user.id, token);
     const mapped = reviews.map(mapApiReview);
     mapped.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
     setUserReviews(mapped);
@@ -354,7 +407,7 @@ export function ReviewsProvider({ children }: { children: React.ReactNode }) {
       getLikedReviews,
       toggleLike,
       loadUserReviews,
-    ]
+    ],
   );
 
   return <ReviewsContext.Provider value={value}>{children}</ReviewsContext.Provider>;

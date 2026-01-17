@@ -85,7 +85,7 @@ describe('toArrayBuffer', () => {
     assert.throws(
       // @ts-expect-error - テスト用に不正な型を渡す
       () => toArrayBuffer('invalid'),
-      { name: 'TypeError', message: 'Unsupported BufferSource type' }
+      { name: 'TypeError', message: 'Unsupported BufferSource type' },
     );
   });
 });

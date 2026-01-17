@@ -1,5 +1,6 @@
-import type React from 'react';
 import { createContext, useCallback, useContext, useMemo, useState } from 'react';
+
+import type { ReactNode } from 'react';
 
 export type Gender = 'male' | 'female' | 'other';
 
@@ -22,7 +23,7 @@ type UserContextType = {
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
-export function UserProvider({ children }: { children: React.ReactNode }) {
+export function UserProvider({ children }: { children: ReactNode }) {
   const [user, setUserState] = useState<UserProfile | null>(null);
 
   const setUser = useCallback((profile: UserProfile) => {
@@ -35,7 +36,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
 
   const value = useMemo<UserContextType>(
     () => ({ user, isProfileComplete: !!user && user.isProfileRegistered, setUser, clearUser }),
-    [user, setUser, clearUser]
+    [user, setUser, clearUser],
   );
 
   return <UserContext.Provider value={value}>{children}</UserContext.Provider>;

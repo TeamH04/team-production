@@ -1,9 +1,5 @@
-import { palette } from '@/constants/palette';
-import { TAB_BAR_SPACING } from '@/constants/TabBarSpacing';
-import { useFavorites } from '@/features/favorites/FavoritesContext';
-import { useStores } from '@/features/stores/StoresContext';
 import { Ionicons } from '@expo/vector-icons';
-import type { Shop } from '@team/shop-core';
+import { BUDGET_LABEL } from '@team/shop-core';
 import { withAlpha } from '@team/theme';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
@@ -19,11 +15,10 @@ import {
   View,
 } from 'react-native';
 
-const BUDGET_LABEL: Record<Shop['budget'], string> = {
-  $: '¥',
-  $$: '¥¥',
-  $$$: '¥¥¥',
-};
+import { palette } from '@/constants/palette';
+import { TAB_BAR_SPACING } from '@/constants/TabBarSpacing';
+import { useFavorites } from '@/features/favorites/FavoritesContext';
+import { useStores } from '@/features/stores/StoresContext';
 
 type SortType = 'newest' | 'rating-high' | 'rating-low';
 
@@ -57,7 +52,7 @@ export default function FavoritesScreen() {
       void loadFavorites().catch(() => {
         Alert.alert('お気に入りの取得に失敗しました', '通信環境を確認してもう一度お試しください。');
       });
-    }, [loadFavorites])
+    }, [loadFavorites]),
   );
 
   // お気に入りに登録されている店舗のみをフィルタリング
@@ -74,7 +69,7 @@ export default function FavoritesScreen() {
         shop =>
           shop.name.toLowerCase().includes(query) ||
           shop.description.toLowerCase().includes(query) ||
-          shop.category.toLowerCase().includes(query)
+          shop.category.toLowerCase().includes(query),
       );
     }
 

@@ -15,46 +15,52 @@ import (
 // --- GetUserFavorites Tests ---
 
 func TestFavoriteHandler_GetUserFavorites_Success(t *testing.T) {
-	tc := testutil.NewTestContextNoBody(http.MethodGet, "/users/user-1/favorites")
-	tc.SetPath("/users/:id/favorites", []string{"id"}, []string{"user-1"})
+	tc := testutil.NewTestContextNoBody(http.MethodGet, "/me/favorites")
+
+	user := entity.User{UserID: "user-1"}
+	tc.SetUser(user, "user")
 
 	mockUC := &testutil.MockFavoriteUseCase{
-		GetUserFavoritesResult: []entity.Favorite{
+		GetMyFavoritesResult: []entity.Favorite{
 			{UserID: "user-1", StoreID: "store-1"},
 			{UserID: "user-1", StoreID: "store-2"},
 		},
 	}
 	h := handlers.NewFavoriteHandler(mockUC)
 
-	err := h.GetUserFavorites(tc.Context)
+	err := h.GetMyFavorites(tc.Context)
 
 	testutil.AssertSuccess(t, err, tc.Recorder, http.StatusOK)
 }
 
 func TestFavoriteHandler_GetUserFavorites_Empty(t *testing.T) {
-	tc := testutil.NewTestContextNoBody(http.MethodGet, "/users/user-1/favorites")
-	tc.SetPath("/users/:id/favorites", []string{"id"}, []string{"user-1"})
+	tc := testutil.NewTestContextNoBody(http.MethodGet, "/me/favorites")
+
+	user := entity.User{UserID: "user-1"}
+	tc.SetUser(user, "user")
 
 	mockUC := &testutil.MockFavoriteUseCase{
-		GetUserFavoritesResult: []entity.Favorite{},
+		GetMyFavoritesResult: []entity.Favorite{},
 	}
 	h := handlers.NewFavoriteHandler(mockUC)
 
-	err := h.GetUserFavorites(tc.Context)
+	err := h.GetMyFavorites(tc.Context)
 
 	testutil.AssertSuccess(t, err, tc.Recorder, http.StatusOK)
 }
 
 func TestFavoriteHandler_GetUserFavorites_UseCaseError(t *testing.T) {
-	tc := testutil.NewTestContextNoBody(http.MethodGet, "/users/user-1/favorites")
-	tc.SetPath("/users/:id/favorites", []string{"id"}, []string{"user-1"})
+	tc := testutil.NewTestContextNoBody(http.MethodGet, "/me/favorites")
+
+	user := entity.User{UserID: "user-1"}
+	tc.SetUser(user, "user")
 
 	mockUC := &testutil.MockFavoriteUseCase{
-		GetUserFavoritesErr: usecase.ErrUserNotFound,
+		GetMyFavoritesErr: usecase.ErrUserNotFound,
 	}
 	h := handlers.NewFavoriteHandler(mockUC)
 
-	err := h.GetUserFavorites(tc.Context)
+	err := h.GetMyFavorites(tc.Context)
 
 	testutil.AssertError(t, err, "usecase error")
 }
