@@ -19,6 +19,10 @@ const DEMO_AREA_DISTRIBUTION = [
   '須磨',
   '北区(田舎)',
   '西神(西区)',
+  '三宮・元町',
+  '神戸・新開地',
+  '須磨',
+  '西神(西区)',
 ];
 
 function normalizeDate(value?: string | null): string {

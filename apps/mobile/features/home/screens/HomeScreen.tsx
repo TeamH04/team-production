@@ -169,13 +169,14 @@ export default function HomeScreen() {
     const boosted = filteredShops.filter(shop => boostedShopIds.has(shop.id));
     const nonBoosted = filteredShops.filter(shop => !boostedShopIds.has(shop.id));
     const result: Shop[] = [];
+    const maxLen = Math.max(boosted.length, nonBoosted.length);
 
-    while (boosted.length > 0 || nonBoosted.length > 0) {
-      if (boosted.length > 0) {
-        result.push(boosted.shift()!);
+    for (let i = 0; i < maxLen; i++) {
+      if (i < boosted.length) {
+        result.push(boosted[i]);
       }
-      if (nonBoosted.length > 0) {
-        result.push(nonBoosted.shift()!);
+      if (i < nonBoosted.length) {
+        result.push(nonBoosted[i]);
       }
     }
 
@@ -183,9 +184,12 @@ export default function HomeScreen() {
   }, [boostedShopIds, filteredShops]);
 
   const renderShop = useCallback(
-    ({ item, index }: { item: Shop; index: number }) => {
+    ({ item }: { item: Shop }) => {
       const isBoosted = boostedShopIds.has(item.id);
-      const reactionLabel = FEATURED_REACTIONS[index % FEATURED_REACTIONS.length];
+      const reactionIndex =
+        item.id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) %
+        FEATURED_REACTIONS.length;
+      const reactionLabel = FEATURED_REACTIONS[reactionIndex];
       const categoryLabel = normalizeCategoryLabel(item.category) ?? item.category;
 
       return (

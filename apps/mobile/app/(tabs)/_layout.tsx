@@ -23,7 +23,7 @@ export default function TabLayout() {
   );
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['left', 'right']}>
+    <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
       <StatusBar style='light' backgroundColor={palette.accent} />
       <View style={styles.container}>
         <Tabs

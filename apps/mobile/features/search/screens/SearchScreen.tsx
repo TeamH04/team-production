@@ -974,6 +974,9 @@ const styles = StyleSheet.create({
     color: palette.secondaryText,
     fontSize: 13,
   },
+  visitedFilterContainer: {
+    marginBottom: 16,
+  },
   visitedFilterRow: {
     flexDirection: 'row',
     gap: 8,

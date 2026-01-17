@@ -23,7 +23,7 @@ export interface Shop {
   category: ShopCategory;
   distanceMinutes: number;
   rating: number;
-  ratingDetails: RatingDetails;
+  ratingDetails?: RatingDetails;
   budget: '$' | '$$' | '$$$';
   createdAt: string; // アプリに追加した日
   openedAt: string; // 実際のオープン日
@@ -32,6 +32,7 @@ export interface Shop {
   placeId: string;
   imageUrl: string;
   imageUrls?: string[]; // 複数画像対応
+  area?: string; // エリア情報
   tags: string[];
   menu?: {
     id: string;

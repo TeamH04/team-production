@@ -73,9 +73,9 @@ export default function ReviewModalScreen() {
     () => [
       { key: 'taste', label: '味' },
       { key: 'atmosphere', label: '雰囲気' },
-      { key: 'cleanliness', label: '清潔感' },
       { key: 'service', label: '接客' },
       { key: 'speed', label: '提供速度' },
+      { key: 'cleanliness', label: '清潔感' },
     ],
     []
   );
@@ -100,7 +100,7 @@ export default function ReviewModalScreen() {
   const getRatingColor = (value: number) => {
     if (value === 3) return palette.errorText;
     if (value === 2) return palette.accent;
-    return '#264053';
+    return palette.primary;
   };
 
   const steps = useMemo<ReviewStep[]>(() => {
