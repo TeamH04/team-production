@@ -1,3 +1,4 @@
+import { ROUTES } from '@team/constants';
 import { type Href, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
@@ -33,7 +34,7 @@ export default function OwnerHomeScreen() {
   if (!authorized) {
     return (
       <View style={styles.center}>
-        <Pressable style={styles.linkBtn} onPress={() => router.replace('/login' as Href)}>
+        <Pressable style={styles.linkBtn} onPress={() => router.replace(ROUTES.LOGIN as Href)}>
           <Text style={styles.linkText}>ログインへ</Text>
         </Pressable>
       </View>
@@ -48,7 +49,7 @@ export default function OwnerHomeScreen() {
       <View style={styles.card}>
         <Text style={styles.cardTitle}>クイックアクション</Text>
         <View style={styles.actionsRow}>
-          <Pressable style={styles.actionBtn} onPress={() => router.push('/')}>
+          <Pressable style={styles.actionBtn} onPress={() => router.push(ROUTES.HOME)}>
             <Text style={styles.actionText}>ユーザーホームへ</Text>
           </Pressable>
           <Pressable

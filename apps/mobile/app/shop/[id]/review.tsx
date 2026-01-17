@@ -1,3 +1,4 @@
+import { AUTH_ERROR_MESSAGES, ERROR_MESSAGES, FONT_WEIGHT, ROUTES } from '@team/constants';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
@@ -7,7 +8,7 @@ import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 
 import { palette } from '@/constants/palette';
 import { useReviews } from '@/features/reviews/ReviewsContext';
 import { useStores } from '@/features/stores/StoresContext';
-import { fetchStoreMenus } from '@/lib/api';
+import { api } from '@/lib/api';
 
 // レビュー投稿画面のコンポーネント
 export default function ReviewModalScreen() {
@@ -40,7 +41,8 @@ export default function ReviewModalScreen() {
     if (!id) return;
     let active = true;
     setMenuLoading(true);
-    fetchStoreMenus(id)
+    api
+      .fetchStoreMenus(id)
       .then(menus => {
         if (!active) return;
         const mapped = menus.map(item => ({
@@ -104,15 +106,15 @@ export default function ReviewModalScreen() {
           fileName: asset.fileName ?? `review-${Date.now()}-${index}.jpg`,
           contentType: asset.mimeType ?? 'image/jpeg',
           fileSize: asset.fileSize ?? undefined,
-        }))
+        })),
       );
       router.back();
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Unknown error';
+      const message = err instanceof Error ? err.message : ERROR_MESSAGES.UNKNOWN;
       if (message === 'auth_required') {
-        Alert.alert('ログインが必要です', 'レビュー投稿にはログインが必要です。', [
+        Alert.alert(AUTH_ERROR_MESSAGES.LOGIN_REQUIRED_TITLE, AUTH_ERROR_MESSAGES.REVIEW, [
           { text: 'キャンセル', style: 'cancel' },
-          { text: 'ログイン', onPress: () => router.push('/login') },
+          { text: 'ログイン', onPress: () => router.push(ROUTES.LOGIN) },
         ]);
       } else {
         Alert.alert('投稿に失敗しました', message);
@@ -192,7 +194,7 @@ export default function ReviewModalScreen() {
                   key={item.id}
                   onPress={() =>
                     setSelectedMenuIds(prev =>
-                      selected ? prev.filter(id => id !== item.id) : [...prev, item.id]
+                      selected ? prev.filter(id => id !== item.id) : [...prev, item.id],
                     )
                   }
                   style={[styles.menuItem, selected && styles.menuItemSelected]}
@@ -250,7 +252,7 @@ const styles = StyleSheet.create({
   centered: { alignItems: 'center', justifyContent: 'center' }, // 中央寄せ
   content: { padding: 16 }, // 画面内余白
   errorText: { color: palette.errorText, fontSize: 14, marginTop: 4 }, // エラーメッセージ
-  heading: { color: palette.primary, fontSize: 18, fontWeight: '800', marginBottom: 8 }, // 店舗名
+  heading: { color: palette.primary, fontSize: 18, fontWeight: FONT_WEIGHT.BOLD, marginBottom: 8 }, // 店舗名
   imageGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -282,7 +284,7 @@ const styles = StyleSheet.create({
     backgroundColor: palette.menuSelectedBackground,
     borderColor: palette.menuSelectedBorder,
   },
-  menuItemText: { color: palette.primary, fontWeight: '600' },
+  menuItemText: { color: palette.primary, fontWeight: FONT_WEIGHT.SEMIBOLD },
   menuItemTextSelected: { color: palette.menuSelectedText },
   menuList: { flexDirection: 'row', flexWrap: 'wrap' },
   menuSection: { marginTop: 12 },
@@ -336,5 +338,5 @@ const styles = StyleSheet.create({
   star: { color: palette.starInactive, fontSize: 22, marginRight: 4 },
   starActive: { color: palette.starHighlight },
   starsRow: { flexDirection: 'row', marginBottom: 8 },
-  title: { color: palette.primary, fontSize: 18, fontWeight: '800' },
+  title: { color: palette.primary, fontSize: 18, fontWeight: FONT_WEIGHT.BOLD },
 });

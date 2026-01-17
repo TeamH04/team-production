@@ -1,12 +1,16 @@
-﻿import { palette } from '@/constants/palette';
-import { useFavorites } from '@/features/favorites/FavoritesContext';
-import { useReviews } from '@/features/reviews/ReviewsContext';
-import { useStores } from '@/features/stores/StoresContext';
-import { useVisited } from '@/features/visited/VisitedContext';
-import type { ReviewSort } from '@/lib/api';
-import { getPublicStorageUrl } from '@/lib/storage';
-import { Ionicons } from '@expo/vector-icons';
-import type { Shop } from '@team/shop-core';
+﻿import { Ionicons } from '@expo/vector-icons';
+import {
+  AUTH_ERROR_MESSAGES,
+  BORDER_RADIUS,
+  buildGoogleMapsUrl,
+  FONT_WEIGHT,
+  formatRating,
+  ICON_SIZE,
+  ROUTES,
+} from '@team/constants';
+import { formatDateJa } from '@team/core-utils';
+import { useAuthErrorHandler } from '@team/hooks';
+import { BUDGET_LABEL, getShopImages } from '@team/shop-core';
 import { Image } from 'expo-image';
 import { useFocusEffect, useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -24,11 +28,14 @@ import {
   View,
 } from 'react-native';
 
-const BUDGET_LABEL: Record<Shop['budget'], string> = {
-  $: '¥',
-  $$: '¥¥',
-  $$$: '¥¥¥',
-};
+import { palette } from '@/constants/palette';
+import { useFavorites } from '@/features/favorites/FavoritesContext';
+import { useReviews } from '@/features/reviews/ReviewsContext';
+import { useStores } from '@/features/stores/StoresContext';
+import { useVisited } from '@/features/visited/VisitedContext';
+import { storage } from '@/lib/storage';
+
+import type { ReviewSort } from '@/lib/api';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
@@ -41,6 +48,7 @@ export default function ShopDetailScreen() {
 
   const { isFavorite, toggleFavorite } = useFavorites();
   const { isVisited, toggleVisited } = useVisited();
+  const { handleError } = useAuthErrorHandler();
 
   // reviews: 2つ目の設計を採用（ロード・ソート・いいね・ローディング）
   const { getReviews, loadReviews, toggleLike, loadingByShop } = useReviews();
@@ -62,7 +70,7 @@ export default function ShopDetailScreen() {
   const isFav = useMemo(() => (shop ? isFavorite(shop.id) : false), [shop, isFavorite]);
   const isVis = useMemo(() => (shop ? isVisited(shop.id) : false), [shop, isVisited]);
 
-  const imageUrls = shop?.imageUrls;
+  const imageUrls = useMemo(() => (shop ? getShopImages(shop) : []), [shop]);
   const flatListRef = useRef<FlatList<string>>(null);
 
   // 【修正1】isReviewsLoading の定義を追加
@@ -100,7 +108,7 @@ export default function ShopDetailScreen() {
   useFocusEffect(
     useCallback(() => {
       navigation.setOptions?.({ headerBackTitle: '戻る' });
-    }, [navigation])
+    }, [navigation]),
   );
 
   // Reviews load: 2つ目の挙動（focus時にload、sort変化でも再fetch）
@@ -108,13 +116,12 @@ export default function ShopDetailScreen() {
     useCallback(() => {
       if (!id) return;
       loadReviews(id, reviewSort).catch(() => undefined);
-    }, [id, loadReviews, reviewSort])
+    }, [id, loadReviews, reviewSort]),
   );
 
   const mapOpenUrl = useMemo(() => {
     if (!shop?.placeId) return null;
-    // 【修正2】テンプレートリテラルのミス `${shop.placeId}` に修正
-    return `http://googleusercontent.com/maps.google.com/?query_place_id=${shop.placeId}`;
+    return buildGoogleMapsUrl(shop.placeId, shop.name);
   }, [shop]);
 
   const scrollToImage = useCallback((index: number) => {
@@ -127,7 +134,7 @@ export default function ShopDetailScreen() {
     if (!webBaseUrl) {
       Alert.alert(
         '共有できません',
-        '共有URLの設定が見つからないため、この機能は現在利用できません。'
+        '共有URLの設定が見つからないため、この機能は現在利用できません。',
       );
       return;
     }
@@ -158,7 +165,7 @@ export default function ShopDetailScreen() {
 
       return names.length > 0 ? names.join(' / ') : undefined;
     },
-    [shop]
+    [shop],
   );
 
   const handleToggleLike = useCallback(
@@ -167,18 +174,20 @@ export default function ShopDetailScreen() {
       try {
         await toggleLike(shop.id, reviewId);
       } catch (err) {
-        const message = err instanceof Error ? err.message : 'Unknown error';
-        if (message === 'auth_required') {
-          Alert.alert('ログインが必要です', 'いいねにはログインが必要です。', [
-            { text: 'キャンセル', style: 'cancel' },
-            { text: 'ログイン', onPress: () => router.push('/login') },
-          ]);
-          return;
+        const errorMessage = handleError(err, {
+          onAuthRequired: () => {
+            Alert.alert(AUTH_ERROR_MESSAGES.LOGIN_REQUIRED_TITLE, AUTH_ERROR_MESSAGES.LIKE, [
+              { text: 'キャンセル', style: 'cancel' },
+              { text: 'ログイン', onPress: () => router.push(ROUTES.LOGIN) },
+            ]);
+          },
+        });
+        if (errorMessage) {
+          Alert.alert('いいねに失敗しました', errorMessage);
         }
-        Alert.alert('いいねに失敗しました', message);
       }
     },
-    [router, shop, toggleLike]
+    [handleError, router, shop, toggleLike],
   );
 
   const handleToggleFavorite = useCallback(async () => {
@@ -186,21 +195,23 @@ export default function ShopDetailScreen() {
     try {
       await toggleFavorite(shop.id);
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Unknown error';
-      if (message === 'auth_required') {
-        Alert.alert('ログインが必要です', 'お気に入りにはログインが必要です。', [
-          { text: 'キャンセル', style: 'cancel' },
-          { text: 'ログイン', onPress: () => router.push('/login') },
-        ]);
-        return;
+      const errorMessage = handleError(err, {
+        onAuthRequired: () => {
+          Alert.alert(AUTH_ERROR_MESSAGES.LOGIN_REQUIRED_TITLE, AUTH_ERROR_MESSAGES.FAVORITE, [
+            { text: 'キャンセル', style: 'cancel' },
+            { text: 'ログイン', onPress: () => router.push(ROUTES.LOGIN) },
+          ]);
+        },
+      });
+      if (errorMessage) {
+        const isCurrentlyFavorite = isFavorite ? isFavorite(shop.id) : false;
+        const title = isCurrentlyFavorite
+          ? 'お気に入りの削除に失敗しました'
+          : 'お気に入りの追加に失敗しました';
+        Alert.alert(title, errorMessage);
       }
-      const isCurrentlyFavorite = isFavorite ? isFavorite(shop.id) : false;
-      const title = isCurrentlyFavorite
-        ? 'お気に入りの削除に失敗しました'
-        : 'お気に入りの追加に失敗しました';
-      Alert.alert(title, message);
     }
-  }, [router, shop, toggleFavorite, isFavorite]);
+  }, [handleError, isFavorite, router, shop, toggleFavorite]);
 
   if (storesLoading) {
     return (
@@ -225,70 +236,64 @@ export default function ShopDetailScreen() {
     <View style={styles.screen}>
       <StatusBar style='light' translucent />
       <ScrollView contentContainerStyle={styles.content}>
-        {/* Hero: 2つ目の画像カルーセルを採用 */}
-        {imageUrls && imageUrls.length > 0 ? (
-          <View style={styles.heroContainer}>
-            <FlatList
-              ref={flatListRef}
-              data={imageUrls}
-              renderItem={({ item, index }) => (
-                <Image
-                  source={{ uri: item }}
-                  style={styles.hero}
-                  contentFit='cover'
-                  accessibilityLabel={`${shop.name} image ${index + 1} of ${imageUrls.length}`}
-                />
-              )}
-              keyExtractor={(_, index) => index.toString()}
-              horizontal
-              pagingEnabled
-              showsHorizontalScrollIndicator={false}
-              onMomentumScrollEnd={event => {
-                const x = event.nativeEvent.contentOffset.x;
-                setCurrentImageIndex(Math.round(x / SCREEN_WIDTH));
-              }}
-            />
-
-            {imageUrls.length > 1 && (
-              <>
-                {currentImageIndex > 0 && (
-                  <Pressable
-                    style={[styles.arrowButton, styles.arrowButtonLeft]}
-                    onPress={() => scrollToImage(currentImageIndex - 1)}
-                    accessibilityLabel='前の画像'
-                  >
-                    <Ionicons name='chevron-back' size={22} color={palette.primaryText} />
-                  </Pressable>
-                )}
-                {currentImageIndex < imageUrls.length - 1 && (
-                  <Pressable
-                    style={[styles.arrowButton, styles.arrowButtonRight]}
-                    onPress={() => scrollToImage(currentImageIndex + 1)}
-                    accessibilityLabel='次の画像'
-                  >
-                    <Ionicons name='chevron-forward' size={22} color={palette.primaryText} />
-                  </Pressable>
-                )}
-
-                <View style={styles.paginationContainer}>
-                  {imageUrls.map((uri, idx) => (
-                    <View
-                      key={uri}
-                      style={[
-                        styles.paginationDot,
-                        idx === currentImageIndex && styles.paginationDotActive,
-                      ]}
-                    />
-                  ))}
-                </View>
-              </>
+        {/* Hero: 画像カルーセル（getShopImages で常に最低1枚を保証） */}
+        <View style={styles.heroContainer}>
+          <FlatList
+            ref={flatListRef}
+            data={imageUrls}
+            renderItem={({ item, index }) => (
+              <Image
+                source={{ uri: item }}
+                style={styles.hero}
+                contentFit='cover'
+                accessibilityLabel={`${shop.name} image ${index + 1} of ${imageUrls.length}`}
+              />
             )}
-          </View>
-        ) : (
-          <View style={styles.heroContainer}>
-            <Image source={{ uri: shop.imageUrl }} style={styles.hero} contentFit='cover' />
-          </View>
-        )}
+            keyExtractor={(_, index) => index.toString()}
+            horizontal
+            pagingEnabled
+            showsHorizontalScrollIndicator={false}
+            onMomentumScrollEnd={event => {
+              const x = event.nativeEvent.contentOffset.x;
+              setCurrentImageIndex(Math.round(x / SCREEN_WIDTH));
+            }}
+          />
+
+          {imageUrls.length > 1 && (
+            <>
+              {currentImageIndex > 0 && (
+                <Pressable
+                  style={[styles.arrowButton, styles.arrowButtonLeft]}
+                  onPress={() => scrollToImage(currentImageIndex - 1)}
+                  accessibilityLabel='前の画像'
+                >
+                  <Ionicons name='chevron-back' size={22} color={palette.primaryText} />
+                </Pressable>
+              )}
+              {currentImageIndex < imageUrls.length - 1 && (
+                <Pressable
+                  style={[styles.arrowButton, styles.arrowButtonRight]}
+                  onPress={() => scrollToImage(currentImageIndex + 1)}
+                  accessibilityLabel='次の画像'
+                >
+                  <Ionicons name='chevron-forward' size={22} color={palette.primaryText} />
+                </Pressable>
+              )}
+
+              <View style={styles.paginationContainer}>
+                {imageUrls.map((uri, idx) => (
+                  <View
+                    key={uri}
+                    style={[
+                      styles.paginationDot,
+                      idx === currentImageIndex && styles.paginationDotActive,
+                    ]}
+                  />
+                ))}
+              </View>
+            </>
+          )}
+        </View>
 
         <View style={styles.container}>
           {/* Title + actions: 両方の良いとこ（押した時のopacity/disabled等は2つ目寄り） */}
@@ -317,7 +322,7 @@ export default function ShopDetailScreen() {
               >
                 <Ionicons
                   name={isVis ? 'checkmark-circle' : 'checkmark-circle-outline'}
-                  size={24}
+                  size={ICON_SIZE.LG}
                   color={isVis ? palette.visitedActive : palette.muted}
                 />
               </Pressable>
@@ -329,7 +334,7 @@ export default function ShopDetailScreen() {
               >
                 <Ionicons
                   name={isFav ? 'heart' : 'heart-outline'}
-                  size={24}
+                  size={ICON_SIZE.LG}
                   color={isFav ? palette.favoriteActive : palette.muted}
                 />
               </Pressable>
@@ -337,7 +342,7 @@ export default function ShopDetailScreen() {
           </View>
 
           <Text style={styles.meta}>
-            {`${shop.category} │ 予算 ${BUDGET_LABEL[shop.budget]} │ ★ ${shop.rating.toFixed(1)}`}
+            {`${shop.category} │ 予算 ${BUDGET_LABEL[shop.budget]} │ ★ ${formatRating(shop.rating)}`}
           </Text>
 
           {/* tags: 1つ目の素朴表示 + 2つ目の「タグで検索」導線を採用 */}
@@ -349,7 +354,7 @@ export default function ShopDetailScreen() {
                 accessibilityLabel={`タグ ${tag} で検索`}
                 onPress={() => {
                   navigation.setOptions?.({ headerBackTitle: '戻る' });
-                  router.navigate({ pathname: '/(tabs)', params: { tag } });
+                  router.navigate({ pathname: ROUTES.TABS, params: { tag } });
                 }}
               >
                 <Text style={styles.tagText}>{tag}</Text>
@@ -392,7 +397,7 @@ export default function ShopDetailScreen() {
                     onPress={() => {
                       navigation.setOptions?.({ headerBackTitle: '戻る' });
                       router.push({
-                        pathname: '/menu',
+                        pathname: ROUTES.MENU,
                         params: { id: shop.id },
                       });
                     }}
@@ -482,10 +487,7 @@ export default function ShopDetailScreen() {
                 <Pressable
                   onPress={() => {
                     navigation.setOptions?.({ headerBackTitle: '戻る' });
-                    router.push({
-                      pathname: '/shop/[id]/review',
-                      params: { id: shop.id },
-                    });
+                    router.push(ROUTES.REVIEW(shop.id));
                   }}
                   style={[styles.primaryBtn, styles.reviewPrimaryBtn]}
                 >
@@ -511,9 +513,7 @@ export default function ShopDetailScreen() {
                         <Text style={styles.reviewTitle}>
                           ★ {review.rating}
                           {' ・ '}
-                          {review.createdAt
-                            ? new Date(review.createdAt).toLocaleDateString('ja-JP')
-                            : ''}
+                          {review.createdAt ? formatDateJa(review.createdAt) : ''}
                         </Text>
 
                         <Pressable
@@ -545,7 +545,7 @@ export default function ShopDetailScreen() {
                           style={styles.reviewFiles}
                         >
                           {review.files.map(file => {
-                            const url = file.url ?? getPublicStorageUrl(file.objectKey);
+                            const url = file.url ?? storage.buildStorageUrl(file.objectKey);
                             if (!url) return null;
                             return (
                               <Image
@@ -641,7 +641,7 @@ const styles = StyleSheet.create({
   likeButton: {
     backgroundColor: palette.highlight,
     borderColor: palette.accent,
-    borderRadius: 999,
+    borderRadius: BORDER_RADIUS.PILL,
     borderWidth: 1,
     paddingHorizontal: 12,
     paddingVertical: 6,
@@ -650,7 +650,7 @@ const styles = StyleSheet.create({
     backgroundColor: palette.highlight,
     borderColor: palette.accent,
   },
-  likeText: { color: palette.muted, fontSize: 12, fontWeight: '600' },
+  likeText: { color: palette.muted, fontSize: 12, fontWeight: FONT_WEIGHT.SEMIBOLD },
   likeTextActive: { color: palette.accent },
   mapIcon: { marginRight: 8 },
   menuAddressBlock: {
@@ -660,7 +660,12 @@ const styles = StyleSheet.create({
     padding: 12,
   },
   menuAddressLabel: { color: palette.secondaryText, fontSize: 12, fontWeight: '700' },
-  menuAddressText: { color: palette.primaryText, fontSize: 14, fontWeight: '600', marginTop: 6 },
+  menuAddressText: {
+    color: palette.primaryText,
+    fontSize: 14,
+    fontWeight: FONT_WEIGHT.SEMIBOLD,
+    marginTop: 6,
+  },
   menuIcon: { marginRight: 10 },
   menuItemText: { color: palette.primaryText, fontSize: 15, fontWeight: '700' },
   menuSection: { marginTop: 8 },
@@ -721,7 +726,7 @@ const styles = StyleSheet.create({
   recommendedLabel: {
     color: palette.primaryText,
     fontSize: 13,
-    fontWeight: '800',
+    fontWeight: FONT_WEIGHT.BOLD,
     marginBottom: 8,
   },
   reviewBody: { color: palette.primaryText, marginTop: 8 },
@@ -761,7 +766,7 @@ const styles = StyleSheet.create({
   sortPill: {
     backgroundColor: palette.secondarySurface,
     borderColor: palette.border,
-    borderRadius: 999,
+    borderRadius: BORDER_RADIUS.PILL,
     borderWidth: 1,
     marginRight: 8,
     paddingHorizontal: 12,
@@ -772,23 +777,23 @@ const styles = StyleSheet.create({
     borderColor: palette.accent,
   },
   sortRow: { flexDirection: 'row', marginBottom: 8 },
-  sortText: { color: palette.muted, fontSize: 12, fontWeight: '600' },
+  sortText: { color: palette.muted, fontSize: 12, fontWeight: FONT_WEIGHT.SEMIBOLD },
   sortTextActive: { color: palette.primaryOnAccent },
   tagPill: {
     backgroundColor: palette.tagSurface,
-    borderRadius: 999,
+    borderRadius: BORDER_RADIUS.PILL,
     marginRight: 8,
     marginTop: 8,
     paddingHorizontal: 12,
     paddingVertical: 6,
   },
   tagRow: { flexDirection: 'row', flexWrap: 'wrap', marginBottom: 16 },
-  tagText: { color: palette.tagText, fontSize: 12, fontWeight: '600' },
+  tagText: { color: palette.tagText, fontSize: 12, fontWeight: FONT_WEIGHT.SEMIBOLD },
   title: {
     color: palette.primary,
     flex: 1,
     fontSize: 22,
-    fontWeight: '800',
+    fontWeight: FONT_WEIGHT.BOLD,
     marginRight: 0,
   },
   titleLoading: { color: palette.secondaryText, fontSize: 18, fontWeight: '700' },

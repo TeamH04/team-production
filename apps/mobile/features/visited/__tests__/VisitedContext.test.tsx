@@ -1,118 +1,77 @@
 import assert from 'node:assert/strict';
-import { test } from 'node:test';
-import { act, useEffect } from 'react';
-import TestRenderer from 'react-test-renderer';
+import { describe, test } from 'node:test';
+
+import { act, createContextHarness, type ContextHarness } from '@/test-utils';
 
 import { useVisited, VisitedProvider } from '../VisitedContext';
 
-const globalForReactAct = globalThis as typeof globalThis & {
-  IS_REACT_ACT_ENVIRONMENT?: boolean;
-};
-globalForReactAct.IS_REACT_ACT_ENVIRONMENT = true;
-
-const createVisitedHarness = () => {
-  let currentValue: ReturnType<typeof useVisited> | undefined;
-  let renderer: ReturnType<typeof TestRenderer.create> | undefined;
-
-  const handleValue = (value: ReturnType<typeof useVisited>) => {
-    currentValue = value;
-  };
-
-  const Consumer = ({ onValue }: { onValue: (value: ReturnType<typeof useVisited>) => void }) => {
-    const value = useVisited();
-
-    useEffect(() => {
-      onValue(value);
-    }, [onValue, value]);
-
-    return null;
-  };
-
-  act(() => {
-    renderer = TestRenderer.create(
-      <VisitedProvider>
-        <Consumer onValue={handleValue} />
-      </VisitedProvider>
-    );
+describe('VisitedContext', () => {
+  test('useVisited throws outside VisitedProvider', () => {
+    assert.throws(() => {
+      createContextHarness(useVisited, ({ children }) => <>{children}</>);
+    }, /useVisited must be used within VisitedProvider/);
   });
 
-  if (!currentValue || !renderer) {
-    throw new Error('VisitedProvider setup failed');
-  }
+  describe('addVisited', () => {
+    test('marks a shop as visited', () => {
+      const harness: ContextHarness<ReturnType<typeof useVisited>> = createContextHarness(
+        useVisited,
+        VisitedProvider,
+      );
 
-  return {
-    getValue: () => {
-      if (!currentValue) {
-        throw new Error('VisitedProvider setup failed');
-      }
-
-      return currentValue;
-    },
-    unmount: () => {
       act(() => {
-        renderer!.unmount();
+        harness.getValue().addVisited('shop-1');
       });
-    },
-  };
-};
 
-test('useVisited throws outside VisitedProvider', () => {
-  const Consumer = () => {
-    useVisited();
-    return null;
-  };
+      assert.equal(harness.getValue().isVisited('shop-1'), true);
+      assert.equal(harness.getValue().visited.has('shop-1'), true);
 
-  assert.throws(() => {
-    act(() => {
-      TestRenderer.create(<Consumer />);
+      harness.unmount();
     });
-  }, /useVisited must be used within VisitedProvider/);
-});
-
-test('addVisited marks a shop as visited', () => {
-  const { getValue, unmount } = createVisitedHarness();
-
-  act(() => {
-    getValue().addVisited('shop-1');
   });
 
-  assert.equal(getValue().isVisited('shop-1'), true);
-  assert.equal(getValue().visited.has('shop-1'), true);
+  describe('removeVisited', () => {
+    test('removes a shop from visited', () => {
+      const harness: ContextHarness<ReturnType<typeof useVisited>> = createContextHarness(
+        useVisited,
+        VisitedProvider,
+      );
 
-  unmount();
-});
+      act(() => {
+        harness.getValue().addVisited('shop-2');
+      });
 
-test('removeVisited removes a shop from visited', () => {
-  const { getValue, unmount } = createVisitedHarness();
+      act(() => {
+        harness.getValue().removeVisited('shop-2');
+      });
 
-  act(() => {
-    getValue().addVisited('shop-2');
+      assert.equal(harness.getValue().isVisited('shop-2'), false);
+      assert.equal(harness.getValue().visited.has('shop-2'), false);
+
+      harness.unmount();
+    });
   });
 
-  act(() => {
-    getValue().removeVisited('shop-2');
+  describe('toggleVisited', () => {
+    test('adds and removes a shop', () => {
+      const harness: ContextHarness<ReturnType<typeof useVisited>> = createContextHarness(
+        useVisited,
+        VisitedProvider,
+      );
+
+      act(() => {
+        harness.getValue().toggleVisited('shop-3');
+      });
+
+      assert.equal(harness.getValue().isVisited('shop-3'), true);
+
+      act(() => {
+        harness.getValue().toggleVisited('shop-3');
+      });
+
+      assert.equal(harness.getValue().isVisited('shop-3'), false);
+
+      harness.unmount();
+    });
   });
-
-  assert.equal(getValue().isVisited('shop-2'), false);
-  assert.equal(getValue().visited.has('shop-2'), false);
-
-  unmount();
-});
-
-test('toggleVisited adds and removes a shop', () => {
-  const { getValue, unmount } = createVisitedHarness();
-
-  act(() => {
-    getValue().toggleVisited('shop-3');
-  });
-
-  assert.equal(getValue().isVisited('shop-3'), true);
-
-  act(() => {
-    getValue().toggleVisited('shop-3');
-  });
-
-  assert.equal(getValue().isVisited('shop-3'), false);
-
-  unmount();
 });

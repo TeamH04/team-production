@@ -1,3 +1,4 @@
+import { ROUTES } from '@team/constants';
 import { Stack, useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import {
@@ -43,7 +44,7 @@ export default function RegisterProfileScreen() {
       isProfileRegistered: true,
       favoriteGenres: selectedGenres,
     });
-    router.replace('/');
+    router.replace(ROUTES.HOME);
   };
 
   return (

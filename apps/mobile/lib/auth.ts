@@ -1,38 +1,21 @@
+import { SESSION_NOT_FOUND } from '@team/constants';
+import {
+  type AuthState,
+  type OwnerCheck,
+  hasOwnerRole as hasOwnerRoleBase,
+} from '@team/core-utils';
+
+import { api } from './api';
+import { getSupabase, isSupabaseConfigured } from './supabase';
+
 import type { User } from '@supabase/supabase-js';
 
-import { fetchAuthMe } from './api';
-import { getSupabase } from './supabase';
+// Re-export OwnerCheck with Supabase User type for mobile convenience
+export type { OwnerCheck };
 
-export type OwnerCheck = {
-  isOwner: boolean;
-  user: User | null;
-};
-
-function getString(value: unknown): string | undefined {
-  return typeof value === 'string' ? value : undefined;
-}
-
-function getStringArray(value: unknown): string[] | undefined {
-  return Array.isArray(value) && value.every(v => typeof v === 'string')
-    ? (value as string[])
-    : undefined;
-}
-
-export function isOwnerFromUser(user: User | null): boolean {
-  if (!user) return false;
-  const meta = (user.user_metadata ?? {}) as Record<string, unknown>;
-  const app = (user.app_metadata ?? {}) as Record<string, unknown>;
-
-  const metaRole = getString(meta['role']);
-  if (metaRole === 'owner') return true;
-
-  const appRoles = getStringArray(app['roles']);
-  if (appRoles?.includes('owner')) return true;
-
-  const appRole = getString(app['role']);
-  if (appRole === 'owner') return true;
-
-  return false;
+// Re-export from shared package with Supabase User type compatibility
+export function hasOwnerRole(user: User | null): boolean {
+  return hasOwnerRoleBase(user);
 }
 
 export async function getCurrentUser(): Promise<User | null> {
@@ -61,18 +44,42 @@ export async function getAccessToken(): Promise<string | null> {
 
 export async function checkIsOwner(): Promise<OwnerCheck> {
   const user = await getCurrentUser();
-  return { isOwner: isOwnerFromUser(user), user };
+  return { isOwner: hasOwnerRole(user), user };
 }
 
 export async function ensureUserExistsInDB(): Promise<void> {
   const token = await getAccessToken();
   if (!token) {
-    throw new Error('session_not_found');
+    throw new Error(SESSION_NOT_FOUND);
   }
   try {
-    await fetchAuthMe(token);
+    await api.fetchAuthMe(token);
   } catch (err) {
     await getSupabase().auth.signOut();
     throw err;
   }
+}
+
+/**
+ * 認証状態を判定し、各モードの意味を返す。
+ * - local: Supabase 未設定のため、ローカル状態のみを使用する。
+ * - unauthenticated: Supabase は設定済みだが、未ログインまたはトークンが取得できない。
+ * - remote: 認証済みで、API 呼び出しに利用できるアクセストークンを保持している。
+ */
+export async function resolveAuth(): Promise<AuthState> {
+  if (!isSupabaseConfigured()) {
+    return { mode: 'local' };
+  }
+
+  const user = await getCurrentUser();
+  if (!user) {
+    return { mode: 'unauthenticated' };
+  }
+
+  const token = await getAccessToken();
+  if (!token) {
+    return { mode: 'unauthenticated' };
+  }
+
+  return { mode: 'remote', token };
 }

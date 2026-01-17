@@ -1,3 +1,4 @@
+import { ROUTES } from '@team/constants';
 import * as Linking from 'expo-linking';
 import { type Href, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
@@ -36,13 +37,13 @@ export default function OAuthCallback() {
               : raw;
           Alert.alert('ログイン失敗', message);
           setStatus('error');
-          router.replace('/login' as Href);
+          router.replace(ROUTES.LOGIN as Href);
           return;
         }
 
         setStatus('done');
         const { isOwner } = await checkIsOwner();
-        router.replace((isOwner ? '/owner' : '/(tabs)') as Href);
+        router.replace((isOwner ? ROUTES.OWNER : ROUTES.TABS) as Href);
       } catch (e: unknown) {
         setStatus('error');
         const message = e instanceof Error ? e.message : 'サインイン処理に失敗しました';

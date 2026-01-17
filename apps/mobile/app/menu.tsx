@@ -1,13 +1,14 @@
 import { Ionicons } from '@expo/vector-icons';
+import { BORDER_RADIUS, FONT_WEIGHT, SPACING } from '@team/constants';
+import { colors as themeColors, withAlpha } from '@team/theme';
+import { MENU_TAB_MAP, type ShopMenuItem } from '@team/types';
 import { useLocalSearchParams, useNavigation } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useState } from 'react';
 import { Pressable, ScrollView, SectionList, StyleSheet, Text, View } from 'react-native';
 
 import { useStores } from '@/features/stores/StoresContext';
-import { fetchStoreMenus } from '@/lib/api';
-import { colors as themeColors, withAlpha } from '@team/theme';
-import { MENU_TAB_MAP, type ShopMenuItem } from '@team/types';
+import { api } from '@/lib/api';
 
 // --- 定数 ---
 const COLORS = {
@@ -78,7 +79,7 @@ export default function ShopMenuScreen() {
 
     const orderedFromMap = mappedCategories.filter(category => apiCategories.includes(category));
     const remainingCategories = apiCategories.filter(
-      category => !orderedFromMap.includes(category)
+      category => !orderedFromMap.includes(category),
     );
 
     return ['すべて', 'おすすめ', ...orderedFromMap, ...remainingCategories];
@@ -102,7 +103,7 @@ export default function ShopMenuScreen() {
         setLoading(true);
         setError(null);
         try {
-          const menus = await fetchStoreMenus(id);
+          const menus = await api.fetchStoreMenus(id);
           if (!active) return;
           const mapped: ExtendedMenuItem[] = menus.map(menu => ({
             id: menu.menu_id,
@@ -165,7 +166,7 @@ export default function ShopMenuScreen() {
           acc[key].push(item);
           return acc;
         },
-        {} as Record<string, ExtendedMenuItem[]>
+        {} as Record<string, ExtendedMenuItem[]>,
       );
 
       return Object.keys(groups).map(category => ({
@@ -233,7 +234,7 @@ export default function ShopMenuScreen() {
         </View>
       );
     },
-    [activeCategory]
+    [activeCategory],
   );
 
   const renderSectionHeader = useCallback(
@@ -247,7 +248,7 @@ export default function ShopMenuScreen() {
         </View>
       );
     },
-    [activeCategory]
+    [activeCategory],
   );
 
   if (loading) {
@@ -339,15 +340,15 @@ const styles = StyleSheet.create({
   cardInner: {
     alignItems: 'center',
     flexDirection: 'row',
-    paddingVertical: 16,
+    paddingVertical: SPACING.LG,
   },
   categoryBadge: {
     backgroundColor: COLORS.BADGE_BG,
-    borderRadius: 12,
-    marginRight: 8,
-    marginVertical: 4,
+    borderRadius: BORDER_RADIUS.LARGE,
+    marginRight: SPACING.SM,
+    marginVertical: SPACING.XS,
     paddingHorizontal: 10,
-    paddingVertical: 4,
+    paddingVertical: SPACING.XS,
   },
   categoryBadgeText: {
     color: COLORS.BADGE_TEXT,
@@ -364,24 +365,24 @@ const styles = StyleSheet.create({
     color: COLORS.TAX_TEXT,
     fontSize: 14,
     lineHeight: 20,
-    marginTop: 12,
+    marginTop: SPACING.MD,
     textAlign: 'center',
   },
   listContent: {
     backgroundColor: COLORS.WHITE,
     flexGrow: 1,
     paddingBottom: 40,
-    paddingHorizontal: 12,
-    paddingTop: 8,
+    paddingHorizontal: SPACING.MD,
+    paddingTop: SPACING.SM,
   },
   menuCard: {
     backgroundColor: COLORS.WHITE,
     borderColor: COLORS.BORDER_SOFT,
-    borderRadius: 12,
+    borderRadius: BORDER_RADIUS.LARGE,
     borderWidth: 1,
-    marginBottom: 12,
+    marginBottom: SPACING.MD,
     paddingHorizontal: 14,
-    paddingVertical: 8,
+    paddingVertical: SPACING.SM,
     width: '100%',
   },
   menuDescription: {
@@ -395,7 +396,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 4,
+    marginBottom: SPACING.XS,
   },
   menuInfo: {
     flex: 1,
@@ -418,7 +419,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flexDirection: 'row',
     flexWrap: 'wrap',
-    marginTop: 4,
+    marginTop: SPACING.XS,
   },
   nameContainer: {
     alignItems: 'center',
@@ -433,21 +434,21 @@ const styles = StyleSheet.create({
   pageSubtitle: {
     color: COLORS.SUB_TEXT,
     fontSize: 13,
-    fontWeight: '600',
+    fontWeight: FONT_WEIGHT.SEMIBOLD,
     lineHeight: 20,
   },
   pageTitle: {
     color: COLORS.GRAY_DARK,
     fontSize: 20,
-    fontWeight: '800',
+    fontWeight: FONT_WEIGHT.BOLD,
   },
   pageTitleCard: {
     backgroundColor: COLORS.WHITE,
     borderColor: COLORS.BORDER_SOFT,
-    borderRadius: 16,
+    borderRadius: BORDER_RADIUS.XLARGE,
     borderWidth: 1,
     gap: 6,
-    padding: 16,
+    padding: SPACING.LG,
   },
   pageTitleWrapper: { paddingBottom: 4, paddingHorizontal: 4, paddingTop: 6 },
   priceContainer: {
@@ -456,7 +457,7 @@ const styles = StyleSheet.create({
   },
   recommendBadge: {
     backgroundColor: COLORS.BADGE_BG,
-    borderRadius: 4,
+    borderRadius: BORDER_RADIUS.SMALL,
     paddingHorizontal: 6,
     paddingVertical: 2,
   },
@@ -474,15 +475,15 @@ const styles = StyleSheet.create({
     borderColor: COLORS.BORDER_LIGHT,
     borderRadius: 10,
     borderWidth: 1,
-    marginBottom: 8,
-    marginTop: 8,
+    marginBottom: SPACING.SM,
+    marginTop: SPACING.SM,
     paddingHorizontal: 14,
-    paddingVertical: 8,
+    paddingVertical: SPACING.SM,
   },
   sectionTitle: {
     color: COLORS.GRAY_TEXT,
     fontSize: 13,
-    fontWeight: '800',
+    fontWeight: FONT_WEIGHT.BOLD,
     letterSpacing: 1,
   },
   tab: {
@@ -493,8 +494,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     height: 34,
     justifyContent: 'center',
-    marginRight: 8,
-    paddingHorizontal: 16,
+    marginRight: SPACING.SM,
+    paddingHorizontal: SPACING.LG,
   },
   tabSelected: {
     backgroundColor: COLORS.WHITE,
@@ -503,7 +504,7 @@ const styles = StyleSheet.create({
   tabText: {
     color: COLORS.WHITE,
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: FONT_WEIGHT.SEMIBOLD,
   },
   tabTextSelected: {
     color: COLORS.HEADER_GREEN,
@@ -514,7 +515,7 @@ const styles = StyleSheet.create({
   tabsContent: {
     flexDirection: 'row',
     paddingBottom: 10,
-    paddingHorizontal: 12,
+    paddingHorizontal: SPACING.MD,
     paddingTop: 10,
   },
   taxLabel: {

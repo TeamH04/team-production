@@ -1,4 +1,11 @@
 import { Ionicons } from '@expo/vector-icons';
+import {
+  ERROR_MESSAGES,
+  FONT_WEIGHT,
+  isValidEmail,
+  ROUTES,
+  SESSION_NOT_FOUND,
+} from '@team/constants';
 import { type Href, useNavigation, useRouter } from 'expo-router';
 import { useLayoutEffect, useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
@@ -6,8 +13,6 @@ import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 
 import { palette } from '@/constants/palette';
 import { ensureUserExistsInDB } from '@/lib/auth';
 import { getSupabase, isSupabaseConfigured } from '@/lib/supabase';
-
-const isLikelyEmail = (value: string) => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(value.trim());
 
 export default function OwnerLoginScreen() {
   const router = useRouter();
@@ -33,7 +38,7 @@ export default function OwnerLoginScreen() {
       return;
     }
 
-    if (!isLikelyEmail(trimmedEmail)) {
+    if (!isValidEmail(trimmedEmail)) {
       setEmailError(true);
       return;
     }
@@ -42,10 +47,7 @@ export default function OwnerLoginScreen() {
     setLoading(true);
     try {
       if (!isSupabaseConfigured()) {
-        Alert.alert(
-          '未設定',
-          'Supabaseの環境変数が未設定です。EXPO_PUBLIC_SUPABASE_URL と EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY を設定してください。'
-        );
+        Alert.alert('未設定', ERROR_MESSAGES.SUPABASE_NOT_CONFIGURED);
         return;
       }
 
@@ -67,7 +69,7 @@ export default function OwnerLoginScreen() {
       } catch (err) {
         const raw = err instanceof Error ? err.message : 'ログイン処理に失敗しました';
         const message =
-          raw === 'session_not_found'
+          raw === SESSION_NOT_FOUND
             ? 'セッションを取得できませんでした。もう一度ログインしてください。'
             : raw;
         Alert.alert('ログイン失敗', message);
@@ -75,7 +77,7 @@ export default function OwnerLoginScreen() {
       }
 
       Alert.alert('ログイン成功', `${data.user?.email ?? 'メール/パスワード'}でログインしました`);
-      router.replace('/owner' as Href);
+      router.replace(ROUTES.OWNER as Href);
     } finally {
       setLoading(false);
     }
@@ -144,7 +146,7 @@ export default function OwnerLoginScreen() {
             <View style={styles.dividerLine} />
 
             <Pressable
-              onPress={() => router.push('/owner/signup' as Href)}
+              onPress={() => router.push(ROUTES.OWNER_SIGNUP as Href)}
               style={({ pressed }) => [styles.secondaryBtn, pressed && styles.secondaryBtnPressed]}
             >
               <Text style={styles.secondaryBtnText}>アカウントを新規作成</Text>
@@ -258,7 +260,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     textAlign: 'center',
   },
-  title: { color: palette.primaryText, fontSize: 20, fontWeight: '800' },
+  title: { color: palette.primaryText, fontSize: 20, fontWeight: FONT_WEIGHT.BOLD },
   titleContainer: {
     alignItems: 'center',
     flexDirection: 'row',

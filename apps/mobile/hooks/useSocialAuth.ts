@@ -1,23 +1,31 @@
-import { getSupabase, isSupabaseConfigured } from '@/lib/supabase';
-import type { AuthError, Session } from '@supabase/supabase-js';
+import { ERROR_MESSAGES } from '@team/constants';
+import { parseOAuthTokensFromUrl, isUserCancellation, extractOAuthError } from '@team/core-utils';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import * as AuthSession from 'expo-auth-session';
 import * as WebBrowser from 'expo-web-browser';
 import { useCallback, useState } from 'react';
 import { Platform } from 'react-native';
 
+import { getSupabase, isSupabaseConfigured } from '@/lib/supabase';
+
+import type { AuthError, Session } from '@supabase/supabase-js';
+
 WebBrowser.maybeCompleteAuthSession();
+
+function handleAuthError(error: unknown): { success: false; error: string } {
+  return { success: false, error: extractOAuthError(error) };
+}
 
 export const useSocialAuth = () => {
   const [loading, setLoading] = useState(false);
   const supabase = getSupabase();
+  const isConfigured = isSupabaseConfigured();
 
   const signInWithGoogle = useCallback(async () => {
-    if (!isSupabaseConfigured()) {
+    if (!isConfigured) {
       return {
         success: false,
-        error:
-          'Supabase is not configured. Please set EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY.',
+        error: ERROR_MESSAGES.SUPABASE_NOT_CONFIGURED_EN,
       };
     }
 
@@ -44,11 +52,7 @@ export const useSocialAuth = () => {
 
         if (result.type === 'success' && result.url) {
           // Parse tokens from the redirect URL
-          const url = new URL(result.url);
-          const params = new URLSearchParams(url.hash ? url.hash.substring(1) : url.search);
-          const access_token = params.get('access_token');
-          const refresh_token = params.get('refresh_token');
-          const code = params.get('code');
+          const { accessToken, refreshToken, code } = parseOAuthTokensFromUrl(result.url);
 
           type SessionResult = {
             session: Session | null;
@@ -58,10 +62,10 @@ export const useSocialAuth = () => {
           let sessionData: SessionResult | null = null;
           let sessionError: AuthError | null = null;
 
-          if (access_token && refresh_token) {
+          if (accessToken && refreshToken) {
             ({ data: sessionData, error: sessionError } = await supabase.auth.setSession({
-              access_token,
-              refresh_token,
+              access_token: accessToken,
+              refresh_token: refreshToken,
             }));
           } else if (code) {
             ({ data: sessionData, error: sessionError } =
@@ -80,23 +84,21 @@ export const useSocialAuth = () => {
 
       return { success: false, error: 'Google signin cancelled' };
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-      return { success: false, error: errorMessage };
+      return handleAuthError(error);
     } finally {
       setLoading(false);
     }
-  }, [supabase]);
+  }, [supabase, isConfigured]);
 
   const signInWithApple = useCallback(async () => {
     if (Platform.OS !== 'ios') {
       return { success: false, error: 'Apple signin is only available on iOS' };
     }
 
-    if (!isSupabaseConfigured()) {
+    if (!isConfigured) {
       return {
         success: false,
-        error:
-          'Supabase is not configured. Please set EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY.',
+        error: ERROR_MESSAGES.SUPABASE_NOT_CONFIGURED_EN,
       };
     }
 
@@ -137,22 +139,19 @@ export const useSocialAuth = () => {
       return { success: true, user: data.user };
     } catch (error) {
       // User cancelled is not an error
-      if (error && typeof error === 'object' && 'code' in error) {
-        const err = error as { code?: string };
-        if (err.code === 'ERR_CANCELED') {
-          return { success: false, error: 'Signin cancelled' };
-        }
+      if (isUserCancellation(error)) {
+        return { success: false, error: 'Signin cancelled' };
       }
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-      return { success: false, error: errorMessage };
+      return handleAuthError(error);
     } finally {
       setLoading(false);
     }
-  }, [supabase]);
+  }, [supabase, isConfigured]);
 
   return {
     signInWithGoogle,
     signInWithApple,
     loading,
+    isConfigured,
   };
 };

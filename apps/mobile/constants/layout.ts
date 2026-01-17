@@ -1,1 +1,3 @@
-export const HEADER_HEIGHT = 100;
+export { LAYOUT } from '@team/constants';
+import { LAYOUT } from '@team/constants';
+export const HEADER_HEIGHT = LAYOUT.HEADER_HEIGHT;

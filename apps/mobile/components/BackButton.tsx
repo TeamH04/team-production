@@ -1,7 +1,10 @@
+import { FONT_SIZE, FONT_WEIGHT, SPACING } from '@team/constants';
 import React from 'react';
-import { Pressable, StyleProp, StyleSheet, Text, ViewStyle } from 'react-native';
+import { Pressable, StyleSheet, Text } from 'react-native';
 
 import { palette } from '@/constants/palette';
+
+import type { StyleProp, ViewStyle } from 'react-native';
 
 type Props = {
   onPress?: () => void;
@@ -22,20 +25,20 @@ const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
     backgroundColor: palette.secondarySurface,
-    borderRadius: 20,
+    borderRadius: SPACING.XL,
     flexDirection: 'row',
     paddingHorizontal: 14,
-    paddingVertical: 8,
+    paddingVertical: SPACING.SM,
   },
   icon: {
     color: palette.primary,
-    fontSize: 20,
+    fontSize: FONT_SIZE.XXL,
     fontWeight: '700',
-    marginRight: 4,
+    marginRight: SPACING.XS,
   },
   text: {
     color: palette.primary,
-    fontSize: 14,
-    fontWeight: '600',
+    fontSize: FONT_SIZE.MD,
+    fontWeight: FONT_WEIGHT.SEMIBOLD,
   },
 });

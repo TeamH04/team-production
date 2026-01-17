@@ -1,8 +1,7 @@
-import { palette } from '@/constants/palette';
-import { useStores } from '@/features/stores/StoresContext';
-import { useVisited } from '@/features/visited/VisitedContext';
+import { BORDER_RADIUS, ERROR_MESSAGES, FONT_WEIGHT, ROUTES, SPACING } from '@team/constants';
+import { sortShops, type Shop } from '@team/shop-core';
 import { useRouter } from 'expo-router';
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import {
   FlatList,
   Image,
@@ -14,12 +13,13 @@ import {
   View,
 } from 'react-native';
 
-const TAB_BAR_SPACING = 129;
-const INACTIVE_COLOR = palette.secondarySurface;
-
-const COLOR_WHITE = '#FFFFFF';
-const COLOR_ACTIVE_NAVY = '#1A2533';
-const COLOR_TAG_BG = '#F0F2F5';
+import { ShopCard } from '@/components/ShopCard';
+import { ToggleButton } from '@/components/ToggleButton';
+import { palette } from '@/constants/palette';
+import { TAB_BAR_SPACING } from '@/constants/TabBarSpacing';
+import { useStores } from '@/features/stores/StoresContext';
+import { useVisited } from '@/features/visited/VisitedContext';
+import { useShopFilter } from '@/hooks/useShopFilter';
 
 type SortType = 'default' | 'newest' | 'rating' | 'registered';
 type SortOrder = 'asc' | 'desc';
@@ -69,6 +69,14 @@ export default function SearchScreen() {
     registered: 'desc',
   });
 
+  const { filteredShops: baseFilteredShops } = useShopFilter({
+    shops,
+    searchText: currentSearchText.trim(),
+    categories: activeCategories,
+    tags: selectedTags,
+    sortType: 'default',
+  });
+
   const CATEGORY_OPTIONS = useMemo(() => {
     const set = new Set<string>();
     for (const shop of shops) {
@@ -93,7 +101,7 @@ export default function SearchScreen() {
       }
     });
     return Object.fromEntries(
-      Array.from(m.entries(), ([cat, set]) => [cat, Array.from(set).sort()] as const)
+      Array.from(m.entries(), ([cat, set]) => [cat, Array.from(set).sort()] as const),
     ) as Record<string, string[]>;
   }, [shops]);
 
@@ -160,12 +168,18 @@ export default function SearchScreen() {
     setSelectedTags(prev => (prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]));
   };
 
-  const handleShopPress = (shopId: string) => {
-    router.push({
-      pathname: '/shop/[id]',
-      params: { id: shopId },
-    });
-  };
+  const handleShopPress = useCallback(
+    (shopId: string) => {
+      router.push(ROUTES.SHOP_DETAIL(shopId));
+    },
+    [router],
+  );
+
+  const formatSearchMeta = useCallback(
+    (shop: Shop) =>
+      `${shop.category}${shop.budget ? ` • ${shop.budget}` : ''} • 徒歩${shop.distanceMinutes}分`,
+    [],
+  );
 
   const getSortOrderLabel = () => {
     const currentOrder = sortOrders[sortBy];
@@ -182,63 +196,47 @@ export default function SearchScreen() {
 
   const searchResults = useMemo(() => {
     if (!hasSearchCriteria) return [];
-    const q = currentSearchText.trim().toLowerCase();
-    const tags = selectedTags.map(t => t.toLowerCase());
-    const hasCategories = activeCategories.length > 0;
 
-    const filtered = shops.filter(shop => {
-      const matchesText =
-        q.length > 0
-          ? shop.name.toLowerCase().includes(q) ||
-            shop.description.toLowerCase().includes(q) ||
-            shop.category.toLowerCase().includes(q)
-          : true;
-      const matchesTags =
-        tags.length > 0
-          ? tags.some(tag => shop.tags.some(st => st.toLowerCase().includes(tag)))
-          : true;
-      const matchesCategory = hasCategories ? activeCategories.includes(shop.category) : true;
-      const matchesVisited =
-        filterVisited === 'all'
-          ? true
-          : filterVisited === 'visited'
-            ? isVisited(shop.id)
-            : !isVisited(shop.id);
-      return matchesText && matchesTags && matchesCategory && matchesVisited;
-    });
+    let filtered = baseFilteredShops;
 
-    return filtered.sort((a, b) => {
-      let comparison = 0;
-      const currentOrder = sortOrders[sortBy];
-      switch (sortBy) {
-        case 'newest':
-          comparison = new Date(a.openedAt).getTime() - new Date(b.openedAt).getTime();
-          break;
-        case 'registered':
-          comparison =
-            getIdNum(a.id) !== 0 || getIdNum(b.id) !== 0
-              ? getIdNum(a.id) - getIdNum(b.id)
-              : new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
-          break;
-        case 'rating':
-          comparison = a.rating - b.rating;
-          break;
-        default:
-          return 0;
+    // 訪問済みフィルター（モバイル固有）
+    if (filterVisited !== 'all') {
+      filtered = filtered.filter(shop =>
+        filterVisited === 'visited' ? isVisited(shop.id) : !isVisited(shop.id),
+      );
+    }
+
+    const currentOrder = sortOrders[sortBy];
+
+    switch (sortBy) {
+      case 'newest': {
+        const sorted = sortShops(filtered, 'newest');
+        filtered = currentOrder === 'asc' ? [...sorted].reverse() : sorted;
+        break;
       }
-      return currentOrder === 'asc' ? comparison : -comparison;
-    });
-  }, [
-    activeCategories,
-    currentSearchText,
-    filterVisited,
-    hasSearchCriteria,
-    isVisited,
-    selectedTags,
-    shops,
-    sortBy,
-    sortOrders,
-  ]);
+      case 'rating': {
+        const sortType = currentOrder === 'asc' ? 'rating-low' : 'rating-high';
+        filtered = sortShops(filtered, sortType);
+        break;
+      }
+      case 'registered': {
+        const sorted = [...filtered].sort((a, b) => {
+          const leftId = getIdNum(a.id);
+          const rightId = getIdNum(b.id);
+          if (leftId !== 0 || rightId !== 0) {
+            return leftId - rightId;
+          }
+          return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+        });
+        filtered = currentOrder === 'asc' ? sorted : sorted.reverse();
+        break;
+      }
+      default:
+        break;
+    }
+
+    return filtered;
+  }, [baseFilteredShops, filterVisited, hasSearchCriteria, isVisited, sortBy, sortOrders]);
 
   return (
     <ScrollView
@@ -279,26 +277,13 @@ export default function SearchScreen() {
             <Text style={styles.sectionLabel}>カテゴリから探す（複数選択可）</Text>
             <View style={styles.categoriesRow}>
               {CATEGORY_OPTIONS.map(cat => (
-                <Pressable
+                <ToggleButton
                   key={cat}
+                  label={cat}
+                  isActive={activeCategories.includes(cat)}
                   onPress={() => handleCategoryPress(cat)}
-                  style={[
-                    styles.categoryButton,
-                    activeCategories.includes(cat)
-                      ? styles.categoryButtonActive
-                      : styles.categoryButtonInactive,
-                  ]}
-                >
-                  <Text
-                    style={
-                      activeCategories.includes(cat)
-                        ? styles.categoryButtonTextActive
-                        : styles.categoryButtonTextInactive
-                    }
-                  >
-                    {cat}
-                  </Text>
-                </Pressable>
+                  style={styles.categoryButton}
+                />
               ))}
             </View>
 
@@ -311,26 +296,14 @@ export default function SearchScreen() {
                     <Text style={styles.subSectionLabel}>{`${cat}のタグ`}</Text>
                     <View style={styles.tagsRow}>
                       {(TAGS_BY_CATEGORY[cat] || []).map(tag => (
-                        <Pressable
+                        <ToggleButton
                           key={tag}
+                          label={tag}
+                          isActive={selectedTags.includes(tag)}
                           onPress={() => handleTagPress(tag)}
-                          style={[
-                            styles.tagButton,
-                            selectedTags.includes(tag)
-                              ? styles.tagButtonActive
-                              : styles.tagButtonInactive,
-                          ]}
-                        >
-                          <Text
-                            style={
-                              selectedTags.includes(tag)
-                                ? styles.tagButtonTextActive
-                                : styles.tagButtonTextInactive
-                            }
-                          >
-                            {tag}
-                          </Text>
-                        </Pressable>
+                          style={styles.tagButton}
+                          size='small'
+                        />
                       ))}
                     </View>
                   </View>
@@ -349,7 +322,7 @@ export default function SearchScreen() {
 
       {!loading && loadError && (
         <View style={styles.emptyState}>
-          <Text style={styles.emptyTitle}>店舗情報の取得に失敗しました</Text>
+          <Text style={styles.emptyTitle}>{ERROR_MESSAGES.STORE_FETCH_FAILED}</Text>
           <Text style={styles.emptyHistoryText}>{loadError}</Text>
         </View>
       )}
@@ -359,32 +332,16 @@ export default function SearchScreen() {
           <Text style={styles.resultsTitle}>{`検索結果：${searchResults.length}件`}</Text>
 
           <View style={styles.visitedFilterRow}>
-            {VISITED_FILTER_OPTIONS.map(option => {
-              const isActive = filterVisited === option.value;
-              return (
-                <Pressable
-                  key={option.value}
-                  accessibilityLabel={`訪問済みフィルター: ${option.label}`}
-                  onPress={() => setFilterVisited(option.value)}
-                  style={[
-                    styles.visitedFilterButton,
-                    isActive
-                      ? styles.visitedFilterButtonActive
-                      : styles.visitedFilterButtonInactive,
-                  ]}
-                >
-                  <Text
-                    style={
-                      isActive
-                        ? styles.visitedFilterButtonTextActive
-                        : styles.visitedFilterButtonTextInactive
-                    }
-                  >
-                    {option.label}
-                  </Text>
-                </Pressable>
-              );
-            })}
+            {VISITED_FILTER_OPTIONS.map(option => (
+              <ToggleButton
+                key={option.value}
+                label={option.label}
+                isActive={filterVisited === option.value}
+                onPress={() => setFilterVisited(option.value)}
+                style={styles.visitedFilterButton}
+                size='small'
+              />
+            ))}
           </View>
 
           {searchResults.length > 0 ? (
@@ -397,26 +354,14 @@ export default function SearchScreen() {
                   contentContainerStyle={styles.sortOptionsContent}
                 >
                   {SORT_OPTIONS.map(option => (
-                    <Pressable
+                    <ToggleButton
                       key={option.value}
+                      label={option.label}
+                      isActive={sortBy === option.value}
                       onPress={() => handleSortTypePress(option.value)}
-                      style={[
-                        styles.sortButton,
-                        sortBy === option.value
-                          ? styles.sortButtonActive
-                          : styles.sortButtonInactive,
-                      ]}
-                    >
-                      <Text
-                        style={
-                          sortBy === option.value
-                            ? styles.sortButtonTextActive
-                            : styles.sortButtonTextInactive
-                        }
-                      >
-                        {option.label}
-                      </Text>
-                    </Pressable>
+                      style={styles.sortButton}
+                      size='small'
+                    />
                   ))}
                 </ScrollView>
                 {sortBy !== 'default' && (
@@ -431,29 +376,12 @@ export default function SearchScreen() {
 
               <View style={styles.categorySection}>
                 {searchResults.map(item => (
-                  <Pressable
+                  <ShopCard
                     key={item.id}
-                    onPress={() => handleShopPress(item.id)}
-                    style={styles.shopCard}
-                  >
-                    <Image source={{ uri: item.imageUrl }} style={styles.shopImage} />
-                    <View style={styles.shopInfo}>
-                      <View style={styles.shopHeader}>
-                        <Text style={styles.shopName}>{item.name}</Text>
-                        <View style={styles.ratingBadge}>
-                          <Text style={styles.ratingText}>{`★ ${item.rating.toFixed(1)}`}</Text>
-                        </View>
-                      </View>
-                      <Text style={styles.shopMeta}>
-                        {item.category}
-                        {item.budget ? ` • ${item.budget}` : ''}
-                        {` • 徒歩${item.distanceMinutes}分`}
-                      </Text>
-                      <Text style={styles.shopDescription} numberOfLines={2}>
-                        {item.description}
-                      </Text>
-                    </View>
-                  </Pressable>
+                    shop={item}
+                    onPress={handleShopPress}
+                    formatMeta={formatSearchMeta}
+                  />
                 ))}
               </View>
             </View>
@@ -505,33 +433,16 @@ const styles = StyleSheet.create({
   categoriesRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
+    gap: SPACING.SM,
   },
   categoryButton: {
-    borderRadius: 999,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-  },
-  categoryButtonActive: {
-    backgroundColor: COLOR_ACTIVE_NAVY,
-  },
-  categoryButtonInactive: {
-    backgroundColor: INACTIVE_COLOR,
-  },
-  categoryButtonTextActive: {
-    color: COLOR_WHITE,
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  categoryButtonTextInactive: {
-    color: palette.textOnSecondary,
-    fontSize: 14,
+    borderRadius: BORDER_RADIUS.PILL,
   },
   categorySection: {
     marginBottom: 24,
   },
   clearButton: {
-    padding: 8,
+    padding: SPACING.SM,
   },
   clearButtonHidden: {
     opacity: 0,
@@ -547,14 +458,14 @@ const styles = StyleSheet.create({
   contentContainer: {
     flexGrow: 1,
     paddingBottom: TAB_BAR_SPACING,
-    paddingHorizontal: 20,
-    paddingTop: 24,
+    paddingHorizontal: SPACING.XL,
+    paddingTop: SPACING.XXL,
   },
   divider: {
     backgroundColor: palette.border,
     height: 1,
-    marginBottom: 8,
-    marginTop: 20,
+    marginBottom: SPACING.SM,
+    marginTop: SPACING.XL,
     opacity: 0.5,
   },
   emptyHistoryBox: {
@@ -576,7 +487,7 @@ const styles = StyleSheet.create({
   emptyTitle: {
     color: palette.secondaryText,
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: FONT_WEIGHT.SEMIBOLD,
     marginBottom: 40,
   },
   fixedOrderContainer: {
@@ -594,10 +505,10 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingVertical: 16,
+    paddingVertical: SPACING.LG,
   },
   historySection: {
-    marginTop: 16,
+    marginTop: SPACING.LG,
   },
   historyText: {
     color: palette.primaryText,
@@ -609,16 +520,16 @@ const styles = StyleSheet.create({
   historyTitle: {
     color: palette.primaryText,
     fontSize: 20,
-    fontWeight: '600',
-    marginBottom: 16,
+    fontWeight: FONT_WEIGHT.SEMIBOLD,
+    marginBottom: SPACING.LG,
   },
   orderButton: {
     alignItems: 'center',
     backgroundColor: palette.background,
     borderColor: palette.border,
-    borderRadius: 8,
+    borderRadius: BORDER_RADIUS.MEDIUM,
     borderWidth: 1,
-    paddingHorizontal: 12,
+    paddingHorizontal: SPACING.MD,
     paddingVertical: 6,
   },
   orderButtonText: {
@@ -626,28 +537,17 @@ const styles = StyleSheet.create({
     fontSize: 12,
     textAlign: 'center',
   },
-  ratingBadge: {
-    backgroundColor: palette.highlight,
-    borderRadius: 999,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-  },
-  ratingText: {
-    color: palette.ratingText,
-    fontSize: 11,
-    fontWeight: '600',
-  },
   removeBtn: {
     color: palette.secondaryText,
     fontSize: 18,
-    padding: 8,
+    padding: SPACING.SM,
   },
   resultsSection: {},
   resultsTitle: {
     color: palette.primaryText,
     fontSize: 14,
-    fontWeight: '600',
-    marginBottom: 16,
+    fontWeight: FONT_WEIGHT.SEMIBOLD,
+    marginBottom: SPACING.LG,
   },
   screenTitle: {
     color: palette.primaryText,
@@ -655,11 +555,11 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   searchBarContainer: {
-    marginBottom: 16,
+    marginBottom: SPACING.LG,
   },
   searchBarRow: {
     flexDirection: 'row',
-    marginBottom: 20,
+    marginBottom: SPACING.XL,
   },
   searchInput: {
     color: palette.primaryText,
@@ -672,14 +572,14 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     flex: 1,
     flexDirection: 'row',
-    paddingHorizontal: 20,
+    paddingHorizontal: SPACING.XL,
     paddingVertical: 10,
   },
   sectionLabel: {
     color: palette.secondaryText,
     fontSize: 14,
-    fontWeight: '600',
-    marginBottom: 16,
+    fontWeight: FONT_WEIGHT.SEMIBOLD,
+    marginBottom: SPACING.LG,
   },
   shadowLight: {
     elevation: 3,
@@ -691,154 +591,56 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.05,
     shadowRadius: 10,
   },
-  shopCard: {
-    backgroundColor: palette.surface,
-    borderColor: palette.divider,
-    borderRadius: 12,
-    borderWidth: 1,
-    flexDirection: 'row',
-    marginBottom: 12,
-    overflow: 'hidden',
-  },
-  shopDescription: {
-    color: palette.secondaryText,
-    fontSize: 12,
-    lineHeight: 16,
-  },
-  shopHeader: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 4,
-  },
-  shopImage: {
-    height: 100,
-    width: 100,
-  },
-  shopInfo: {
-    flex: 1,
-    padding: 12,
-  },
-  shopMeta: {
-    color: palette.secondaryText,
-    fontSize: 12,
-    marginBottom: 4,
-  },
-  shopName: {
-    color: palette.primaryText,
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  sortButton: {
-    borderRadius: 8,
-    borderWidth: 1,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-  },
-  sortButtonActive: {
-    backgroundColor: palette.primaryText,
-    borderColor: palette.primaryText,
-  },
-  sortButtonInactive: {
-    backgroundColor: palette.background,
-    borderColor: palette.border,
-  },
-  sortButtonTextActive: {
-    color: palette.surface,
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  sortButtonTextInactive: {
-    color: palette.secondaryText,
-    fontSize: 12,
-  },
+  sortButton: {},
   sortOptionsContent: {
     alignItems: 'center',
-    gap: 8,
-    paddingRight: 8,
+    gap: SPACING.SM,
+    paddingRight: SPACING.SM,
   },
   sortOptionsScroll: {
     flex: 1,
-    marginRight: 8,
+    marginRight: SPACING.SM,
   },
   sortRow: {
     alignItems: 'center',
     flexDirection: 'row',
-    marginBottom: 16,
+    marginBottom: SPACING.LG,
   },
   subSectionLabel: {
     color: palette.secondaryText,
     fontSize: 13,
-    fontWeight: '600',
-    marginBottom: 12,
+    fontWeight: FONT_WEIGHT.SEMIBOLD,
+    marginBottom: SPACING.MD,
   },
   subTagSection: {
     marginTop: 0,
   },
   tagButton: {
-    borderRadius: 999,
-    paddingHorizontal: 14,
-    paddingVertical: 6,
-  },
-  tagButtonActive: {
-    backgroundColor: COLOR_ACTIVE_NAVY,
-  },
-  tagButtonInactive: {
-    backgroundColor: COLOR_TAG_BG,
-  },
-  tagButtonTextActive: {
-    color: COLOR_WHITE,
-    fontSize: 13,
-  },
-  tagButtonTextInactive: {
-    color: palette.secondaryText,
-    fontSize: 13,
+    borderRadius: BORDER_RADIUS.PILL,
   },
   tagGroup: {
-    marginTop: 16,
+    marginTop: SPACING.LG,
   },
   tagGroupsContainer: {
     backgroundColor: palette.surface,
-    borderRadius: 12,
-    padding: 20,
+    borderRadius: BORDER_RADIUS.LARGE,
+    padding: SPACING.XL,
   },
   tagsRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
+    gap: SPACING.SM,
   },
   verticalDivider: {
     backgroundColor: palette.border,
     height: 18,
-    marginRight: 8,
+    marginRight: SPACING.SM,
     width: 1,
   },
-  visitedFilterButton: {
-    borderRadius: 8,
-    borderWidth: 1,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-  },
-  visitedFilterButtonActive: {
-    backgroundColor: palette.primary,
-    borderColor: palette.primary,
-  },
-  visitedFilterButtonInactive: {
-    backgroundColor: palette.background,
-    borderColor: palette.border,
-  },
-  visitedFilterButtonTextActive: {
-    color: COLOR_WHITE,
-    fontSize: 13,
-    fontWeight: '600',
-  },
-  visitedFilterButtonTextInactive: {
-    color: palette.secondaryText,
-    fontSize: 13,
-  },
+  visitedFilterButton: {},
   visitedFilterRow: {
     flexDirection: 'row',
-    gap: 8,
-    marginBottom: 12,
+    gap: SPACING.SM,
+    marginBottom: SPACING.MD,
   },
 });

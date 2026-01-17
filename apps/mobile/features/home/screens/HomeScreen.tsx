@@ -1,8 +1,6 @@
-import { palette } from '@/constants/palette';
-import { TAB_BAR_SPACING } from '@/constants/TabBarSpacing';
-import { useStores } from '@/features/stores/StoresContext';
-import type { Shop } from '@team/shop-core';
-import { Image } from 'expo-image';
+import { ERROR_MESSAGES, FONT_WEIGHT, MOBILE_PAGE_SIZE, ROUTES } from '@team/constants';
+import { usePagination } from '@team/hooks';
+import { type Shop } from '@team/shop-core';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { type ReactElement, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -16,13 +14,12 @@ import {
 } from 'react-native';
 import Animated, { useAnimatedRef } from 'react-native-reanimated';
 
-const PAGE_SIZE = 10;
-
-const BUDGET_LABEL: Record<Shop['budget'], string> = {
-  $: '¥',
-  $$: '¥¥',
-  $$$: '¥¥¥',
-};
+import { ShopCard } from '@/components/ShopCard';
+import { palette } from '@/constants/palette';
+import { TAB_BAR_SPACING } from '@/constants/TabBarSpacing';
+import { useStores } from '@/features/stores/StoresContext';
+import { useShopFilter } from '@/hooks/useShopFilter';
+import { useShopNavigator } from '@/hooks/useShopNavigator';
 
 const KEY_EXTRACTOR = (item: Shop) => item.id;
 
@@ -39,10 +36,16 @@ function ShopResultsList({
   renderListHeader,
   renderShop,
 }: ShopResultsListProps) {
-  const [visibleCount, setVisibleCount] = useState(() => Math.min(PAGE_SIZE, filteredShops.length));
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const loadMoreTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const listRef = useAnimatedRef<FlatList<Shop>>();
+
+  const {
+    visibleItems: visibleShops,
+    hasMore: hasMoreResults,
+    loadMore,
+    reset: resetPagination,
+  } = usePagination(filteredShops, { pageSize: MOBILE_PAGE_SIZE });
 
   useEffect(() => {
     if (loadMoreTimeout.current) {
@@ -52,11 +55,11 @@ function ShopResultsList({
 
     const resetId = setTimeout(() => {
       setIsLoadingMore(false);
-      setVisibleCount(Math.min(PAGE_SIZE, filteredShops.length));
+      resetPagination();
     }, 0);
 
     return () => clearTimeout(resetId);
-  }, [filteredShops]);
+  }, [filteredShops, resetPagination]);
 
   useEffect(() => {
     return () => {
@@ -67,23 +70,17 @@ function ShopResultsList({
     };
   }, []);
 
-  const visibleShops = useMemo(() => {
-    return filteredShops.slice(0, visibleCount);
-  }, [filteredShops, visibleCount]);
-
-  const hasMoreResults = visibleCount < filteredShops.length;
-
   const handleLoadMore = useCallback(() => {
     if (isLoadingMore || !hasMoreResults) return;
 
     setIsLoadingMore(true);
 
     loadMoreTimeout.current = setTimeout(() => {
-      setVisibleCount(prev => Math.min(prev + PAGE_SIZE, filteredShops.length));
+      loadMore();
       setIsLoadingMore(false);
       loadMoreTimeout.current = null;
     }, 350);
-  }, [filteredShops.length, hasMoreResults, isLoadingMore]);
+  }, [hasMoreResults, isLoadingMore, loadMore]);
 
   return (
     <Animated.FlatList
@@ -110,6 +107,7 @@ function ShopResultsList({
 
 export default function HomeScreen() {
   const router = useRouter();
+  const { navigateToShop } = useShopNavigator();
   const { stores, loading, error } = useStores();
   const params = useLocalSearchParams<{
     tag?: string | string[];
@@ -120,54 +118,17 @@ export default function HomeScreen() {
 
   const listKey = `${activeTag ?? 'all'}-${activeCategory ?? 'all'}`;
 
-  const filteredShops = useMemo(() => {
-    if (!activeTag && !activeCategory) {
-      return stores;
-    }
-
-    return stores.filter(shop => {
-      const matchesTag = activeTag ? shop.tags?.includes(activeTag) : true;
-      const matchesCategory = activeCategory ? shop.category === activeCategory : true;
-
-      return matchesTag && matchesCategory;
-    });
-  }, [activeCategory, activeTag, stores]);
+  const { filteredShops } = useShopFilter({
+    shops: stores,
+    searchText: '',
+    categories: activeCategory ? [activeCategory] : [],
+    tags: activeTag ? [activeTag] : [],
+    sortType: 'default',
+  });
 
   const renderShop = useCallback(
-    ({ item }: { item: Shop }) => (
-      <View style={styles.cardShadow}>
-        <Pressable
-          onPress={() => router.push({ pathname: '/shop/[id]', params: { id: item.id } })}
-          style={styles.cardContainer}
-        >
-          <Image contentFit='cover' source={{ uri: item.imageUrl }} style={styles.cardImage} />
-
-          <View style={styles.cardBody}>
-            <View style={styles.cardHeader}>
-              <Text style={styles.cardTitle} numberOfLines={1}>
-                {item.name}
-              </Text>
-              <View style={styles.ratingBadge}>
-                <Text style={styles.ratingText}>{`★ ${item.rating.toFixed(1)}`}</Text>
-              </View>
-            </View>
-
-            <View style={styles.metaRow}>
-              <Text style={styles.metaText}>{item.category}</Text>
-              <Text style={styles.metaSeparator}>│</Text>
-              <Text style={styles.metaText}>{`徒歩${item.distanceMinutes}分`}</Text>
-              <Text style={styles.metaSeparator}>│</Text>
-              <Text style={styles.metaText}>{`予算 ${BUDGET_LABEL[item.budget]}`}</Text>
-            </View>
-
-            <Text style={styles.cardDescription} numberOfLines={2}>
-              {item.description}
-            </Text>
-          </View>
-        </Pressable>
-      </View>
-    ),
-    [router]
+    ({ item }: { item: Shop }) => <ShopCard shop={item} onPress={navigateToShop} variant='large' />,
+    [navigateToShop],
   );
 
   const renderListHeader = useMemo(() => {
@@ -180,7 +141,7 @@ export default function HomeScreen() {
             {activeTag ? `#${activeTag}` : activeCategory} の結果: {filteredShops.length}件
           </Text>
 
-          <Pressable onPress={() => router.replace('/')}>
+          <Pressable onPress={() => router.replace(ROUTES.HOME)}>
             <Text style={styles.clearFilterText}>解除</Text>
           </Pressable>
         </View>
@@ -199,7 +160,7 @@ export default function HomeScreen() {
     if (error) {
       return (
         <View style={styles.emptyState}>
-          <Text style={styles.emptyTitle}>店舗情報の取得に失敗しました</Text>
+          <Text style={styles.emptyTitle}>{ERROR_MESSAGES.STORE_FETCH_FAILED}</Text>
           <Text style={styles.emptySubtitle}>{error}</Text>
         </View>
       );
@@ -228,53 +189,6 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  cardBody: {
-    paddingHorizontal: 20,
-    paddingVertical: 20,
-  },
-
-  cardContainer: {
-    backgroundColor: palette.surface,
-    borderColor: palette.divider,
-    borderRadius: 28,
-    borderWidth: 1,
-    overflow: 'hidden',
-  },
-
-  cardDescription: {
-    color: palette.tertiaryText,
-    fontSize: 14,
-    lineHeight: 20,
-    marginTop: 12,
-  },
-
-  cardHeader: {
-    alignItems: 'center',
-    flexDirection: 'row',
-  },
-
-  cardImage: {
-    height: 176,
-    width: '100%',
-  },
-
-  cardShadow: {
-    elevation: 5,
-    marginBottom: 20,
-    shadowColor: palette.shadow,
-    shadowOffset: { height: 8, width: 0 },
-    shadowOpacity: 0.08,
-    shadowRadius: 16,
-  },
-
-  cardTitle: {
-    color: palette.primaryText,
-    flex: 1,
-    fontSize: 18,
-    fontWeight: '700',
-    marginRight: 12,
-  },
-
   clearFilterText: {
     color: palette.accent,
     fontSize: 14,
@@ -303,7 +217,7 @@ const styles = StyleSheet.create({
   emptyTitle: {
     color: palette.secondaryText,
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: FONT_WEIGHT.SEMIBOLD,
   },
 
   filterInfo: {
@@ -318,7 +232,7 @@ const styles = StyleSheet.create({
   filterText: {
     color: palette.primaryText,
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: FONT_WEIGHT.SEMIBOLD,
   },
 
   footerLoader: {
@@ -327,36 +241,6 @@ const styles = StyleSheet.create({
 
   headerContainer: {
     marginBottom: 24,
-  },
-
-  metaRow: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    marginTop: 12,
-  },
-
-  metaSeparator: {
-    color: palette.divider,
-    fontSize: 13,
-    marginHorizontal: 6,
-  },
-
-  metaText: {
-    color: palette.secondaryText,
-    fontSize: 13,
-  },
-
-  ratingBadge: {
-    backgroundColor: palette.highlight,
-    borderRadius: 999,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-  },
-
-  ratingText: {
-    color: palette.ratingText,
-    fontSize: 13,
-    fontWeight: '600',
   },
 
   screen: {

@@ -64,6 +64,7 @@
 | `pnpm --dir apps/mobile ios`     | iOS エミュレータで起動                                 |
 | `pnpm --dir apps/mobile web`     | Web で起動                                             |
 | `pnpm --dir apps/mobile lint`    | ESLint 実行                                            |
+| `pnpm --filter mobile test`      | テスト実行                                             |
 
 ---
 

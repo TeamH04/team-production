@@ -1,4 +1,5 @@
 import { SymbolView, type SymbolViewProps, type SymbolWeight } from 'expo-symbols';
+
 import type { StyleProp, ViewStyle } from 'react-native';
 
 export function IconSymbol({

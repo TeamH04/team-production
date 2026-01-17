@@ -1,15 +1,24 @@
-﻿import { palette } from '@/constants/palette';
-import { TAB_BAR_SPACING } from '@/constants/TabBarSpacing';
-import { useReviews } from '@/features/reviews/ReviewsContext';
-import { useUser } from '@/features/user/UserContext';
-import { getSupabase } from '@/lib/supabase';
-import Ionicons from '@expo/vector-icons/Ionicons';
+﻿import Ionicons from '@expo/vector-icons/Ionicons';
+import {
+  BORDER_RADIUS,
+  ERROR_MESSAGES,
+  FONT_WEIGHT,
+  formatRating,
+  ICON_SIZE,
+  ROUTES,
+} from '@team/constants';
+import { formatDateJa } from '@team/core-utils';
 import { SHOPS } from '@team/shop-core';
 import { useRouter } from 'expo-router';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { Alert, Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { BackButton } from '@/components/BackButton';
+import { HeaderWithBack } from '@/components/HeaderWithBack';
+import { palette } from '@/constants/palette';
+import { TAB_BAR_SPACING } from '@/constants/TabBarSpacing';
+import { useReviews } from '@/features/reviews/ReviewsContext';
+import { useUser } from '@/features/user/UserContext';
+import { getSupabase } from '@/lib/supabase';
 
 /**
  * マイページ画面コンポーネント
@@ -79,9 +88,9 @@ export default function MyPageScreen({
   const handleLogout = useCallback(async () => {
     try {
       await getSupabase().auth.signOut();
-      router.replace('/login');
+      router.replace(ROUTES.LOGIN);
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Unknown error';
+      const message = err instanceof Error ? err.message : ERROR_MESSAGES.UNKNOWN;
       Alert.alert('ログアウトに失敗しました', message);
     }
   }, [router]);
@@ -109,7 +118,7 @@ export default function MyPageScreen({
   }, [setWasDetailScreen]);
 
   const handleGoToShopRegister = useCallback(() => {
-    router.push('/owner/register-shop');
+    router.push(ROUTES.OWNER_REGISTER_SHOP);
   }, [router]);
 
   const handleGoToShopEdit = useCallback(() => {
@@ -125,7 +134,7 @@ export default function MyPageScreen({
       Alert.alert('ユーザー情報が見つかりません', 'ログインし直してください');
       return;
     }
-    router.push('/profile/edit');
+    router.push(ROUTES.PROFILE_EDIT);
   }, [router, user]);
 
   // 画面の描画（switch 文で管理）
@@ -142,11 +151,7 @@ export default function MyPageScreen({
           showsVerticalScrollIndicator={false}
         >
           {/* いいねしたレビューヘッダー */}
-          <View style={styles.headerContainer}>
-            <BackButton onPress={handleBackPress} />
-            <Text style={styles.headerTitle}>いいねしたレビュー</Text>
-            <View style={styles.spacer} />
-          </View>
+          <HeaderWithBack title='いいねしたレビュー' onBack={handleBackPress} />
 
           {likedReviews.length === 0 ? (
             <View style={styles.emptyContainer}>
@@ -160,7 +165,7 @@ export default function MyPageScreen({
                   <Pressable
                     key={review.id}
                     style={styles.cardShadow}
-                    onPress={() => router.push(`/shop/${review.shopId}`)}
+                    onPress={() => router.push(ROUTES.SHOP_DETAIL(review.shopId))}
                   >
                     <View style={styles.card}>
                       <View style={styles.reviewCardContent}>
@@ -172,16 +177,15 @@ export default function MyPageScreen({
                             <View style={styles.shopInfo}>
                               <Text style={styles.shopName}>{shop?.name ?? '不明な店舗'}</Text>
                               <Text style={styles.shopCategory}>
-                                {shop?.category} │ ★ {shop?.rating.toFixed(1)}
+                                {shop?.category} │ ★{' '}
+                                {shop?.rating !== undefined ? formatRating(shop.rating) : ''}
                               </Text>
                             </View>
                           </View>
 
                           <View style={styles.reviewMeta}>
                             <Text style={styles.rating}>★ {review.rating}</Text>
-                            <Text style={styles.date}>
-                              {new Date(review.createdAt).toLocaleDateString('ja-JP')}
-                            </Text>
+                            <Text style={styles.date}>{formatDateJa(review.createdAt)}</Text>
                           </View>
 
                           {review.menuItemName && (
@@ -212,11 +216,7 @@ export default function MyPageScreen({
           showsVerticalScrollIndicator={false}
         >
           {/* レビュー履歴ヘッダー */}
-          <View style={styles.headerContainer}>
-            <BackButton onPress={handleBackPress} />
-            <Text style={styles.headerTitle}>レビュー履歴</Text>
-            <View style={styles.spacer} />
-          </View>
+          <HeaderWithBack title='レビュー履歴' onBack={handleBackPress} />
 
           {reviews.length === 0 ? (
             <View style={styles.emptyContainer}>
@@ -230,7 +230,7 @@ export default function MyPageScreen({
                   <Pressable
                     key={review.id}
                     style={styles.cardShadow}
-                    onPress={() => router.push(`/shop/${review.shopId}`)}
+                    onPress={() => router.push(ROUTES.SHOP_DETAIL(review.shopId))}
                   >
                     <View style={styles.card}>
                       <View style={styles.reviewCardContent}>
@@ -242,16 +242,15 @@ export default function MyPageScreen({
                             <View style={styles.shopInfo}>
                               <Text style={styles.shopName}>{shop?.name ?? '不明な店舗'}</Text>
                               <Text style={styles.shopCategory}>
-                                {shop?.category} │ ★ {shop?.rating.toFixed(1)}
+                                {shop?.category} │ ★{' '}
+                                {shop?.rating !== undefined ? formatRating(shop.rating) : ''}
                               </Text>
                             </View>
                           </View>
 
                           <View style={styles.reviewMeta}>
                             <Text style={styles.rating}>★ {review.rating}</Text>
-                            <Text style={styles.date}>
-                              {new Date(review.createdAt).toLocaleDateString('ja-JP')}
-                            </Text>
+                            <Text style={styles.date}>{formatDateJa(review.createdAt)}</Text>
                           </View>
 
                           {review.menuItemName && (
@@ -282,11 +281,7 @@ export default function MyPageScreen({
           showsVerticalScrollIndicator={false}
         >
           {/* お知らせヘッダー */}
-          <View style={styles.headerContainer}>
-            <BackButton onPress={handleBackPress} />
-            <Text style={styles.headerTitle}>お知らせ</Text>
-            <View style={styles.spacer} />
-          </View>
+          <HeaderWithBack title='お知らせ' onBack={handleBackPress} />
 
           <View style={styles.emptyContainer}>
             <Text style={styles.emptyText}>お知らせはありません</Text>
@@ -306,11 +301,7 @@ export default function MyPageScreen({
           showsVerticalScrollIndicator={false}
         >
           {/* 設定ヘッダー */}
-          <View style={styles.headerContainer}>
-            <BackButton onPress={handleBackPress} />
-            <Text style={styles.headerTitle}>設定</Text>
-            <View style={styles.spacer} />
-          </View>
+          <HeaderWithBack title='設定' onBack={handleBackPress} />
 
           <View style={styles.emptyContainer}>
             <Text style={styles.emptyText}>設定オプションはまもなく追加されます</Text>
@@ -375,14 +366,14 @@ export default function MyPageScreen({
             <View style={styles.gridContainer}>
               <Pressable style={styles.gridCard} onPress={handleGoToShopRegister}>
                 <View style={styles.gridIconBadge}>
-                  <Ionicons name='add-circle' size={24} color={palette.primary} />
+                  <Ionicons name='add-circle' size={ICON_SIZE.LG} color={palette.primary} />
                 </View>
                 <Text style={styles.gridCardLabel}>登録</Text>
               </Pressable>
 
               <Pressable style={styles.gridCard} onPress={handleGoToShopEdit}>
                 <View style={styles.gridIconBadge}>
-                  <Ionicons name='create' size={24} color={palette.primary} />
+                  <Ionicons name='create' size={ICON_SIZE.LG} color={palette.primary} />
                 </View>
                 <Text style={styles.gridCardLabel}>編集</Text>
               </Pressable>
@@ -407,30 +398,30 @@ export default function MyPageScreen({
             </View>
 
             <View style={styles.gridContainer}>
-              <Pressable style={styles.gridCard} onPress={() => router.push('/(tabs)/favorites')}>
+              <Pressable style={styles.gridCard} onPress={() => router.push(ROUTES.TABS_FAVORITES)}>
                 <View style={styles.gridIconBadge}>
-                  <Ionicons name='heart' size={24} color={palette.primary} />
+                  <Ionicons name='heart' size={ICON_SIZE.LG} color={palette.primary} />
                 </View>
                 <Text style={styles.gridCardLabel}>お気に入り</Text>
               </Pressable>
 
               <Pressable style={styles.gridCard} onPress={handleGoToReviewHistory}>
                 <View style={styles.gridIconBadge}>
-                  <Ionicons name='document-text' size={24} color={palette.primary} />
+                  <Ionicons name='document-text' size={ICON_SIZE.LG} color={palette.primary} />
                 </View>
                 <Text style={styles.gridCardLabel}>レビュー履歴</Text>
               </Pressable>
 
               <Pressable style={styles.gridCard} onPress={handleGoToLikedReviews}>
                 <View style={styles.gridIconBadge}>
-                  <Ionicons name='thumbs-up' size={24} color={palette.primary} />
+                  <Ionicons name='thumbs-up' size={ICON_SIZE.LG} color={palette.primary} />
                 </View>
                 <Text style={styles.gridCardLabel}>いいねしたレビュー</Text>
               </Pressable>
 
               <Pressable style={styles.gridCard}>
                 <View style={styles.gridIconBadge}>
-                  <Ionicons name='checkmark-done' size={24} color={palette.primary} />
+                  <Ionicons name='checkmark-done' size={ICON_SIZE.LG} color={palette.primary} />
                 </View>
                 <Text style={styles.gridCardLabel}>好みチェック</Text>
               </Pressable>
@@ -457,14 +448,14 @@ export default function MyPageScreen({
             <View style={styles.gridContainer}>
               <Pressable style={styles.gridCard} onPress={handleGoToNotifications}>
                 <View style={styles.gridIconBadge}>
-                  <Ionicons name='notifications' size={24} color={palette.primary} />
+                  <Ionicons name='notifications' size={ICON_SIZE.LG} color={palette.primary} />
                 </View>
                 <Text style={styles.gridCardLabel}>お知らせ</Text>
               </Pressable>
 
               <Pressable style={styles.gridCard} onPress={handleGoToSettings}>
                 <View style={styles.gridIconBadge}>
-                  <Ionicons name='settings' size={24} color={palette.primary} />
+                  <Ionicons name='settings' size={ICON_SIZE.LG} color={palette.primary} />
                 </View>
                 <Text style={styles.gridCardLabel}>設定</Text>
               </Pressable>
@@ -481,12 +472,12 @@ const styles = StyleSheet.create({
   avatar: {
     alignItems: 'center',
     backgroundColor: palette.avatarBackground,
-    borderRadius: 999,
+    borderRadius: BORDER_RADIUS.PILL,
     height: 64,
     justifyContent: 'center',
     width: 64,
   },
-  avatarText: { color: palette.avatarText, fontSize: 22, fontWeight: '800' },
+  avatarText: { color: palette.avatarText, fontSize: 22, fontWeight: FONT_WEIGHT.BOLD },
   card: { backgroundColor: palette.surface, borderRadius: 20, padding: 12 },
   cardShadow: {
     elevation: 4,
@@ -529,7 +520,7 @@ const styles = StyleSheet.create({
   gridCardLabel: {
     color: palette.primary,
     fontSize: 13,
-    fontWeight: '600',
+    fontWeight: FONT_WEIGHT.SEMIBOLD,
     textAlign: 'center',
   },
   gridContainer: {
@@ -547,17 +538,6 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     width: 44,
   },
-  headerContainer: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 20,
-  },
-  headerTitle: {
-    color: palette.primary,
-    fontSize: 18,
-    fontWeight: '700',
-  },
   logoutBtn: {
     alignSelf: 'flex-start',
     marginLeft: 'auto',
@@ -565,7 +545,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 4,
   },
-  logoutText: { color: palette.errorText, fontSize: 14, fontWeight: '600' },
+  logoutText: { color: palette.errorText, fontSize: 14, fontWeight: FONT_WEIGHT.SEMIBOLD },
   menuItem: {
     color: palette.mutedText,
     fontSize: 11,
@@ -591,7 +571,7 @@ const styles = StyleSheet.create({
   rating: {
     color: palette.primary,
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: FONT_WEIGHT.SEMIBOLD,
   },
   reviewCardContent: {
     flexDirection: 'row',
@@ -657,9 +637,6 @@ const styles = StyleSheet.create({
   shopName: {
     color: palette.primary,
     fontSize: 14,
-    fontWeight: '600',
-  },
-  spacer: {
-    width: 50,
+    fontWeight: FONT_WEIGHT.SEMIBOLD,
   },
 });

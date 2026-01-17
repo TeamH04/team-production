@@ -1,3 +1,4 @@
+import { formatDateInput, isValidDateYYYYMMDD, isValidEmail, ROUTES } from '@team/constants';
 import { useNavigation, useRouter } from 'expo-router';
 import { useLayoutEffect, useState } from 'react';
 import {
@@ -13,29 +14,6 @@ import {
 } from 'react-native';
 
 import { palette } from '@/constants/palette';
-
-const isLikelyEmail = (value: string) => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(value.trim());
-
-const formatDateInput = (value: string): string => {
-  const digits = value.replace(/\D/g, '').slice(0, 8);
-  const y = digits.slice(0, 4);
-  const m = digits.slice(4, 6);
-  const d = digits.slice(6, 8);
-
-  if (digits.length <= 4) return y + (digits.length === 4 ? '-' : '');
-  if (digits.length <= 6) return `${y}-${m}` + (digits.length === 6 ? '-' : '');
-  return `${y}-${m}-${d}`;
-};
-
-const isValidDateYYYYMMDD = (digits8: string): boolean => {
-  if (!/^\d{8}$/.test(digits8)) return false;
-  const y = Number(digits8.slice(0, 4));
-  const m = Number(digits8.slice(4, 6));
-  const d = Number(digits8.slice(6, 8));
-
-  const date = new Date(y, m - 1, d);
-  return date.getFullYear() === y && date.getMonth() === m - 1 && date.getDate() === d;
-};
 
 export default function OwnerSignupScreen() {
   const router = useRouter();
@@ -84,7 +62,7 @@ export default function OwnerSignupScreen() {
       return;
     }
 
-    if (!isLikelyEmail(trimmedEmail)) {
+    if (!isValidEmail(trimmedEmail)) {
       Alert.alert('入力エラー', '正式なメールアドレスを入力してください');
       return;
     }
@@ -99,7 +77,7 @@ export default function OwnerSignupScreen() {
       // NOTE: Backend 未実装。将来的にここで API に POST する想定。
       await new Promise(r => setTimeout(r, 600));
       Alert.alert('作成完了', 'オーナー用アカウントの申請を受け付けました');
-      router.replace('/');
+      router.replace(ROUTES.HOME);
     } catch (e: unknown) {
       const message = e instanceof Error ? e.message : '送信に失敗しました';
       Alert.alert('作成失敗', message);

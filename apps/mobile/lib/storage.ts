@@ -1,7 +1,14 @@
-const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL;
-export const SUPABASE_STORAGE_BUCKET = process.env.EXPO_PUBLIC_SUPABASE_STORAGE_BUCKET ?? 'media';
+import { createConfiguredStorage } from '@team/api';
+import { createStoreMapping } from '@team/shop-core';
 
-export function getPublicStorageUrl(objectKey: string) {
-  if (!SUPABASE_URL || !objectKey) return '';
-  return `${SUPABASE_URL}/storage/v1/object/public/${SUPABASE_STORAGE_BUCKET}/${objectKey}`;
-}
+const configuredStorage = createConfiguredStorage({
+  supabaseUrl: process.env.EXPO_PUBLIC_SUPABASE_URL ?? '',
+  storageBucket: process.env.EXPO_PUBLIC_SUPABASE_STORAGE_BUCKET,
+});
+
+const storeMapping = createStoreMapping(configuredStorage.buildStorageUrl);
+
+export const storage = {
+  ...configuredStorage,
+  ...storeMapping,
+};
