@@ -1,3 +1,4 @@
+import { Ionicons } from '@expo/vector-icons';
 import { BUDGET_LABEL } from '@team/shop-core';
 import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -20,6 +21,23 @@ import { useStores } from '@/features/stores/StoresContext';
 import type { Shop } from '@team/shop-core';
 
 const PAGE_SIZE = 10;
+const FEATURED_REACTIONS = ['味', '接客', '雰囲気', '提供速度', '価格'];
+const BOOST_COUNT = 3;
+const CATEGORY_LABELS: Record<string, string> = {
+  'スイーツ・デザート専門': 'スイーツ',
+  'ファストフード・テイクアウト': 'ファストフード',
+};
+
+const normalizeCategoryLabel = (category?: string) => {
+  if (!category) return category;
+
+  if (category.includes('スイーツ・デザート')) return 'スイーツ';
+  if (category.includes('ファストフード')) return 'ファストフード';
+  if (category.includes('ビュッフェ・食べ放題')) return '食べ放題';
+  if (category.includes('・')) return category.split('・')[0];
+
+  return CATEGORY_LABELS[category] ?? category;
+};
 
 const KEY_EXTRACTOR = (item: Shop) => item.id;
 
@@ -130,41 +148,89 @@ export default function HomeScreen() {
     });
   }, [activeCategory, activeTag, stores]);
 
+  const boostedShopIds = useMemo(() => {
+    const scored = filteredShops.map(shop => {
+      const score = shop.id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+      return { id: shop.id, score };
+    });
+
+    return new Set(
+      scored
+        .sort((a, b) => b.score - a.score)
+        .slice(0, BOOST_COUNT)
+        .map(entry => entry.id),
+    );
+  }, [filteredShops]);
+
+  const orderedShops = useMemo(() => {
+    const boosted = filteredShops.filter(shop => boostedShopIds.has(shop.id));
+    const nonBoosted = filteredShops.filter(shop => !boostedShopIds.has(shop.id));
+    const result: Shop[] = [];
+    const maxLen = Math.max(boosted.length, nonBoosted.length);
+
+    for (let i = 0; i < maxLen; i++) {
+      if (i < boosted.length) {
+        result.push(boosted[i]);
+      }
+      if (i < nonBoosted.length) {
+        result.push(nonBoosted[i]);
+      }
+    }
+
+    return result;
+  }, [boostedShopIds, filteredShops]);
+
   const renderShop = useCallback(
-    ({ item }: { item: Shop }) => (
-      <View style={styles.cardShadow}>
-        <Pressable
-          onPress={() => router.push({ pathname: '/shop/[id]', params: { id: item.id } })}
-          style={styles.cardContainer}
-        >
-          <Image contentFit='cover' source={{ uri: item.imageUrl }} style={styles.cardImage} />
+    ({ item }: { item: Shop }) => {
+      const isBoosted = boostedShopIds.has(item.id);
+      const reactionIndex =
+        item.id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) %
+        FEATURED_REACTIONS.length;
+      const reactionLabel = FEATURED_REACTIONS[reactionIndex];
+      const categoryLabel = normalizeCategoryLabel(item.category) ?? item.category;
 
-          <View style={styles.cardBody}>
-            <View style={styles.cardHeader}>
-              <Text style={styles.cardTitle} numberOfLines={1}>
-                {item.name}
-              </Text>
-              <View style={styles.ratingBadge}>
-                <Text style={styles.ratingText}>{`★ ${item.rating.toFixed(1)}`}</Text>
+      return (
+        <View style={styles.cardShadow}>
+          <Pressable
+            onPress={() => router.push({ pathname: '/shop/[id]', params: { id: item.id } })}
+            style={[styles.cardContainer, isBoosted && styles.cardContainerBoosted]}
+          >
+            {isBoosted ? (
+              <View style={styles.boostBadge}>
+                <Ionicons name='flame' size={16} color={palette.boostRed} />
               </View>
-            </View>
+            ) : null}
+            <Image contentFit='cover' source={{ uri: item.imageUrl }} style={styles.cardImage} />
 
-            <View style={styles.metaRow}>
-              <Text style={styles.metaText}>{item.category}</Text>
-              <Text style={styles.metaSeparator}>│</Text>
-              <Text style={styles.metaText}>{`徒歩${item.distanceMinutes}分`}</Text>
-              <Text style={styles.metaSeparator}>│</Text>
-              <Text style={styles.metaText}>{`予算 ${BUDGET_LABEL[item.budget]}`}</Text>
-            </View>
+            <View style={styles.cardBody}>
+              <View style={styles.cardHeader}>
+                <Text style={styles.cardTitle} numberOfLines={1}>
+                  {item.name}
+                </Text>
+              </View>
 
-            <Text style={styles.cardDescription} numberOfLines={2}>
-              {item.description}
-            </Text>
-          </View>
-        </Pressable>
-      </View>
-    ),
-    [router],
+              <View style={styles.metaRow}>
+                <Text style={styles.metaText}>{categoryLabel}</Text>
+                <Text style={styles.metaSeparator}>│</Text>
+                <Text style={styles.metaText}>{`徒歩${item.distanceMinutes}分`}</Text>
+                <Text style={styles.metaSeparator}>│</Text>
+                <Text style={styles.metaText}>{`予算 ${BUDGET_LABEL[item.budget]}`}</Text>
+                <Text style={styles.metaSeparator}>│</Text>
+                <View style={styles.metaBadge}>
+                  <Text style={styles.metaBadgeText}>{reactionLabel}</Text>
+                  <Ionicons name='thumbs-up' size={12} color={palette.metaBadgeText} />
+                </View>
+              </View>
+
+              <Text style={styles.cardDescription} numberOfLines={2}>
+                {item.description}
+              </Text>
+            </View>
+          </Pressable>
+        </View>
+      );
+    },
+    [boostedShopIds, router],
   );
 
   const renderListHeader = useMemo(() => {
@@ -174,7 +240,10 @@ export default function HomeScreen() {
       <View style={styles.headerContainer}>
         <View style={styles.filterInfo}>
           <Text style={styles.filterText}>
-            {activeTag ? `#${activeTag}` : activeCategory} の結果: {filteredShops.length}件
+            {activeTag
+              ? `#${activeTag}`
+              : (normalizeCategoryLabel(activeCategory) ?? activeCategory)}{' '}
+            の結果: {filteredShops.length}件
           </Text>
 
           <Pressable onPress={() => router.replace('/')}>
@@ -216,7 +285,7 @@ export default function HomeScreen() {
       <ShopResultsList
         key={listKey}
         emptyState={renderEmptyState}
-        filteredShops={filteredShops}
+        filteredShops={orderedShops}
         renderListHeader={renderListHeader}
         renderShop={renderShop}
       />
@@ -225,6 +294,18 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
+  boostBadge: {
+    alignItems: 'center',
+    backgroundColor: palette.boostBadgeBg,
+    borderRadius: 999,
+    justifyContent: 'center',
+    padding: 8,
+    position: 'absolute',
+    right: 12,
+    top: 12,
+    zIndex: 1,
+  },
+
   cardBody: {
     paddingHorizontal: 20,
     paddingVertical: 20,
@@ -236,6 +317,12 @@ const styles = StyleSheet.create({
     borderRadius: 28,
     borderWidth: 1,
     overflow: 'hidden',
+    position: 'relative',
+  },
+
+  cardContainerBoosted: {
+    borderColor: palette.boostBorder,
+    borderWidth: 2,
   },
 
   cardDescription: {
@@ -326,6 +413,24 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
 
+  metaBadge: {
+    alignItems: 'center',
+    backgroundColor: palette.metaBadgeBg,
+    borderColor: palette.metaBadgeBorder,
+    borderRadius: 999,
+    borderWidth: 1,
+    flexDirection: 'row',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+  },
+
+  metaBadgeText: {
+    color: palette.metaBadgeText,
+    fontSize: 13,
+    fontWeight: '700',
+    marginRight: 6,
+  },
+
   metaRow: {
     alignItems: 'center',
     flexDirection: 'row',
@@ -341,19 +446,6 @@ const styles = StyleSheet.create({
   metaText: {
     color: palette.secondaryText,
     fontSize: 13,
-  },
-
-  ratingBadge: {
-    backgroundColor: palette.highlight,
-    borderRadius: 999,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-  },
-
-  ratingText: {
-    color: palette.ratingText,
-    fontSize: 13,
-    fontWeight: '600',
   },
 
   screen: {

@@ -41,7 +41,10 @@ const polyfillSubtle: SubtleCryptoLike = {
     if (normalized !== 'SHA-256' && normalized !== 'SHA256') {
       throw new Error(`Unsupported digest algorithm: ${normalized ?? 'unknown'}`);
     }
-    return ExpoCrypto.digest(ExpoCrypto.CryptoDigestAlgorithm.SHA256, toArrayBuffer(data));
+    const buffer = toArrayBuffer(data);
+    const typedData =
+      buffer instanceof ArrayBuffer ? new Uint8Array(buffer) : new Uint8Array(buffer);
+    return ExpoCrypto.digest(ExpoCrypto.CryptoDigestAlgorithm.SHA256, typedData);
   },
 };
 

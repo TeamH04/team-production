@@ -10,6 +10,8 @@ export type ShopSearchOptions = {
   category?: ShopCategory | null;
   /** タグフィルター（いずれかに一致） */
   tags?: string[];
+  /** エリアフィルター（いずれかに一致） */
+  areas?: string[];
 };
 
 /**
@@ -54,20 +56,34 @@ export function matchesTags(shop: Shop, tags: string[]): boolean {
 }
 
 /**
+ * エリアが店舗にマッチするか判定（いずれかに一致）
+ * @param shop 判定対象の店舗
+ * @param areas エリア配列（空の場合は全てマッチ）
+ * @returns マッチする場合 true
+ */
+export function matchesAreas(shop: Shop, areas: string[]): boolean {
+  if (!areas || areas.length === 0) return true;
+  if (!shop.area) return false;
+
+  return areas.includes(shop.area);
+}
+
+/**
  * 店舗をフィルタリング
  * @param shops 店舗配列
  * @param options 検索オプション
  * @returns フィルタリング後の店舗配列
  */
 export function filterShops(shops: Shop[], options: ShopSearchOptions = {}): Shop[] {
-  const { query, category, tags } = options;
+  const { query, category, tags, areas } = options;
   const normalizedQuery = query?.trim().toLowerCase() ?? '';
 
   return shops.filter(shop => {
     const queryMatch = matchesSearchQuery(shop, normalizedQuery);
     const categoryMatch = matchesCategory(shop, category);
     const tagsMatch = matchesTags(shop, tags ?? []);
+    const areasMatch = matchesAreas(shop, areas ?? []);
 
-    return queryMatch && categoryMatch && tagsMatch;
+    return queryMatch && categoryMatch && tagsMatch && areasMatch;
   });
 }

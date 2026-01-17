@@ -81,6 +81,14 @@ export const palette = {
   // 訪問済み
   visitedActive: '#10B981',
 
+  // ブースト・メタ情報
+  boostRed: '#ce332d',
+  boostBorder: '#C94A45',
+  boostBadgeBg: 'rgba(255, 255, 255, 0.45)',
+  metaBadgeBg: '#FFF4D6',
+  metaBadgeBorder: '#F4B740',
+  metaBadgeText: '#B45309',
+
   // その他のUI
   arrowButtonBg: withAlpha(textOnBackground, 0.05),
   heroPlaceholder: withAlpha(textOnBackground, 0.1),
