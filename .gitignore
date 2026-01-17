@@ -47,6 +47,7 @@ infra/**/.env
 # ---- Package Managers ----
 package-lock.json
 yarn.lock
+.pnpm-store/
 
 # ---- Tooling / Editor ----
 .idea/

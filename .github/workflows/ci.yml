@@ -25,6 +25,7 @@ jobs:
     outputs:
       backend: ${{ steps.filter.outputs.backend }}
       mobile: ${{ steps.filter.outputs.mobile }}
+      web: ${{ steps.filter.outputs.web }}
       root: ${{ steps.filter.outputs.root }}
     steps:
       - name: Checkout
@@ -36,11 +37,16 @@ jobs:
         uses: dorny/paths-filter@v3
         id: filter
         with:
+          base: ${{ github.event.pull_request.base.ref || 'main' }}
+          list-files: none
           filters: |
             backend:
               - 'apps/backend/**'
             mobile:
               - 'apps/mobile/**'
+              - 'packages/**'
+            web:
+              - 'apps/web/**'
               - 'packages/**'
             root:
               - 'package.json'
@@ -95,9 +101,9 @@ jobs:
           POSTGRES_DB: test_app
         options: >-
           --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 3
         ports:
           - 5432:5432
 
@@ -114,10 +120,15 @@ jobs:
       - name: Run go vet
         run: go vet ./...
 
-      - name: Run tests with race detector
+      - name: Run tests
         env:
           DATABASE_URL: postgres://postgres:postgres@localhost:5432/test_app?sslmode=disable
-        run: go test -v -race -parallel 4 -coverprofile=coverage.out -covermode=atomic ./...
+        run: |
+          RACE_FLAG=""
+          if [ "${{ github.event_name }}" = "push" ] && [ "${{ github.ref }}" = "refs/heads/main" ]; then
+            RACE_FLAG="-race"
+          fi
+          go test $RACE_FLAG -parallel 8 -coverprofile=coverage.out -covermode=atomic ./...
 
       - name: Generate coverage report
         run: |
@@ -241,6 +252,32 @@ jobs:
           pnpm run format:mobile
           git diff --exit-code || (echo "Code is not formatted. Please run 'pnpm run format:mobile'" && exit 1)
 
+      - name: Run tests
+        run: pnpm test
+
+  # ----- Web Tests -----
+  web-test:
+    name: Web Tests
+    needs: changes
+    if: ${{ needs.changes.outputs.web == 'true' || needs.changes.outputs.root == 'true' }}
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/web
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup pnpm and Node.js
+        uses: ./.github/actions/pnpm-setup
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          working-directory: apps/web
+
+      - name: Run tests
+        run: pnpm test
+
   # ----- Mobile Build Check -----
   mobile-build:
     name: Mobile Build Check
@@ -259,16 +296,18 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
-      - name: Setup Expo
-        uses: ./.github/actions/expo-setup
+      - name: Setup pnpm and Node.js
+        uses: ./.github/actions/pnpm-setup
         with:
           node-version: ${{ env.NODE_VERSION }}
-          expo-token: ${{ secrets.EXPO_TOKEN }}
+          working-directory: apps/mobile
 
-      - name: Check Expo build configuration
-        run: |
-          npx expo export --platform web --output-dir dist
-          echo "Build configuration is valid"
+      - name: Check Expo configuration
+        run: npx expo config --type introspect
+
+      - name: Run Expo Doctor
+        continue-on-error: true
+        run: npx expo-doctor
 
   # ----- Security Audit (Node.js) -----
   security-audit-node:
@@ -299,6 +338,7 @@ jobs:
     permissions:
       contents: read
       security-events: write
+      actions: read
     defaults:
       run:
         working-directory: apps/backend

@@ -30,7 +30,7 @@
     "@actions/github": "^7.0.0",
     "@babel/core": "^7.28.6",
     "@eslint/js": "^9.39.2",
-    "@types/node": "^25.0.8",
+    "@types/node": "^25.0.9",
     "@typescript-eslint/eslint-plugin": "^8.53.0",
     "@typescript-eslint/parser": "^8.53.0",
     "eslint": "^9.39.2",
@@ -46,6 +46,8 @@
   },
   "pnpm": {
     "overrides": {
+      "react": "19.1.0",
+      "react-dom": "19.1.0",
       "@types/react": "~19.1.17",
       "@types/react-dom": "~19.1.11"
     },

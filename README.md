@@ -2,18 +2,67 @@
 
 ## 概要
 
-- モバイル（Expo）とバックエンド（Go）を一体管理するモノレポ
+- モバイル（Expo）・Web（Next.js）・バックエンド（Go）を一体管理するモノレポ
 - パッケージ管理：pnpm
 - 共通タスク：Makefile 経由で提供
+
+> **Windows ユーザーへ**: 本プロジェクトは POSIX 環境を前提としています。
+> **WSL2 の使用を強く推奨します。** 詳細は [docs/windows-setup.md](docs/windows-setup.md) を参照してください。
 
 ---
 
 ## 前提条件
 
-- Node.js 20 系
-- Go 1.23 以上（CI では 1.24.0）
-- Docker（Compose v2）
-- Windows の場合：Git Bash（MINGW64）
+- Node.js 24 系
+- Go 1.24 以上
+- Docker
+
+---
+
+## クイックスタート
+
+```bash
+# 1. 依存関係をインストール
+make install
+
+# 2. 環境変数を設定
+cp .env.example .env
+cp apps/backend/.env.example apps/backend/.env
+cp apps/mobile/.env.example apps/mobile/.env
+
+# 3. DB起動 + マイグレーション
+make db-migrate
+
+# 4. 開発サーバーを起動
+make dev        # DB + backend + mobile 同時起動
+# または個別に起動
+make backend    # バックエンドのみ
+make mobile     # モバイルのみ
+make web        # Web のみ
+```
+
+---
+
+## 主なコマンド
+
+| コマンド          | 説明                         |
+| ----------------- | ---------------------------- |
+| `make install`    | 依存インストール + Git hooks |
+| `make dev`        | DB + backend + mobile 起動   |
+| `make backend`    | バックエンドのみ             |
+| `make mobile`     | モバイルのみ                 |
+| `make web`        | Web のみ                     |
+| `make db-start`   | DB 起動                      |
+| `make db-stop`    | DB 停止                      |
+| `make db-migrate` | マイグレーション実行         |
+| `make db-reset`   | DB リセット                  |
+| `make db-destroy` | DB 完全削除                  |
+| `make test`       | テスト実行                   |
+| `make lint`       | Lint 実行                    |
+
+エイリアス: `make m` (mobile), `make w` (web), `make b` (backend)
+
+全コマンド一覧: `make help`
 
 ---
 
@@ -22,126 +71,19 @@
 | パス           | 説明                             |
 | -------------- | -------------------------------- |
 | `apps/mobile`  | Expo + React Native クライアント |
+| `apps/web`     | Next.js Web アプリ               |
 | `apps/backend` | Go 製 API サーバ                 |
-| `supabase`     | ローカル DB 用 Docker Compose    |
-| `docs/`        | アーキテクチャ・運用ノート       |
+| `packages/`    | 共有パッケージ群                 |
+| `docs/`        | ドキュメント                     |
 
 ---
 
-## セットアップ
+## ドキュメント
 
-1. 依存ツールをインストール
-   - Node.js / Go / Docker を事前に用意
-
-2. 依存関係をインストール
-
-   ```bash
-   corepack enable pnpm
-   pnpm install
-   ```
-
-3. 環境変数を設定
-   - 各アプリの `.env.example` を `.env` にコピー
-   - 必要な値を入力
-
-4. Windows の注意
-   - `make` は Git Bash から実行
-   - PowerShell / cmd は一部非対応
-
----
-
-## 主なコマンド
-
-| コマンド               | 説明                             |
-| ---------------------- | -------------------------------- |
-| `make install`         | 全ワークスペース依存インストール |
-| `make backend`         | DB 起動 + Go サーバ起動          |
-| `make backend-db-up`   | DB 起動                          |
-| `make backend-db-down` | DB 停止                          |
-| `make backend-db-init` | マイグレーション適用             |
-| `make backend-test`    | Go テスト                        |
-| `make frontend`        | Expo Dev Client 起動             |
-| `make dev`             | フロント + バック同時起動        |
-
----
-
-## 画面と機能
-
-### モバイル（apps/mobile）
-
-- 店舗閲覧
-- お気に入り管理
-- レビュー投稿
-- ユーザー管理
-
-### バックエンド（apps/backend）
-
-- 認証・認可 API
-- 店舗・レビュー CRUD
-- ユーザーデータ管理
-
----
-
-## CI/CD
-
-### トリガー
-
-- `main` / `develop` への push
-- `main` / `develop` への pull request
-
-### ローカル実行コマンド
-
-```bash
-# Lint
-pnpm run lint
-
-# フォーマットチェック
-pnpm run format:check
-
-# フォーマット修正
-pnpm run format
-
-# モバイル専用フォーマット
-pnpm run format:mobile
-
-# バックエンドテスト
-cd apps/backend
-go test -v -race -cover -coverprofile=coverage.out -count=1 ./...
-
-# 依存関係セキュリティ監査
-pnpm audit --audit-level moderate
-
-# Go セキュリティチェック
-go install github.com/securego/gosec/v2/cmd/gosec@latest
-gosec ./...
-```
-
----
-
-## 環境変数
-
-### 最低限
-
-- `NODE_VERSION=20.x`
-- `GO_VERSION=1.24.0`
-
-### 注意点
-
-- `.env` は Git 管理対象外
-- 本番値は GitHub Secrets で管理
-
----
-
-## 開発時の補足
-
-- Expo は Dev Client 前提
-- ポート競合時はログを確認して手動停止
-- Docker DB が起動していないと backend は起動不可
-
----
-
-## ドキュメント参照先
-
-- バックエンド: `apps/backend/README.md`
-- モバイル: `apps/mobile/README.md`
-- 開発補足: `docs/`
+| ドキュメント                                     | 内容                        |
+| ------------------------------------------------ | --------------------------- |
+| [docs/development.md](docs/development.md)       | 開発ガイド・CI/CD・環境変数 |
+| [docs/windows-setup.md](docs/windows-setup.md)   | Windows 環境のセットアップ  |
+| [apps/backend/README.md](apps/backend/README.md) | バックエンド詳細            |
+| [apps/mobile/README.md](apps/mobile/README.md)   | モバイルアプリ詳細          |
+| [apps/web/README.md](apps/web/README.md)         | Web アプリ詳細              |

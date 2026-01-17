@@ -14,7 +14,13 @@
   "include": [
     "apps/mobile/**/*",
     "apps/web/**/*",
+    "packages/api/**/*",
+    "packages/constants/**/*",
+    "packages/core-utils/**/*",
+    "packages/hooks/**/*",
+    "packages/mobile-ui/**/*",
     "packages/shop-core/**/*",
+    "packages/test-utils/**/*",
     "packages/theme/**/*",
     "packages/types/**/*"
   ],
