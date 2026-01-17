@@ -15,6 +15,9 @@
       "default": "./src/shop-registration.ts"
     }
   },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
   "dependencies": {
     "@team/constants": "workspace:*"
   }

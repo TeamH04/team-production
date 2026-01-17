@@ -14,6 +14,9 @@
       "default": "./src/index.ts"
     }
   },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
   "dependencies": {
     "@team/core-utils": "workspace:*",
     "@team/types": "workspace:*"
