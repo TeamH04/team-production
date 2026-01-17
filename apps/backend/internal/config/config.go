@@ -120,7 +120,7 @@ func findFreePort(startPort string, attempts int) (string, error) {
 		candidate := start + i
 		ln, err := net.Listen("tcp", fmt.Sprintf(":%d", candidate))
 		if err == nil {
-			ln.Close()
+			_ = ln.Close() // エラーは無視（ポート確認用の一時リスナーのため）
 			return strconv.Itoa(candidate), nil
 		}
 	}

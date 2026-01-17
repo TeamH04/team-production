@@ -34,7 +34,7 @@ jobs:
           fetch-depth: 2
 
       - name: Filter paths
-        uses: dorny/paths-filter@v3
+        uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3.0.2
         id: filter
         with:
           base: ${{ github.event.pull_request.base.ref || 'main' }}
@@ -138,7 +138,7 @@ jobs:
       # Repository Secrets で CODECOV_TOKEN を設定してください
       # 設定後は fail_ci_if_error を true に変更することを推奨
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5.5.2
         continue-on-error: true
         with:
           files: apps/backend/coverage.out
