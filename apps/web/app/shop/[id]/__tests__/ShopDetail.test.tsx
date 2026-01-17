@@ -199,14 +199,14 @@ describe('ShopDetail', () => {
 
       await waitFor(() => {
         expect(localStorage.setItem).toHaveBeenCalledWith(
-          'shop-web-favorites',
+          'shop-favorites',
           expect.stringContaining('test-shop-1'),
         );
       });
     });
 
     test('ページ読み込み時にlocalStorageから状態を復元する', () => {
-      storageMock.setData({ 'shop-web-favorites': JSON.stringify(['test-shop-1']) });
+      storageMock.setData({ 'shop-favorites': JSON.stringify(['test-shop-1']) });
 
       render(<ShopDetail shop={createMockShop()} />);
 

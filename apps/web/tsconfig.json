@@ -30,8 +30,7 @@
       "@team/theme": ["../../packages/theme/src"],
       "@team/theme/*": ["../../packages/theme/src/*"],
       "@team/types": ["../../packages/types/src"],
-      "@team/types/*": ["../../packages/types/src/*"],
-      "@team/test-utils": ["../../packages/test-utils/src"]
+      "@team/types/*": ["../../packages/types/src/*"]
     }
   },
   "include": [
