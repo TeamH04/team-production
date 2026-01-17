@@ -7,7 +7,7 @@ SHELL := /usr/bin/env bash
 .DEFAULT_GOAL := help
 .PHONY: help install dev mobile web backend \
 	db-start db-stop db-migrate db-reset db-destroy \
-	test test-backend test-web test-mobile lint build clean \
+	test test-backend test-web test-mobile lint typecheck build clean \
 	m w b
 
 # Colors for output (ANSI escape sequences)
@@ -43,7 +43,11 @@ install: ## Install dependencies + setup Git hooks
 	corepack enable pnpm
 	$(PNPM) install
 	@if [ ! -f .git/hooks/pre-commit ]; then \
-		printf '#!/bin/sh\npnpm run format:check && pnpm run lint && pnpm run typecheck\n' > .git/hooks/pre-commit; \
+		printf '%s\n' '#!/bin/sh' \
+			'printf "\\033[34m▶ Running pre-commit checks...\\033[0m\\n"' \
+			'pnpm run format:check --log-level=warn && pnpm run lint --quiet && pnpm run typecheck' \
+			'printf "\\033[32m✓ All checks passed\\033[0m\\n"' \
+			> .git/hooks/pre-commit; \
 		chmod +x .git/hooks/pre-commit; \
 		printf '%b\n' "$(GREEN)✅ Pre-commit hook installed$(NC)"; \
 	fi
@@ -94,21 +98,26 @@ test-backend: ## Run backend tests
 
 test-web: ## Run web tests
 	@printf '%b\n' "$(BLUE)Running web tests...$(NC)"
-	@$(PNPM) --dir apps/web test:run
+	@$(PNPM) --dir apps/web test
 
 test-mobile: ## Run mobile tests
 	@printf '%b\n' "$(BLUE)Running mobile tests...$(NC)"
-	@$(PNPM) --filter mobile test
+	@$(PNPM) --dir apps/mobile test
 
 lint: ## Run linters
 	@printf '%b\n' "$(BLUE)Running linters...$(NC)"
 	$(PNPM) run lint
 	@printf '%b\n' "$(GREEN)✅ Linting completed!$(NC)"
 
+typecheck: ## Run type checking (Turbo cached)
+	@printf '%b\n' "$(BLUE)Running type check...$(NC)"
+	$(PNPM) run typecheck
+	@printf '%b\n' "$(GREEN)✅ Type check completed!$(NC)"
+
 build: ## Build all applications
 	@printf '%b\n' "$(BLUE)Building applications...$(NC)"
 	cd $(BACKEND_DIR) && $(MAKE) build
-	cd $(MOBILE_DIR) && npx expo export --platform web
+	$(PNPM) run build
 	@printf '%b\n' "$(GREEN)✅ Build completed!$(NC)"
 
 clean: ## Clean build artifacts

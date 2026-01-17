@@ -14,7 +14,7 @@
       "outputLogs": "errors-only"
     },
     "lint": {
-      "cache": true
+      "outputLogs": "errors-only"
     },
     "dev": {
       "cache": false,

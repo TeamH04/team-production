@@ -64,4 +64,6 @@ tools:
 	$(GO_BIN) install -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@v4.17.0
 
 test:
-	$(GO_BIN) test -v ./...
+	$(GO_BIN) test -race -coverprofile=coverage.out -count=1 ./...
+	@$(GO_BIN) tool cover -func=coverage.out | grep total
+	@rm -f coverage.out
