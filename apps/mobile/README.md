@@ -56,15 +56,40 @@
 
 ## 主なコマンド
 
-| コマンド                         | 説明                                                   |
-| -------------------------------- | ------------------------------------------------------ |
-| `pnpm dev`                       | ルートから Expo をトンネル付き起動（キャッシュクリア） |
-| `pnpm --dir apps/mobile start`   | Metro Bundler を通常起動                               |
-| `pnpm --dir apps/mobile android` | Android エミュレータで起動                             |
-| `pnpm --dir apps/mobile ios`     | iOS エミュレータで起動                                 |
-| `pnpm --dir apps/mobile web`     | Web で起動                                             |
-| `pnpm --dir apps/mobile lint`    | ESLint 実行                                            |
-| `pnpm --filter mobile test`      | テスト実行                                             |
+### テスト・品質チェック
+
+```bash
+# テスト
+make test                            # 全テスト
+pnpm --dir apps/mobile test          # モバイルのみ
+
+# 型チェック
+make typecheck                       # 全パッケージ
+pnpm --dir apps/mobile typecheck     # モバイルのみ
+
+# Lint・フォーマット
+pnpm lint
+pnpm format
+```
+
+### 開発サーバー
+
+| コマンド          | 説明                         |
+| ----------------- | ---------------------------- |
+| `make mobile`     | モバイル起動（推奨）         |
+| `pnpm dev`        | Expo起動（キャッシュクリア） |
+| `pnpm dev:tunnel` | Expo起動（トンネルモード）   |
+| `pnpm android`    | Androidエミュレータで起動    |
+| `pnpm ios`        | iOSエミュレータで起動        |
+
+### apps/mobile から直接実行
+
+| コマンド                         | 説明                       |
+| -------------------------------- | -------------------------- |
+| `pnpm --dir apps/mobile start`   | Metro Bundler を通常起動   |
+| `pnpm --dir apps/mobile android` | Android エミュレータで起動 |
+| `pnpm --dir apps/mobile ios`     | iOS エミュレータで起動     |
+| `pnpm --dir apps/mobile web`     | Web で起動                 |
 
 ---
 

@@ -4,6 +4,7 @@
 
 - モバイル（Expo）・Web（Next.js）・バックエンド（Go）を一体管理するモノレポ
 - パッケージ管理：pnpm
+- ビルドシステム：Turborepo（キャッシュ・並列実行）
 - 共通タスク：Makefile 経由で提供
 
 > **Windows ユーザーへ**: 本プロジェクトは POSIX 環境を前提としています。
@@ -45,22 +46,40 @@ make web        # Web のみ
 
 ## 主なコマンド
 
+### よく使うコマンド
+
+| コマンド            | 説明                 |
+| ------------------- | -------------------- |
+| `make test`         | 全テスト実行         |
+| `make typecheck`    | 型チェック           |
+| `make lint`         | Lint実行             |
+| `pnpm format`       | フォーマット修正     |
+| `pnpm format:check` | フォーマットチェック |
+
+### 開発サーバー
+
+| コマンド       | 説明                         |
+| -------------- | ---------------------------- |
+| `make dev`     | DB + backend + mobile 起動   |
+| `make backend` | バックエンドのみ（`make b`） |
+| `make mobile`  | モバイルのみ（`make m`）     |
+| `make web`     | Webのみ（`make w`）          |
+
+### セットアップ・DB操作
+
 | コマンド          | 説明                         |
 | ----------------- | ---------------------------- |
 | `make install`    | 依存インストール + Git hooks |
-| `make dev`        | DB + backend + mobile 起動   |
-| `make backend`    | バックエンドのみ             |
-| `make mobile`     | モバイルのみ                 |
-| `make web`        | Web のみ                     |
-| `make db-start`   | DB 起動                      |
-| `make db-stop`    | DB 停止                      |
-| `make db-migrate` | マイグレーション実行         |
-| `make db-reset`   | DB リセット                  |
-| `make db-destroy` | DB 完全削除                  |
-| `make test`       | テスト実行                   |
-| `make lint`       | Lint 実行                    |
+| `make db-migrate` | DB起動 + マイグレーション    |
+| `make db-reset`   | DBリセット                   |
+| `make db-stop`    | DB停止                       |
 
-エイリアス: `make m` (mobile), `make w` (web), `make b` (backend)
+### ビルド・その他
+
+| コマンド                     | 説明               |
+| ---------------------------- | ------------------ |
+| `make build`                 | 全アプリビルド     |
+| `pnpm create-package <name>` | 新規パッケージ生成 |
 
 全コマンド一覧: `make help`
 
