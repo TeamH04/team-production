@@ -1,16 +1,19 @@
-import type { ApiFavorite } from '@/lib/api';
-import type { SupabaseClient } from '@supabase/supabase-js';
 import assert from 'node:assert/strict';
 import { afterEach, mock, test } from 'node:test';
-import type { ReactElement } from 'react';
-import { act, useEffect } from 'react';
+
+import React, { act, useEffect } from 'react';
 import TestRenderer from 'react-test-renderer';
+
 import {
   __resetFavoritesDependenciesForTesting,
   __setFavoritesDependenciesForTesting,
   FavoritesProvider,
   useFavorites,
 } from '../FavoritesContext';
+
+import type { ApiFavorite } from '@/lib/api';
+import type { SupabaseClient } from '@supabase/supabase-js';
+import type { ReactElement } from 'react';
 
 type RendererHandle = {
   unmount: () => void;
@@ -193,7 +196,7 @@ const createFavoritesHarness = () => {
     renderer = createRenderer(
       <FavoritesProvider>
         <Consumer onValue={handleValue} />
-      </FavoritesProvider>
+      </FavoritesProvider>,
     );
   });
 
@@ -242,6 +245,28 @@ test('addFavorite marks a shop as favorite', async () => {
   assert.deepEqual(addFavoriteApi.mock.calls[0].arguments, ['shop-1', token]);
   assert.equal(getValue().isFavorite('shop-1'), true);
   assert.equal(getValue().favorites.has('shop-1'), true);
+
+  unmount();
+});
+
+test('addFavorite でAPIエラー時にロールバックされる', async () => {
+  const { addFavoriteApi } = setupRemoteDependencies();
+  addFavoriteApi.mock.mockImplementation(async () => {
+    throw new Error('API Error');
+  });
+  const { getValue, unmount } = createFavoritesHarness();
+
+  await assert.rejects(
+    async () => {
+      await act(async () => {
+        await getValue().addFavorite('shop-1');
+      });
+    },
+    (err: unknown) => err instanceof Error && err.message === 'API Error',
+  );
+
+  assert.equal(getValue().isFavorite('shop-1'), false);
+  assert.equal(getValue().isOperationPending('shop-1'), false);
 
   unmount();
 });
@@ -302,7 +327,7 @@ test('removeFavorite throws auth_required when unauthenticated', async () => {
         await getValue().removeFavorite('shop-4');
       });
     },
-    (err: unknown) => err instanceof Error && err.message === 'auth_required'
+    (err: unknown) => err instanceof Error && err.message === 'auth_required',
   );
 
   assert.equal(removeFavoriteApi.mock.calls.length, 0);
@@ -320,7 +345,7 @@ test('addFavorite throws auth_required when unauthenticated', async () => {
         await getValue().addFavorite('shop-5');
       });
     },
-    (err: unknown) => err instanceof Error && err.message === 'auth_required'
+    (err: unknown) => err instanceof Error && err.message === 'auth_required',
   );
 
   assert.equal(addFavoriteApi.mock.calls.length, 0);
@@ -338,7 +363,7 @@ test('toggleFavorite throws auth_required when unauthenticated', async () => {
         await getValue().toggleFavorite('shop-6');
       });
     },
-    (err: unknown) => err instanceof Error && err.message === 'auth_required'
+    (err: unknown) => err instanceof Error && err.message === 'auth_required',
   );
 
   assert.equal(addFavoriteApi.mock.calls.length, 0);
