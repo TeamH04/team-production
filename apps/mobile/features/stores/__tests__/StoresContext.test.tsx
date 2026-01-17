@@ -34,7 +34,7 @@ const setupDependencies = (
 
   const apiStores = stores.map(shopToApiStore);
 
-  const fetchStores = mock.fn(async () => {
+  const fetchStores = mock.fn(async (): Promise<ApiStore[]> => {
     if (shouldFail) {
       throw new Error('API Error');
     }
