@@ -41,7 +41,7 @@ func (h *ReviewHandler) GetReviewsByStoreID(c echo.Context) error {
 	sort := c.QueryParam("sort")
 	viewerID := ""
 	if token := bearerTokenFromHeader(c.Request().Header.Get("Authorization")); token != "" {
-		claims, err := h.tokenVerifier.Verify(token)
+		claims, err := h.tokenVerifier.Verify(c.Request().Context(), token)
 		if err == nil {
 			viewerID = claims.UserID
 		}

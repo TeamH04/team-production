@@ -2,10 +2,12 @@ package testutil
 
 import (
 	"context"
+	"time"
 
 	"github.com/TeamH04/team-production/apps/backend/internal/domain/entity"
 	"github.com/TeamH04/team-production/apps/backend/internal/security"
 	"github.com/TeamH04/team-production/apps/backend/internal/usecase/input"
+	"github.com/TeamH04/team-production/apps/backend/internal/usecase/output"
 )
 
 // MockUserUseCase implements input.UserUseCase for testing
@@ -59,7 +61,7 @@ type MockTokenVerifier struct {
 	Err    error
 }
 
-func (m *MockTokenVerifier) Verify(token string) (*security.TokenClaims, error) {
+func (m *MockTokenVerifier) Verify(ctx context.Context, token string) (*security.TokenClaims, error) {
 	if m.Err != nil {
 		return nil, m.Err
 	}
@@ -168,18 +170,18 @@ func (m *MockReviewUseCase) UnlikeReview(ctx context.Context, reviewID string, u
 
 // MockFavoriteUseCase implements input.FavoriteUseCase for testing
 type MockFavoriteUseCase struct {
-	GetUserFavoritesResult []entity.Favorite
-	GetUserFavoritesErr    error
-	AddResult              *entity.Favorite
-	AddErr                 error
-	RemoveErr              error
+	GetMyFavoritesResult []entity.Favorite
+	GetMyFavoritesErr    error
+	AddResult            *entity.Favorite
+	AddErr               error
+	RemoveErr            error
 }
 
-func (m *MockFavoriteUseCase) GetUserFavorites(ctx context.Context, userID string) ([]entity.Favorite, error) {
-	if m.GetUserFavoritesErr != nil {
-		return nil, m.GetUserFavoritesErr
+func (m *MockFavoriteUseCase) GetMyFavorites(ctx context.Context, userID string) ([]entity.Favorite, error) {
+	if m.GetMyFavoritesErr != nil {
+		return nil, m.GetMyFavoritesErr
 	}
-	return m.GetUserFavoritesResult, nil
+	return m.GetMyFavoritesResult, nil
 }
 
 func (m *MockFavoriteUseCase) AddFavorite(ctx context.Context, userID string, storeID string) (*entity.Favorite, error) {
@@ -226,4 +228,26 @@ func (m *MockMediaUseCase) CreateReviewUploads(ctx context.Context, storeID stri
 		return nil, m.CreateErr
 	}
 	return m.CreateResult, nil
+}
+
+// MockStorageProvider implements output.StorageProvider for testing
+type MockStorageProvider struct {
+	CreateSignedUploadResult   *output.SignedUpload
+	CreateSignedUploadErr      error
+	CreateSignedDownloadResult *output.SignedDownload
+	CreateSignedDownloadErr    error
+}
+
+func (m *MockStorageProvider) CreateSignedUpload(ctx context.Context, bucket, objectPath, contentType string, expiresIn time.Duration, upsert bool) (*output.SignedUpload, error) {
+	if m.CreateSignedUploadErr != nil {
+		return nil, m.CreateSignedUploadErr
+	}
+	return m.CreateSignedUploadResult, nil
+}
+
+func (m *MockStorageProvider) CreateSignedDownload(ctx context.Context, bucket, objectPath string, expiresIn time.Duration) (*output.SignedDownload, error) {
+	if m.CreateSignedDownloadErr != nil {
+		return nil, m.CreateSignedDownloadErr
+	}
+	return m.CreateSignedDownloadResult, nil
 }
