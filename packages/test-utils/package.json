@@ -1,0 +1,21 @@
+{
+  "name": "@team/test-utils",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    }
+  },
+  "dependencies": {
+    "@team/core-utils": "workspace:*",
+    "@team/types": "workspace:*"
+  }
+}

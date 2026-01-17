@@ -1,0 +1,21 @@
+{
+  "name": "@team/validators",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    },
+    "./shop-registration": {
+      "types": "./src/shop-registration.ts",
+      "default": "./src/shop-registration.ts"
+    }
+  },
+  "dependencies": {
+    "@team/constants": "workspace:*"
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "name": "@team/api",
+  "version": "0.0.1",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "dependencies": {
+    "@team/constants": "workspace:*",
+    "@team/types": "workspace:*"
+  }
+}

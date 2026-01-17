@@ -8,13 +8,10 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,
-    "jsx": "react-jsx",
     "baseUrl": ".",
     "paths": {
       "@team/types": ["../types/src"],
-      "@team/types/*": ["../types/src/*"],
-      "@team/test-utils": ["../test-utils/src"],
-      "@team/test-utils/*": ["../test-utils/src/*"]
+      "@team/types/*": ["../types/src/*"]
     }
   },
   "include": ["src"]
