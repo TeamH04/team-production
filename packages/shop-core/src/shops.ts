@@ -23,6 +23,7 @@ export interface Shop {
   category: ShopCategory;
   distanceMinutes: number;
   rating: number;
+  ratingDetails?: RatingDetails;
   budget: '$' | '$$' | '$$$';
   createdAt: string; // アプリに追加した日
   openedAt: string; // 実際のオープン日
@@ -31,6 +32,7 @@ export interface Shop {
   placeId: string;
   imageUrl: string;
   imageUrls?: string[]; // 複数画像対応
+  area?: string; // エリア情報
   tags: string[];
   menu?: {
     id: string;
@@ -39,6 +41,14 @@ export interface Shop {
     price: string;
   }[];
 }
+
+export type RatingDetails = {
+  taste: number; // 味
+  atmosphere: number; // 雰囲気
+  service: number; // 接客
+  speed: number; // 提供速度
+  cleanliness: number; // 清潔感
+};
 
 /**
  * ベースとなる店舗データから派生店舗を生成するための設定。
@@ -135,6 +145,13 @@ const BASE_SHOPS: Shop[] = [
     category: 'カフェ・喫茶',
     distanceMinutes: 5,
     rating: 4.6,
+    ratingDetails: {
+      taste: 4.8,
+      atmosphere: 4.7,
+      service: 4.5,
+      speed: 4.5,
+      cleanliness: 4.6,
+    },
     budget: '$',
     createdAt: '2025-02-01T00:00:00.000Z',
     openedAt: '2024-10-12T00:00:00.000Z',
@@ -161,6 +178,13 @@ const BASE_SHOPS: Shop[] = [
     category: 'レストラン',
     distanceMinutes: 11,
     rating: 4.8,
+    ratingDetails: {
+      taste: 4.9,
+      atmosphere: 4.8,
+      service: 4.8,
+      speed: 4.7,
+      cleanliness: 4.8,
+    },
     budget: '$$$',
     createdAt: '2025-02-01T00:00:00.000Z',
     openedAt: '2020-08-14T00:00:00.000Z',
@@ -187,6 +211,13 @@ const BASE_SHOPS: Shop[] = [
     category: 'スイーツ・デザート専門',
     distanceMinutes: 7,
     rating: 4.7,
+    ratingDetails: {
+      taste: 4.8,
+      atmosphere: 4.6,
+      service: 4.7,
+      speed: 4.5,
+      cleanliness: 4.8,
+    },
     budget: '$$',
     createdAt: '2025-02-01T00:00:00.000Z',
     openedAt: '2023-09-05T00:00:00.000Z',
@@ -213,6 +244,13 @@ const BASE_SHOPS: Shop[] = [
     category: 'バー・居酒屋',
     distanceMinutes: 9,
     rating: 4.7,
+    ratingDetails: {
+      taste: 4.6,
+      atmosphere: 4.8,
+      service: 4.7,
+      speed: 4.6,
+      cleanliness: 4.7,
+    },
     budget: '$$',
     createdAt: '2025-02-01T00:00:00.000Z',
     openedAt: '2019-11-30T00:00:00.000Z',
@@ -238,6 +276,13 @@ const BASE_SHOPS: Shop[] = [
     category: 'レストラン',
     distanceMinutes: 6,
     rating: 4.4,
+    ratingDetails: {
+      taste: 4.3,
+      atmosphere: 4.5,
+      service: 4.4,
+      speed: 4.2,
+      cleanliness: 4.6,
+    },
     budget: '$$',
     createdAt: '2025-02-01T00:00:00.000Z',
     openedAt: '2024-02-18T00:00:00.000Z',
@@ -263,6 +308,13 @@ const BASE_SHOPS: Shop[] = [
     category: 'ベーカリー・パン',
     distanceMinutes: 4,
     rating: 4.6,
+    ratingDetails: {
+      taste: 4.7,
+      atmosphere: 4.5,
+      service: 4.6,
+      speed: 4.6,
+      cleanliness: 4.7,
+    },
     budget: '$',
     createdAt: '2025-02-01T00:00:00.000Z',
     openedAt: '2025-01-22T00:00:00.000Z',
@@ -289,6 +341,13 @@ const BASE_SHOPS: Shop[] = [
     category: 'ビュッフェ・食べ放題',
     distanceMinutes: 12,
     rating: 4.6,
+    ratingDetails: {
+      taste: 4.5,
+      atmosphere: 4.6,
+      service: 4.5,
+      speed: 4.7,
+      cleanliness: 4.7,
+    },
     budget: '$$',
     createdAt: '2025-02-01T00:00:00.000Z',
     openedAt: '2023-12-01T00:00:00.000Z',
@@ -314,6 +373,13 @@ const BASE_SHOPS: Shop[] = [
     category: 'バー・居酒屋',
     distanceMinutes: 13,
     rating: 4.4,
+    ratingDetails: {
+      taste: 4.2,
+      atmosphere: 4.5,
+      service: 4.3,
+      speed: 4.4,
+      cleanliness: 4.5,
+    },
     budget: '$$',
     createdAt: '2025-02-01T00:00:00.000Z',
     openedAt: '2021-07-14T00:00:00.000Z',
@@ -339,6 +405,13 @@ const BASE_SHOPS: Shop[] = [
     category: 'レストラン',
     distanceMinutes: 14,
     rating: 4.7,
+    ratingDetails: {
+      taste: 4.8,
+      atmosphere: 4.7,
+      service: 4.6,
+      speed: 4.6,
+      cleanliness: 4.8,
+    },
     budget: '$$$',
     createdAt: '2025-02-01T00:00:00.000Z',
     openedAt: '2021-12-06T00:00:00.000Z',
@@ -364,6 +437,13 @@ const BASE_SHOPS: Shop[] = [
     category: 'バー・居酒屋',
     distanceMinutes: 13,
     rating: 4.7,
+    ratingDetails: {
+      taste: 4.6,
+      atmosphere: 4.9,
+      service: 4.6,
+      speed: 4.5,
+      cleanliness: 4.8,
+    },
     budget: '$$',
     createdAt: '2025-02-01T00:00:00.000Z',
     openedAt: '2024-07-30T00:00:00.000Z',
@@ -389,6 +469,13 @@ const BASE_SHOPS: Shop[] = [
     category: 'ファストフード・テイクアウト',
     distanceMinutes: 6,
     rating: 4.3,
+    ratingDetails: {
+      taste: 4.2,
+      atmosphere: 4.4,
+      service: 4.2,
+      speed: 4.3,
+      cleanliness: 4.5,
+    },
     budget: '$$',
     createdAt: '2025-02-01T00:00:00.000Z',
     openedAt: '2023-02-14T00:00:00.000Z',

@@ -23,61 +23,63 @@ export default function TabLayout() {
   );
 
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+    <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
       <StatusBar style='light' backgroundColor={palette.accent} />
-      <Tabs
-        screenOptions={{
-          tabBarActiveTintColor: palette.textOnAccent,
-          tabBarInactiveTintColor: palette.textOnAccent,
-          headerStyle: styles.header,
-          headerTitleAlign: 'center',
-          headerShadowVisible: false,
-          headerTitle: () => headerLogo,
-          headerTitleContainerStyle: styles.headerTitleContainer,
-          tabBarButton: HapticTab,
-          tabBarBackground: () => <View style={styles.tabBackground} />,
-          tabBarStyle: Platform.select({
-            ios: {
-              // Use a transparent background on iOS to show the blur effect
-              position: 'absolute',
-            },
-            default: {},
-          }),
-        }}
-      >
-        <Tabs.Screen
-          name='index'
-          options={{
-            title: 'ホーム',
-            tabBarIcon: ({ color }) => <IconSymbol size={28} name='house.fill' color={color} />,
+      <View style={styles.container}>
+        <Tabs
+          screenOptions={{
+            tabBarActiveTintColor: palette.textOnAccent,
+            tabBarInactiveTintColor: palette.textOnAccent,
+            headerStyle: styles.header,
+            headerTitleAlign: 'center',
+            headerShadowVisible: false,
+            headerTitle: () => headerLogo,
+            headerTitleContainerStyle: styles.headerTitleContainer,
+            tabBarButton: HapticTab,
+            tabBarBackground: () => <View style={styles.tabBackground} />,
+            tabBarStyle: Platform.select({
+              ios: {
+                // Use a transparent background on iOS to show the blur effect
+                position: 'absolute',
+              },
+              default: {},
+            }),
           }}
-        />
-        <Tabs.Screen
-          name='search'
-          options={{
-            title: '検索',
-            tabBarIcon: ({ color }) => (
-              <IconSymbol size={28} name='magnifyingglass' color={color} />
-            ),
-          }}
-        />
-        <Tabs.Screen
-          name='favorites'
-          options={{
-            title: 'お気に入り',
-            tabBarIcon: ({ color }) => <IconSymbol size={28} name='heart.fill' color={color} />,
-          }}
-        />
-        <Tabs.Screen
-          name='mypage'
-          options={{
-            title: 'マイページ',
-            tabBarIcon: ({ color }) => (
-              <IconSymbol size={28} name='person.crop.circle' color={color} />
-            ),
-          }}
-        />
-      </Tabs>
+        >
+          <Tabs.Screen
+            name='index'
+            options={{
+              title: 'ホーム',
+              tabBarIcon: ({ color }) => <IconSymbol size={28} name='house.fill' color={color} />,
+            }}
+          />
+          <Tabs.Screen
+            name='search'
+            options={{
+              title: '検索',
+              tabBarIcon: ({ color }) => (
+                <IconSymbol size={28} name='magnifyingglass' color={color} />
+              ),
+            }}
+          />
+          <Tabs.Screen
+            name='favorites'
+            options={{
+              title: 'お気に入り',
+              tabBarIcon: ({ color }) => <IconSymbol size={28} name='heart.fill' color={color} />,
+            }}
+          />
+          <Tabs.Screen
+            name='mypage'
+            options={{
+              title: 'マイページ',
+              tabBarIcon: ({ color }) => (
+                <IconSymbol size={28} name='person.crop.circle' color={color} />
+              ),
+            }}
+          />
+        </Tabs>
+      </View>
     </SafeAreaView>
   );
 }
@@ -99,6 +101,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingBottom: 0,
     paddingTop: 10,
+  },
+  safeArea: {
+    backgroundColor: palette.accent,
+    flex: 1,
   },
   tabBackground: {
     ...StyleSheet.absoluteFillObject,

@@ -19,12 +19,21 @@ export type ShopMenuItem = {
   description?: string;
 };
 
+export type RatingDetails = {
+  taste: number;
+  atmosphere: number;
+  service: number;
+  speed: number;
+  cleanliness: number;
+};
+
 export type Shop = {
   id: string;
   name: string;
   category: ShopCategory;
   distanceMinutes: number;
   rating: number;
+  ratingDetails?: RatingDetails;
   budget: MoneyBucket;
   createdAt: string;
   openedAt: string;
@@ -33,6 +42,7 @@ export type Shop = {
   placeId: string;
   imageUrl: string;
   imageUrls?: string[];
+  area?: string;
   tags: string[];
   menu?: ShopMenuItem[];
 };

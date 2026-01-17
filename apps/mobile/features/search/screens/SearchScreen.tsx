@@ -1,6 +1,7 @@
 import { palette } from '@/constants/palette';
 import { useStores } from '@/features/stores/StoresContext';
 import { useVisited } from '@/features/visited/VisitedContext';
+import { AREA_OPTIONS } from '@/lib/stationArea';
 import { useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import {
@@ -56,8 +57,12 @@ export default function SearchScreen() {
   const [userTypedText, setUserTypedText] = useState('');
   const [currentSearchText, setCurrentSearchText] = useState('');
   const [activeCategories, setActiveCategories] = useState<string[]>([]);
+  const [activeAreas, setActiveAreas] = useState<string[]>([]);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [searchHistory, setSearchHistory] = useState<string[]>([]);
+  const [filtersExpanded, setFiltersExpanded] = useState(true);
+  const [expandedCategoryTags, setExpandedCategoryTags] = useState<string[]>([]);
+  const [sortMenuOpen, setSortMenuOpen] = useState(false);
   const { stores: shops, loading, error: loadError } = useStores();
   const [filterVisited, setFilterVisited] = useState<VisitedFilter>('all');
 
@@ -76,6 +81,8 @@ export default function SearchScreen() {
     }
     return Array.from(set).sort();
   }, [shops]);
+
+  const AREA_FILTER_OPTIONS = useMemo(() => AREA_OPTIONS, []);
 
   const TAGS_BY_CATEGORY = useMemo(() => {
     const m = new Map<string, Set<string>>();
@@ -98,12 +105,16 @@ export default function SearchScreen() {
   }, [shops]);
 
   const hasSearchCriteria =
-    currentSearchText.length > 0 || selectedTags.length > 0 || activeCategories.length > 0;
+    currentSearchText.length > 0 ||
+    selectedTags.length > 0 ||
+    activeCategories.length > 0 ||
+    activeAreas.length > 0;
 
   const handleClearAll = () => {
     setUserTypedText('');
     setCurrentSearchText('');
     setActiveCategories([]);
+    setActiveAreas([]);
     setSelectedTags([]);
     setSortBy('default');
     setFilterVisited('all');
@@ -128,8 +139,13 @@ export default function SearchScreen() {
     }
   };
 
+  const handleFilterToggle = () => {
+    setFiltersExpanded(prev => !prev);
+  };
+
   const handleSortTypePress = (value: SortType) => {
     if (sortBy !== value) setSortBy(value);
+    setSortMenuOpen(false);
   };
 
   const toggleSortOrder = () => {
@@ -144,8 +160,8 @@ export default function SearchScreen() {
   };
 
   const handleCategoryPress = (category: string) => {
+    const isDeselecting = activeCategories.includes(category);
     setActiveCategories(prev => {
-      const isDeselecting = prev.includes(category);
       if (isDeselecting) {
         const tagsToRemove = TAGS_BY_CATEGORY[category] || [];
         setSelectedTags(currentTags => currentTags.filter(tag => !tagsToRemove.includes(tag)));
@@ -154,10 +170,23 @@ export default function SearchScreen() {
         return [...prev, category];
       }
     });
+    setExpandedCategoryTags(prev =>
+      isDeselecting ? prev.filter(cat => cat !== category) : [...prev, category]
+    );
+  };
+
+  const handleAreaPress = (area: string) => {
+    setActiveAreas(prev => (prev.includes(area) ? prev.filter(a => a !== area) : [...prev, area]));
   };
 
   const handleTagPress = (tag: string) => {
     setSelectedTags(prev => (prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]));
+  };
+
+  const handleCategoryTagsToggle = (category: string) => {
+    setExpandedCategoryTags(prev =>
+      prev.includes(category) ? prev.filter(cat => cat !== category) : [...prev, category]
+    );
   };
 
   const handleShopPress = (shopId: string) => {
@@ -180,31 +209,38 @@ export default function SearchScreen() {
     }
   };
 
+  const currentSortLabel = useMemo(() => {
+    return SORT_OPTIONS.find(option => option.value === sortBy)?.label ?? 'おすすめ';
+  }, [sortBy]);
+
   const searchResults = useMemo(() => {
     if (!hasSearchCriteria) return [];
     const q = currentSearchText.trim().toLowerCase();
     const tags = selectedTags.map(t => t.toLowerCase());
     const hasCategories = activeCategories.length > 0;
+    const hasAreas = activeAreas.length > 0;
 
     const filtered = shops.filter(shop => {
       const matchesText =
         q.length > 0
           ? shop.name.toLowerCase().includes(q) ||
             shop.description.toLowerCase().includes(q) ||
-            shop.category.toLowerCase().includes(q)
+            shop.category.toLowerCase().includes(q) ||
+            (shop.area ? shop.area.toLowerCase().includes(q) : false)
           : true;
       const matchesTags =
         tags.length > 0
           ? tags.some(tag => shop.tags.some(st => st.toLowerCase().includes(tag)))
           : true;
       const matchesCategory = hasCategories ? activeCategories.includes(shop.category) : true;
+      const matchesArea = hasAreas ? (shop.area ? activeAreas.includes(shop.area) : false) : true;
       const matchesVisited =
         filterVisited === 'all'
           ? true
           : filterVisited === 'visited'
             ? isVisited(shop.id)
             : !isVisited(shop.id);
-      return matchesText && matchesTags && matchesCategory && matchesVisited;
+      return matchesText && matchesTags && matchesCategory && matchesArea && matchesVisited;
     });
 
     return filtered.sort((a, b) => {
@@ -230,6 +266,7 @@ export default function SearchScreen() {
     });
   }, [
     activeCategories,
+    activeAreas,
     currentSearchText,
     filterVisited,
     hasSearchCriteria,
@@ -274,71 +311,148 @@ export default function SearchScreen() {
           </View>
         </View>
 
-        {currentSearchText.length === 0 && (
-          <View style={styles.tagGroupsContainer}>
-            <Text style={styles.sectionLabel}>カテゴリから探す（複数選択可）</Text>
-            <View style={styles.categoriesRow}>
-              {CATEGORY_OPTIONS.map(cat => (
-                <Pressable
-                  key={cat}
-                  onPress={() => handleCategoryPress(cat)}
-                  style={[
-                    styles.categoryButton,
-                    activeCategories.includes(cat)
-                      ? styles.categoryButtonActive
-                      : styles.categoryButtonInactive,
-                  ]}
-                >
-                  <Text
-                    style={
-                      activeCategories.includes(cat)
-                        ? styles.categoryButtonTextActive
-                        : styles.categoryButtonTextInactive
-                    }
+        {!loading && !loadError && (
+          <View style={styles.visitedFilterContainer}>
+            <Text style={styles.filterSectionLabel}>訪問状況</Text>
+            <View style={styles.visitedFilterRow}>
+              {VISITED_FILTER_OPTIONS.map(option => {
+                const isActive = filterVisited === option.value;
+                return (
+                  <Pressable
+                    key={option.value}
+                    accessibilityLabel={`訪問済みフィルター: ${option.label}`}
+                    onPress={() => setFilterVisited(option.value)}
+                    style={[
+                      styles.visitedFilterButton,
+                      isActive
+                        ? styles.visitedFilterButtonActive
+                        : styles.visitedFilterButtonInactive,
+                    ]}
                   >
-                    {cat}
-                  </Text>
-                </Pressable>
-              ))}
+                    <Text
+                      style={
+                        isActive
+                          ? styles.visitedFilterButtonTextActive
+                          : styles.visitedFilterButtonTextInactive
+                      }
+                    >
+                      {option.label}
+                    </Text>
+                  </Pressable>
+                );
+              })}
             </View>
-
-            {activeCategories.length > 0 && (
-              <View style={styles.subTagSection}>
-                <View style={styles.divider} />
-
-                {activeCategories.map(cat => (
-                  <View key={`tags-${cat}`} style={styles.tagGroup}>
-                    <Text style={styles.subSectionLabel}>{`${cat}のタグ`}</Text>
-                    <View style={styles.tagsRow}>
-                      {(TAGS_BY_CATEGORY[cat] || []).map(tag => (
-                        <Pressable
-                          key={tag}
-                          onPress={() => handleTagPress(tag)}
-                          style={[
-                            styles.tagButton,
-                            selectedTags.includes(tag)
-                              ? styles.tagButtonActive
-                              : styles.tagButtonInactive,
-                          ]}
-                        >
-                          <Text
-                            style={
-                              selectedTags.includes(tag)
-                                ? styles.tagButtonTextActive
-                                : styles.tagButtonTextInactive
-                            }
-                          >
-                            {tag}
-                          </Text>
-                        </Pressable>
-                      ))}
-                    </View>
-                  </View>
-                ))}
-              </View>
-            )}
           </View>
         )}
+
+        <View style={styles.tagGroupsContainer}>
+          <Pressable onPress={handleFilterToggle} style={styles.filterHeaderRow}>
+            <Text style={styles.filterHeaderText}>絞り込み条件</Text>
+            <Text style={styles.filterHeaderIcon}>{filtersExpanded ? '−' : '+'}</Text>
+          </Pressable>
+          {filtersExpanded && (
+            <View style={styles.filterBody}>
+              <Text style={styles.sectionLabel}>エリアから探す（複数選択可）</Text>
+              <View style={styles.categoriesRow}>
+                {AREA_FILTER_OPTIONS.map(area => (
+                  <Pressable
+                    key={area}
+                    onPress={() => handleAreaPress(area)}
+                    style={[
+                      styles.categoryButton,
+                      activeAreas.includes(area)
+                        ? styles.categoryButtonActive
+                        : styles.categoryButtonInactive,
+                    ]}
+                  >
+                    <Text
+                      style={
+                        activeAreas.includes(area)
+                          ? styles.categoryButtonTextActive
+                          : styles.categoryButtonTextInactive
+                      }
+                    >
+                      {area}
+                    </Text>
+                  </Pressable>
+                ))}
+              </View>
+              <View style={styles.divider} />
+              <Text style={styles.sectionLabel}>カテゴリから探す（複数選択可）</Text>
+              <View style={styles.categoriesRow}>
+                {CATEGORY_OPTIONS.map(cat => (
+                  <Pressable
+                    key={cat}
+                    onPress={() => handleCategoryPress(cat)}
+                    style={[
+                      styles.categoryButton,
+                      activeCategories.includes(cat)
+                        ? styles.categoryButtonActive
+                        : styles.categoryButtonInactive,
+                    ]}
+                  >
+                    <Text
+                      style={
+                        activeCategories.includes(cat)
+                          ? styles.categoryButtonTextActive
+                          : styles.categoryButtonTextInactive
+                      }
+                    >
+                      {cat}
+                    </Text>
+                  </Pressable>
+                ))}
+              </View>
+
+              {activeCategories.length > 0 && (
+                <View style={styles.subTagSection}>
+                  <View style={styles.divider} />
+
+                  {activeCategories.map(cat => {
+                    const isExpanded = expandedCategoryTags.includes(cat);
+                    return (
+                      <View key={`tags-${cat}`} style={styles.tagGroup}>
+                        <Pressable
+                          onPress={() => handleCategoryTagsToggle(cat)}
+                          style={styles.subSectionHeader}
+                        >
+                          <Text style={styles.subSectionLabel}>{`${cat}のタグ`}</Text>
+                          <Text style={styles.subSectionToggle}>{isExpanded ? '−' : '+'}</Text>
+                        </Pressable>
+                        {isExpanded && (
+                          <View style={styles.tagsRow}>
+                            {(TAGS_BY_CATEGORY[cat] || []).map(tag => (
+                              <Pressable
+                                key={tag}
+                                onPress={() => handleTagPress(tag)}
+                                style={[
+                                  styles.tagButton,
+                                  selectedTags.includes(tag)
+                                    ? styles.tagButtonActive
+                                    : styles.tagButtonInactive,
+                                ]}
+                              >
+                                <Text
+                                  style={
+                                    selectedTags.includes(tag)
+                                      ? styles.tagButtonTextActive
+                                      : styles.tagButtonTextInactive
+                                  }
+                                >
+                                  {tag}
+                                </Text>
+                              </Pressable>
+                            ))}
+                          </View>
+                        )}
+                      </View>
+                    );
+                  })}
+                </View>
+              )}
+            </View>
+          )}
+        </View>
       </View>
 
       {loading && (
@@ -358,73 +472,43 @@ export default function SearchScreen() {
         <View style={styles.resultsSection}>
           <Text style={styles.resultsTitle}>{`検索結果：${searchResults.length}件`}</Text>
 
-          <View style={styles.visitedFilterRow}>
-            {VISITED_FILTER_OPTIONS.map(option => {
-              const isActive = filterVisited === option.value;
-              return (
-                <Pressable
-                  key={option.value}
-                  accessibilityLabel={`訪問済みフィルター: ${option.label}`}
-                  onPress={() => setFilterVisited(option.value)}
-                  style={[
-                    styles.visitedFilterButton,
-                    isActive
-                      ? styles.visitedFilterButtonActive
-                      : styles.visitedFilterButtonInactive,
-                  ]}
-                >
-                  <Text
-                    style={
-                      isActive
-                        ? styles.visitedFilterButtonTextActive
-                        : styles.visitedFilterButtonTextInactive
-                    }
-                  >
-                    {option.label}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </View>
-
           {searchResults.length > 0 ? (
             <View>
-              <View style={styles.sortRow}>
-                <ScrollView
-                  horizontal
-                  showsHorizontalScrollIndicator={false}
-                  style={styles.sortOptionsScroll}
-                  contentContainerStyle={styles.sortOptionsContent}
-                >
-                  {SORT_OPTIONS.map(option => (
-                    <Pressable
-                      key={option.value}
-                      onPress={() => handleSortTypePress(option.value)}
-                      style={[
-                        styles.sortButton,
-                        sortBy === option.value
-                          ? styles.sortButtonActive
-                          : styles.sortButtonInactive,
-                      ]}
-                    >
-                      <Text
-                        style={
-                          sortBy === option.value
-                            ? styles.sortButtonTextActive
-                            : styles.sortButtonTextInactive
-                        }
+              <View style={styles.resultsFilterContainer}>
+                <Text style={styles.filterSectionLabel}>並び替え</Text>
+                <View style={styles.sortRow}>
+                  <Pressable onPress={() => setSortMenuOpen(prev => !prev)} style={styles.sortMenu}>
+                    <Text style={styles.sortMenuText}>{currentSortLabel}</Text>
+                    <Text style={styles.sortMenuIcon}>{sortMenuOpen ? '−' : '+'}</Text>
+                  </Pressable>
+                  {sortBy !== 'default' && (
+                    <View style={styles.fixedOrderContainer}>
+                      <View style={styles.verticalDivider} />
+                      <Pressable onPress={toggleSortOrder} style={styles.orderButton}>
+                        <Text style={styles.orderButtonText}>{getSortOrderLabel()}</Text>
+                      </Pressable>
+                    </View>
+                  )}
+                </View>
+                {sortMenuOpen && (
+                  <View style={styles.sortMenuList}>
+                    {SORT_OPTIONS.map(option => (
+                      <Pressable
+                        key={option.value}
+                        onPress={() => handleSortTypePress(option.value)}
+                        style={styles.sortMenuItem}
                       >
-                        {option.label}
-                      </Text>
-                    </Pressable>
-                  ))}
-                </ScrollView>
-                {sortBy !== 'default' && (
-                  <View style={styles.fixedOrderContainer}>
-                    <View style={styles.verticalDivider} />
-                    <Pressable onPress={toggleSortOrder} style={styles.orderButton}>
-                      <Text style={styles.orderButtonText}>{getSortOrderLabel()}</Text>
-                    </Pressable>
+                        <Text
+                          style={
+                            sortBy === option.value
+                              ? styles.sortMenuItemTextActive
+                              : styles.sortMenuItemText
+                          }
+                        >
+                          {option.label}
+                        </Text>
+                      </Pressable>
+                    ))}
                   </View>
                 )}
               </View>
@@ -445,6 +529,7 @@ export default function SearchScreen() {
                         </View>
                       </View>
                       <Text style={styles.shopMeta}>
+                        {item.area ? `${item.area} • ` : ''}
                         {item.category}
                         {item.budget ? ` • ${item.budget}` : ''}
                         {` • 徒歩${item.distanceMinutes}分`}
@@ -579,6 +664,30 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginBottom: 40,
   },
+  filterBody: {
+    marginTop: 16,
+  },
+  filterHeaderIcon: {
+    color: palette.secondaryText,
+    fontSize: 18,
+    fontWeight: '600',
+  },
+  filterHeaderRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  filterHeaderText: {
+    color: palette.primaryText,
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  filterSectionLabel: {
+    color: palette.secondaryText,
+    fontSize: 12,
+    fontWeight: '600',
+    marginBottom: 8,
+  },
   fixedOrderContainer: {
     alignItems: 'center',
     backgroundColor: palette.background,
@@ -642,6 +751,14 @@ const styles = StyleSheet.create({
     fontSize: 18,
     padding: 8,
   },
+  resultsFilterContainer: {
+    backgroundColor: palette.surface,
+    borderColor: palette.border,
+    borderRadius: 12,
+    borderWidth: 1,
+    marginBottom: 16,
+    padding: 16,
+  },
   resultsSection: {},
   resultsTitle: {
     color: palette.primaryText,
@@ -659,7 +776,7 @@ const styles = StyleSheet.create({
   },
   searchBarRow: {
     flexDirection: 'row',
-    marginBottom: 20,
+    marginBottom: 16,
   },
   searchInput: {
     color: palette.primaryText,
@@ -729,48 +846,69 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
   },
-  sortButton: {
-    borderRadius: 8,
-    borderWidth: 1,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-  },
-  sortButtonActive: {
-    backgroundColor: palette.primaryText,
-    borderColor: palette.primaryText,
-  },
-  sortButtonInactive: {
+  sortMenu: {
+    alignItems: 'center',
     backgroundColor: palette.background,
     borderColor: palette.border,
+    borderRadius: 8,
+    borderWidth: 1,
+    flex: 1,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: 12,
+    paddingVertical: 10,
   },
-  sortButtonTextActive: {
-    color: palette.surface,
-    fontSize: 12,
+  sortMenuIcon: {
+    color: palette.secondaryText,
+    fontSize: 16,
     fontWeight: '600',
   },
-  sortButtonTextInactive: {
-    color: palette.secondaryText,
-    fontSize: 12,
+  sortMenuItem: {
+    backgroundColor: palette.background,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
   },
-  sortOptionsContent: {
-    alignItems: 'center',
-    gap: 8,
-    paddingRight: 8,
+  sortMenuItemText: {
+    color: palette.primaryText,
+    fontSize: 13,
   },
-  sortOptionsScroll: {
-    flex: 1,
-    marginRight: 8,
+  sortMenuItemTextActive: {
+    color: palette.primary,
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  sortMenuList: {
+    borderColor: palette.border,
+    borderRadius: 8,
+    borderWidth: 1,
+    marginTop: 8,
+    overflow: 'hidden',
+  },
+  sortMenuText: {
+    color: palette.primaryText,
+    fontSize: 13,
+    fontWeight: '600',
   },
   sortRow: {
     alignItems: 'center',
     flexDirection: 'row',
     marginBottom: 16,
   },
+  subSectionHeader: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+  },
   subSectionLabel: {
     color: palette.secondaryText,
     fontSize: 13,
     fontWeight: '600',
-    marginBottom: 12,
+  },
+  subSectionToggle: {
+    color: palette.secondaryText,
+    fontSize: 16,
+    fontWeight: '600',
   },
   subTagSection: {
     marginTop: 0,
@@ -800,7 +938,7 @@ const styles = StyleSheet.create({
   tagGroupsContainer: {
     backgroundColor: palette.surface,
     borderRadius: 12,
-    padding: 20,
+    padding: 16,
   },
   tagsRow: {
     flexDirection: 'row',
@@ -836,9 +974,12 @@ const styles = StyleSheet.create({
     color: palette.secondaryText,
     fontSize: 13,
   },
+  visitedFilterContainer: {
+    marginBottom: 16,
+  },
   visitedFilterRow: {
     flexDirection: 'row',
     gap: 8,
-    marginBottom: 12,
+    marginBottom: 16,
   },
 });
