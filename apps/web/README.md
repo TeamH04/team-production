@@ -32,6 +32,7 @@
 | `pnpm --dir apps/web dev`   | 開発サーバー起動。 |
 | `pnpm --dir apps/web lint`  | Lint 実行。        |
 | `pnpm --dir apps/web build` | 本番ビルド。       |
+| `pnpm --filter web test`    | テスト実行。       |
 
 ## 画面と機能
 

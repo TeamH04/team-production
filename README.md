@@ -92,6 +92,11 @@
 ### ローカル実行コマンド
 
 ```bash
+# フロントエンドテスト
+pnpm --filter web test                    # Webアプリのテスト
+pnpm --filter mobile test                 # モバイルアプリのテスト
+pnpm --filter web --filter mobile test    # Web・モバイル同時実行
+
 # Lint
 pnpm run lint
 
