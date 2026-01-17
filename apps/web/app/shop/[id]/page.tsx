@@ -1,10 +1,10 @@
-import type { Metadata } from 'next';
+import { SHOPS } from '@team/shop-core';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 
-import { SHOPS } from '@team/shop-core';
-
 import ShopDetail from './ShopDetail';
+
+import type { Metadata } from 'next';
 
 type ShopPageProps = {
   params: Promise<{ id: string }>;

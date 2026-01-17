@@ -1,32 +1,47 @@
 'use client';
 
+import { formatRating, TIMING, WEB_PAGE_SIZE } from '@team/constants';
+import { useCompositionInput, usePagination, useShopFilter } from '@team/hooks';
+import { BUDGET_LABEL, CATEGORIES, SHOPS, type Shop, type ShopCategory } from '@team/shop-core';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { useEffect, useMemo, useState } from 'react';
-
-import { CATEGORIES, SHOPS, type Shop, type ShopCategory } from '@team/shop-core';
+import { useEffect, useState } from 'react';
 
 type CategoryFilter = ShopCategory | typeof CATEGORY_ALL;
 
 const CATEGORY_ALL = 'すべて';
 const CATEGORY_OPTIONS: CategoryFilter[] = [CATEGORY_ALL, ...[...CATEGORIES].sort()];
-const BUDGET_LABEL: Record<Shop['budget'], string> = {
-  $: '\u00a5',
-  $$: '\u00a5\u00a5',
-  $$$: '\u00a5\u00a5\u00a5',
-};
-const PAGE_SIZE = 9;
 
 export default function HomePageClient() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
 
-  const [searchText, setSearchText] = useState(() => searchParams.get('q') ?? '');
-  const [isComposing, setIsComposing] = useState(false);
+  const {
+    value: searchText,
+    setValue: setSearchText,
+    isComposing,
+    compositionHandlers,
+  } = useCompositionInput({
+    initialValue: searchParams.get('q') ?? '',
+  });
   const [selectedCategory, setSelectedCategory] = useState<CategoryFilter>(CATEGORY_ALL);
-  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+
+  const normalizedQuery = searchText.trim();
+
+  const { filteredShops } = useShopFilter({
+    shops: SHOPS,
+    searchText: normalizedQuery,
+    categories: selectedCategory === CATEGORY_ALL ? [] : [selectedCategory],
+  });
+
+  const {
+    visibleItems: visibleShops,
+    hasMore,
+    loadMore: handleLoadMore,
+    reset: resetPagination,
+  } = usePagination(filteredShops, { pageSize: WEB_PAGE_SIZE });
 
   useEffect(() => {
     if (isComposing) return;
@@ -34,38 +49,15 @@ export default function HomePageClient() {
       const query = searchText.trim();
       const target = query.length > 0 ? `${pathname}?q=${encodeURIComponent(query)}` : pathname;
       router.replace(target, { scroll: false });
-      setVisibleCount(PAGE_SIZE);
-    }, 180);
+      resetPagination();
+    }, TIMING.DEBOUNCE_SEARCH);
 
     return () => clearTimeout(handle);
-  }, [isComposing, pathname, router, searchText]);
-
-  const normalizedQuery = searchText.trim().toLowerCase();
-
-  const filteredShops = useMemo(() => {
-    return SHOPS.filter(shop => {
-      const matchesCategory =
-        selectedCategory === CATEGORY_ALL || shop.category === selectedCategory;
-      const matchesQuery =
-        normalizedQuery.length === 0 ||
-        shop.name.toLowerCase().includes(normalizedQuery) ||
-        shop.tags.some(tag => tag.toLowerCase().includes(normalizedQuery)) ||
-        shop.description.toLowerCase().includes(normalizedQuery);
-      return matchesCategory && matchesQuery;
-    });
-  }, [normalizedQuery, selectedCategory]);
-
-  const visibleShops = filteredShops.slice(0, visibleCount);
-  const hasMore = visibleCount < filteredShops.length;
+  }, [isComposing, pathname, router, searchText, resetPagination]);
 
   const handleCategoryClick = (category: CategoryFilter) => {
     setSelectedCategory(current => (current === category ? CATEGORY_ALL : category));
-    setVisibleCount(PAGE_SIZE);
-  };
-
-  const handleLoadMore = () => {
-    if (!hasMore) return;
-    setVisibleCount(prev => Math.min(prev + PAGE_SIZE, filteredShops.length));
+    resetPagination();
   };
 
   const handleTagClick = (tag: string) => {
@@ -135,11 +127,7 @@ export default function HomePageClient() {
               <input
                 value={searchText}
                 onChange={event => setSearchText(event.target.value)}
-                onCompositionStart={() => setIsComposing(true)}
-                onCompositionEnd={event => {
-                  setIsComposing(false);
-                  setSearchText(event.currentTarget.value);
-                }}
+                {...compositionHandlers}
                 placeholder='お店名・雰囲気・タグで検索'
                 className='w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-base text-slate-900 shadow-sm outline-none transition focus:border-sky-400 focus:ring-2 focus:ring-sky-100'
               />
@@ -248,7 +236,7 @@ function ShopCard({ shop, onTagClick }: { shop: Shop; onTagClick: (tag: string) 
         <div className='flex items-start justify-between gap-3'>
           <h3 className='text-lg font-semibold text-slate-900'>{shop.name}</h3>
           <span className='rounded-full bg-amber-100 px-2.5 py-1 text-xs font-semibold text-amber-700'>
-            ★ {shop.rating.toFixed(1)}
+            ★ {formatRating(shop.rating)}
           </span>
         </div>
         <p className='line-clamp-2 text-sm text-slate-600'>{shop.description}</p>

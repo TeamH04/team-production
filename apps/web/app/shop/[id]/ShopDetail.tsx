@@ -1,19 +1,14 @@
 'use client';
 
+import { buildGoogleMapsUrl, formatRating, STORAGE_KEYS } from '@team/constants';
+import { useFavoriteToggle, useImageGallery, useLocalStorage, useShare } from '@team/hooks';
+import { BUDGET_LABEL, getShopImages } from '@team/shop-core';
+import { colors } from '@team/theme';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo } from 'react';
 
 import type { Shop } from '@team/shop-core';
-import { colors } from '@team/theme';
-
-const FAVORITE_STORAGE_KEY = 'shop-web-favorites';
-
-const BUDGET_LABEL: Record<Shop['budget'], string> = {
-  $: '\u00a5',
-  $$: '\u00a5\u00a5',
-  $$$: '\u00a5\u00a5\u00a5',
-};
 
 type ShopDetailProps = {
   shop: Shop;
@@ -38,72 +33,34 @@ function HeartIcon({ filled }: { filled: boolean }) {
 }
 
 export default function ShopDetail({ shop }: ShopDetailProps) {
-  const [currentImage, setCurrentImage] = useState(0);
-  const [favorites, setFavorites] = useState<string[]>([]);
-  const [shareUrl, setShareUrl] = useState('');
-  const [shareMessage, setShareMessage] = useState('');
+  const [favorites, setFavorites] = useLocalStorage<string[]>(STORAGE_KEYS.FAVORITES, []);
+  const { isFavorite, toggleFavorite } = useFavoriteToggle({ favorites, setFavorites });
+  const { share, shareMessage } = useShare();
 
-  const images = useMemo(
-    () => (shop.imageUrls?.length ? shop.imageUrls : [shop.imageUrl]),
-    [shop.imageUrl, shop.imageUrls]
-  );
+  const imageList = useMemo(() => getShopImages(shop), [shop]);
+
+  const {
+    currentIndex: currentImage,
+    images,
+    totalImages,
+    goToImage,
+    goToPrevious,
+    goToNext,
+    hasMultipleImages,
+  } = useImageGallery({ images: imageList });
 
   const mapOpenUrl = useMemo(
-    () => `https://www.google.com/maps/search/?api=1&query=Google&query_place_id=${shop.placeId}`,
-    [shop.placeId]
+    () => buildGoogleMapsUrl(shop.placeId, shop.name),
+    [shop.placeId, shop.name],
   );
 
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
+  const isFav = isFavorite(shop.id);
 
-    setShareUrl(window.location.href);
-
-    try {
-      const stored = window.localStorage.getItem(FAVORITE_STORAGE_KEY);
-      if (stored) {
-        setFavorites(JSON.parse(stored));
-      }
-    } catch {
-      setFavorites([]);
-    }
-  }, [shop.id]);
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    window.localStorage.setItem(FAVORITE_STORAGE_KEY, JSON.stringify(favorites));
-  }, [favorites]);
-
-  const isFavorite = favorites.includes(shop.id);
-
-  const goToImage = (index: number) => {
-    setCurrentImage((index + images.length) % images.length);
-  };
-
-  const handleShare = async () => {
-    const url = shareUrl || (typeof window !== 'undefined' ? window.location.href : '');
+  const handleShare = () => {
+    const url = typeof window !== 'undefined' ? window.location.href : '';
     const text = `${shop.name} | ${shop.category} - ${shop.description}`;
 
-    try {
-      if (navigator.share) {
-        await navigator.share({ title: shop.name, text, url });
-        setShareMessage('共有しました');
-      } else if (navigator.clipboard) {
-        await navigator.clipboard.writeText(url);
-        setShareMessage('リンクをコピーしました');
-      } else {
-        setShareMessage('お使いの環境では共有できませんでした');
-      }
-    } catch {
-      setShareMessage('共有に失敗しました');
-    } finally {
-      setTimeout(() => setShareMessage(''), 2400);
-    }
-  };
-
-  const toggleFavorite = () => {
-    setFavorites(prev =>
-      prev.includes(shop.id) ? prev.filter(id => id !== shop.id) : [...prev, shop.id]
-    );
+    share({ title: shop.name, text, url });
   };
 
   return (
@@ -113,7 +70,7 @@ export default function ShopDetail({ shop }: ShopDetailProps) {
           <div className='relative aspect-[16/10]'>
             <Image
               src={images[currentImage]}
-              alt={`${shop.name}の写真 ${currentImage + 1}/${images.length}`}
+              alt={`${shop.name}の写真 ${currentImage + 1}/${totalImages}`}
               fill
               sizes='(min-width: 1024px) 720px, 100vw'
               className='object-cover'
@@ -123,11 +80,11 @@ export default function ShopDetail({ shop }: ShopDetailProps) {
             <div className='pointer-events-none absolute inset-0 bg-gradient-to-t from-black/35 via-transparent' />
           </div>
 
-          {images.length > 1 && (
+          {hasMultipleImages && (
             <>
               <button
                 type='button'
-                onClick={() => goToImage(currentImage - 1)}
+                onClick={goToPrevious}
                 className='absolute left-5 top-1/2 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-lg font-semibold text-slate-800 shadow-lg ring-1 ring-white/60 transition hover:-translate-y-[55%] hover:bg-white'
                 aria-label='前の画像へ'
               >
@@ -135,7 +92,7 @@ export default function ShopDetail({ shop }: ShopDetailProps) {
               </button>
               <button
                 type='button'
-                onClick={() => goToImage(currentImage + 1)}
+                onClick={goToNext}
                 className='absolute right-5 top-1/2 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-lg font-semibold text-slate-800 shadow-lg ring-1 ring-white/60 transition hover:-translate-y-[55%] hover:bg-white'
                 aria-label='次の画像へ'
               >
@@ -173,7 +130,7 @@ export default function ShopDetail({ shop }: ShopDetailProps) {
                 {shop.name}
               </h1>
               <p className='text-base text-slate-600'>
-                {shop.category} / ★ {shop.rating.toFixed(1)} / {BUDGET_LABEL[shop.budget]}
+                {shop.category} / ★ {formatRating(shop.rating)} / {BUDGET_LABEL[shop.budget]}
               </p>
             </div>
 
@@ -187,17 +144,17 @@ export default function ShopDetail({ shop }: ShopDetailProps) {
               </button>
               <button
                 type='button'
-                onClick={toggleFavorite}
-                aria-pressed={isFavorite}
+                onClick={() => toggleFavorite(shop.id)}
+                aria-pressed={isFav}
                 className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
-                  isFavorite
+                  isFav
                     ? 'bg-rose-100 text-rose-700 hover:bg-rose-200'
                     : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                 }`}
               >
                 <span className='inline-flex items-center gap-2'>
-                  <HeartIcon filled={isFavorite} />
-                  <span>{isFavorite ? 'お気に入り済み' : 'お気に入りに追加'}</span>
+                  <HeartIcon filled={isFav} />
+                  <span>{isFav ? 'お気に入り済み' : 'お気に入りに追加'}</span>
                 </span>
               </button>
             </div>
@@ -250,7 +207,7 @@ export default function ShopDetail({ shop }: ShopDetailProps) {
             <h2 className='text-2xl font-semibold text-slate-900'>{shop.name}</h2>
           </div>
           <span className='rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700 ring-1 ring-amber-100'>
-            ★ {shop.rating.toFixed(1)}
+            ★ {formatRating(shop.rating)}
           </span>
         </div>
 
