@@ -64,7 +64,8 @@ export function validateRange(
 // Email Validation
 // =============================================================================
 
-export const EMAIL_VALIDATION_REGEX = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
+// ReDoS対策: ドメイン部分を [^@\s.]+ で区切り、バックトラッキングを防止
+export const EMAIL_VALIDATION_REGEX = /^[^@\s]+@[^@\s.]+(?:\.[^@\s.]+)+$/;
 
 export function isValidEmail(email: string): boolean {
   return EMAIL_VALIDATION_REGEX.test(email);
