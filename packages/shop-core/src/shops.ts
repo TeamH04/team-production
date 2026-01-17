@@ -1,44 +1,6 @@
-export type ShopCategory =
-  | 'レストラン'
-  | 'カフェ・喫茶'
-  | 'ベーカリー・パン'
-  | 'スイーツ・デザート専門'
-  | 'ファストフード・テイクアウト'
-  | 'バー・居酒屋'
-  | 'ビュッフェ・食べ放題';
+import { MENU_TAB_MAP, type Shop, type ShopCategory } from '@team/types';
 
-export const MENU_TAB_MAP: Record<ShopCategory, string[]> = {
-  レストラン: ['ランチ', 'ディナー', 'ドリンク', 'デザート'],
-  'カフェ・喫茶': ['ドリンク', 'フード', 'スイーツ'],
-  'ベーカリー・パン': ['惣菜パン', '菓子パン', 'ドリンク'],
-  'スイーツ・デザート専門': ['ジェラート', '焼き菓子', 'ドリンク'],
-  'ファストフード・テイクアウト': ['メイン', 'サイド', 'ドリンク'],
-  'バー・居酒屋': ['おつまみ', 'メイン', 'お酒'],
-  'ビュッフェ・食べ放題': ['料理', 'デザート', 'ドリンク'],
-};
-
-export interface Shop {
-  id: string;
-  name: string;
-  category: ShopCategory;
-  distanceMinutes: number;
-  rating: number;
-  budget: '$' | '$$' | '$$$';
-  createdAt: string; // アプリに追加した日
-  openedAt: string; // 実際のオープン日
-  description: string;
-  address: string;
-  placeId: string;
-  imageUrl: string;
-  imageUrls?: string[]; // 複数画像対応
-  tags: string[];
-  menu?: {
-    id: string;
-    name: string;
-    category: string;
-    price: string;
-  }[];
-}
+export { MENU_TAB_MAP, type Shop, type ShopCategory };
 
 /**
  * ベースとなる店舗データから派生店舗を生成するための設定。
@@ -117,7 +79,7 @@ const createVariantShop = (shop: Shop, variant: ShopVariant, offset: number): Sh
     // バリアント生成時にリスト表示の並び方を変えやすくしている。
     distanceMinutes: adjustDistance(
       shop.distanceMinutes,
-      variant.distanceDelta + (offset % 2 === 0 ? 0 : 1)
+      variant.distanceDelta + (offset % 2 === 0 ? 0 : 1),
     ),
     rating: clampRating(shop.rating + variant.ratingDelta),
     createdAt: shiftDate(shop.createdAt, variant.createdOffsetDays + offset),
@@ -423,7 +385,7 @@ const VARIANTS: ShopVariant[] = [
 // 同じバリアントでも店舗ごとに距離・日付の微調整量がずれるようにして
 // 完全に同一の値が並ばないよう分散させている（デモデータの見栄え用）。
 const VARIANT_SHOPS = VARIANTS.flatMap((variant, variantIndex) =>
-  BASE_SHOPS.map((shop, baseIndex) => createVariantShop(shop, variant, variantIndex + baseIndex))
+  BASE_SHOPS.map((shop, baseIndex) => createVariantShop(shop, variant, variantIndex + baseIndex)),
 );
 
 export const SHOPS: Shop[] = [...BASE_SHOPS, ...VARIANT_SHOPS];
