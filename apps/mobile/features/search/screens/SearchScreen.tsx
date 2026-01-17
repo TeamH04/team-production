@@ -1,6 +1,4 @@
-import { palette } from '@/constants/palette';
-import { useStores } from '@/features/stores/StoresContext';
-import { useVisited } from '@/features/visited/VisitedContext';
+import { filterShops } from '@team/shop-core';
 import { useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import {
@@ -13,6 +11,10 @@ import {
   TextInput,
   View,
 } from 'react-native';
+
+import { palette } from '@/constants/palette';
+import { useStores } from '@/features/stores/StoresContext';
+import { useVisited } from '@/features/visited/VisitedContext';
 
 const TAB_BAR_SPACING = 129;
 const INACTIVE_COLOR = palette.secondarySurface;
@@ -93,7 +95,7 @@ export default function SearchScreen() {
       }
     });
     return Object.fromEntries(
-      Array.from(m.entries(), ([cat, set]) => [cat, Array.from(set).sort()] as const)
+      Array.from(m.entries(), ([cat, set]) => [cat, Array.from(set).sort()] as const),
     ) as Record<string, string[]>;
   }, [shops]);
 
@@ -182,30 +184,24 @@ export default function SearchScreen() {
 
   const searchResults = useMemo(() => {
     if (!hasSearchCriteria) return [];
-    const q = currentSearchText.trim().toLowerCase();
-    const tags = selectedTags.map(t => t.toLowerCase());
-    const hasCategories = activeCategories.length > 0;
 
-    const filtered = shops.filter(shop => {
-      const matchesText =
-        q.length > 0
-          ? shop.name.toLowerCase().includes(q) ||
-            shop.description.toLowerCase().includes(q) ||
-            shop.category.toLowerCase().includes(q)
-          : true;
-      const matchesTags =
-        tags.length > 0
-          ? tags.some(tag => shop.tags.some(st => st.toLowerCase().includes(tag)))
-          : true;
-      const matchesCategory = hasCategories ? activeCategories.includes(shop.category) : true;
-      const matchesVisited =
-        filterVisited === 'all'
-          ? true
-          : filterVisited === 'visited'
-            ? isVisited(shop.id)
-            : !isVisited(shop.id);
-      return matchesText && matchesTags && matchesCategory && matchesVisited;
+    // 共通フィルタリングロジックを使用
+    let filtered = filterShops(shops, {
+      query: currentSearchText.trim(),
+      tags: selectedTags,
     });
+
+    // カテゴリフィルター（複数選択対応のためカスタム処理）
+    if (activeCategories.length > 0) {
+      filtered = filtered.filter(shop => activeCategories.includes(shop.category));
+    }
+
+    // 訪問済みフィルター（モバイル固有）
+    if (filterVisited !== 'all') {
+      filtered = filtered.filter(shop =>
+        filterVisited === 'visited' ? isVisited(shop.id) : !isVisited(shop.id),
+      );
+    }
 
     return filtered.sort((a, b) => {
       let comparison = 0;

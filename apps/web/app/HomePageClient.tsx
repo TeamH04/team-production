@@ -1,21 +1,22 @@
 'use client';
 
+import {
+  BUDGET_LABEL,
+  CATEGORIES,
+  filterShops,
+  SHOPS,
+  type Shop,
+  type ShopCategory,
+} from '@team/shop-core';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 
-import { CATEGORIES, SHOPS, type Shop, type ShopCategory } from '@team/shop-core';
-
 type CategoryFilter = ShopCategory | typeof CATEGORY_ALL;
 
 const CATEGORY_ALL = 'すべて';
 const CATEGORY_OPTIONS: CategoryFilter[] = [CATEGORY_ALL, ...[...CATEGORIES].sort()];
-const BUDGET_LABEL: Record<Shop['budget'], string> = {
-  $: '\u00a5',
-  $$: '\u00a5\u00a5',
-  $$$: '\u00a5\u00a5\u00a5',
-};
 const PAGE_SIZE = 9;
 
 export default function HomePageClient() {
@@ -40,18 +41,12 @@ export default function HomePageClient() {
     return () => clearTimeout(handle);
   }, [isComposing, pathname, router, searchText]);
 
-  const normalizedQuery = searchText.trim().toLowerCase();
+  const normalizedQuery = searchText.trim();
 
   const filteredShops = useMemo(() => {
-    return SHOPS.filter(shop => {
-      const matchesCategory =
-        selectedCategory === CATEGORY_ALL || shop.category === selectedCategory;
-      const matchesQuery =
-        normalizedQuery.length === 0 ||
-        shop.name.toLowerCase().includes(normalizedQuery) ||
-        shop.tags.some(tag => tag.toLowerCase().includes(normalizedQuery)) ||
-        shop.description.toLowerCase().includes(normalizedQuery);
-      return matchesCategory && matchesQuery;
+    return filterShops(SHOPS, {
+      query: normalizedQuery,
+      category: selectedCategory === CATEGORY_ALL ? null : selectedCategory,
     });
   }, [normalizedQuery, selectedCategory]);
 

@@ -1,8 +1,29 @@
-import { fetchStores } from '@/lib/api';
-import { mapApiStoresToShops } from '@/lib/storeMapping';
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+
+import { fetchStores as fetchStoresApi } from '@/lib/api';
+import { mapApiStoresToShops as mapApiStoresToShopsDefault } from '@/lib/storeMapping';
+
 import type { Shop } from '@team/shop-core';
-import type React from 'react';
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+
+type StoresDependencies = {
+  fetchStores: typeof fetchStoresApi;
+  mapApiStoresToShops: typeof mapApiStoresToShopsDefault;
+};
+
+const defaultDependencies: StoresDependencies = {
+  fetchStores: fetchStoresApi,
+  mapApiStoresToShops: mapApiStoresToShopsDefault,
+};
+
+let dependencies = defaultDependencies;
+
+export function __setStoresDependenciesForTesting(overrides: Partial<StoresDependencies>): void {
+  dependencies = { ...defaultDependencies, ...overrides };
+}
+
+export function __resetStoresDependenciesForTesting(): void {
+  dependencies = defaultDependencies;
+}
 
 type StoresContextValue = {
   stores: Shop[];
@@ -23,8 +44,8 @@ export function StoresProvider({ children }: { children: React.ReactNode }) {
     setLoading(true);
     setError(null);
     try {
-      const data = await fetchStores();
-      setStores(mapApiStoresToShops(data));
+      const data = await dependencies.fetchStores();
+      setStores(dependencies.mapApiStoresToShops(data));
     } catch (err) {
       const message = err instanceof Error ? err.message : '店舗情報の取得に失敗しました';
       setError(message);
@@ -47,7 +68,7 @@ export function StoresProvider({ children }: { children: React.ReactNode }) {
       refresh,
       getStoreById,
     }),
-    [error, getStoreById, loading, refresh, stores]
+    [error, getStoreById, loading, refresh, stores],
   );
 
   return <StoresContext.Provider value={value}>{children}</StoresContext.Provider>;

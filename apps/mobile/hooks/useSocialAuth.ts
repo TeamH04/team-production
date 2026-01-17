@@ -1,10 +1,12 @@
-import { getSupabase, isSupabaseConfigured } from '@/lib/supabase';
-import type { AuthError, Session } from '@supabase/supabase-js';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import * as AuthSession from 'expo-auth-session';
 import * as WebBrowser from 'expo-web-browser';
 import { useCallback, useState } from 'react';
 import { Platform } from 'react-native';
+
+import { getSupabase, isSupabaseConfigured } from '@/lib/supabase';
+
+import type { AuthError, Session } from '@supabase/supabase-js';
 
 WebBrowser.maybeCompleteAuthSession();
 

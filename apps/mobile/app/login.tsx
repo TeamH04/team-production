@@ -1,9 +1,3 @@
-import KuguriTitle from '@/assets/icons/kaguri.svg';
-import { palette } from '@/constants/palette';
-import { useUser } from '@/features/user/UserContext';
-import { checkIsOwner, ensureUserExistsInDB } from '@/lib/auth';
-import { DEV_GUEST_FLAG_KEY, DEV_LOGIN_ENABLED } from '@/lib/devMode';
-import { getSupabase, isSupabaseConfigured } from '@/lib/supabase';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as AppleAuthentication from 'expo-apple-authentication';
@@ -13,6 +7,13 @@ import { type Href, useRouter } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import { useCallback, useLayoutEffect, useState } from 'react';
 import { Alert, Platform, Pressable, StatusBar, StyleSheet, Text, View } from 'react-native';
+
+import KuguriTitle from '@/assets/icons/kaguri.svg';
+import { palette } from '@/constants/palette';
+import { useUser } from '@/features/user/UserContext';
+import { checkIsOwner, ensureUserExistsInDB } from '@/lib/auth';
+import { DEV_GUEST_FLAG_KEY, DEV_LOGIN_ENABLED } from '@/lib/devMode';
+import { getSupabase, isSupabaseConfigured } from '@/lib/supabase';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -74,7 +75,7 @@ export default function LoginScreen() {
     const { isOwner } = await checkIsOwner();
     Alert.alert(
       'ログイン完了',
-      isOwner ? 'オーナーとしてログインしました。' : '正常にログインしました。'
+      isOwner ? 'オーナーとしてログインしました。' : '正常にログインしました。',
     );
     // オーナーの場合は直接オーナー画面へ遷移（プロフィール登録をスキップ）
     if (isOwner) {
@@ -88,7 +89,7 @@ export default function LoginScreen() {
       if (!isSupabaseConfigured()) {
         Alert.alert(
           '未設定',
-          'Supabaseの環境変数が未設定です。EXPO_PUBLIC_SUPABASE_URL と EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY を設定してください。'
+          'Supabaseの環境変数が未設定です。EXPO_PUBLIC_SUPABASE_URL と EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY を設定してください。',
         );
         return;
       }
@@ -145,7 +146,7 @@ export default function LoginScreen() {
         if (/Unsupported provider|invalid_provider/i.test(msg)) {
           Alert.alert(
             'プロバイダ未設定',
-            'Supabase で Google/Apple のプロバイダが無効です。Authentication > Providers で有効化し、クライアントID/シークレットとリダイレクトURL (https://auth.expo.dev/… のプロキシURL) を設定してください。'
+            'Supabase で Google/Apple のプロバイダが無効です。Authentication > Providers で有効化し、クライアントID/シークレットとリダイレクトURL (https://auth.expo.dev/… のプロキシURL) を設定してください。',
           );
         } else {
           Alert.alert('ログイン失敗', msg);
@@ -154,14 +155,14 @@ export default function LoginScreen() {
         setLoading(null);
       }
     },
-    [finishLogin, setUser]
+    [finishLogin, setUser],
   );
 
   const handleAppleNative = useCallback(async () => {
     if (!isSupabaseConfigured()) {
       Alert.alert(
         '未設定',
-        'Supabaseの環境変数が未設定です。EXPO_PUBLIC_SUPABASE_URL と EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY を設定してください。'
+        'Supabaseの環境変数が未設定です。EXPO_PUBLIC_SUPABASE_URL と EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY を設定してください。',
       );
       return;
     }
@@ -180,7 +181,7 @@ export default function LoginScreen() {
       const rawNonce = createNonce();
       const hashedNonce = await Crypto.digestStringAsync(
         Crypto.CryptoDigestAlgorithm.SHA256,
-        rawNonce
+        rawNonce,
       );
       const credential = await AppleAuthentication.signInAsync({
         requestedScopes: [
@@ -227,7 +228,7 @@ export default function LoginScreen() {
       if (/Unsupported provider|invalid_provider/i.test(msg)) {
         Alert.alert(
           'プロバイダ未設定',
-          'Supabase で Apple のプロバイダが無効です。Authentication > Providers で有効化し、クライアントID/シークレットとリダイレクトURLを設定してください。'
+          'Supabase で Apple のプロバイダが無効です。Authentication > Providers で有効化し、クライアントID/シークレットとリダイレクトURLを設定してください。',
         );
       } else if (/Sign in with Apple is not available/i.test(msg)) {
         Alert.alert('非対応端末', 'この端末ではAppleによるサインインが利用できません。');

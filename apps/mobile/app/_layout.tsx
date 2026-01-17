@@ -1,15 +1,10 @@
 // ポリフィルは他のモジュールより先にロードする必要がある
 import '@/polyfills/crypto';
-
-import { FavoritesProvider } from '@/features/favorites/FavoritesContext';
-import { ReviewsProvider } from '@/features/reviews/ReviewsContext';
-import { StoresProvider } from '@/features/stores/StoresContext';
-import { UserProvider, useUser } from '@/features/user/UserContext';
-import { VisitedProvider } from '@/features/visited/VisitedContext';
 import '@/global.css';
+
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
-import { router, Stack, useSegments, type Href } from 'expo-router';
+import { router, Stack, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -17,7 +12,14 @@ import 'react-native-reanimated';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { palette } from '@/constants/palette';
+import { FavoritesProvider } from '@/features/favorites/FavoritesContext';
+import { ReviewsProvider } from '@/features/reviews/ReviewsContext';
+import { StoresProvider } from '@/features/stores/StoresContext';
+import { UserProvider, useUser } from '@/features/user/UserContext';
+import { VisitedProvider } from '@/features/visited/VisitedContext';
 import { useColorScheme } from '@/hooks/useColorScheme';
+
+import type { Href } from 'expo-router';
 
 const layoutColors = {
   surface: palette.surface,

@@ -1,7 +1,4 @@
-import { palette } from '@/constants/palette';
-import { TAB_BAR_SPACING } from '@/constants/TabBarSpacing';
-import { useStores } from '@/features/stores/StoresContext';
-import type { Shop } from '@team/shop-core';
+import { BUDGET_LABEL } from '@team/shop-core';
 import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { type ReactElement, useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -16,13 +13,13 @@ import {
 } from 'react-native';
 import Animated, { useAnimatedRef } from 'react-native-reanimated';
 
-const PAGE_SIZE = 10;
+import { palette } from '@/constants/palette';
+import { TAB_BAR_SPACING } from '@/constants/TabBarSpacing';
+import { useStores } from '@/features/stores/StoresContext';
 
-const BUDGET_LABEL: Record<Shop['budget'], string> = {
-  $: '¥',
-  $$: '¥¥',
-  $$$: '¥¥¥',
-};
+import type { Shop } from '@team/shop-core';
+
+const PAGE_SIZE = 10;
 
 const KEY_EXTRACTOR = (item: Shop) => item.id;
 
@@ -167,7 +164,7 @@ export default function HomeScreen() {
         </Pressable>
       </View>
     ),
-    [router]
+    [router],
   );
 
   const renderListHeader = useMemo(() => {

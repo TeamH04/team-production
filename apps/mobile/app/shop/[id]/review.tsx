@@ -104,7 +104,7 @@ export default function ReviewModalScreen() {
           fileName: asset.fileName ?? `review-${Date.now()}-${index}.jpg`,
           contentType: asset.mimeType ?? 'image/jpeg',
           fileSize: asset.fileSize ?? undefined,
-        }))
+        })),
       );
       router.back();
     } catch (err) {
@@ -192,7 +192,7 @@ export default function ReviewModalScreen() {
                   key={item.id}
                   onPress={() =>
                     setSelectedMenuIds(prev =>
-                      selected ? prev.filter(id => id !== item.id) : [...prev, item.id]
+                      selected ? prev.filter(id => id !== item.id) : [...prev, item.id],
                     )
                   }
                   style={[styles.menuItem, selected && styles.menuItemSelected]}

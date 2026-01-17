@@ -1,7 +1,7 @@
-import type { User } from '@supabase/supabase-js';
-
 import { fetchAuthMe } from './api';
 import { getSupabase } from './supabase';
+
+import type { User } from '@supabase/supabase-js';
 
 export type OwnerCheck = {
   isOwner: boolean;

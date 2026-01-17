@@ -1,4 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
+import { colors as themeColors, withAlpha } from '@team/theme';
+import { MENU_TAB_MAP, type ShopMenuItem } from '@team/types';
 import { useLocalSearchParams, useNavigation } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useState } from 'react';
@@ -6,8 +8,6 @@ import { Pressable, ScrollView, SectionList, StyleSheet, Text, View } from 'reac
 
 import { useStores } from '@/features/stores/StoresContext';
 import { fetchStoreMenus } from '@/lib/api';
-import { colors as themeColors, withAlpha } from '@team/theme';
-import { MENU_TAB_MAP, type ShopMenuItem } from '@team/types';
 
 // --- 定数 ---
 const COLORS = {
@@ -78,7 +78,7 @@ export default function ShopMenuScreen() {
 
     const orderedFromMap = mappedCategories.filter(category => apiCategories.includes(category));
     const remainingCategories = apiCategories.filter(
-      category => !orderedFromMap.includes(category)
+      category => !orderedFromMap.includes(category),
     );
 
     return ['すべて', 'おすすめ', ...orderedFromMap, ...remainingCategories];
@@ -165,7 +165,7 @@ export default function ShopMenuScreen() {
           acc[key].push(item);
           return acc;
         },
-        {} as Record<string, ExtendedMenuItem[]>
+        {} as Record<string, ExtendedMenuItem[]>,
       );
 
       return Object.keys(groups).map(category => ({
@@ -233,7 +233,7 @@ export default function ShopMenuScreen() {
         </View>
       );
     },
-    [activeCategory]
+    [activeCategory],
   );
 
   const renderSectionHeader = useCallback(
@@ -247,7 +247,7 @@ export default function ShopMenuScreen() {
         </View>
       );
     },
-    [activeCategory]
+    [activeCategory],
   );
 
   if (loading) {

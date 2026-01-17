@@ -1,7 +1,9 @@
 import React from 'react';
-import { Pressable, StyleProp, StyleSheet, Text, ViewStyle } from 'react-native';
+import { Pressable, StyleSheet, Text } from 'react-native';
 
 import { palette } from '@/constants/palette';
+
+import type { StyleProp, ViewStyle } from 'react-native';
 
 type Props = {
   onPress?: () => void;

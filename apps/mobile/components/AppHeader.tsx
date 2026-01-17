@@ -1,7 +1,8 @@
-import KuguriTitle from '@/assets/icons/kaguri.svg';
-import { palette } from '@/constants/palette';
 import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, View } from 'react-native';
+
+import KuguriTitle from '@/assets/icons/kaguri.svg';
+import { palette } from '@/constants/palette';
 
 export function AppHeader() {
   return (

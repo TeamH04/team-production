@@ -1,12 +1,5 @@
-﻿import { palette } from '@/constants/palette';
-import { useFavorites } from '@/features/favorites/FavoritesContext';
-import { useReviews } from '@/features/reviews/ReviewsContext';
-import { useStores } from '@/features/stores/StoresContext';
-import { useVisited } from '@/features/visited/VisitedContext';
-import type { ReviewSort } from '@/lib/api';
-import { getPublicStorageUrl } from '@/lib/storage';
-import { Ionicons } from '@expo/vector-icons';
-import type { Shop } from '@team/shop-core';
+﻿import { Ionicons } from '@expo/vector-icons';
+import { BUDGET_LABEL } from '@team/shop-core';
 import { Image } from 'expo-image';
 import { useFocusEffect, useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -24,11 +17,14 @@ import {
   View,
 } from 'react-native';
 
-const BUDGET_LABEL: Record<Shop['budget'], string> = {
-  $: '¥',
-  $$: '¥¥',
-  $$$: '¥¥¥',
-};
+import { palette } from '@/constants/palette';
+import { useFavorites } from '@/features/favorites/FavoritesContext';
+import { useReviews } from '@/features/reviews/ReviewsContext';
+import { useStores } from '@/features/stores/StoresContext';
+import { useVisited } from '@/features/visited/VisitedContext';
+import { getPublicStorageUrl } from '@/lib/storage';
+
+import type { ReviewSort } from '@/lib/api';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
@@ -100,7 +96,7 @@ export default function ShopDetailScreen() {
   useFocusEffect(
     useCallback(() => {
       navigation.setOptions?.({ headerBackTitle: '戻る' });
-    }, [navigation])
+    }, [navigation]),
   );
 
   // Reviews load: 2つ目の挙動（focus時にload、sort変化でも再fetch）
@@ -108,7 +104,7 @@ export default function ShopDetailScreen() {
     useCallback(() => {
       if (!id) return;
       loadReviews(id, reviewSort).catch(() => undefined);
-    }, [id, loadReviews, reviewSort])
+    }, [id, loadReviews, reviewSort]),
   );
 
   const mapOpenUrl = useMemo(() => {
@@ -127,7 +123,7 @@ export default function ShopDetailScreen() {
     if (!webBaseUrl) {
       Alert.alert(
         '共有できません',
-        '共有URLの設定が見つからないため、この機能は現在利用できません。'
+        '共有URLの設定が見つからないため、この機能は現在利用できません。',
       );
       return;
     }
@@ -158,7 +154,7 @@ export default function ShopDetailScreen() {
 
       return names.length > 0 ? names.join(' / ') : undefined;
     },
-    [shop]
+    [shop],
   );
 
   const handleToggleLike = useCallback(
@@ -178,7 +174,7 @@ export default function ShopDetailScreen() {
         Alert.alert('いいねに失敗しました', message);
       }
     },
-    [router, shop, toggleLike]
+    [router, shop, toggleLike],
   );
 
   const handleToggleFavorite = useCallback(async () => {
