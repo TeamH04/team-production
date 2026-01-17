@@ -21,7 +21,7 @@ func TestUserHandler_GetMe_Success(t *testing.T) {
 	mockUC := &testutil.MockUserUseCase{
 		FindByIDResult: user,
 	}
-	h := handlers.NewUserHandler(mockUC)
+	h := handlers.NewUserHandler(mockUC, &testutil.MockStorageProvider{}, "test-bucket")
 
 	err := h.GetMe(tc.Context)
 
@@ -32,7 +32,7 @@ func TestUserHandler_GetMe_Unauthorized(t *testing.T) {
 	tc := testutil.NewTestContextNoBody(http.MethodGet, "/users/me")
 
 	mockUC := &testutil.MockUserUseCase{}
-	h := handlers.NewUserHandler(mockUC)
+	h := handlers.NewUserHandler(mockUC, &testutil.MockStorageProvider{}, "test-bucket")
 
 	err := h.GetMe(tc.Context)
 
@@ -48,7 +48,7 @@ func TestUserHandler_GetMe_UserNotFound(t *testing.T) {
 	mockUC := &testutil.MockUserUseCase{
 		FindByIDErr: usecase.ErrUserNotFound,
 	}
-	h := handlers.NewUserHandler(mockUC)
+	h := handlers.NewUserHandler(mockUC, &testutil.MockStorageProvider{}, "test-bucket")
 
 	err := h.GetMe(tc.Context)
 
@@ -67,7 +67,7 @@ func TestUserHandler_UpdateUser_Success(t *testing.T) {
 	mockUC := &testutil.MockUserUseCase{
 		UpdateUserResult: entity.User{UserID: "user-1", Name: "Updated Name"},
 	}
-	h := handlers.NewUserHandler(mockUC)
+	h := handlers.NewUserHandler(mockUC, &testutil.MockStorageProvider{}, "test-bucket")
 
 	err := h.UpdateUser(tc.Context)
 
@@ -79,7 +79,7 @@ func TestUserHandler_UpdateUser_Unauthorized(t *testing.T) {
 	tc.SetPath("/users/:id", []string{"id"}, []string{"user-1"})
 
 	mockUC := &testutil.MockUserUseCase{}
-	h := handlers.NewUserHandler(mockUC)
+	h := handlers.NewUserHandler(mockUC, &testutil.MockStorageProvider{}, "test-bucket")
 
 	err := h.UpdateUser(tc.Context)
 
@@ -94,7 +94,7 @@ func TestUserHandler_UpdateUser_Forbidden(t *testing.T) {
 	tc.SetUser(user, "user")
 
 	mockUC := &testutil.MockUserUseCase{}
-	h := handlers.NewUserHandler(mockUC)
+	h := handlers.NewUserHandler(mockUC, &testutil.MockStorageProvider{}, "test-bucket")
 
 	err := h.UpdateUser(tc.Context)
 
@@ -109,7 +109,7 @@ func TestUserHandler_UpdateUser_InvalidJSON(t *testing.T) {
 	tc.SetUser(user, "user")
 
 	mockUC := &testutil.MockUserUseCase{}
-	h := handlers.NewUserHandler(mockUC)
+	h := handlers.NewUserHandler(mockUC, &testutil.MockStorageProvider{}, "test-bucket")
 
 	err := h.UpdateUser(tc.Context)
 
@@ -126,7 +126,7 @@ func TestUserHandler_UpdateUser_UseCaseError(t *testing.T) {
 	mockUC := &testutil.MockUserUseCase{
 		UpdateUserErr: usecase.ErrInvalidInput,
 	}
-	h := handlers.NewUserHandler(mockUC)
+	h := handlers.NewUserHandler(mockUC, &testutil.MockStorageProvider{}, "test-bucket")
 
 	err := h.UpdateUser(tc.Context)
 
@@ -145,7 +145,7 @@ func TestUserHandler_GetUserReviews_Success(t *testing.T) {
 			{ReviewID: "review-2", UserID: "user-1"},
 		},
 	}
-	h := handlers.NewUserHandler(mockUC)
+	h := handlers.NewUserHandler(mockUC, &testutil.MockStorageProvider{}, "test-bucket")
 
 	err := h.GetUserReviews(tc.Context)
 
@@ -159,7 +159,7 @@ func TestUserHandler_GetUserReviews_Empty(t *testing.T) {
 	mockUC := &testutil.MockUserUseCase{
 		GetUserReviewsResult: []entity.Review{},
 	}
-	h := handlers.NewUserHandler(mockUC)
+	h := handlers.NewUserHandler(mockUC, &testutil.MockStorageProvider{}, "test-bucket")
 
 	err := h.GetUserReviews(tc.Context)
 
@@ -173,7 +173,7 @@ func TestUserHandler_GetUserReviews_UseCaseError(t *testing.T) {
 	mockUC := &testutil.MockUserUseCase{
 		GetUserReviewsErr: usecase.ErrUserNotFound,
 	}
-	h := handlers.NewUserHandler(mockUC)
+	h := handlers.NewUserHandler(mockUC, &testutil.MockStorageProvider{}, "test-bucket")
 
 	err := h.GetUserReviews(tc.Context)
 

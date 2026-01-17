@@ -25,7 +25,8 @@ func TestMediaHandler_CreateReviewUploads_Success(t *testing.T) {
 			{
 				FileID:      "file-1",
 				ObjectKey:   "uploads/file-1.jpg",
-				UploadURL:   "https://example.com/upload",
+				Path:        "/uploads/file-1.jpg",
+				Token:       "test-token",
 				ContentType: "image/jpeg",
 			},
 		},

@@ -7,6 +7,7 @@ import (
 
 	"github.com/TeamH04/team-production/apps/backend/internal/apperr"
 	"github.com/TeamH04/team-production/apps/backend/internal/domain/entity"
+	"github.com/TeamH04/team-production/apps/backend/internal/domain/role"
 	"github.com/TeamH04/team-production/apps/backend/internal/usecase/input"
 	"github.com/TeamH04/team-production/apps/backend/internal/usecase/output"
 )
@@ -55,9 +56,9 @@ func (uc *userUseCase) EnsureUser(ctx context.Context, input input.EnsureUserInp
 		return entity.User{}, ErrInvalidInput
 	}
 
-	role := strings.ToLower(strings.TrimSpace(input.Role))
-	if !IsValidRole(role) {
-		role = "user"
+	userRole := strings.ToLower(strings.TrimSpace(input.Role))
+	if !IsValidRole(userRole) {
+		userRole = role.User
 	}
 
 	name := deriveNameFromEmail(email)
@@ -67,7 +68,7 @@ func (uc *userUseCase) EnsureUser(ctx context.Context, input input.EnsureUserInp
 		Name:      name,
 		Email:     email,
 		Provider:  provider,
-		Role:      role,
+		Role:      userRole,
 		CreatedAt: now,
 		UpdatedAt: now,
 	}

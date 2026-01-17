@@ -104,9 +104,9 @@ func (m *mockStoreRepoForFavorite) Delete(ctx context.Context, id string) error 
 	return errors.New("not implemented")
 }
 
-// --- GetUserFavorites Tests ---
+// --- GetMyFavorites Tests ---
 
-func TestGetUserFavorites_Success(t *testing.T) {
+func TestGetMyFavorites_Success(t *testing.T) {
 	favorites := []entity.Favorite{
 		{UserID: "user-1", StoreID: "store-1"},
 		{UserID: "user-1", StoreID: "store-2"},
@@ -117,7 +117,7 @@ func TestGetUserFavorites_Success(t *testing.T) {
 
 	uc := usecase.NewFavoriteUseCase(favoriteRepo, userRepo, storeRepo)
 
-	result, err := uc.GetUserFavorites(context.Background(), "user-1")
+	result, err := uc.GetMyFavorites(context.Background(), "user-1")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -126,7 +126,7 @@ func TestGetUserFavorites_Success(t *testing.T) {
 	}
 }
 
-func TestGetUserFavorites_UserNotFound(t *testing.T) {
+func TestGetMyFavorites_UserNotFound(t *testing.T) {
 	favoriteRepo := &mockFavoriteRepository{}
 	userRepo := &mockUserRepoForFavorite{
 		findByIDErr: apperr.New(apperr.CodeNotFound, entity.ErrNotFound),
@@ -135,20 +135,20 @@ func TestGetUserFavorites_UserNotFound(t *testing.T) {
 
 	uc := usecase.NewFavoriteUseCase(favoriteRepo, userRepo, storeRepo)
 
-	_, err := uc.GetUserFavorites(context.Background(), "nonexistent")
+	_, err := uc.GetMyFavorites(context.Background(), "nonexistent")
 	if !errors.Is(err, usecase.ErrUserNotFound) {
 		t.Errorf("expected ErrUserNotFound, got %v", err)
 	}
 }
 
-func TestGetUserFavorites_EmptyFavorites(t *testing.T) {
+func TestGetMyFavorites_EmptyFavorites(t *testing.T) {
 	favoriteRepo := &mockFavoriteRepository{findByUserIDResult: []entity.Favorite{}}
 	userRepo := &mockUserRepoForFavorite{findByIDResult: entity.User{UserID: "user-1"}}
 	storeRepo := &mockStoreRepoForFavorite{}
 
 	uc := usecase.NewFavoriteUseCase(favoriteRepo, userRepo, storeRepo)
 
-	result, err := uc.GetUserFavorites(context.Background(), "user-1")
+	result, err := uc.GetMyFavorites(context.Background(), "user-1")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -157,7 +157,7 @@ func TestGetUserFavorites_EmptyFavorites(t *testing.T) {
 	}
 }
 
-func TestGetUserFavorites_RepositoryError(t *testing.T) {
+func TestGetMyFavorites_RepositoryError(t *testing.T) {
 	dbErr := errors.New("database error")
 	favoriteRepo := &mockFavoriteRepository{findByUserIDErr: dbErr}
 	userRepo := &mockUserRepoForFavorite{findByIDResult: entity.User{UserID: "user-1"}}
@@ -165,7 +165,7 @@ func TestGetUserFavorites_RepositoryError(t *testing.T) {
 
 	uc := usecase.NewFavoriteUseCase(favoriteRepo, userRepo, storeRepo)
 
-	_, err := uc.GetUserFavorites(context.Background(), "user-1")
+	_, err := uc.GetMyFavorites(context.Background(), "user-1")
 	if !errors.Is(err, dbErr) {
 		t.Errorf("expected database error, got %v", err)
 	}

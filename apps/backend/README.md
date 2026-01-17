@@ -11,6 +11,21 @@
 - Go 1.24 系。
 - Docker / Docker Compose v2。
 - pnpm（ルート依存の取得に使用）。
+- golang-migrate（DB マイグレーションツール）。
+
+### golang-migrate のインストール
+
+```bash
+go install -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@latest
+```
+
+インストール後、`$HOME/go/bin` が PATH に含まれていることを確認する。
+
+```bash
+export PATH=$PATH:$HOME/go/bin
+```
+
+永続化する場合は `~/.bashrc` または `~/.zshrc` に追加する。
 
 ## セットアップ手順
 
@@ -30,31 +45,29 @@
    - `SUPABASE_PUBLISHABLE_KEY`
    - `SUPABASE_SECRET_KEY`
 
-3. ローカルで起動する。
+3. DB 起動 + マイグレーション
 
    ```bash
-   make db-up      # Postgres のみ
-   make backend    # Postgres + API を Docker Compose で起動
+   make db-migrate
    ```
 
-4. マイグレーションを適用する。
+4. バックエンド起動
 
    ```bash
-   make db-init
+   make backend
    ```
 
-## 主なコマンド（apps/backend/Makefile）
+## 主なコマンド（リポジトリルートから実行）
 
-| コマンド                                       | 用途                                                  |
-| ---------------------------------------------- | ----------------------------------------------------- |
-| `make run-dev`                                 | Postgres を起動し `go run ./cmd/server` を実行。      |
-| `make serve`                                   | 既存の DB で API のみ起動。                           |
-| `make db-up` / `make db-down` / `make destroy` | Docker Compose で DB 起動/停止/ボリューム削除。       |
-| `make db-init`                                 | ローカル Postgres に `migrations/` を適用。           |
-| `make migrate-new name=<name>`                 | 連番付き SQL マイグレーションを作成。                 |
-| `make migrate`                                 | `MIGRATE_DATABASE_URL` に対してマイグレーション適用。 |
-| `make test`                                    | Go テスト実行。                                       |
-| `make check`                                   | 簡易ヘルスチェック。                                  |
+| コマンド          | 用途                         |
+| ----------------- | ---------------------------- |
+| `make backend`    | バックエンド起動             |
+| `make db-start`   | DB 起動                      |
+| `make db-stop`    | DB 停止                      |
+| `make db-migrate` | マイグレーション実行         |
+| `make db-reset`   | DB リセット（drop + 再作成） |
+| `make db-destroy` | DB 完全削除（ボリュームも）  |
+| `make test`       | テスト実行                   |
 
 ## 環境変数
 

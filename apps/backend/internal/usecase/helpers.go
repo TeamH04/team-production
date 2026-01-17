@@ -5,14 +5,15 @@ import (
 
 	"github.com/TeamH04/team-production/apps/backend/internal/apperr"
 	"github.com/TeamH04/team-production/apps/backend/internal/domain/entity"
+	"github.com/TeamH04/team-production/apps/backend/internal/domain/role"
 	"github.com/TeamH04/team-production/apps/backend/internal/usecase/output"
 )
 
 // validRoles defines the allowed user roles.
 var validRoles = map[string]bool{
-	"user":  true,
-	"owner": true,
-	"admin": true,
+	role.User:  true,
+	role.Owner: true,
+	role.Admin: true,
 }
 
 // IsValidRole checks if the given role is valid.

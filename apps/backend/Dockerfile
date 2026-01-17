@@ -9,7 +9,8 @@ RUN go mod download
 
 FROM base AS dev
 
-ARG AIR_VERSION=v1.63.0
+ARG AIR_VERSION=v1.64.0
+ENV GOTOOLCHAIN=auto
 RUN go install github.com/air-verse/air@${AIR_VERSION}
 
 COPY . .

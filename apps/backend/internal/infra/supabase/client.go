@@ -21,6 +21,8 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 
+	"github.com/TeamH04/team-production/apps/backend/internal/domain/role"
+	infrahttp "github.com/TeamH04/team-production/apps/backend/internal/infra/http"
 	"github.com/TeamH04/team-production/apps/backend/internal/security"
 	"github.com/TeamH04/team-production/apps/backend/internal/usecase/output"
 )
@@ -114,7 +116,7 @@ func (c *Client) fetchJWKS(ctx context.Context) (map[string]*ecdsa.PublicKey, er
 	if err != nil {
 		return nil, err
 	}
-	if resp.StatusCode >= 300 {
+	if infrahttp.IsHTTPError(resp.StatusCode) {
 		return nil, fmt.Errorf("jwks fetch failed: status=%d body=%s", resp.StatusCode, string(body))
 	}
 
@@ -265,7 +267,7 @@ func (c *Client) Signup(ctx context.Context, input output.AuthSignupInput) (*out
 		return nil, err
 	}
 
-	if resp.StatusCode >= 300 {
+	if infrahttp.IsHTTPError(resp.StatusCode) {
 		return nil, decodeSupabaseErrorFromBody(resp.StatusCode, respBody)
 	}
 
@@ -280,15 +282,15 @@ func (c *Client) Signup(ctx context.Context, input output.AuthSignupInput) (*out
 		return nil, err
 	}
 
-	role := result.AppMetadata.Role
-	if role == "" {
-		role = "user"
+	userRole := result.AppMetadata.Role
+	if userRole == "" {
+		userRole = role.User
 	}
 
 	return &output.AuthUser{
 		ID:    result.ID,
 		Email: result.Email,
-		Role:  role,
+		Role:  userRole,
 	}, nil
 }
 
@@ -329,7 +331,7 @@ func (c *Client) Login(ctx context.Context, input output.AuthLoginInput) (*outpu
 		return nil, err
 	}
 
-	if resp.StatusCode >= 300 {
+	if infrahttp.IsHTTPError(resp.StatusCode) {
 		return nil, decodeSupabaseErrorFromBody(resp.StatusCode, respBody)
 	}
 
@@ -353,12 +355,12 @@ func (c *Client) Login(ctx context.Context, input output.AuthLoginInput) (*outpu
 		return nil, err
 	}
 
-	role := result.User.AppMetadata.Role
-	if role == "" {
-		role = result.User.UserMetadata.Role
+	userRole := result.User.AppMetadata.Role
+	if userRole == "" {
+		userRole = result.User.UserMetadata.Role
 	}
-	if role == "" {
-		role = "user"
+	if userRole == "" {
+		userRole = role.User
 	}
 
 	return &output.AuthSession{
@@ -369,7 +371,7 @@ func (c *Client) Login(ctx context.Context, input output.AuthLoginInput) (*outpu
 		User: output.AuthUser{
 			ID:    result.User.ID,
 			Email: result.User.Email,
-			Role:  role,
+			Role:  userRole,
 		},
 	}, nil
 }
@@ -412,9 +414,9 @@ func (c *Client) Verify(ctx context.Context, token string) (*security.TokenClaim
 		return nil, fmt.Errorf("token missing sub claim")
 	}
 
-	role := claims.Role
-	if role == "" {
-		role = "user"
+	userRole := claims.Role
+	if userRole == "" {
+		userRole = role.User
 	}
 
 	provider := extractProvider(claims)
@@ -424,7 +426,7 @@ func (c *Client) Verify(ctx context.Context, token string) (*security.TokenClaim
 
 	return &security.TokenClaims{
 		UserID:   userID,
-		Role:     role,
+		Role:     userRole,
 		Email:    claims.Email,
 		Provider: provider,
 	}, nil
@@ -554,7 +556,7 @@ func (c *Client) CreateSignedUpload(
 		return nil, err
 	}
 
-	if resp.StatusCode >= 300 {
+	if infrahttp.IsHTTPError(resp.StatusCode) {
 		return nil, decodeSupabaseErrorFromBody(resp.StatusCode, respBody)
 	}
 
@@ -633,7 +635,7 @@ func (c *Client) CreateSignedDownload(ctx context.Context, bucket, objectPath st
 		return nil, err
 	}
 
-	if resp.StatusCode >= 300 {
+	if infrahttp.IsHTTPError(resp.StatusCode) {
 		return nil, decodeSupabaseErrorFromBody(resp.StatusCode, respBody)
 	}
 
