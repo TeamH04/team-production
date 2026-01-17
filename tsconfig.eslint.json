@@ -9,7 +9,18 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "resolveJsonModule": true,
-    "moduleResolution": "node"
+    "moduleResolution": "node",
+    "baseUrl": ".",
+    "paths": {
+      "@team/types": ["packages/types/src"],
+      "@team/types/*": ["packages/types/src/*"],
+      "@team/test-utils": ["packages/test-utils/src"],
+      "@team/test-utils/*": ["packages/test-utils/src/*"],
+      "@team/shop-core": ["packages/shop-core/src"],
+      "@team/shop-core/*": ["packages/shop-core/src/*"],
+      "@team/theme": ["packages/theme/src"],
+      "@team/theme/*": ["packages/theme/src/*"]
+    }
   },
   "include": [
     "apps/mobile/**/*",
