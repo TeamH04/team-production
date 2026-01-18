@@ -5,7 +5,9 @@ import React from 'react';
 
 import { act, createContextHarness, type ContextHarness } from '@/test-utils';
 
-import { type UserProfile, UserProvider, useUser } from '../UserContext';
+import { UserProvider, useUser } from '../UserContext';
+
+import type { UserProfile } from '@team/types';
 
 let harness: ContextHarness<ReturnType<typeof useUser>> | undefined;
 

@@ -5,8 +5,6 @@ import (
 
 	"github.com/labstack/echo/v4"
 
-	"github.com/TeamH04/team-production/apps/backend/internal/presentation"
-	"github.com/TeamH04/team-production/apps/backend/internal/presentation/requestcontext"
 	"github.com/TeamH04/team-production/apps/backend/internal/usecase"
 	"github.com/TeamH04/team-production/apps/backend/internal/usecase/input"
 )
@@ -43,14 +41,14 @@ func NewMediaHandler(mediaUseCase input.MediaUseCase) *MediaHandler {
 }
 
 func (h *MediaHandler) CreateReviewUploads(c echo.Context) error {
-	user, err := requestcontext.GetUserFromContext(c.Request().Context())
+	user, err := getRequiredUser(c)
 	if err != nil {
-		return usecase.ErrUnauthorized
+		return err
 	}
 
 	var dto createUploadDTO
-	if err := c.Bind(&dto); err != nil {
-		return presentation.NewBadRequest("invalid JSON")
+	if err := bindJSON(c, &dto); err != nil {
+		return err
 	}
 	if dto.StoreID == "" || len(dto.Files) == 0 {
 		return usecase.ErrInvalidInput

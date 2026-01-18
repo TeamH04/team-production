@@ -29,12 +29,10 @@ func NewReportUseCase(reportRepo output.ReportRepository, userRepo output.UserRe
 }
 
 func (uc *reportUseCase) CreateReport(ctx context.Context, req input.CreateReportInput) (*entity.Report, error) {
-	// ユーザーの存在確認
 	if err := ensureUserExists(ctx, uc.userRepo, req.UserID); err != nil {
 		return nil, err
 	}
 
-	// バリデーション
 	if req.TargetType == "" || req.Reason == "" {
 		return nil, ErrInvalidInput
 	}
@@ -67,7 +65,6 @@ func (uc *reportUseCase) GetAllReports(ctx context.Context) ([]entity.Report, er
 }
 
 func (uc *reportUseCase) HandleReport(ctx context.Context, reportID int64, action input.HandleReportAction) error {
-	// 通報の存在確認
 	if err := ensureReportExists(ctx, uc.reportRepo, reportID); err != nil {
 		return err
 	}

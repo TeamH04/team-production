@@ -3,16 +3,11 @@
  *
  * vi.mock のホイスティング制約により、モック内で外部モジュールを直接使用できないため、
  * テストデータをこのファイルで一元管理する。
- *
- * 重要: 以下の実装は @team/shop-core の実装と同期を保つ必要があります:
- * - filterShops: packages/shop-core/src/search.ts
- * - BUDGET_LABEL: packages/shop-core/src/constants.ts
- *
- * 実装を変更する場合は、両方を更新してください。
  */
+import { BUDGET_LABEL, filterShops } from '@team/shop-core';
 import { createMockShop } from '@team/test-utils';
 
-import type { Shop, ShopCategory } from '@team/types';
+import type { ShopCategory } from '@team/types';
 
 /**
  * テスト用店舗データ
@@ -44,52 +39,6 @@ export const TEST_SHOPS = [
  * テスト用カテゴリ一覧
  */
 export const TEST_CATEGORIES: ShopCategory[] = ['カフェ・喫茶', 'レストラン', 'バー・居酒屋'];
-
-/**
- * 予算ラベルのマッピング
- */
-export const BUDGET_LABEL = {
-  $: '¥',
-  $$: '¥¥',
-  $$$: '¥¥¥',
-};
-
-/**
- * 検索オプション型
- */
-type ShopSearchOptions = {
-  query?: string;
-  category?: ShopCategory | null;
-  tags?: string[];
-};
-
-/**
- * 店舗をフィルタリング（実装のモック）
- */
-export const filterShops = (shops: Shop[], options: ShopSearchOptions = {}): Shop[] => {
-  const { query, category, tags } = options;
-  const normalizedQuery = query?.trim().toLowerCase() ?? '';
-
-  return shops.filter(shop => {
-    // クエリマッチ
-    const queryMatch =
-      !normalizedQuery ||
-      shop.name.toLowerCase().includes(normalizedQuery) ||
-      shop.description.toLowerCase().includes(normalizedQuery) ||
-      shop.tags.some(tag => tag.toLowerCase().includes(normalizedQuery));
-
-    // カテゴリマッチ
-    const categoryMatch = !category || shop.category === category;
-
-    // タグマッチ
-    const tagsMatch =
-      !tags ||
-      tags.length === 0 ||
-      tags.some(t => shop.tags.some(shopTag => shopTag.toLowerCase().includes(t.toLowerCase())));
-
-    return queryMatch && categoryMatch && tagsMatch;
-  });
-};
 
 /**
  * @team/shop-core モジュールのモック

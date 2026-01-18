@@ -34,7 +34,7 @@ const setupDependencies = (
 
   const apiStores = stores.map(shopToApiStore);
 
-  const fetchStores = mock.fn(async (): Promise<ApiStore[]> => {
+  const fetchStores = mock.fn(async () => {
     if (shouldFail) {
       throw new Error('API Error');
     }
@@ -42,7 +42,7 @@ const setupDependencies = (
   });
 
   // 実際の変換ロジックをシミュレート
-  const mapApiStoresToShops = mock.fn((input: ApiStore[]) =>
+  const mapStores = mock.fn((input: ApiStore[]) =>
     input.map(apiStore => {
       const matchingShop = stores.find(s => s.id === apiStore.store_id);
       return matchingShop ?? createMockShop({ id: apiStore.store_id, name: apiStore.name });
@@ -51,10 +51,10 @@ const setupDependencies = (
 
   __setStoresDependenciesForTesting({
     fetchStores,
-    mapApiStoresToShops,
+    mapStores,
   });
 
-  return { fetchStores, mapApiStoresToShops, stores, apiStores };
+  return { fetchStores, mapStores, stores, apiStores };
 };
 
 afterEach(() => {
@@ -104,9 +104,9 @@ describe('StoresContext', () => {
       harness.unmount();
     });
 
-    test('mapApiStoresToShops に正しい引数が渡される', async () => {
+    test('mapStores に正しい引数が渡される', async () => {
       const mockStores = [createMockShop({ id: 'test-1', name: 'Test Shop 1' })];
-      const { mapApiStoresToShops, apiStores } = setupDependencies({ stores: mockStores });
+      const { mapStores, apiStores } = setupDependencies({ stores: mockStores });
       const harness: ContextHarness<ReturnType<typeof useStores>> = createContextHarness(
         useStores,
         StoresProvider,
@@ -116,8 +116,8 @@ describe('StoresContext', () => {
         await flushPromises();
       });
 
-      assert.equal(mapApiStoresToShops.mock.calls.length, 1);
-      assert.deepEqual(mapApiStoresToShops.mock.calls[0].arguments[0], apiStores);
+      assert.equal(mapStores.mock.calls.length, 1);
+      assert.deepEqual(mapStores.mock.calls[0].arguments[0], apiStores);
       harness.unmount();
     });
   });

@@ -1,15 +1,11 @@
 name: 'Setup Expo'
-description: 'Sets up pnpm, Node.js, and Expo CLI with caching'
+description: 'Sets up pnpm, Node.js, and EAS CLI with caching'
 
 inputs:
   node-version:
     description: 'Node.js version to use'
     required: false
     default: '24.x'
-  expo-version:
-    description: 'Expo CLI version to use'
-    required: false
-    default: 'latest'
   eas-version:
     description: 'EAS CLI version to use'
     required: false
@@ -31,9 +27,9 @@ runs:
         node-version: ${{ inputs.node-version }}
         working-directory: ${{ inputs.working-directory }}
 
-    - name: Setup Expo CLI
+    - name: Setup EAS CLI
       uses: expo/expo-github-action@v8
       with:
-        expo-version: ${{ inputs.expo-version }}
         eas-version: ${{ inputs.eas-version }}
         token: ${{ inputs.expo-token }}
+        packager: pnpm

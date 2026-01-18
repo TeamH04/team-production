@@ -27,12 +27,39 @@
 
 ## 主なコマンド
 
-| コマンド                    | 用途               |
-| --------------------------- | ------------------ |
-| `pnpm --dir apps/web dev`   | 開発サーバー起動。 |
-| `pnpm --dir apps/web lint`  | Lint 実行。        |
-| `pnpm --dir apps/web build` | 本番ビルド。       |
-| `pnpm --filter web test`    | テスト実行。       |
+### テスト・品質チェック
+
+```bash
+# テスト
+make test                          # 全テスト
+pnpm --dir apps/web test           # Webのみ（単発）
+pnpm --dir apps/web test:watch     # ウォッチモード
+pnpm --dir apps/web test:coverage  # カバレッジ付き
+
+# 型チェック
+make typecheck                     # 全パッケージ
+pnpm --dir apps/web typecheck      # Webのみ
+
+# Lint・フォーマット
+pnpm lint
+pnpm format
+```
+
+### 開発サーバー
+
+| コマンド                  | 用途                     |
+| ------------------------- | ------------------------ |
+| `make web`                | 開発サーバー起動（推奨） |
+| `pnpm dev:web`            | 開発サーバー起動         |
+| `pnpm --dir apps/web dev` | 開発サーバー起動         |
+
+### ビルド
+
+| コマンド                    | 用途             |
+| --------------------------- | ---------------- |
+| `make build`                | 全アプリビルド   |
+| `pnpm --dir apps/web build` | Webのみビルド    |
+| `pnpm --dir apps/web clean` | ビルド成果物削除 |
 
 ## 画面と機能
 

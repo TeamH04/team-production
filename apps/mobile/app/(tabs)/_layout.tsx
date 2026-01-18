@@ -1,3 +1,4 @@
+import { palette } from '@team/mobile-ui';
 import { Tabs } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { Platform, StyleSheet, View } from 'react-native';
@@ -7,7 +8,6 @@ import KuguriTitle from '@/assets/icons/kaguri.svg';
 import { HapticTab } from '@/components/HapticTab';
 import { IconSymbol } from '@/components/ui/IconSymbol';
 import { HEADER_HEIGHT } from '@/constants/layout';
-import { palette } from '@/constants/palette';
 
 export default function TabLayout() {
   const headerLogo = (

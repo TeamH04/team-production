@@ -1,6 +1,9 @@
 package model
 
-import "github.com/TeamH04/team-production/apps/backend/internal/domain/entity"
+import (
+	"github.com/TeamH04/team-production/apps/backend/internal/domain/entity"
+	"github.com/TeamH04/team-production/apps/backend/internal/domain/role"
+)
 
 type model[T any] interface {
 	Entity() T
@@ -85,9 +88,9 @@ func (u User) Entity() entity.User {
 	if provider == "" {
 		provider = "email"
 	}
-	role := u.Role
-	if role == "" {
-		role = "user"
+	userRole := u.Role
+	if userRole == "" {
+		userRole = role.User
 	}
 	return entity.User{
 		UserID:     u.UserID,
@@ -98,7 +101,7 @@ func (u User) Entity() entity.User {
 		Provider:   provider,
 		Gender:     u.Gender,
 		Birthday:   u.Birthday,
-		Role:       role,
+		Role:       userRole,
 		CreatedAt:  u.CreatedAt,
 		UpdatedAt:  u.UpdatedAt,
 	}

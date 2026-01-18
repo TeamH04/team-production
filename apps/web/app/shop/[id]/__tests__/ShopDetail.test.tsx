@@ -199,14 +199,14 @@ describe('ShopDetail', () => {
 
       await waitFor(() => {
         expect(localStorage.setItem).toHaveBeenCalledWith(
-          'shop-web-favorites',
+          'shop-favorites',
           expect.stringContaining('test-shop-1'),
         );
       });
     });
 
     test('ページ読み込み時にlocalStorageから状態を復元する', () => {
-      storageMock.setData({ 'shop-web-favorites': JSON.stringify(['test-shop-1']) });
+      storageMock.setData({ 'shop-favorites': JSON.stringify(['test-shop-1']) });
 
       render(<ShopDetail shop={createMockShop()} />);
 
@@ -286,12 +286,13 @@ describe('ShopDetail', () => {
 
   describe('Googleマップリンク', () => {
     test('正しいマップURLが生成される', () => {
-      render(<ShopDetail shop={createMockShop({ placeId: 'place-abc123' })} />);
+      render(<ShopDetail shop={createMockShop({ placeId: 'place-abc123', name: 'Test Cafe' })} />);
 
       const mapLink = screen.getByRole('link', { name: 'マップで開く' });
+      // buildGoogleMapsUrl(placeId, shopName) で生成されるURL
       expect(mapLink).toHaveAttribute(
         'href',
-        'https://www.google.com/maps/search/?api=1&query=Google&query_place_id=place-abc123',
+        'https://www.google.com/maps/search/?api=1&query_place_id=place-abc123&query=Test+Cafe',
       );
     });
 

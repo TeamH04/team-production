@@ -1,0 +1,32 @@
+{
+  "name": "@team/core-utils",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    },
+    "./stringUtils": {
+      "types": "./src/stringUtils.ts",
+      "default": "./src/stringUtils.ts"
+    }
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "node --import tsx --test src/__tests__/*.test.ts"
+  },
+  "dependencies": {
+    "@team/constants": "workspace:*"
+  },
+  "devDependencies": {
+    "tsx": "^4.21.0"
+  },
+  "peerDependencies": {
+    "@supabase/supabase-js": "^2.0.0",
+    "react": ">=18"
+  }
+}

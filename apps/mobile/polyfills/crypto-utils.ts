@@ -1,61 +1,12 @@
 /**
- * crypto.ts で使用するユーティリティ関数
- * テスト可能にするため、純粋な関数として分離
+ * @team/crypto-utils パッケージからの再エクスポート
+ * 後方互換性のために維持
  */
-
-export type DigestAlgorithm = 'SHA-256' | 'SHA256' | { name?: string };
-export type ArrayBufferViewLike =
-  | Int8Array
-  | Uint8Array
-  | Uint8ClampedArray
-  | Int16Array
-  | Uint16Array
-  | Int32Array
-  | Uint32Array
-  | Float32Array
-  | Float64Array
-  | DataView;
-
-export type CryptoBufferSource = ArrayBuffer | SharedArrayBuffer | ArrayBufferViewLike;
-
-/**
- * アルゴリズム名を正規化する
- * 文字列の場合は大文字に変換し、オブジェクトの場合はnameプロパティを大文字に変換する
- */
-export function normalizeAlgorithm(algorithm: DigestAlgorithm): string | undefined {
-  if (typeof algorithm === 'string') return algorithm.toUpperCase();
-  if (typeof algorithm === 'object' && 'name' in algorithm && algorithm.name) {
-    return String(algorithm.name).toUpperCase();
-  }
-  return undefined;
-}
-
-/**
- * 様々なバッファ形式をArrayBufferに変換する
- */
-export function toArrayBuffer(data: CryptoBufferSource): ArrayBuffer {
-  if (ArrayBuffer.isView(data)) {
-    const view = new Uint8Array(data.buffer, data.byteOffset, data.byteLength);
-    return new Uint8Array(view).buffer;
-  }
-  if (data instanceof ArrayBuffer) return data;
-  if (typeof SharedArrayBuffer !== 'undefined' && data instanceof SharedArrayBuffer) {
-    return new Uint8Array(data).slice().buffer;
-  }
-  throw new TypeError('Unsupported BufferSource type');
-}
-
-/**
- * 様々なバッファ形式をUint8Arrayに変換する
- */
-export function toUint8Array(data: CryptoBufferSource): Uint8Array {
-  if (data instanceof Uint8Array) return data;
-  if (ArrayBuffer.isView(data)) {
-    return new Uint8Array(data.buffer, data.byteOffset, data.byteLength);
-  }
-  if (data instanceof ArrayBuffer) return new Uint8Array(data);
-  if (typeof SharedArrayBuffer !== 'undefined' && data instanceof SharedArrayBuffer) {
-    return new Uint8Array(data);
-  }
-  throw new TypeError('Unsupported BufferSource type');
-}
+export {
+  type DigestAlgorithm,
+  type ArrayBufferViewLike,
+  type CryptoBufferSource,
+  normalizeAlgorithm,
+  toArrayBuffer,
+  toUint8Array,
+} from '@team/crypto-utils';

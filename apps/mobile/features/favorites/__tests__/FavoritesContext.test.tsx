@@ -1,8 +1,19 @@
 import assert from 'node:assert/strict';
 import { afterEach, mock, test } from 'node:test';
 
-import React, { act, useEffect } from 'react';
-import TestRenderer from 'react-test-renderer';
+import React from 'react';
+
+import {
+  act,
+  createContextHarness,
+  createMockApiCall,
+  createMockAuth,
+  createMockFetch,
+  createMockGetSupabase,
+  createMockIsSupabaseConfigured,
+  createRenderer,
+  type ContextHarness,
+} from '@/test-utils';
 
 import {
   __resetFavoritesDependenciesForTesting,
@@ -12,66 +23,28 @@ import {
 } from '../FavoritesContext';
 
 import type { ApiFavorite } from '@/lib/api';
-import type { SupabaseClient } from '@supabase/supabase-js';
-import type { ReactElement } from 'react';
-
-type RendererHandle = {
-  unmount: () => void;
-};
-
-const createRenderer = (
-  TestRenderer as unknown as {
-    create: (element: ReactElement) => RendererHandle;
-  }
-).create;
-
-const globalForReactAct = globalThis as typeof globalThis & {
-  IS_REACT_ACT_ENVIRONMENT?: boolean;
-};
-globalForReactAct.IS_REACT_ACT_ENVIRONMENT = true;
-
-const createSupabaseStub = (): SupabaseClient => {
-  return {
-    auth: {
-      onAuthStateChange: (callback: unknown) => {
-        void callback;
-        return { data: { subscription: { unsubscribe: () => undefined } } };
-      },
-    },
-  } as unknown as SupabaseClient;
-};
 
 const setupRemoteDependencies = () => {
   const token = 'token-1';
   const loadFavoriteId = 'shop-2';
 
-  const resolveAuth = mock.fn(async () => ({ mode: 'remote', token }) as const);
-  const fetchUserFavorites = mock.fn(async (requestedToken?: string) => {
-    void requestedToken;
-    return [
-      {
-        user_id: 'remote-user',
-        store_id: loadFavoriteId,
-        created_at: '2026-01-01T00:00:00.000Z',
-        store: null,
-      },
-    ];
-  });
-  const addFavoriteApi = mock.fn(async (storeId: string, requestedToken: string) => {
-    void requestedToken;
-    return {
+  const resolveAuth = createMockAuth({ mode: 'remote', token });
+  const fetchUserFavorites = createMockFetch<ApiFavorite[]>([
+    {
       user_id: 'remote-user',
-      store_id: storeId,
+      store_id: loadFavoriteId,
       created_at: '2026-01-01T00:00:00.000Z',
       store: null,
-    };
-  });
-  const removeFavoriteApi = mock.fn(async (storeId: string, requestedToken: string) => {
-    void storeId;
-    void requestedToken;
-    return undefined;
-  });
-  const getSupabase = mock.fn(createSupabaseStub);
+    },
+  ]);
+  const addFavoriteApi = createMockApiCall<ApiFavorite, [string, string]>(storeId => ({
+    user_id: 'remote-user',
+    store_id: storeId,
+    created_at: '2026-01-01T00:00:00.000Z',
+    store: null,
+  }));
+  const removeFavoriteApi = createMockApiCall<void, [string, string]>();
+  const getSupabase = createMockGetSupabase();
 
   __setFavoritesDependenciesForTesting({
     resolveAuth,
@@ -79,7 +52,7 @@ const setupRemoteDependencies = () => {
     addFavoriteApi,
     removeFavoriteApi,
     getSupabase,
-    isSupabaseConfigured: () => false,
+    isSupabaseConfigured: createMockIsSupabaseConfigured(false),
   });
 
   return {
@@ -92,26 +65,16 @@ const setupRemoteDependencies = () => {
 };
 
 const setupUnauthenticatedDependencies = () => {
-  const resolveAuth = mock.fn(async () => ({ mode: 'unauthenticated' }) as const);
-  const fetchUserFavorites = mock.fn(async (token?: string) => {
-    void token;
-    return [];
-  });
-  const addFavoriteApi = mock.fn(async (storeId: string, token: string): Promise<ApiFavorite> => {
-    void token;
-    return {
-      user_id: 'unauth-user',
-      store_id: storeId,
-      created_at: '2026-01-01T00:00:00.000Z',
-      store: null,
-    };
-  });
-  const removeFavoriteApi = mock.fn(async (storeId: string, token: string) => {
-    void storeId;
-    void token;
-    return undefined;
-  });
-  const getSupabase = mock.fn(createSupabaseStub);
+  const resolveAuth = createMockAuth({ mode: 'unauthenticated' });
+  const fetchUserFavorites = createMockFetch<ApiFavorite[]>([]);
+  const addFavoriteApi = createMockApiCall<ApiFavorite, [string, string]>(storeId => ({
+    user_id: 'unauth-user',
+    store_id: storeId,
+    created_at: '2026-01-01T00:00:00.000Z',
+    store: null,
+  }));
+  const removeFavoriteApi = createMockApiCall<void, [string, string]>();
+  const getSupabase = createMockGetSupabase();
 
   __setFavoritesDependenciesForTesting({
     resolveAuth,
@@ -119,7 +82,7 @@ const setupUnauthenticatedDependencies = () => {
     addFavoriteApi,
     removeFavoriteApi,
     getSupabase,
-    isSupabaseConfigured: () => false,
+    isSupabaseConfigured: createMockIsSupabaseConfigured(false),
   });
 
   return {
@@ -131,27 +94,16 @@ const setupUnauthenticatedDependencies = () => {
 };
 
 const setupLocalDependencies = () => {
-  const resolveAuth = mock.fn(async () => ({ mode: 'local' }) as const);
-  const fetchUserFavorites = mock.fn(async (token?: string) => {
-    void token;
-    return [];
-  });
-  const addFavoriteApi = mock.fn(async (storeId: string, token: string): Promise<ApiFavorite> => {
-    void storeId;
-    void token;
-    return {
-      user_id: 'local-user',
-      store_id: 'local-store',
-      created_at: '2026-01-01T00:00:00.000Z',
-      store: null,
-    };
-  });
-  const removeFavoriteApi = mock.fn(async (storeId: string, token: string) => {
-    void storeId;
-    void token;
-    return undefined;
-  });
-  const getSupabase = mock.fn(createSupabaseStub);
+  const resolveAuth = createMockAuth({ mode: 'local' });
+  const fetchUserFavorites = createMockFetch<ApiFavorite[]>([]);
+  const addFavoriteApi = createMockApiCall<ApiFavorite, [string, string]>(() => ({
+    user_id: 'local-user',
+    store_id: 'local-store',
+    created_at: '2026-01-01T00:00:00.000Z',
+    store: null,
+  }));
+  const removeFavoriteApi = createMockApiCall<void, [string, string]>();
+  const getSupabase = createMockGetSupabase();
 
   __setFavoritesDependenciesForTesting({
     resolveAuth,
@@ -159,7 +111,7 @@ const setupLocalDependencies = () => {
     addFavoriteApi,
     removeFavoriteApi,
     getSupabase,
-    isSupabaseConfigured: () => false,
+    isSupabaseConfigured: createMockIsSupabaseConfigured(false),
   });
 
   return {
@@ -174,50 +126,12 @@ afterEach(() => {
   mock.restoreAll();
 });
 
-const createFavoritesHarness = () => {
-  let currentValue: ReturnType<typeof useFavorites> | undefined;
-  let renderer: RendererHandle | undefined;
-
-  const handleValue = (value: ReturnType<typeof useFavorites>) => {
-    currentValue = value;
-  };
-
-  const Consumer = ({ onValue }: { onValue: (value: ReturnType<typeof useFavorites>) => void }) => {
-    const value = useFavorites();
-
-    useEffect(() => {
-      onValue(value);
-    }, [onValue, value]);
-
-    return null;
-  };
-
-  act(() => {
-    renderer = createRenderer(
-      <FavoritesProvider>
-        <Consumer onValue={handleValue} />
-      </FavoritesProvider>,
-    );
-  });
-
-  if (!currentValue || !renderer) {
-    throw new Error('FavoritesProvider setup failed');
-  }
-
-  return {
-    getValue: () => {
-      if (!currentValue) {
-        throw new Error('FavoritesProvider setup failed');
-      }
-
-      return currentValue;
-    },
-    unmount: () => {
-      act(() => {
-        renderer!.unmount();
-      });
-    },
-  };
+/**
+ * FavoritesContext用のテストハーネスを作成
+ * 共通のcreateContextHarnessユーティリティを使用
+ */
+const createFavoritesHarness = (): ContextHarness<ReturnType<typeof useFavorites>> => {
+  return createContextHarness(useFavorites, FavoritesProvider);
 };
 
 test('useFavorites throws outside FavoritesProvider', () => {

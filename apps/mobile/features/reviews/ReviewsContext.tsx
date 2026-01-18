@@ -1,22 +1,23 @@
-import React, { createContext, useCallback, useContext, useMemo, useState } from 'react';
-
+import { AUTH_REQUIRED } from '@team/constants';
 import {
-  type ApiReview,
-  createReview as createReviewApi,
-  createReviewUploads as createReviewUploadsApi,
-  fetchStoreReviews as fetchStoreReviewsApi,
-  fetchUserReviews as fetchUserReviewsApi,
-  likeReview as likeReviewApi,
-  type ReviewSort,
-  unlikeReview as unlikeReviewApi,
-  type UploadFileInput,
-} from '@/lib/api';
+  type AuthResolver,
+  createDependencyInjector,
+  createSafeContext,
+  ensureAuthenticated,
+} from '@team/core-utils';
+import { useOptimisticMutation, useSafeState } from '@team/hooks';
+import React, { useCallback, useMemo, useRef } from 'react';
+
+import { api, type ApiReview, type ReviewSort, type UploadFileInput } from '@/lib/api';
 import {
   getAccessToken as getAccessTokenApi,
   getCurrentUser as getCurrentUserApi,
+  resolveAuth as resolveAuthApi,
 } from '@/lib/auth';
-import { SUPABASE_STORAGE_BUCKET } from '@/lib/storage';
+import { storage } from '@/lib/storage';
 import { getSupabase as getSupabaseApi } from '@/lib/supabase';
+
+import type { Review, ReviewAsset, ReviewFile } from '@team/types';
 
 // テスト可能なSupabaseストレージの最小限のインターフェース
 type UploadToSignedUrlResult = { error: Error | null };
@@ -35,67 +36,35 @@ type SupabaseStorageClient = {
 };
 
 type ReviewsDependencies = {
+  resolveAuth: AuthResolver;
   getAccessToken: typeof getAccessTokenApi;
   getCurrentUser: typeof getCurrentUserApi;
-  fetchStoreReviews: typeof fetchStoreReviewsApi;
-  fetchUserReviews: typeof fetchUserReviewsApi;
-  createReview: typeof createReviewApi;
-  createReviewUploads: typeof createReviewUploadsApi;
-  likeReview: typeof likeReviewApi;
-  unlikeReview: typeof unlikeReviewApi;
+  fetchStoreReviews: typeof api.fetchStoreReviews;
+  fetchUserReviews: typeof api.fetchUserReviews;
+  createReview: typeof api.createReview;
+  createReviewUploads: typeof api.createReviewUploads;
+  likeReview: typeof api.likeReview;
+  unlikeReview: typeof api.unlikeReview;
   getSupabase: () => SupabaseStorageClient;
 };
 
-const defaultDependencies: ReviewsDependencies = {
+const dependencyInjector = createDependencyInjector<ReviewsDependencies>({
+  resolveAuth: resolveAuthApi,
   getAccessToken: getAccessTokenApi,
   getCurrentUser: getCurrentUserApi,
-  fetchStoreReviews: fetchStoreReviewsApi,
-  fetchUserReviews: fetchUserReviewsApi,
-  createReview: createReviewApi,
-  createReviewUploads: createReviewUploadsApi,
-  likeReview: likeReviewApi,
-  unlikeReview: unlikeReviewApi,
+  fetchStoreReviews: api.fetchStoreReviews,
+  fetchUserReviews: api.fetchUserReviews,
+  createReview: api.createReview,
+  createReviewUploads: api.createReviewUploads,
+  likeReview: api.likeReview,
+  unlikeReview: api.unlikeReview,
   getSupabase: getSupabaseApi,
-};
+});
 
-let dependencies = defaultDependencies;
+export const __setReviewsDependenciesForTesting = dependencyInjector.setForTesting;
+export const __resetReviewsDependenciesForTesting = dependencyInjector.reset;
 
-export function __setReviewsDependenciesForTesting(overrides: Partial<ReviewsDependencies>): void {
-  dependencies = { ...defaultDependencies, ...overrides };
-}
-
-export function __resetReviewsDependenciesForTesting(): void {
-  dependencies = defaultDependencies;
-}
-
-export type ReviewFile = {
-  id: string;
-  fileName: string;
-  objectKey: string;
-  url?: string;
-  contentType?: string | null;
-};
-
-export type Review = {
-  id: string;
-  shopId: string;
-  userId: string;
-  rating: number;
-  comment?: string;
-  createdAt: string;
-  menuItemIds?: string[];
-  menuItemName?: string;
-  likesCount: number;
-  likedByMe: boolean;
-  files: ReviewFile[];
-};
-
-export type ReviewAsset = {
-  uri: string;
-  fileName: string;
-  contentType: string;
-  fileSize?: number;
-};
+export type { Review, ReviewAsset, ReviewFile };
 
 type ReviewsState = Record<string, Review[]>;
 
@@ -124,9 +93,8 @@ type ReviewsContextValue = {
   loadUserReviews: () => Promise<void>;
 };
 
-const ReviewsContext = createContext<ReviewsContextValue | undefined>(undefined);
-
-const AUTH_REQUIRED = 'auth_required';
+const [ReviewsContextProvider, useReviews] = createSafeContext<ReviewsContextValue>('Reviews');
+export { useReviews };
 
 function mapApiReview(review: ApiReview): Review {
   const menus = review.menus ?? [];
@@ -182,9 +150,10 @@ async function uploadToSignedUrl(path: string, token: string, asset: ReviewAsset
       throw new Error('file read failed');
     }
   }
-  const { error } = await dependencies
+  const { error } = await dependencyInjector
+    .get()
     .getSupabase()
-    .storage.from(SUPABASE_STORAGE_BUCKET)
+    .storage.from(storage.SUPABASE_STORAGE_BUCKET)
     .uploadToSignedUrl(path, token, bytes, {
       contentType: asset.contentType,
       upsert: true,
@@ -195,25 +164,39 @@ async function uploadToSignedUrl(path: string, token: string, asset: ReviewAsset
 }
 
 export function ReviewsProvider({ children }: { children: React.ReactNode }) {
-  const [reviewsByShop, setReviewsByShop] = useState<ReviewsState>({});
-  const [userReviews, setUserReviews] = useState<Review[]>([]);
-  const [loadingByShop, setLoadingByShop] = useState<Record<string, boolean>>({});
+  const [reviewsByShop, setReviewsByShop] = useSafeState<ReviewsState>({});
+  const [userReviews, setUserReviews] = useSafeState<Review[]>([]);
+  const [loadingByShop, setLoadingByShop] = useSafeState<Record<string, boolean>>({});
+
+  // レースコンディション対策: 最新の reviewsByShop を参照
+  const reviewsByShopRef = useRef(reviewsByShop);
+  reviewsByShopRef.current = reviewsByShop;
+
+  // 楽観的更新フック（認証は手動でチェック）
+  const { execute: executeLikeMutation } = useOptimisticMutation<ReviewsState, string, string>({
+    setState: setReviewsByShop,
+  });
 
   const getReviews = useCallback((shopId: string) => reviewsByShop[shopId] ?? [], [reviewsByShop]);
 
-  const loadReviews = useCallback(async (shopId: string, sort: ReviewSort) => {
-    setLoadingByShop(prev => ({ ...prev, [shopId]: true }));
-    try {
-      const token = await dependencies.getAccessToken();
-      const reviews = await dependencies.fetchStoreReviews(shopId, sort, token ?? undefined);
-      setReviewsByShop(prev => ({
-        ...prev,
-        [shopId]: reviews.map(mapApiReview),
-      }));
-    } finally {
-      setLoadingByShop(prev => ({ ...prev, [shopId]: false }));
-    }
-  }, []);
+  const loadReviews = useCallback(
+    async (shopId: string, sort: ReviewSort) => {
+      setLoadingByShop(prev => ({ ...prev, [shopId]: true }));
+      try {
+        const token = await dependencyInjector.get().getAccessToken();
+        const reviews = await dependencyInjector
+          .get()
+          .fetchStoreReviews(shopId, sort, token ?? undefined);
+        setReviewsByShop(prev => ({
+          ...prev,
+          [shopId]: reviews.map(mapApiReview),
+        }));
+      } finally {
+        setLoadingByShop(prev => ({ ...prev, [shopId]: false }));
+      }
+    },
+    [setLoadingByShop, setReviewsByShop],
+  );
 
   const addReview = useCallback(
     async (
@@ -226,7 +209,7 @@ export function ReviewsProvider({ children }: { children: React.ReactNode }) {
       },
       assets: ReviewAsset[],
     ) => {
-      const token = await dependencies.getAccessToken();
+      const token = await dependencyInjector.get().getAccessToken();
       if (!token) {
         throw new Error(AUTH_REQUIRED);
       }
@@ -238,7 +221,9 @@ export function ReviewsProvider({ children }: { children: React.ReactNode }) {
           file_size: asset.fileSize,
           content_type: asset.contentType,
         }));
-        const uploadResult = await dependencies.createReviewUploads(shopId, uploadInputs, token);
+        const uploadResult = await dependencyInjector
+          .get()
+          .createReviewUploads(shopId, uploadInputs, token);
         const uploads = uploadResult.files;
         if (uploads.length !== assets.length) {
           throw new Error('upload mismatch');
@@ -251,7 +236,7 @@ export function ReviewsProvider({ children }: { children: React.ReactNode }) {
         fileIDs = uploads.map(upload => upload.file_id);
       }
 
-      await dependencies.createReview(
+      await dependencyInjector.get().createReview(
         shopId,
         {
           rating: input.rating,
@@ -267,61 +252,71 @@ export function ReviewsProvider({ children }: { children: React.ReactNode }) {
     [loadReviews],
   );
 
-  const toggleLike = useCallback(async (shopId: string, reviewId: string) => {
-    const token = await dependencies.getAccessToken();
-    if (!token) {
-      throw new Error(AUTH_REQUIRED);
-    }
-
-    let wasLiked = false;
-    setReviewsByShop(prev => {
-      const current = prev[shopId] ?? [];
-      const next = current.map(review => {
-        if (review.id !== reviewId) return review;
-        wasLiked = review.likedByMe;
-        return {
-          ...review,
-          likedByMe: !review.likedByMe,
-          likesCount: review.likesCount + (review.likedByMe ? -1 : 1),
-        };
-      });
-      return { ...prev, [shopId]: next };
-    });
-
-    try {
-      if (wasLiked) {
-        await dependencies.unlikeReview(reviewId, token);
-      } else {
-        await dependencies.likeReview(reviewId, token);
+  const toggleLike = useCallback(
+    async (shopId: string, reviewId: string) => {
+      // 認証チェック（API呼び出し前に行う）
+      const token = await dependencyInjector.get().getAccessToken();
+      if (!token) {
+        throw new Error(AUTH_REQUIRED);
       }
-    } catch (err) {
-      setReviewsByShop(prev => {
-        const current = prev[shopId] ?? [];
-        const next = current.map(review => {
-          if (review.id !== reviewId) return review;
-          return {
-            ...review,
-            likedByMe: wasLiked,
-            likesCount: review.likesCount + (wasLiked ? 1 : -1),
-          };
-        });
-        return { ...prev, [shopId]: next };
-      });
-      throw err;
-    }
-  }, []);
 
-  const deleteReview = useCallback((reviewId: string) => {
-    setReviewsByShop(prev => {
-      const next: ReviewsState = {};
-      Object.entries(prev).forEach(([shopId, reviews]) => {
-        const filtered = reviews.filter(review => review.id !== reviewId);
-        next[shopId] = filtered;
+      // 現在の like 状態を取得（楽観的更新・ロールバック・API呼び出しで使用）
+      const currentReviews = reviewsByShopRef.current[shopId] ?? [];
+      const targetReview = currentReviews.find(r => r.id === reviewId);
+      const wasLiked = targetReview?.likedByMe ?? false;
+
+      await executeLikeMutation({
+        key: reviewId,
+        optimisticUpdate: prev => {
+          const current = prev[shopId] ?? [];
+          const next = current.map(review => {
+            if (review.id !== reviewId) return review;
+            return {
+              ...review,
+              likedByMe: !review.likedByMe,
+              likesCount: review.likesCount + (review.likedByMe ? -1 : 1),
+            };
+          });
+          return { ...prev, [shopId]: next };
+        },
+        apiCall: async () => {
+          if (wasLiked) {
+            await dependencyInjector.get().unlikeReview(reviewId, token);
+          } else {
+            await dependencyInjector.get().likeReview(reviewId, token);
+          }
+        },
+        rollback: prev => {
+          const current = prev[shopId] ?? [];
+          const next = current.map(review => {
+            if (review.id !== reviewId) return review;
+            return {
+              ...review,
+              likedByMe: wasLiked,
+              likesCount: review.likesCount + (wasLiked ? 1 : -1),
+            };
+          });
+          return { ...prev, [shopId]: next };
+        },
       });
-      return next;
-    });
-    setUserReviews(prev => prev.filter(review => review.id !== reviewId));
-  }, []);
+    },
+    [executeLikeMutation],
+  );
+
+  const deleteReview = useCallback(
+    (reviewId: string) => {
+      setReviewsByShop(prev => {
+        const next: ReviewsState = {};
+        Object.entries(prev).forEach(([shopId, reviews]) => {
+          const filtered = reviews.filter(review => review.id !== reviewId);
+          next[shopId] = filtered;
+        });
+        return next;
+      });
+      setUserReviews(prev => prev.filter(review => review.id !== reviewId));
+    },
+    [setReviewsByShop, setUserReviews],
+  );
 
   const toggleReviewLike = useCallback(
     async (reviewId: string) => {
@@ -363,19 +358,15 @@ export function ReviewsProvider({ children }: { children: React.ReactNode }) {
   }, [reviewsByShop]);
 
   const loadUserReviews = useCallback(async () => {
-    const user = await dependencies.getCurrentUser();
-    if (!user) {
-      throw new Error(AUTH_REQUIRED);
-    }
-    const token = await dependencies.getAccessToken();
-    if (!token) {
-      throw new Error(AUTH_REQUIRED);
-    }
-    const reviews = await dependencies.fetchUserReviews(user.id, token);
+    const authResult = await ensureAuthenticated(dependencyInjector.get().resolveAuth);
+    if (authResult.skipped) return;
+    const token = authResult.token!;
+    const user = await dependencyInjector.get().getCurrentUser();
+    const reviews = await dependencyInjector.get().fetchUserReviews(user!.id, token);
     const mapped = reviews.map(mapApiReview);
     mapped.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
     setUserReviews(mapped);
-  }, []);
+  }, [setUserReviews]);
 
   const value = useMemo<ReviewsContextValue>(
     () => ({
@@ -410,11 +401,5 @@ export function ReviewsProvider({ children }: { children: React.ReactNode }) {
     ],
   );
 
-  return <ReviewsContext.Provider value={value}>{children}</ReviewsContext.Provider>;
-}
-
-export function useReviews() {
-  const ctx = useContext(ReviewsContext);
-  if (!ctx) throw new Error('useReviews must be used within ReviewsProvider');
-  return ctx;
+  return <ReviewsContextProvider value={value}>{children}</ReviewsContextProvider>;
 }

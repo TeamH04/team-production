@@ -1,5 +1,7 @@
 /**
- * Tab bar bottom spacing for ScrollView contentContainerStyle
- * This ensures content doesn't get hidden behind the fixed tab bar
+ * Re-export TAB_BAR_SPACING from @team/constants for backward compatibility.
+ * This ensures content doesn't get hidden behind the fixed tab bar.
  */
-export const TAB_BAR_SPACING = 125;
+import { LAYOUT } from '@team/constants';
+
+export const TAB_BAR_SPACING = LAYOUT.TAB_BAR_SPACING;

@@ -3,12 +3,45 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { nextImageMock } from '../../test-utils';
-import { shopCoreMock } from '../../test-utils/shop-core-mock';
 import HomePageClient from '../HomePageClient';
 
-// shopCoreMock を使用して @team/shop-core をモック
-// データ定義は test-utils/shop-core-mock.ts に集約
-vi.mock('@team/shop-core', () => shopCoreMock);
+import type * as ShopCoreModule from '@team/shop-core';
+
+// vi.mock はホイスティングされるため、ファクトリ内で vi.importActual を使用
+vi.mock('@team/shop-core', async importOriginal => {
+  const actual = (await importOriginal()) as typeof ShopCoreModule;
+  // TEST_SHOPS, TEST_CATEGORIES は別途インポートするとホイスティング問題が発生するため
+  // ここでインライン定義する必要がある
+  const { createMockShop } = await import('@team/test-utils');
+  const testShops = [
+    createMockShop({ id: 'shop-1', name: 'テストカフェ1', tags: ['コーヒー', 'Wi-Fi'] }),
+    createMockShop({ id: 'shop-2', name: 'テストカフェ2', tags: ['紅茶'] }),
+    createMockShop({
+      id: 'shop-3',
+      name: 'テストレストラン',
+      category: 'レストラン',
+      tags: ['豚骨', '深夜営業'],
+    }),
+    createMockShop({
+      id: 'shop-4',
+      name: 'テストバー',
+      category: 'バー・居酒屋',
+      tags: ['カクテル'],
+    }),
+    createMockShop({ id: 'shop-5', name: '店舗5', tags: ['静か'] }),
+    createMockShop({ id: 'shop-6', name: '店舗6', tags: ['静か'] }),
+    createMockShop({ id: 'shop-7', name: '店舗7', tags: ['静か'] }),
+    createMockShop({ id: 'shop-8', name: '店舗8', tags: ['静か'] }),
+    createMockShop({ id: 'shop-9', name: '店舗9', tags: ['静か'] }),
+    createMockShop({ id: 'shop-10', name: '店舗10', tags: ['静か'] }),
+  ];
+  const testCategories = ['カフェ・喫茶', 'レストラン', 'バー・居酒屋'] as const;
+  return {
+    ...actual,
+    SHOPS: testShops,
+    CATEGORIES: testCategories,
+  };
+});
 
 const mockReplace = vi.fn();
 

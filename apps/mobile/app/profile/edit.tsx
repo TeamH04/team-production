@@ -1,4 +1,6 @@
 import { Picker } from '@react-native-picker/picker';
+import { isValidEmail, VALIDATION_MESSAGES } from '@team/constants';
+import { palette } from '@team/mobile-ui';
 import { useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import {
@@ -13,10 +15,11 @@ import {
   View,
 } from 'react-native';
 
-import { GENRES, toggleGenre as toggleGenreUtil } from '@/constants/genres';
-import { palette } from '@/constants/palette';
+import { GENRES, toggleGenre as toggleGenreUtil, type Genre } from '@/constants/genres';
 import { TAB_BAR_SPACING } from '@/constants/TabBarSpacing';
-import { type Gender, useUser } from '@/features/user/UserContext';
+import { useUser } from '@/features/user/UserContext';
+
+import type { Gender } from '@team/types';
 
 const modalOverlayOpacity = 0.3;
 
@@ -52,8 +55,8 @@ export default function EditProfileScreen() {
   }, [email, name, saving]);
 
   /** ジャンルの選択状態をトグルする */
-  const toggleGenre = (genre: string) => {
-    setFavoriteGenres(prev => toggleGenreUtil(prev, genre));
+  const toggleGenre = (genre: Genre) => {
+    setFavoriteGenres(prev => toggleGenreUtil(prev as Genre[], genre));
   };
 
   const validateForm = (): boolean => {
@@ -63,17 +66,16 @@ export default function EditProfileScreen() {
     setSaveError('');
 
     if (name.trim().length <= 0) {
-      setErrorName('※表示名の入力は必須です');
+      setErrorName(`※表示名の入力${VALIDATION_MESSAGES.REQUIRED_SUFFIX}`);
       return false;
     }
 
     if (email.trim().length <= 0) {
-      setErrorEmail('※メールアドレスの入力は必須です');
+      setErrorEmail(`※メールアドレスの入力${VALIDATION_MESSAGES.REQUIRED_SUFFIX}`);
       return false;
     }
 
-    const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
-    if (!emailOk) {
+    if (!isValidEmail(email.trim())) {
       setErrorEmail('※有効なメールアドレスを入力してください');
       return false;
     }

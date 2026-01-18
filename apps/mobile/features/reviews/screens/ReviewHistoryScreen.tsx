@@ -1,24 +1,30 @@
+import { BORDER_RADIUS, FONT_WEIGHT, formatRating, ROUTES } from '@team/constants';
+import { formatDateJa } from '@team/core-utils';
+import { useAuthErrorHandler } from '@team/hooks';
+import { TabContent } from '@team/mobile-ui';
+import { palette } from '@team/mobile-ui';
+import { resolveMenuName, type Shop } from '@team/shop-core';
 import { Image } from 'expo-image';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { palette } from '@/constants/palette';
 import { TAB_BAR_SPACING } from '@/constants/TabBarSpacing';
 import { useFavorites } from '@/features/favorites/FavoritesContext';
 import { useReviews } from '@/features/reviews/ReviewsContext';
 import { useStores } from '@/features/stores/StoresContext';
-import { getPublicStorageUrl } from '@/lib/storage';
-
-import type { Shop } from '@team/shop-core';
+import { useShopNavigator } from '@/hooks/useShopNavigator';
+import { storage } from '@/lib/storage';
 
 type TabType = 'favorites' | 'history' | 'likes';
 
 export default function ReviewHistoryScreen() {
   const router = useRouter();
+  const { navigateToShop } = useShopNavigator();
   const { favorites } = useFavorites();
   const { userReviews, loadUserReviews, getLikedReviews } = useReviews();
   const { stores, loading: storesLoading } = useStores();
+  const { isAuthError } = useAuthErrorHandler();
   const [activeTab, setActiveTab] = useState<TabType>('history');
   const [reviewLoading, setReviewLoading] = useState(false);
   const [reviewAuthRequired, setReviewAuthRequired] = useState(false);
@@ -31,8 +37,7 @@ export default function ReviewHistoryScreen() {
 
       loadUserReviews()
         .catch(err => {
-          const message = err instanceof Error ? err.message : 'Unknown error';
-          if (message === 'auth_required' && active) {
+          if (isAuthError(err) && active) {
             setReviewAuthRequired(true);
           }
         })
@@ -43,7 +48,7 @@ export default function ReviewHistoryScreen() {
       return () => {
         active = false;
       };
-    }, [loadUserReviews]),
+    }, [isAuthError, loadUserReviews]),
   );
 
   const favoriteShops = useMemo<Shop[]>(() => {
@@ -61,27 +66,13 @@ export default function ReviewHistoryScreen() {
     return sorted;
   }, [getLikedReviews]);
 
-  const resolveMenuName = useCallback(
-    (shop: Shop | undefined, menuItemIds?: string[], menuItemName?: string) => {
-      if (menuItemName) {
-        return menuItemName;
-      }
-      if (!menuItemIds || menuItemIds.length === 0 || !shop?.menu) {
-        return undefined;
-      }
-      const names = shop.menu.filter(item => menuItemIds.includes(item.id)).map(item => item.name);
-      return names.length > 0 ? names.join(' / ') : undefined;
-    },
-    [],
-  );
-
   const renderReviewCard = useCallback(
     (review: (typeof reviews)[number]) => {
       const shop = stores.find(s => s.id === review.shopId);
-      const menuName = resolveMenuName(shop, review.menuItemIds, review.menuItemName);
+      const menuName = resolveMenuName(shop, review);
 
       return (
-        <View key={review.id} style={styles.cardShadow}>
+        <View style={styles.cardShadow}>
           <View style={styles.card}>
             <View style={styles.reviewHeader}>
               <Text style={styles.rowCardTitle}>{shop?.name ?? '不明な店舗'}</Text>
@@ -91,7 +82,7 @@ export default function ReviewHistoryScreen() {
             </View>
 
             <Text style={styles.rowCardSub}>
-              ★ {review.rating} │ {new Date(review.createdAt).toLocaleDateString('ja-JP')}
+              ★ {review.rating} │ {formatDateJa(review.createdAt)}
             </Text>
 
             {menuName ? <Text style={styles.menuText}>メニュー: {menuName}</Text> : null}
@@ -101,7 +92,7 @@ export default function ReviewHistoryScreen() {
             {review.files.length > 0 && (
               <View style={styles.reviewImages}>
                 {review.files.map(file => {
-                  const url = file.url ?? getPublicStorageUrl(file.objectKey);
+                  const url = file.url ?? storage.buildStorageUrl(file.objectKey);
                   if (!url) return null;
                   return (
                     <Image
@@ -118,21 +109,21 @@ export default function ReviewHistoryScreen() {
         </View>
       );
     },
-    [resolveMenuName, stores],
+    [stores],
   );
 
   const renderFavoriteCard = useCallback(
     (shop: Shop) => (
-      <View key={shop.id} style={styles.cardShadow}>
+      <View style={styles.cardShadow}>
         <View style={[styles.card, styles.rowCard]}>
           <View style={styles.rowCardMeta}>
             <Text style={styles.rowCardTitle}>{shop.name}</Text>
             <Text style={styles.rowCardSub}>
-              {shop.category} │ ★ {shop.rating.toFixed(1)}
+              {shop.category} │ ★ {formatRating(shop.rating)}
             </Text>
           </View>
           <Pressable
-            onPress={() => router.push({ pathname: '/shop/[id]', params: { id: shop.id } })}
+            onPress={() => navigateToShop(shop.id)}
             style={({ pressed }) => [styles.secondaryBtn, pressed && styles.btnPressed]}
           >
             <Text style={styles.secondaryBtnText}>詳細</Text>
@@ -140,13 +131,13 @@ export default function ReviewHistoryScreen() {
         </View>
       </View>
     ),
-    [router],
+    [navigateToShop],
   );
 
   const renderAuthRequired = (message: string) => (
     <View style={styles.emptyBox}>
       <Text style={styles.emptyText}>{message}</Text>
-      <Pressable style={styles.secondaryBtn} onPress={() => router.push('/login')}>
+      <Pressable style={styles.secondaryBtn} onPress={() => router.push(ROUTES.LOGIN)}>
         <Text style={styles.secondaryBtnText}>ログイン</Text>
       </Pressable>
     </View>
@@ -154,19 +145,15 @@ export default function ReviewHistoryScreen() {
 
   const renderTabContent = () => {
     if (activeTab === 'favorites') {
-      if (storesLoading) {
-        return (
-          <View style={styles.emptyBox}>
-            <Text style={styles.emptyText}>店舗情報を読み込み中...</Text>
-          </View>
-        );
-      }
-      return favoriteShops.length === 0 ? (
-        <View style={styles.emptyBox}>
-          <Text style={styles.emptyText}>お気に入りがありません</Text>
-        </View>
-      ) : (
-        <View>{favoriteShops.map(renderFavoriteCard)}</View>
+      return (
+        <TabContent
+          isLoading={storesLoading}
+          loadingText='店舗情報を読み込み中...'
+          items={favoriteShops}
+          emptyText='お気に入りがありません'
+          renderItem={renderFavoriteCard}
+          keyExtractor={shop => shop.id}
+        />
       );
     }
 
@@ -174,31 +161,29 @@ export default function ReviewHistoryScreen() {
       if (reviewAuthRequired) {
         return renderAuthRequired('レビュー履歴を見るにはログインが必要です');
       }
-      if (reviewLoading) {
-        return (
-          <View style={styles.emptyBox}>
-            <Text style={styles.emptyText}>レビューを読み込み中...</Text>
-          </View>
-        );
-      }
-      return reviews.length === 0 ? (
-        <View style={styles.emptyBox}>
-          <Text style={styles.emptyText}>レビューがありません</Text>
-        </View>
-      ) : (
-        <View>{reviews.map(renderReviewCard)}</View>
+      return (
+        <TabContent
+          isLoading={reviewLoading}
+          loadingText='レビューを読み込み中...'
+          items={reviews}
+          emptyText='レビューがありません'
+          renderItem={renderReviewCard}
+          keyExtractor={review => review.id}
+        />
       );
     }
 
     if (reviewAuthRequired) {
       return renderAuthRequired('いいねしたレビューを見るにはログインが必要です');
     }
-    return likedReviews.length === 0 ? (
-      <View style={styles.emptyBox}>
-        <Text style={styles.emptyText}>いいねしたレビューがありません</Text>
-      </View>
-    ) : (
-      <View>{likedReviews.map(renderReviewCard)}</View>
+    return (
+      <TabContent
+        isLoading={false}
+        items={likedReviews}
+        emptyText='いいねしたレビューがありません'
+        renderItem={renderReviewCard}
+        keyExtractor={review => review.id}
+      />
     );
   };
 
@@ -271,7 +256,7 @@ const styles = StyleSheet.create({
   likePill: {
     backgroundColor: palette.secondarySurface,
     borderColor: palette.border,
-    borderRadius: 999,
+    borderRadius: BORDER_RADIUS.PILL,
     borderWidth: 1,
     paddingHorizontal: 12,
     paddingVertical: 6,
@@ -325,7 +310,7 @@ const styles = StyleSheet.create({
   tabButtonText: {
     color: palette.mutedText,
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: FONT_WEIGHT.SEMIBOLD,
     textAlign: 'center',
   },
   tabButtonTextActive: {

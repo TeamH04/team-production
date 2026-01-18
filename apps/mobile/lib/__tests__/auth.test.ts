@@ -1,12 +1,12 @@
 import assert from 'node:assert/strict';
 import { describe, test } from 'node:test';
 
-import { isOwnerFromUser } from '../auth';
+import { hasOwnerRole } from '../auth';
 
 import type { User } from '@supabase/supabase-js';
 
 /**
- * isOwnerFromUser のテスト
+ * hasOwnerRole のテスト
  *
  * 仕様根拠:
  * Supabaseの認証システムでは、ユーザーのrole情報が複数の場所に格納される可能性がある:
@@ -18,9 +18,9 @@ import type { User } from '@supabase/supabase-js';
  * user_metadata.role → app_metadata.roles（配列） → app_metadata.role
  * これは既存データの互換性と、新旧両方のロール設定方式に対応するため
  */
-describe('isOwnerFromUser', () => {
+describe('hasOwnerRole', () => {
   test('user が null の場合 false を返す', () => {
-    const result = isOwnerFromUser(null);
+    const result = hasOwnerRole(null);
     assert.equal(result, false);
   });
 
@@ -31,7 +31,7 @@ describe('isOwnerFromUser', () => {
       app_metadata: {},
     } as unknown as User;
 
-    const result = isOwnerFromUser(user);
+    const result = hasOwnerRole(user);
     assert.equal(result, true);
   });
 
@@ -42,7 +42,7 @@ describe('isOwnerFromUser', () => {
       app_metadata: { roles: ['admin', 'owner'] },
     } as unknown as User;
 
-    const result = isOwnerFromUser(user);
+    const result = hasOwnerRole(user);
     assert.equal(result, true);
   });
 
@@ -53,7 +53,7 @@ describe('isOwnerFromUser', () => {
       app_metadata: { role: 'owner' },
     } as unknown as User;
 
-    const result = isOwnerFromUser(user);
+    const result = hasOwnerRole(user);
     assert.equal(result, true);
   });
 
@@ -64,7 +64,7 @@ describe('isOwnerFromUser', () => {
       app_metadata: { roles: ['admin'] },
     } as unknown as User;
 
-    const result = isOwnerFromUser(user);
+    const result = hasOwnerRole(user);
     assert.equal(result, false);
   });
 
@@ -75,7 +75,7 @@ describe('isOwnerFromUser', () => {
       app_metadata: {},
     } as unknown as User;
 
-    const result = isOwnerFromUser(user);
+    const result = hasOwnerRole(user);
     assert.equal(result, false);
   });
 
@@ -84,7 +84,7 @@ describe('isOwnerFromUser', () => {
       id: 'user-1',
     } as unknown as User;
 
-    const result = isOwnerFromUser(user);
+    const result = hasOwnerRole(user);
     assert.equal(result, false);
   });
 
@@ -97,7 +97,7 @@ describe('isOwnerFromUser', () => {
       app_metadata: { role: ['owner'] },
     } as unknown as User;
 
-    const result = isOwnerFromUser(user);
+    const result = hasOwnerRole(user);
     assert.equal(result, false);
   });
 
@@ -108,7 +108,7 @@ describe('isOwnerFromUser', () => {
       app_metadata: { roles: 'owner' },
     } as unknown as User;
 
-    const result = isOwnerFromUser(user);
+    const result = hasOwnerRole(user);
     assert.equal(result, false);
   });
 });

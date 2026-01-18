@@ -1,29 +1,25 @@
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { ERROR_MESSAGES } from '@team/constants';
+import { createDependencyInjector, createSafeContext } from '@team/core-utils';
+import { useStoresState } from '@team/hooks';
+import React, { useCallback } from 'react';
 
-import { fetchStores as fetchStoresApi } from '@/lib/api';
-import { mapApiStoresToShops as mapApiStoresToShopsDefault } from '@/lib/storeMapping';
+import { api } from '@/lib/api';
+import { storage } from '@/lib/storage';
 
 import type { Shop } from '@team/shop-core';
 
 type StoresDependencies = {
-  fetchStores: typeof fetchStoresApi;
-  mapApiStoresToShops: typeof mapApiStoresToShopsDefault;
+  fetchStores: typeof api.fetchStores;
+  mapStores: typeof storage.mapStores;
 };
 
-const defaultDependencies: StoresDependencies = {
-  fetchStores: fetchStoresApi,
-  mapApiStoresToShops: mapApiStoresToShopsDefault,
-};
+const dependencyInjector = createDependencyInjector<StoresDependencies>({
+  fetchStores: api.fetchStores,
+  mapStores: storage.mapStores,
+});
 
-let dependencies = defaultDependencies;
-
-export function __setStoresDependenciesForTesting(overrides: Partial<StoresDependencies>): void {
-  dependencies = { ...defaultDependencies, ...overrides };
-}
-
-export function __resetStoresDependenciesForTesting(): void {
-  dependencies = defaultDependencies;
-}
+export const __setStoresDependenciesForTesting = dependencyInjector.setForTesting;
+export const __resetStoresDependenciesForTesting = dependencyInjector.reset;
 
 type StoresContextValue = {
   stores: Shop[];
@@ -33,49 +29,20 @@ type StoresContextValue = {
   getStoreById: (id: string) => Shop | undefined;
 };
 
-const StoresContext = createContext<StoresContextValue | undefined>(undefined);
+const [StoresContextProvider, useStores] = createSafeContext<StoresContextValue>('Stores');
+
+export { useStores };
+
+const handleError = (err: unknown) =>
+  err instanceof Error ? err.message : ERROR_MESSAGES.STORE_FETCH_FAILED;
 
 export function StoresProvider({ children }: { children: React.ReactNode }) {
-  const [stores, setStores] = useState<Shop[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const getDependencies = useCallback(() => dependencyInjector.get(), []);
 
-  const refresh = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const data = await dependencies.fetchStores();
-      setStores(dependencies.mapApiStoresToShops(data));
-    } catch (err) {
-      const message = err instanceof Error ? err.message : '店舗情報の取得に失敗しました';
-      setError(message);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const storesState = useStoresState<Awaited<ReturnType<typeof api.fetchStores>>, Shop>({
+    getDependencies,
+    onError: handleError,
+  });
 
-  useEffect(() => {
-    void refresh();
-  }, [refresh]);
-
-  const getStoreById = useCallback((id: string) => stores.find(store => store.id === id), [stores]);
-
-  const value = useMemo<StoresContextValue>(
-    () => ({
-      stores,
-      loading,
-      error,
-      refresh,
-      getStoreById,
-    }),
-    [error, getStoreById, loading, refresh, stores],
-  );
-
-  return <StoresContext.Provider value={value}>{children}</StoresContext.Provider>;
-}
-
-export function useStores() {
-  const ctx = useContext(StoresContext);
-  if (!ctx) throw new Error('useStores must be used within StoresProvider');
-  return ctx;
+  return <StoresContextProvider value={storesState}>{children}</StoresContextProvider>;
 }

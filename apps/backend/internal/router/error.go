@@ -4,11 +4,19 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/labstack/echo/v4"
 
 	"github.com/TeamH04/team-production/apps/backend/internal/presentation"
 )
+
+// sanitizeLogInput removes newline characters to prevent log injection attacks (CWE-117).
+func sanitizeLogInput(s string) string {
+	s = strings.ReplaceAll(s, "\n", "")
+	s = strings.ReplaceAll(s, "\r", "")
+	return s
+}
 
 // configureErrorHandler installs a centralized HTTP error handler that maps domain/usecase errors to HTTP responses.
 func configureErrorHandler(e *echo.Echo) {
@@ -17,7 +25,7 @@ func configureErrorHandler(e *echo.Echo) {
 			return
 		}
 
-		requestInfo := fmt.Sprintf("http %s %s", c.Request().Method, c.Request().URL.Path)
+		requestInfo := fmt.Sprintf("http %s %s", c.Request().Method, sanitizeLogInput(c.Request().URL.Path))
 
 		var presErr *presentation.HTTPError
 		if errors.As(err, &presErr) {

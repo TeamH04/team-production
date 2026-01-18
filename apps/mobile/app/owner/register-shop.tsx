@@ -1,4 +1,6 @@
 import { HeaderBackButton } from '@react-navigation/elements';
+import { FONT_WEIGHT, ROUTES, SHADOW_STYLES } from '@team/constants';
+import { palette } from '@team/mobile-ui';
 import { type Href, useNavigation, useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
@@ -14,7 +16,6 @@ import {
 } from 'react-native';
 
 import { HEADER_HEIGHT } from '@/constants/layout';
-import { palette } from '@/constants/palette';
 import {
   toStepData,
   validateStep,
@@ -23,6 +24,8 @@ import {
   type MultiValueStep,
   type SingleValueStep,
 } from '@/features/owner/logic/shop-registration';
+
+const MOCK_SUBMIT_DELAY_MS = 700;
 
 type SingleValueStepUI = SingleValueStep & {
   onChange: (text: string) => void;
@@ -64,7 +67,7 @@ export default function RegisterShopScreen() {
     if (navigation.canGoBack?.()) {
       navigation.goBack();
     } else {
-      router.replace('/owner' as Href);
+      router.replace(ROUTES.OWNER as Href);
     }
   }, [navigation, router, stepIndex]);
 
@@ -85,41 +88,6 @@ export default function RegisterShopScreen() {
       ),
     });
   }, [navigation, handleBack]);
-
-  const handleSubmit = useCallback(async () => {
-    if (loading) return;
-
-    const hasTag = tagItems.some(tag => tag.value.trim().length > 0);
-    if (!storeName.trim() || !hasTag || !address.trim()) {
-      Alert.alert('入力不足', '店舗名・タグ・住所は必須です');
-      return;
-    }
-
-    if (minutesFromStation && !/^\d{1,3}$/.test(minutesFromStation.trim())) {
-      Alert.alert('入力エラー', '最寄り駅からの分数は半角数字で入力してください');
-      return;
-    }
-
-    const parsedMinutes = minutesFromStation.trim() ? Number(minutesFromStation.trim()) : null;
-    if (parsedMinutes !== null && parsedMinutes <= 0) {
-      Alert.alert('入力エラー', '最寄り駅からの分数は1以上で入力してください');
-      return;
-    }
-
-    try {
-      setLoading(true);
-      // TODO: Backend エンドポイントに置き換え予定。現在はモック送信。
-      // 実際のペイロード: { storeName, menuItems, minutesFromStation: parsedMinutes, tags: tagItems, address, minBudget, maxBudget }
-      await new Promise(resolve => setTimeout(resolve, 700));
-      Alert.alert('送信完了', '店舗登録リクエストを受け付けました');
-      router.replace('/owner' as Href);
-    } catch (e: unknown) {
-      const message = e instanceof Error ? e.message : '送信に失敗しました';
-      Alert.alert('エラー', message);
-    } finally {
-      setLoading(false);
-    }
-  }, [address, loading, minutesFromStation, router, storeName, tagItems]);
 
   const steps = useMemo<Step[]>(
     () => [
@@ -205,6 +173,40 @@ export default function RegisterShopScreen() {
     }
     return true;
   }, [currentStep]);
+
+  const validateAllSteps = useCallback(() => {
+    for (let i = 0; i < steps.length; i += 1) {
+      const result = validateStep(toStepData(steps[i]));
+      if (!result.isValid) {
+        Alert.alert(
+          result.errorTitle ?? '入力エラー',
+          result.errorMessage ?? '入力内容を確認してください',
+        );
+        setStepIndex(i);
+        return false;
+      }
+    }
+    return true;
+  }, [steps]);
+
+  const handleSubmit = useCallback(async () => {
+    if (loading) return;
+    if (!validateAllSteps()) return;
+
+    try {
+      setLoading(true);
+      // TODO: Backend エンドポイントに置き換え予定。現在はモック送信。
+      // 実際のペイロード: { storeName, menuItems, minutesFromStation, tags: tagItems, address, minBudget, maxBudget }
+      await new Promise(resolve => setTimeout(resolve, MOCK_SUBMIT_DELAY_MS));
+      Alert.alert('送信完了', '店舗登録リクエストを受け付けました');
+      router.replace(ROUTES.OWNER as Href);
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : '送信に失敗しました';
+      Alert.alert('エラー', message);
+    } finally {
+      setLoading(false);
+    }
+  }, [loading, router, validateAllSteps]);
 
   const handlePrimary = useCallback(() => {
     if (stepIndex < totalSteps - 1) {
@@ -374,7 +376,7 @@ const styles = StyleSheet.create({
   addMenuText: {
     color: palette.accent,
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: FONT_WEIGHT.SEMIBOLD,
   },
   budgetContainer: {
     gap: 12,
@@ -385,7 +387,7 @@ const styles = StyleSheet.create({
   budgetLabel: {
     color: palette.secondaryText,
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: FONT_WEIGHT.SEMIBOLD,
     marginBottom: 6,
   },
   budgetRow: {
@@ -400,18 +402,14 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   buttonContainer: {
+    ...SHADOW_STYLES.DEFAULT,
     backgroundColor: palette.button,
     borderColor: palette.buttonBorder,
     borderRadius: 999,
     borderWidth: 1,
-    elevation: 4,
     height: 48,
     minWidth: 180,
     overflow: 'hidden',
-    shadowColor: palette.shadowColor,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.16,
-    shadowRadius: 10,
   },
   buttonPressable: {
     alignItems: 'center',
@@ -469,7 +467,7 @@ const styles = StyleSheet.create({
   skipText: {
     color: palette.secondaryText,
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: FONT_WEIGHT.SEMIBOLD,
   },
   stepCard: {
     backgroundColor: palette.surface,

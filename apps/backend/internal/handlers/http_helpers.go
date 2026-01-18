@@ -13,6 +13,13 @@ import (
 	"github.com/TeamH04/team-production/apps/backend/internal/usecase"
 )
 
+// Error message constants
+const (
+	ErrMsgInvalidJSON     = "invalid JSON"
+	ErrMsgInvalidStoreID  = "invalid store id"
+	ErrMsgInvalidReviewID = "invalid review id"
+)
+
 // getRequiredUser extracts the authenticated user from the request context.
 // Returns ErrUnauthorized if the user is not authenticated.
 func getRequiredUser(c echo.Context) (entity.User, error) {
@@ -26,7 +33,7 @@ func getRequiredUser(c echo.Context) (entity.User, error) {
 // bindJSON binds JSON request body to the given struct and returns BadRequest on error.
 func bindJSON[T any](c echo.Context, dst *T) error {
 	if err := c.Bind(dst); err != nil {
-		return presentation.NewBadRequest("invalid JSON")
+		return presentation.NewBadRequest(ErrMsgInvalidJSON)
 	}
 	return nil
 }

@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, test } from 'node:test';
 
-import { GENRES, toggleGenre } from '../genres';
+import { GENRES, toggleGenre, type Genre } from '../genres';
 
 describe('GENRES', () => {
   test('contains 10 genres', () => {
@@ -12,9 +12,9 @@ describe('GENRES', () => {
 describe('toggleGenre', () => {
   const testCases: Array<{
     name: string;
-    input: string[];
-    genre: string;
-    expected: string[];
+    input: Genre[];
+    genre: Genre;
+    expected: Genre[];
   }> = [
     { name: 'adds a genre when not present', input: [], genre: 'カフェ', expected: ['カフェ'] },
     {
@@ -50,7 +50,7 @@ describe('toggleGenre', () => {
   }
 
   test('does not mutate original array', () => {
-    const original = ['カフェ', '和食'];
+    const original: Genre[] = ['カフェ', '和食'];
     const result = toggleGenre(original, 'カフェ');
 
     assert.deepEqual(original, ['カフェ', '和食']);
@@ -58,7 +58,7 @@ describe('toggleGenre', () => {
   });
 
   test('toggle twice returns to original state', () => {
-    const initial: string[] = [];
+    const initial: Genre[] = [];
     const afterAdd = toggleGenre(initial, 'フレンチ');
     const afterRemove = toggleGenre(afterAdd, 'フレンチ');
 

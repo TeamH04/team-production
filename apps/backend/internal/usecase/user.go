@@ -7,6 +7,7 @@ import (
 
 	"github.com/TeamH04/team-production/apps/backend/internal/apperr"
 	"github.com/TeamH04/team-production/apps/backend/internal/domain/entity"
+	"github.com/TeamH04/team-production/apps/backend/internal/domain/role"
 	"github.com/TeamH04/team-production/apps/backend/internal/usecase/input"
 	"github.com/TeamH04/team-production/apps/backend/internal/usecase/output"
 )
@@ -55,9 +56,9 @@ func (uc *userUseCase) EnsureUser(ctx context.Context, input input.EnsureUserInp
 		return entity.User{}, ErrInvalidInput
 	}
 
-	role := strings.ToLower(strings.TrimSpace(input.Role))
-	if !IsValidRole(role) {
-		role = "user"
+	userRole := strings.ToLower(strings.TrimSpace(input.Role))
+	if !IsValidRole(userRole) {
+		userRole = role.User
 	}
 
 	name := deriveNameFromEmail(email)
@@ -67,7 +68,7 @@ func (uc *userUseCase) EnsureUser(ctx context.Context, input input.EnsureUserInp
 		Name:      name,
 		Email:     email,
 		Provider:  provider,
-		Role:      role,
+		Role:      userRole,
 		CreatedAt: now,
 		UpdatedAt: now,
 	}
@@ -96,7 +97,6 @@ func (uc *userUseCase) UpdateUser(ctx context.Context, userID string, input inpu
 		return entity.User{}, err
 	}
 
-	// 更新フィールドの適用
 	if input.Name != nil {
 		user.Name = *input.Name
 	}
@@ -122,12 +122,10 @@ func (uc *userUseCase) UpdateUser(ctx context.Context, userID string, input inpu
 }
 
 func (uc *userUseCase) UpdateUserRole(ctx context.Context, userID string, role string) error {
-	// ロールのバリデーション
 	if !IsValidRole(role) {
 		return ErrInvalidRole
 	}
 
-	// ユーザーの存在確認
 	if err := ensureUserExists(ctx, uc.userRepo, userID); err != nil {
 		return err
 	}
@@ -136,7 +134,6 @@ func (uc *userUseCase) UpdateUserRole(ctx context.Context, userID string, role s
 }
 
 func (uc *userUseCase) GetUserReviews(ctx context.Context, userID string) ([]entity.Review, error) {
-	// ユーザーの存在確認
 	if err := ensureUserExists(ctx, uc.userRepo, userID); err != nil {
 		return nil, err
 	}

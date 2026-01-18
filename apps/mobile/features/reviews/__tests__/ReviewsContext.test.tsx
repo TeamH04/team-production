@@ -15,6 +15,7 @@ import {
 
 import type { ApiReview } from '@/lib/api';
 import type { User } from '@supabase/supabase-js';
+import type { AuthState } from '@team/core-utils';
 
 type SetupOptions = {
   token?: string | null;
@@ -35,6 +36,13 @@ const setupDependencies = (options: SetupOptions = {}) => {
     uploadFileCount = 2,
   } = options;
 
+  // resolveAuth: token と user の状態に基づいて認証状態を返す
+  const resolveAuth = mock.fn(async (): Promise<AuthState> => {
+    if (!token || !user) {
+      return { mode: 'unauthenticated' };
+    }
+    return { mode: 'remote', token };
+  });
   const getAccessToken = mock.fn(async () => token);
   const getCurrentUser = mock.fn(async () => user);
   const fetchStoreReviews = mock.fn(async () => {
@@ -71,6 +79,7 @@ const setupDependencies = (options: SetupOptions = {}) => {
   }));
 
   __setReviewsDependenciesForTesting({
+    resolveAuth,
     getAccessToken,
     getCurrentUser,
     fetchStoreReviews,
@@ -83,6 +92,7 @@ const setupDependencies = (options: SetupOptions = {}) => {
   });
 
   return {
+    resolveAuth,
     getAccessToken,
     getCurrentUser,
     fetchStoreReviews,

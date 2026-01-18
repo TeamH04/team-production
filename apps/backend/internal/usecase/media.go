@@ -4,11 +4,11 @@ import (
 	"context"
 	"fmt"
 	"strings"
-	"time"
 
 	"github.com/google/uuid"
 
 	"github.com/TeamH04/team-production/apps/backend/internal/apperr"
+	"github.com/TeamH04/team-production/apps/backend/internal/config"
 	"github.com/TeamH04/team-production/apps/backend/internal/domain/entity"
 	"github.com/TeamH04/team-production/apps/backend/internal/usecase/input"
 	"github.com/TeamH04/team-production/apps/backend/internal/usecase/output"
@@ -95,7 +95,7 @@ func (uc *mediaUseCase) CreateReviewUploads(ctx context.Context, storeID string,
 			return nil, err
 		}
 
-		signed, err := uc.storage.CreateSignedUpload(ctx, uc.bucket, objectKey, contentType, 15*time.Minute, false)
+		signed, err := uc.storage.CreateSignedUpload(ctx, uc.bucket, objectKey, contentType, config.SignedURLTTL, false)
 		if err != nil {
 			return nil, err
 		}

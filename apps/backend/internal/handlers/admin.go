@@ -9,7 +9,6 @@ import (
 
 	"github.com/TeamH04/team-production/apps/backend/internal/presentation"
 	"github.com/TeamH04/team-production/apps/backend/internal/presentation/presenter"
-	"github.com/TeamH04/team-production/apps/backend/internal/presentation/requestcontext"
 	"github.com/TeamH04/team-production/apps/backend/internal/usecase"
 	"github.com/TeamH04/team-production/apps/backend/internal/usecase/input"
 )
@@ -48,7 +47,7 @@ func (h *AdminHandler) GetPendingStores(c echo.Context) error {
 }
 
 func (h *AdminHandler) ApproveStore(c echo.Context) error {
-	storeID, err := parseUUIDParam(c, "id", "invalid store id")
+	storeID, err := parseUUIDParam(c, "id", ErrMsgInvalidStoreID)
 	if err != nil {
 		return err
 	}
@@ -59,7 +58,7 @@ func (h *AdminHandler) ApproveStore(c echo.Context) error {
 }
 
 func (h *AdminHandler) RejectStore(c echo.Context) error {
-	storeID, err := parseUUIDParam(c, "id", "invalid store id")
+	storeID, err := parseUUIDParam(c, "id", ErrMsgInvalidStoreID)
 	if err != nil {
 		return err
 	}
@@ -83,8 +82,8 @@ func (h *AdminHandler) HandleReport(c echo.Context) error {
 		return err
 	}
 	var dto handleReportDTO
-	if err := c.Bind(&dto); err != nil {
-		return presentation.NewBadRequest("invalid JSON")
+	if err := bindJSON(c, &dto); err != nil {
+		return err
 	}
 	cmd := dto.toCommand()
 	if err := cmd.Validate(); err != nil {
@@ -97,9 +96,9 @@ func (h *AdminHandler) HandleReport(c echo.Context) error {
 }
 
 func (h *AdminHandler) GetUserByID(c echo.Context) error {
-	userFromCtx, err := requestcontext.GetUserFromContext(c.Request().Context())
+	userFromCtx, err := getRequiredUser(c)
 	if err != nil {
-		return usecase.ErrUnauthorized
+		return err
 	}
 
 	user, err := h.userUseCase.FindByID(c.Request().Context(), userFromCtx.UserID)

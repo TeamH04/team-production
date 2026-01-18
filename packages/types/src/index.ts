@@ -65,6 +65,43 @@ export type ApiReview = {
   files?: ApiFile[];
 };
 
+export type ApiUser = {
+  user_id: string;
+  name: string;
+  email: string;
+  icon_file_id?: string | null;
+  icon_url?: string | null;
+  provider: string;
+  gender?: string | null;
+  birthday?: string | null;
+  role: string;
+  created_at: string;
+  updated_at: string;
+};
+
+export type ApiFavorite = {
+  user_id: string;
+  store_id: string;
+  created_at: string;
+  store?: ApiStore | null;
+};
+
+export type ReviewSort = 'new' | 'liked';
+
+export type UploadFileInput = {
+  file_name: string;
+  file_size?: number;
+  content_type: string;
+};
+
+export type SignedUploadFile = {
+  file_id: string;
+  object_key: string;
+  path: string;
+  token: string;
+  content_type: string;
+};
+
 // =============================================================================
 // Frontend Types
 // =============================================================================
@@ -88,21 +125,12 @@ export type ShopMenuItem = {
   description?: string;
 };
 
-export type RatingDetails = {
-  taste: number;
-  atmosphere: number;
-  service: number;
-  speed: number;
-  cleanliness: number;
-};
-
 export type Shop = {
   id: string;
   name: string;
   category: ShopCategory;
   distanceMinutes: number;
   rating: number;
-  ratingDetails?: RatingDetails;
   budget: MoneyBucket;
   createdAt: string;
   openedAt: string;
@@ -111,7 +139,6 @@ export type Shop = {
   placeId: string;
   imageUrl: string;
   imageUrls?: string[];
-  area?: string;
   tags: string[];
   menu?: ShopMenuItem[];
 };
@@ -125,3 +152,70 @@ export const MENU_TAB_MAP: Record<ShopCategory, string[]> = {
   'バー・居酒屋': ['おつまみ', 'メイン', 'お酒'],
   'ビュッフェ・食べ放題': ['料理', 'デザート', 'ドリンク'],
 };
+
+// =============================================================================
+// User Types
+// =============================================================================
+
+export type Gender = 'male' | 'female' | 'other';
+
+export type UserProfile = {
+  name: string;
+  email: string;
+  gender?: Gender;
+  birthYear?: string;
+  birthMonth?: string;
+  isProfileRegistered: boolean;
+  favoriteGenres?: string[];
+};
+
+// =============================================================================
+// Review Types
+// =============================================================================
+
+export type ReviewFile = {
+  id: string;
+  fileName: string;
+  objectKey: string;
+  url?: string;
+  contentType?: string | null;
+};
+
+export type Review = {
+  id: string;
+  shopId: string;
+  userId: string;
+  rating: number;
+  comment?: string;
+  createdAt: string;
+  menuItemIds?: string[];
+  menuItemName?: string;
+  likesCount: number;
+  likedByMe: boolean;
+  files: ReviewFile[];
+};
+
+export type ReviewAsset = {
+  uri: string;
+  fileName: string;
+  contentType: string;
+  fileSize?: number;
+};
+
+// =============================================================================
+// OAuth Types
+// =============================================================================
+
+/**
+ * OAuth認証プロバイダー
+ * 将来的に他のプロバイダー（facebook, twitter, github等）を追加可能
+ */
+export type OAuthProvider = 'google' | 'apple';
+
+/**
+ * OAuth認証のローディング状態
+ * - OAuthProvider: 各プロバイダーでの認証処理中
+ * - 'guest': ゲストログイン処理中
+ * - null: ローディングなし
+ */
+export type OAuthLoadingState = OAuthProvider | 'guest' | null;
