@@ -10,6 +10,7 @@ import {
   Text,
   View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { GENRES } from '@/constants/genres';
 import { palette } from '@/constants/palette';
@@ -18,6 +19,7 @@ import { useUser } from '@/features/user/UserContext';
 
 export default function RegisterProfileScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { user, setUser } = useUser();
   const name = user?.name ?? '';
   const email = user?.email ?? '';
@@ -54,8 +56,13 @@ export default function RegisterProfileScreen() {
         behavior={Platform.select({ ios: 'padding', default: undefined })}
         style={styles.keyboard}
       >
-        <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
-          <Text style={styles.title}>ジャンル選択</Text>
+        <ScrollView
+          style={styles.screen}
+          contentContainerStyle={[styles.content, { paddingTop: insets.top + 16 }]}
+        >
+          <View style={styles.headerContainer}>
+            <Text style={styles.title}>ジャンル選択</Text>
+          </View>
           <Text style={styles.subtitle}>自身の選んだ店舗がおすすめに表示されやすくなります</Text>
           <Text style={styles.label}>好きな店舗のジャンル（複数選択可）</Text>
           <View style={styles.chipsWrap}>
@@ -109,6 +116,11 @@ const styles = StyleSheet.create({
 
   content: { padding: 16 },
 
+  headerContainer: {
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+
   keyboard: { flex: 1 },
 
   label: {
@@ -158,9 +170,11 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     marginTop: 8,
   },
+
   title: {
-    color: palette.primaryText,
+    color: palette.primary,
     fontFamily: fonts.medium,
-    fontSize: 24,
+    fontSize: 20,
+    textAlign: 'center',
   },
 });

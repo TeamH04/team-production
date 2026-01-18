@@ -50,7 +50,7 @@ function RootStack() {
 
   const first = segments[0] ?? '';
   const isInsideTabs = segments.some(seg => seg === '(tabs)');
-  const isExcluded = (['shop', 'profile', 'menu'] as string[]).includes(first);
+  const isExcluded = (['login', 'shop', 'profile', 'menu', 'owner'] as string[]).includes(first);
   const padTop = !isInsideTabs && !isExcluded ? insets.top : 0;
 
   return (
@@ -75,6 +75,7 @@ function RootStack() {
           name='review-history'
           options={{ title: 'あなたの記録', headerShown: true }}
         />
+        <Stack.Screen name='profile' options={{ headerShown: false }} />
         <Stack.Screen name='+not-found' />
       </Stack>
     </View>
