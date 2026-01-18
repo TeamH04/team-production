@@ -18,10 +18,10 @@
     "lint:report": "pnpm run lint:report:prep && pnpm run lint:report:json && pnpm run lint:report:md",
     "conflict:report": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/conflict-report.ps1",
     "fix": "eslint \"**/*.{ts,tsx,js,jsx}\" --fix",
-    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "format": "sh -c 'FILES=$(prettier --list-different \"**/*.{ts,tsx,js,jsx,json,md}\" || true); if [ -z \"$FILES\" ]; then echo \"prettier: no changes\"; else echo \"$FILES\"; prettier --write $FILES; fi'",
     "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md}\"",
-    "format:mobile": "prettier --write \"apps/mobile/**/*.{ts,tsx,js,jsx,json}\"",
-    "format:backend": "prettier --write \"apps/backend/**/*.{ts,tsx,js,jsx,json,md}\"",
+    "format:mobile": "sh -c 'FILES=$(prettier --list-different \"apps/mobile/**/*.{ts,tsx,js,jsx,json}\" || true); if [ -z \"$FILES\" ]; then echo \"prettier:mobile no changes\"; else echo \"$FILES\"; prettier --write $FILES; fi'",
+    "format:backend": "sh -c 'FILES=$(prettier --list-different \"apps/backend/**/*.{ts,tsx,js,jsx,json,md}\" || true); if [ -z \"$FILES\" ]; then echo \"prettier:backend no changes\"; else echo \"$FILES\"; prettier --write $FILES; fi'",
     "android": "pnpm --dir apps/mobile exec expo run:android",
     "ios": "pnpm --dir apps/mobile exec expo run:ios"
   },
