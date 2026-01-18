@@ -21,6 +21,7 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 
+	"github.com/TeamH04/team-production/apps/backend/internal/config"
 	"github.com/TeamH04/team-production/apps/backend/internal/domain/role"
 	infrahttp "github.com/TeamH04/team-production/apps/backend/internal/infra/http"
 	"github.com/TeamH04/team-production/apps/backend/internal/security"
@@ -43,7 +44,7 @@ func NewClient(baseURL, publishableKey, secretKey string) *Client {
 		baseURL:    strings.TrimRight(strings.TrimSpace(baseURL), "/"),
 		anonKey:    strings.TrimSpace(publishableKey),
 		serviceKey: strings.TrimSpace(secretKey),
-		httpClient: &http.Client{Timeout: 10 * time.Second},
+		httpClient: &http.Client{Timeout: config.HTTPClientTimeout},
 	}
 }
 
@@ -103,7 +104,7 @@ func (c *Client) fetchJWKS(ctx context.Context) (map[string]*ecdsa.PublicKey, er
 	}
 	key := c.authKey()
 	if key != "" {
-		req.Header.Set("apikey", key)
+		req.Header.Set(infrahttp.HeaderAPIKey, key)
 	}
 
 	resp, err := c.httpClient.Do(req)
@@ -144,13 +145,11 @@ func (c *Client) fetchJWKS(ctx context.Context) (map[string]*ecdsa.PublicKey, er
 }
 
 func (c *Client) getPublicKey(ctx context.Context, kid string) (*ecdsa.PublicKey, error) {
-	const ttl = 10 * time.Minute
-
 	c.jwksMu.Lock()
 	cached := c.jwksCached
 	c.jwksMu.Unlock()
 
-	if cached != nil && time.Since(cached.fetchedAt) < ttl {
+	if cached != nil && time.Since(cached.fetchedAt) < config.JWKSCacheTTL {
 		if pub, ok := cached.keysByKID[kid]; ok {
 			return pub, nil
 		}
@@ -252,9 +251,9 @@ func (c *Client) Signup(ctx context.Context, input output.AuthSignupInput) (*out
 	if err != nil {
 		return nil, err
 	}
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("apikey", c.serviceKey)
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", c.serviceKey))
+	req.Header.Set(infrahttp.HeaderContentType, infrahttp.MimeTypeJSON)
+	req.Header.Set(infrahttp.HeaderAPIKey, c.serviceKey)
+	req.Header.Set(infrahttp.HeaderAuthorization, security.BearerPrefix+c.serviceKey)
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
@@ -315,10 +314,10 @@ func (c *Client) Login(ctx context.Context, input output.AuthLoginInput) (*outpu
 	if err != nil {
 		return nil, err
 	}
-	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set(infrahttp.HeaderContentType, infrahttp.MimeTypeJSON)
 
-	req.Header.Set("apikey", key)
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", key))
+	req.Header.Set(infrahttp.HeaderAPIKey, key)
+	req.Header.Set(infrahttp.HeaderAuthorization, security.BearerPrefix+key)
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
@@ -392,12 +391,15 @@ func (c *Client) Verify(ctx context.Context, token string) (*security.TokenClaim
 	claims := &supabaseClaims{}
 
 	parsed, err := jwt.ParseWithClaims(token, claims, func(t *jwt.Token) (interface{}, error) {
-		alg, _ := t.Header["alg"].(string)
+		alg, ok := t.Header["alg"].(string)
+		if !ok || alg == "" {
+			return nil, fmt.Errorf("token missing alg header")
+		}
 		if alg != "ES256" {
 			return nil, fmt.Errorf("unexpected signing method %v", t.Header["alg"])
 		}
-		kid, _ := t.Header["kid"].(string)
-		if kid == "" {
+		kid, ok := t.Header["kid"].(string)
+		if !ok || kid == "" {
 			return nil, fmt.Errorf("token missing kid header")
 		}
 		return c.getPublicKey(ctx, kid)
@@ -541,9 +543,9 @@ func (c *Client) CreateSignedUpload(
 	if err != nil {
 		return nil, err
 	}
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("apikey", key)
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", key))
+	req.Header.Set(infrahttp.HeaderContentType, infrahttp.MimeTypeJSON)
+	req.Header.Set(infrahttp.HeaderAPIKey, key)
+	req.Header.Set(infrahttp.HeaderAuthorization, security.BearerPrefix+key)
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
@@ -590,20 +592,63 @@ func (c *Client) CreateSignedUpload(
 	}, nil
 }
 
-func (c *Client) CreateSignedDownload(ctx context.Context, bucket, objectPath string, expiresIn time.Duration) (*output.SignedDownload, error) {
+func (c *Client) storageKeyOrError() (string, error) {
 	key := c.storageKey()
 	if c.baseURL == "" || key == "" {
-		return nil, errors.New("supabase storage api not configured")
+		return "", errors.New("supabase storage api not configured")
 	}
+	return key, nil
+}
+
+func validateSignedDownloadInputs(bucket, objectPath string, expiresIn time.Duration) (string, error) {
 	if strings.TrimSpace(bucket) == "" {
-		return nil, errors.New("bucket is required")
+		return "", errors.New("bucket is required")
 	}
 	objectPath = strings.TrimSpace(objectPath)
 	if objectPath == "" {
-		return nil, errors.New("objectPath is required")
+		return "", errors.New("objectPath is required")
 	}
 	if expiresIn <= 0 {
-		return nil, errors.New("expiresIn must be positive")
+		return "", errors.New("expiresIn must be positive")
+	}
+	return objectPath, nil
+}
+
+func parseSignedDownloadURL(respBody []byte, bucket, objectPath string) (string, error) {
+	var result struct {
+		SignedURL string `json:"signedURL"`
+	}
+	if err := json.Unmarshal(respBody, &result); err != nil {
+		return "", err
+	}
+	signedURL := strings.TrimSpace(result.SignedURL)
+	if signedURL != "" {
+		return signedURL, nil
+	}
+	return "", missingSignedDownloadURLError(respBody, bucket, objectPath)
+}
+
+func missingSignedDownloadURLError(respBody []byte, bucket, objectPath string) error {
+	var raw map[string]any
+	if err := json.Unmarshal(respBody, &raw); err == nil {
+		keys := make([]string, 0, len(raw))
+		for k := range raw {
+			keys = append(keys, k)
+		}
+		sort.Strings(keys)
+		return fmt.Errorf("supabase signed download missing url (bucket=%s path=%s keys=%v)", bucket, objectPath, keys)
+	}
+	return fmt.Errorf("supabase signed download missing url (bucket=%s path=%s)", bucket, objectPath)
+}
+
+func (c *Client) CreateSignedDownload(ctx context.Context, bucket, objectPath string, expiresIn time.Duration) (*output.SignedDownload, error) {
+	key, err := c.storageKeyOrError()
+	if err != nil {
+		return nil, err
+	}
+	objectPath, err = validateSignedDownloadInputs(bucket, objectPath, expiresIn)
+	if err != nil {
+		return nil, err
 	}
 
 	escapedPath := escapePathPreserveSlash(objectPath)
@@ -620,9 +665,9 @@ func (c *Client) CreateSignedDownload(ctx context.Context, bucket, objectPath st
 	if err != nil {
 		return nil, err
 	}
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("apikey", key)
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", key))
+	req.Header.Set(infrahttp.HeaderContentType, infrahttp.MimeTypeJSON)
+	req.Header.Set(infrahttp.HeaderAPIKey, key)
+	req.Header.Set(infrahttp.HeaderAuthorization, security.BearerPrefix+key)
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
@@ -639,24 +684,9 @@ func (c *Client) CreateSignedDownload(ctx context.Context, bucket, objectPath st
 		return nil, decodeSupabaseErrorFromBody(resp.StatusCode, respBody)
 	}
 
-	var result struct {
-		SignedURL string `json:"signedURL"`
-	}
-	if err := json.Unmarshal(respBody, &result); err != nil {
+	signedURL, err := parseSignedDownloadURL(respBody, bucket, objectPath)
+	if err != nil {
 		return nil, err
-	}
-	signedURL := strings.TrimSpace(result.SignedURL)
-	if signedURL == "" {
-		var raw map[string]any
-		if err := json.Unmarshal(respBody, &raw); err == nil {
-			keys := make([]string, 0, len(raw))
-			for k := range raw {
-				keys = append(keys, k)
-			}
-			sort.Strings(keys)
-			return nil, fmt.Errorf("supabase signed download missing url (bucket=%s path=%s keys=%v)", bucket, objectPath, keys)
-		}
-		return nil, fmt.Errorf("supabase signed download missing url (bucket=%s path=%s)", bucket, objectPath)
 	}
 
 	urlStr := signedURL

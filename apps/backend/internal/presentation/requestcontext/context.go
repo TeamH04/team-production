@@ -13,8 +13,10 @@ var (
 	ErrNoUserRoleInContext = errors.New("no user role in context")
 )
 
-type userKey struct{}
-type userRoleKey struct{}
+type (
+	userKey     struct{}
+	userRoleKey struct{}
+)
 
 func SetToContext(c echo.Context, user entity.User, role string) echo.Context {
 	ctx := c.Request().Context()

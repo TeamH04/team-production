@@ -48,7 +48,7 @@ func (h *UserHandler) UpdateUser(c echo.Context) error {
 	}
 
 	var dto updateUserDTO
-	if err := bindJSON(c, &dto); err != nil {
+	if err = bindJSON(c, &dto); err != nil {
 		return err
 	}
 	userID := c.Param("id")

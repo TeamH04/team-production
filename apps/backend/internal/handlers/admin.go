@@ -96,18 +96,7 @@ func (h *AdminHandler) HandleReport(c echo.Context) error {
 }
 
 func (h *AdminHandler) GetUserByID(c echo.Context) error {
-	userFromCtx, err := getRequiredUser(c)
-	if err != nil {
-		return err
-	}
-
-	user, err := h.userUseCase.FindByID(c.Request().Context(), userFromCtx.UserID)
-	if err != nil {
-		return err
-	}
-
-	resp := presenter.NewUserResponse(user)
-	return c.JSON(http.StatusOK, resp)
+	return fetchAndRespondWithCurrentUser(c, h.userUseCase)
 }
 
 type handleReportDTO struct {
@@ -115,5 +104,5 @@ type handleReportDTO struct {
 }
 
 func (dto handleReportDTO) toCommand() HandleReportCommand {
-	return HandleReportCommand{Action: dto.Action}
+	return HandleReportCommand(dto)
 }

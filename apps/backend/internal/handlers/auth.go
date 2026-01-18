@@ -24,19 +24,8 @@ func NewAuthHandler(authUseCase input.AuthUseCase, userUseCase input.UserUseCase
 }
 
 // GetMe returns the current authenticated user.
-// Note: This delegates to UserHandler.GetMe for consistency.
 func (h *AuthHandler) GetMe(c echo.Context) error {
-	userFromCtx, err := getRequiredUser(c)
-	if err != nil {
-		return err
-	}
-
-	user, err := h.userUseCase.FindByID(c.Request().Context(), userFromCtx.UserID)
-	if err != nil {
-		return err
-	}
-	resp := presenter.NewUserResponse(user)
-	return c.JSON(http.StatusOK, resp)
+	return fetchAndRespondWithCurrentUser(c, h.userUseCase)
 }
 
 func (h *AuthHandler) UpdateRole(c echo.Context) error {

@@ -28,7 +28,7 @@ include .env
 export
 endif
 
-.PHONY: help serve db-start db-stop db-migrate db-reset db-destroy tools test
+.PHONY: help serve db-start db-stop db-migrate db-reset db-destroy tools lint fmt test
 
 help:
 	@echo "Available targets:"
@@ -39,6 +39,8 @@ help:
 	@echo "  make db-reset    # Reset database (drop + migrate)"
 	@echo "  make db-destroy  # Destroy database (remove volumes)"
 	@echo "  make tools       # Install CLI tools (migrate)"
+	@echo "  make lint        # Run golangci-lint"
+	@echo "  make fmt         # Run gofumpt"
 	@echo "  make test        # Run tests"
 
 serve:
@@ -62,6 +64,16 @@ db-destroy:
 
 tools:
 	$(GO_BIN) install -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@v4.17.0
+	$(GO_BIN) install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.61.0
+	$(GO_BIN) install mvdan.cc/gofumpt@v0.6.0
+
+lint:
+	@command -v golangci-lint >/dev/null 2>&1 || { echo "golangci-lint not found. Run: make tools"; exit 1; }
+	golangci-lint run ./...
+
+fmt:
+	@command -v gofumpt >/dev/null 2>&1 || { echo "gofumpt not found. Run: make tools"; exit 1; }
+	gofumpt -w .
 
 test:
 	$(GO_BIN) test -race -coverprofile=coverage.out -count=1 ./...

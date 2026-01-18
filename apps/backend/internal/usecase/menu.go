@@ -40,8 +40,8 @@ func (uc *menuUseCase) CreateMenu(ctx context.Context, storeID string, in input.
 		return nil, err
 	}
 
-	if in.Name == "" {
-		return nil, ErrInvalidInput
+	if err := validateNotEmpty(in.Name); err != nil {
+		return nil, err
 	}
 
 	menu := &entity.Menu{

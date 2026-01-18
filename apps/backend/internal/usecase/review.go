@@ -3,6 +3,7 @@ package usecase
 import (
 	"context"
 
+	"github.com/TeamH04/team-production/apps/backend/internal/domain/constants"
 	"github.com/TeamH04/team-production/apps/backend/internal/domain/entity"
 	"github.com/TeamH04/team-production/apps/backend/internal/usecase/input"
 	"github.com/TeamH04/team-production/apps/backend/internal/usecase/output"
@@ -42,8 +43,8 @@ func (uc *reviewUseCase) GetReviewsByStoreID(ctx context.Context, storeID string
 }
 
 func (uc *reviewUseCase) Create(ctx context.Context, storeID string, userID string, input input.CreateReview) error {
-	if storeID == "" || userID == "" {
-		return ErrInvalidInput
+	if err := validateNotEmpty(storeID, userID); err != nil {
+		return err
 	}
 
 	if err := ensureStoreExists(ctx, uc.storeRepo, storeID); err != nil {
@@ -93,8 +94,8 @@ func (uc *reviewUseCase) Create(ctx context.Context, storeID string, userID stri
 }
 
 func (uc *reviewUseCase) LikeReview(ctx context.Context, reviewID string, userID string) error {
-	if reviewID == "" || userID == "" {
-		return ErrInvalidInput
+	if err := validateNotEmpty(reviewID, userID); err != nil {
+		return err
 	}
 	if err := ensureReviewExists(ctx, uc.reviewRepo, reviewID); err != nil {
 		return err
@@ -103,8 +104,8 @@ func (uc *reviewUseCase) LikeReview(ctx context.Context, reviewID string, userID
 }
 
 func (uc *reviewUseCase) UnlikeReview(ctx context.Context, reviewID string, userID string) error {
-	if reviewID == "" || userID == "" {
-		return ErrInvalidInput
+	if err := validateNotEmpty(reviewID, userID); err != nil {
+		return err
 	}
 	if err := ensureReviewExists(ctx, uc.reviewRepo, reviewID); err != nil {
 		return err
@@ -114,10 +115,10 @@ func (uc *reviewUseCase) UnlikeReview(ctx context.Context, reviewID string, user
 
 func normalizeReviewSort(sort string) string {
 	switch sort {
-	case "liked":
-		return "liked"
+	case constants.SortByLiked:
+		return constants.SortByLiked
 	default:
-		return "new"
+		return constants.SortByNew
 	}
 }
 

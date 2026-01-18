@@ -37,7 +37,7 @@ func (h *MenuHandler) CreateMenu(c echo.Context) error {
 		return err
 	}
 	var dto createMenuDTO
-	if err := bindJSON(c, &dto); err != nil {
+	if err = bindJSON(c, &dto); err != nil {
 		return err
 	}
 	menu, err := h.menuUseCase.CreateMenu(c.Request().Context(), storeID, dto.toInput())

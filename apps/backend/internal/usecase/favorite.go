@@ -43,8 +43,8 @@ func (uc *favoriteUseCase) GetMyFavorites(ctx context.Context, userID string) ([
 }
 
 func (uc *favoriteUseCase) AddFavorite(ctx context.Context, userID string, storeID string) (*entity.Favorite, error) {
-	if userID == "" || storeID == "" {
-		return nil, ErrInvalidInput
+	if err := validateNotEmpty(userID, storeID); err != nil {
+		return nil, err
 	}
 
 	if err := ensureUserExists(ctx, uc.userRepo, userID); err != nil {
@@ -77,8 +77,8 @@ func (uc *favoriteUseCase) AddFavorite(ctx context.Context, userID string, store
 }
 
 func (uc *favoriteUseCase) RemoveFavorite(ctx context.Context, userID string, storeID string) error {
-	if userID == "" || storeID == "" {
-		return ErrInvalidInput
+	if err := validateNotEmpty(userID, storeID); err != nil {
+		return err
 	}
 
 	// お気に入りの存在確認

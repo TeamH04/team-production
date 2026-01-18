@@ -34,10 +34,10 @@ const (
 	MediaUploadPath = "/media/upload"
 
 	// Admin
-	AdminStoresPendingPath  = "/stores/pending"
-	AdminStoreApprovePath   = "/stores/:id/approve"
-	AdminStoreRejectPath    = "/stores/:id/reject"
-	AdminReportsPath        = "/reports"
-	AdminReportActionPath   = "/reports/:id/action"
-	AdminUserByIDPath       = "/users/:id"
+	AdminStoresPendingPath = "/stores/pending"
+	AdminStoreApprovePath  = "/stores/:id/approve"
+	AdminStoreRejectPath   = "/stores/:id/reject"
+	AdminReportsPath       = "/reports"
+	AdminReportActionPath  = "/reports/:id/action"
+	AdminUserByIDPath      = "/users/:id"
 )

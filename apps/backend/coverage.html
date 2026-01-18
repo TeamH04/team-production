@@ -1,0 +1,1247 @@
+
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+		<title>usecase: Go Coverage Report</title>
+		<style>
+			body {
+				background: black;
+				color: rgb(80, 80, 80);
+			}
+			body, pre, #legend span {
+				font-family: Menlo, monospace;
+				font-weight: bold;
+			}
+			#topbar {
+				background: black;
+				position: fixed;
+				top: 0; left: 0; right: 0;
+				height: 42px;
+				border-bottom: 1px solid rgb(80, 80, 80);
+			}
+			#content {
+				margin-top: 50px;
+			}
+			#nav, #legend {
+				float: left;
+				margin-left: 10px;
+			}
+			#legend {
+				margin-top: 12px;
+			}
+			#nav {
+				margin-top: 10px;
+			}
+			#legend span {
+				margin: 0 5px;
+			}
+			.cov0 { color: rgb(192, 0, 0) }
+.cov1 { color: rgb(128, 128, 128) }
+.cov2 { color: rgb(116, 140, 131) }
+.cov3 { color: rgb(104, 152, 134) }
+.cov4 { color: rgb(92, 164, 137) }
+.cov5 { color: rgb(80, 176, 140) }
+.cov6 { color: rgb(68, 188, 143) }
+.cov7 { color: rgb(56, 200, 146) }
+.cov8 { color: rgb(44, 212, 149) }
+.cov9 { color: rgb(32, 224, 152) }
+.cov10 { color: rgb(20, 236, 155) }
+
+		</style>
+	</head>
+	<body>
+		<div id="topbar">
+			<div id="nav">
+				<select id="files">
+				
+				<option value="file0">github.com/TeamH04/team-production/apps/backend/internal/usecase/admin.go (100.0%)</option>
+				
+				<option value="file1">github.com/TeamH04/team-production/apps/backend/internal/usecase/auth.go (100.0%)</option>
+				
+				<option value="file2">github.com/TeamH04/team-production/apps/backend/internal/usecase/favorite.go (100.0%)</option>
+				
+				<option value="file3">github.com/TeamH04/team-production/apps/backend/internal/usecase/helpers.go (100.0%)</option>
+				
+				<option value="file4">github.com/TeamH04/team-production/apps/backend/internal/usecase/media.go (100.0%)</option>
+				
+				<option value="file5">github.com/TeamH04/team-production/apps/backend/internal/usecase/menu.go (100.0%)</option>
+				
+				<option value="file6">github.com/TeamH04/team-production/apps/backend/internal/usecase/report.go (100.0%)</option>
+				
+				<option value="file7">github.com/TeamH04/team-production/apps/backend/internal/usecase/review.go (100.0%)</option>
+				
+				<option value="file8">github.com/TeamH04/team-production/apps/backend/internal/usecase/store.go (100.0%)</option>
+				
+				<option value="file9">github.com/TeamH04/team-production/apps/backend/internal/usecase/user.go (97.4%)</option>
+				
+				</select>
+			</div>
+			<div id="legend">
+				<span>not tracked</span>
+			
+				<span class="cov0">not covered</span>
+				<span class="cov8">covered</span>
+			
+			</div>
+		</div>
+		<div id="content">
+		
+		<pre class="file" id="file0" style="display: none">package usecase
+
+import (
+        "context"
+
+        "github.com/TeamH04/team-production/apps/backend/internal/domain/entity"
+        "github.com/TeamH04/team-production/apps/backend/internal/usecase/output"
+)
+
+// AdminUseCase は管理者機能に関するビジネスロジックを提供します
+type AdminUseCase interface {
+        GetPendingStores(ctx context.Context) ([]entity.Store, error)
+        ApproveStore(ctx context.Context, storeID string) error
+        RejectStore(ctx context.Context, storeID string) error
+}
+
+type adminUseCase struct {
+        storeRepo output.StoreRepository
+}
+
+// NewAdminUseCase は AdminUseCase の実装を生成します
+func NewAdminUseCase(storeRepo output.StoreRepository) AdminUseCase <span class="cov8" title="1">{
+        return &amp;adminUseCase{
+                storeRepo: storeRepo,
+        }
+}</span>
+
+func (uc *adminUseCase) GetPendingStores(ctx context.Context) ([]entity.Store, error) <span class="cov8" title="1">{
+        return uc.storeRepo.FindPending(ctx)
+}</span>
+
+func (uc *adminUseCase) ApproveStore(ctx context.Context, storeID string) error <span class="cov8" title="1">{
+        return uc.setStoreApproval(ctx, storeID, true)
+}</span>
+
+func (uc *adminUseCase) RejectStore(ctx context.Context, storeID string) error <span class="cov8" title="1">{
+        return uc.setStoreApproval(ctx, storeID, false)
+}</span>
+
+// setStoreApproval is a helper to set store approval status.
+func (uc *adminUseCase) setStoreApproval(ctx context.Context, storeID string, approved bool) error <span class="cov8" title="1">{
+        store, err := mustFindStore(ctx, uc.storeRepo, storeID)
+        if err != nil </span><span class="cov8" title="1">{
+                return err
+        }</span>
+
+        <span class="cov8" title="1">store.IsApproved = approved
+        return uc.storeRepo.Update(ctx, store)</span>
+}
+</pre>
+		
+		<pre class="file" id="file1" style="display: none">package usecase
+
+import (
+        "context"
+        "strings"
+        "time"
+
+        "github.com/TeamH04/team-production/apps/backend/internal/apperr"
+        "github.com/TeamH04/team-production/apps/backend/internal/domain/entity"
+        "github.com/TeamH04/team-production/apps/backend/internal/usecase/input"
+        "github.com/TeamH04/team-production/apps/backend/internal/usecase/output"
+)
+
+type AuthProvider = output.AuthProvider
+
+// AuthUseCase は認証フローを司るユースケースです。
+type AuthUseCase interface {
+        Signup(ctx context.Context, input input.AuthSignupInput) (*entity.User, error)
+        Login(ctx context.Context, input input.AuthLoginInput) (*input.AuthSession, error)
+}
+
+type authUseCase struct {
+        authProvider AuthProvider
+        userRepo     output.UserRepository
+}
+
+// NewAuthUseCase は AuthUseCase 実装を返します。
+func NewAuthUseCase(authProvider AuthProvider, userRepo output.UserRepository) AuthUseCase <span class="cov8" title="1">{
+        return &amp;authUseCase{
+                authProvider: authProvider,
+                userRepo:     userRepo,
+        }
+}</span>
+
+func (uc *authUseCase) Signup(ctx context.Context, input input.AuthSignupInput) (*entity.User, error) <span class="cov8" title="1">{
+        if err := validateSignupInput(input); err != nil </span><span class="cov8" title="1">{
+                return nil, err
+        }</span>
+
+        <span class="cov8" title="1">providerInput := output.AuthSignupInput{
+                Email:    input.Email,
+                Password: input.Password,
+                Name:     input.Name,
+        }
+
+        if _, err := uc.userRepo.FindByEmail(ctx, strings.ToLower(input.Email)); err == nil </span><span class="cov8" title="1">{
+                return nil, ErrUserAlreadyExists
+        }</span> else<span class="cov8" title="1"> if !apperr.IsCode(err, apperr.CodeNotFound) </span><span class="cov8" title="1">{
+                return nil, err
+        }</span>
+
+        <span class="cov8" title="1">authUser, err := uc.authProvider.Signup(ctx, providerInput)
+        if err != nil </span><span class="cov8" title="1">{
+                return nil, err
+        }</span>
+
+        <span class="cov8" title="1">now := time.Now()
+        user := &amp;entity.User{
+                UserID:    authUser.ID,
+                Name:      input.Name,
+                Email:     strings.ToLower(authUser.Email),
+                Provider:  "email",
+                Role:      authUser.Role,
+                CreatedAt: now,
+                UpdatedAt: now,
+        }
+
+        if err := uc.userRepo.Create(ctx, user); err != nil </span><span class="cov8" title="1">{
+                return nil, err
+        }</span>
+
+        <span class="cov8" title="1">return user, nil</span>
+}
+
+func (uc *authUseCase) Login(ctx context.Context, input input.AuthLoginInput) (*input.AuthSession, error) <span class="cov8" title="1">{
+        if err := validateLoginInput(input); err != nil </span><span class="cov8" title="1">{
+                return nil, err
+        }</span>
+        <span class="cov8" title="1">session, err := uc.authProvider.Login(ctx, output.AuthLoginInput{
+                Email:    input.Email,
+                Password: input.Password,
+        })
+        if err != nil </span><span class="cov8" title="1">{
+                return nil, err
+        }</span>
+        <span class="cov8" title="1">return newAuthSession(session), nil</span>
+}
+
+func validateSignupInput(input input.AuthSignupInput) error <span class="cov8" title="1">{
+        if input.Email == "" || input.Password == "" || input.Name == "" </span><span class="cov8" title="1">{
+                return ErrInvalidInput
+        }</span>
+        <span class="cov8" title="1">if len(input.Password) &lt; 6 </span><span class="cov8" title="1">{
+                return ErrInvalidInput
+        }</span>
+        <span class="cov8" title="1">return nil</span>
+}
+
+func validateLoginInput(input input.AuthLoginInput) error <span class="cov8" title="1">{
+        if input.Email == "" || input.Password == "" </span><span class="cov8" title="1">{
+                return ErrInvalidInput
+        }</span>
+        <span class="cov8" title="1">return nil</span>
+}
+
+func newAuthSession(session *output.AuthSession) *input.AuthSession <span class="cov8" title="1">{
+        if session == nil </span><span class="cov8" title="1">{
+                return nil
+        }</span>
+        <span class="cov8" title="1">return &amp;input.AuthSession{
+                AccessToken:  session.AccessToken,
+                RefreshToken: session.RefreshToken,
+                TokenType:    session.TokenType,
+                ExpiresIn:    session.ExpiresIn,
+                User: input.AuthUser{
+                        ID:    session.User.ID,
+                        Email: session.User.Email,
+                        Role:  session.User.Role,
+                },
+        }</span>
+}
+</pre>
+		
+		<pre class="file" id="file2" style="display: none">package usecase
+
+import (
+        "context"
+
+        "github.com/TeamH04/team-production/apps/backend/internal/apperr"
+        "github.com/TeamH04/team-production/apps/backend/internal/domain/entity"
+        "github.com/TeamH04/team-production/apps/backend/internal/usecase/output"
+)
+
+// FavoriteUseCase はお気に入りに関するビジネスロジックを提供します
+type FavoriteUseCase interface {
+        GetMyFavorites(ctx context.Context, userID string) ([]entity.Favorite, error)
+        AddFavorite(ctx context.Context, userID string, storeID string) (*entity.Favorite, error)
+        RemoveFavorite(ctx context.Context, userID string, storeID string) error
+}
+
+type favoriteUseCase struct {
+        favoriteRepo output.FavoriteRepository
+        userRepo     output.UserRepository
+        storeRepo    output.StoreRepository
+}
+
+// NewFavoriteUseCase は FavoriteUseCase の実装を生成します
+func NewFavoriteUseCase(
+        favoriteRepo output.FavoriteRepository,
+        userRepo output.UserRepository,
+        storeRepo output.StoreRepository,
+) FavoriteUseCase <span class="cov8" title="1">{
+        return &amp;favoriteUseCase{
+                favoriteRepo: favoriteRepo,
+                userRepo:     userRepo,
+                storeRepo:    storeRepo,
+        }
+}</span>
+
+func (uc *favoriteUseCase) GetMyFavorites(ctx context.Context, userID string) ([]entity.Favorite, error) <span class="cov8" title="1">{
+        if err := ensureUserExists(ctx, uc.userRepo, userID); err != nil </span><span class="cov8" title="1">{
+                return nil, err
+        }</span>
+
+        <span class="cov8" title="1">return uc.favoriteRepo.FindByUserID(ctx, userID)</span>
+}
+
+func (uc *favoriteUseCase) AddFavorite(ctx context.Context, userID string, storeID string) (*entity.Favorite, error) <span class="cov8" title="1">{
+        if userID == "" || storeID == "" </span><span class="cov8" title="1">{
+                return nil, ErrInvalidInput
+        }</span>
+
+        <span class="cov8" title="1">if err := ensureUserExists(ctx, uc.userRepo, userID); err != nil </span><span class="cov8" title="1">{
+                return nil, err
+        }</span>
+
+        <span class="cov8" title="1">if err := ensureStoreExists(ctx, uc.storeRepo, storeID); err != nil </span><span class="cov8" title="1">{
+                return nil, err
+        }</span>
+
+        // 既にお気に入り登録されているか確認
+        <span class="cov8" title="1">existing, err := uc.favoriteRepo.FindByUserAndStore(ctx, userID, storeID)
+        if err == nil &amp;&amp; existing != nil </span><span class="cov8" title="1">{
+                return nil, ErrAlreadyFavorite
+        }</span>
+        <span class="cov8" title="1">if err != nil &amp;&amp; !apperr.IsCode(err, apperr.CodeNotFound) </span><span class="cov8" title="1">{
+                return nil, err
+        }</span>
+
+        <span class="cov8" title="1">favorite := &amp;entity.Favorite{
+                UserID:  userID,
+                StoreID: storeID,
+        }
+
+        if err := uc.favoriteRepo.Create(ctx, favorite); err != nil </span><span class="cov8" title="1">{
+                return nil, err
+        }</span>
+
+        <span class="cov8" title="1">return favorite, nil</span>
+}
+
+func (uc *favoriteUseCase) RemoveFavorite(ctx context.Context, userID string, storeID string) error <span class="cov8" title="1">{
+        if userID == "" || storeID == "" </span><span class="cov8" title="1">{
+                return ErrInvalidInput
+        }</span>
+
+        // お気に入りの存在確認
+        <span class="cov8" title="1">if _, err := uc.favoriteRepo.FindByUserAndStore(ctx, userID, storeID); err != nil </span><span class="cov8" title="1">{
+                if apperr.IsCode(err, apperr.CodeNotFound) </span><span class="cov8" title="1">{
+                        return ErrFavoriteNotFound
+                }</span>
+                <span class="cov8" title="1">return err</span>
+        }
+
+        <span class="cov8" title="1">return uc.favoriteRepo.Delete(ctx, userID, storeID)</span>
+}
+</pre>
+		
+		<pre class="file" id="file3" style="display: none">package usecase
+
+import (
+        "context"
+
+        "github.com/TeamH04/team-production/apps/backend/internal/apperr"
+        "github.com/TeamH04/team-production/apps/backend/internal/domain/entity"
+        "github.com/TeamH04/team-production/apps/backend/internal/domain/role"
+        "github.com/TeamH04/team-production/apps/backend/internal/usecase/output"
+)
+
+// validRoles defines the allowed user roles.
+var validRoles = map[string]bool{
+        role.User:  true,
+        role.Owner: true,
+        role.Admin: true,
+}
+
+// IsValidRole checks if the given role is valid.
+func IsValidRole(role string) bool <span class="cov8" title="1">{
+        return validRoles[role]
+}</span>
+
+// mustFindStore retrieves a store by ID and returns ErrStoreNotFound if not found.
+func mustFindStore(ctx context.Context, repo output.StoreRepository, storeID string) (*entity.Store, error) <span class="cov8" title="1">{
+        store, err := repo.FindByID(ctx, storeID)
+        if err != nil </span><span class="cov8" title="1">{
+                if apperr.IsCode(err, apperr.CodeNotFound) </span><span class="cov8" title="1">{
+                        return nil, ErrStoreNotFound
+                }</span>
+                <span class="cov8" title="1">return nil, err</span>
+        }
+        <span class="cov8" title="1">return store, nil</span>
+}
+
+// mustFindUser retrieves a user by ID and returns ErrUserNotFound if not found.
+func mustFindUser(ctx context.Context, repo output.UserRepository, userID string) (entity.User, error) <span class="cov8" title="1">{
+        user, err := repo.FindByID(ctx, userID)
+        if err != nil </span><span class="cov8" title="1">{
+                if apperr.IsCode(err, apperr.CodeNotFound) </span><span class="cov8" title="1">{
+                        return entity.User{}, ErrUserNotFound
+                }</span>
+                <span class="cov8" title="1">return entity.User{}, err</span>
+        }
+        <span class="cov8" title="1">return user, nil</span>
+}
+
+// ensureStoreExists checks if a store exists and returns ErrStoreNotFound if not.
+func ensureStoreExists(ctx context.Context, repo output.StoreRepository, storeID string) error <span class="cov8" title="1">{
+        _, err := mustFindStore(ctx, repo, storeID)
+        return err
+}</span>
+
+// ensureUserExists checks if a user exists and returns ErrUserNotFound if not.
+func ensureUserExists(ctx context.Context, repo output.UserRepository, userID string) error <span class="cov8" title="1">{
+        _, err := mustFindUser(ctx, repo, userID)
+        return err
+}</span>
+
+// mustFindReview retrieves a review by ID and returns ErrReviewNotFound if not found.
+func mustFindReview(ctx context.Context, repo output.ReviewRepository, reviewID string) (*entity.Review, error) <span class="cov8" title="1">{
+        review, err := repo.FindByID(ctx, reviewID)
+        if err != nil </span><span class="cov8" title="1">{
+                if apperr.IsCode(err, apperr.CodeNotFound) </span><span class="cov8" title="1">{
+                        return nil, ErrReviewNotFound
+                }</span>
+                <span class="cov8" title="1">return nil, err</span>
+        }
+        <span class="cov8" title="1">return review, nil</span>
+}
+
+// ensureReviewExists checks if a review exists and returns ErrReviewNotFound if not.
+func ensureReviewExists(ctx context.Context, repo output.ReviewRepository, reviewID string) error <span class="cov8" title="1">{
+        _, err := mustFindReview(ctx, repo, reviewID)
+        return err
+}</span>
+
+// mustFindReport retrieves a report by ID and returns ErrReportNotFound if not found.
+func mustFindReport(ctx context.Context, repo output.ReportRepository, reportID int64) (*entity.Report, error) <span class="cov8" title="1">{
+        report, err := repo.FindByID(ctx, reportID)
+        if err != nil </span><span class="cov8" title="1">{
+                if apperr.IsCode(err, apperr.CodeNotFound) </span><span class="cov8" title="1">{
+                        return nil, ErrReportNotFound
+                }</span>
+                <span class="cov8" title="1">return nil, err</span>
+        }
+        <span class="cov8" title="1">return report, nil</span>
+}
+
+// ensureReportExists checks if a report exists and returns ErrReportNotFound if not.
+func ensureReportExists(ctx context.Context, repo output.ReportRepository, reportID int64) error <span class="cov8" title="1">{
+        _, err := mustFindReport(ctx, repo, reportID)
+        return err
+}</span>
+</pre>
+		
+		<pre class="file" id="file4" style="display: none">package usecase
+
+import (
+        "context"
+        "fmt"
+        "strings"
+
+        "github.com/google/uuid"
+
+        "github.com/TeamH04/team-production/apps/backend/internal/apperr"
+        "github.com/TeamH04/team-production/apps/backend/internal/config"
+        "github.com/TeamH04/team-production/apps/backend/internal/domain/entity"
+        "github.com/TeamH04/team-production/apps/backend/internal/usecase/input"
+        "github.com/TeamH04/team-production/apps/backend/internal/usecase/output"
+)
+
+// MediaUseCase はアップロード処理に関するビジネスロジックを提供します
+type MediaUseCase interface {
+        CreateReviewUploads(ctx context.Context, storeID string, userID string, files []input.UploadFileInput) ([]input.SignedUploadFile, error)
+}
+
+type mediaUseCase struct {
+        storage   output.StorageProvider
+        fileRepo  output.FileRepository
+        storeRepo output.StoreRepository
+        bucket    string
+}
+
+// allowedContentTypes は許可されたContent-Typeのホワイトリスト
+var allowedContentTypes = map[string]bool{
+        "image/jpeg": true,
+        "image/png":  true,
+        "image/gif":  true,
+        "image/webp": true,
+}
+
+// isAllowedContentType はContent-Typeが許可されているかを確認します
+func isAllowedContentType(contentType string) bool <span class="cov8" title="1">{
+        return allowedContentTypes[strings.ToLower(contentType)]
+}</span>
+
+// NewMediaUseCase は MediaUseCase の実装を生成します
+func NewMediaUseCase(
+        storage output.StorageProvider,
+        fileRepo output.FileRepository,
+        storeRepo output.StoreRepository,
+        bucket string,
+) MediaUseCase <span class="cov8" title="1">{
+        return &amp;mediaUseCase{
+                storage:   storage,
+                fileRepo:  fileRepo,
+                storeRepo: storeRepo,
+                bucket:    bucket,
+        }
+}</span>
+
+func (uc *mediaUseCase) CreateReviewUploads(ctx context.Context, storeID string, userID string, files []input.UploadFileInput) ([]input.SignedUploadFile, error) <span class="cov8" title="1">{
+        if storeID == "" || userID == "" || len(files) == 0 </span><span class="cov8" title="1">{
+                return nil, ErrInvalidInput
+        }</span>
+        <span class="cov8" title="1">if _, err := uc.storeRepo.FindByID(ctx, storeID); err != nil </span><span class="cov8" title="1">{
+                if apperr.IsCode(err, apperr.CodeNotFound) </span><span class="cov8" title="1">{
+                        return nil, ErrStoreNotFound
+                }</span>
+                <span class="cov8" title="1">return nil, err</span>
+        }
+
+        <span class="cov8" title="1">results := make([]input.SignedUploadFile, 0, len(files))
+        for _, file := range files </span><span class="cov8" title="1">{
+                fileName := strings.TrimSpace(file.FileName)
+                contentType := strings.TrimSpace(file.ContentType)
+                if fileName == "" || contentType == "" </span><span class="cov8" title="1">{
+                        return nil, ErrInvalidInput
+                }</span>
+                <span class="cov8" title="1">if !isAllowedContentType(contentType) </span><span class="cov8" title="1">{
+                        return nil, ErrInvalidContentType
+                }</span>
+
+                <span class="cov8" title="1">objectKey := fmt.Sprintf("reviews/%s/%s/%s", storeID, userID, uuid.NewString())
+
+                createdBy := userID
+                record := entity.File{
+                        FileKind:    "review",
+                        FileName:    fileName,
+                        FileSize:    file.FileSize,
+                        ObjectKey:   objectKey,
+                        ContentType: &amp;contentType,
+                        CreatedBy:   &amp;createdBy,
+                }
+
+                if err := uc.fileRepo.Create(ctx, &amp;record); err != nil </span><span class="cov8" title="1">{
+                        return nil, err
+                }</span>
+                <span class="cov8" title="1">if err := uc.fileRepo.LinkToStore(ctx, storeID, record.FileID); err != nil </span><span class="cov8" title="1">{
+                        return nil, err
+                }</span>
+
+                <span class="cov8" title="1">signed, err := uc.storage.CreateSignedUpload(ctx, uc.bucket, objectKey, contentType, config.SignedURLTTL, false)
+                if err != nil </span><span class="cov8" title="1">{
+                        return nil, err
+                }</span>
+
+                <span class="cov8" title="1">results = append(results, input.SignedUploadFile{
+                        FileID:      record.FileID,
+                        ObjectKey:   objectKey,
+                        Path:        signed.Path,
+                        Token:       signed.Token,
+                        ContentType: contentType,
+                })</span>
+        }
+
+        <span class="cov8" title="1">return results, nil</span>
+}
+</pre>
+		
+		<pre class="file" id="file5" style="display: none">package usecase
+
+import (
+        "context"
+
+        "github.com/TeamH04/team-production/apps/backend/internal/domain/entity"
+        "github.com/TeamH04/team-production/apps/backend/internal/usecase/input"
+        "github.com/TeamH04/team-production/apps/backend/internal/usecase/output"
+)
+
+// MenuUseCase はメニューに関するビジネスロジックを提供します
+type MenuUseCase interface {
+        GetMenusByStoreID(ctx context.Context, storeID string) ([]entity.Menu, error)
+        CreateMenu(ctx context.Context, storeID string, input input.CreateMenuInput) (*entity.Menu, error)
+}
+
+type menuUseCase struct {
+        menuRepo  output.MenuRepository
+        storeRepo output.StoreRepository
+}
+
+// NewMenuUseCase は MenuUseCase の実装を生成します
+func NewMenuUseCase(menuRepo output.MenuRepository, storeRepo output.StoreRepository) MenuUseCase <span class="cov8" title="1">{
+        return &amp;menuUseCase{
+                menuRepo:  menuRepo,
+                storeRepo: storeRepo,
+        }
+}</span>
+
+func (uc *menuUseCase) GetMenusByStoreID(ctx context.Context, storeID string) ([]entity.Menu, error) <span class="cov8" title="1">{
+        if err := ensureStoreExists(ctx, uc.storeRepo, storeID); err != nil </span><span class="cov8" title="1">{
+                return nil, err
+        }</span>
+
+        <span class="cov8" title="1">return uc.menuRepo.FindByStoreID(ctx, storeID)</span>
+}
+
+func (uc *menuUseCase) CreateMenu(ctx context.Context, storeID string, in input.CreateMenuInput) (*entity.Menu, error) <span class="cov8" title="1">{
+        if err := ensureStoreExists(ctx, uc.storeRepo, storeID); err != nil </span><span class="cov8" title="1">{
+                return nil, err
+        }</span>
+
+        <span class="cov8" title="1">if in.Name == "" </span><span class="cov8" title="1">{
+                return nil, ErrInvalidInput
+        }</span>
+
+        <span class="cov8" title="1">menu := &amp;entity.Menu{
+                StoreID:     storeID,
+                Name:        in.Name,
+                Price:       in.Price,
+                Description: in.Description,
+        }
+
+        if err := uc.menuRepo.Create(ctx, menu); err != nil </span><span class="cov8" title="1">{
+                return nil, err
+        }</span>
+
+        <span class="cov8" title="1">return menu, nil</span>
+}
+</pre>
+		
+		<pre class="file" id="file6" style="display: none">package usecase
+
+import (
+        "context"
+
+        "github.com/TeamH04/team-production/apps/backend/internal/domain/entity"
+        "github.com/TeamH04/team-production/apps/backend/internal/usecase/input"
+        "github.com/TeamH04/team-production/apps/backend/internal/usecase/output"
+)
+
+// ReportUseCase は通報に関するビジネスロジックを提供します
+type ReportUseCase interface {
+        CreateReport(ctx context.Context, input input.CreateReportInput) (*entity.Report, error)
+        GetAllReports(ctx context.Context) ([]entity.Report, error)
+        HandleReport(ctx context.Context, reportID int64, action input.HandleReportAction) error
+}
+
+type reportUseCase struct {
+        reportRepo output.ReportRepository
+        userRepo   output.UserRepository
+}
+
+// NewReportUseCase は ReportUseCase の実装を生成します
+func NewReportUseCase(reportRepo output.ReportRepository, userRepo output.UserRepository) ReportUseCase <span class="cov8" title="1">{
+        return &amp;reportUseCase{
+                reportRepo: reportRepo,
+                userRepo:   userRepo,
+        }
+}</span>
+
+func (uc *reportUseCase) CreateReport(ctx context.Context, req input.CreateReportInput) (*entity.Report, error) <span class="cov8" title="1">{
+        if err := ensureUserExists(ctx, uc.userRepo, req.UserID); err != nil </span><span class="cov8" title="1">{
+                return nil, err
+        }</span>
+
+        <span class="cov8" title="1">if req.TargetType == "" || req.Reason == "" </span><span class="cov8" title="1">{
+                return nil, ErrInvalidInput
+        }</span>
+
+        <span class="cov8" title="1">validTargetTypes := map[string]bool{
+                "review": true,
+                "store":  true,
+        }
+        if !validTargetTypes[req.TargetType] </span><span class="cov8" title="1">{
+                return nil, ErrInvalidTargetType
+        }</span>
+
+        <span class="cov8" title="1">report := &amp;entity.Report{
+                UserID:     req.UserID,
+                TargetType: req.TargetType,
+                TargetID:   req.TargetID,
+                Reason:     req.Reason,
+                Status:     "pending",
+        }
+
+        if err := uc.reportRepo.Create(ctx, report); err != nil </span><span class="cov8" title="1">{
+                return nil, err
+        }</span>
+
+        <span class="cov8" title="1">return report, nil</span>
+}
+
+func (uc *reportUseCase) GetAllReports(ctx context.Context) ([]entity.Report, error) <span class="cov8" title="1">{
+        return uc.reportRepo.FindAll(ctx)
+}</span>
+
+func (uc *reportUseCase) HandleReport(ctx context.Context, reportID int64, action input.HandleReportAction) error <span class="cov8" title="1">{
+        if err := ensureReportExists(ctx, uc.reportRepo, reportID); err != nil </span><span class="cov8" title="1">{
+                return err
+        }</span>
+
+        // アクションのバリデーション
+        <span class="cov8" title="1">validActions := map[input.HandleReportAction]string{
+                input.HandleReportResolve: "resolved",
+                input.HandleReportReject:  "rejected",
+        }
+
+        status, ok := validActions[action]
+        if !ok </span><span class="cov8" title="1">{
+                return ErrInvalidAction
+        }</span>
+
+        <span class="cov8" title="1">return uc.reportRepo.UpdateStatus(ctx, reportID, status)</span>
+}
+</pre>
+		
+		<pre class="file" id="file7" style="display: none">package usecase
+
+import (
+        "context"
+
+        "github.com/TeamH04/team-production/apps/backend/internal/domain/entity"
+        "github.com/TeamH04/team-production/apps/backend/internal/usecase/input"
+        "github.com/TeamH04/team-production/apps/backend/internal/usecase/output"
+)
+
+type reviewUseCase struct {
+        reviewRepo  output.ReviewRepository
+        storeRepo   output.StoreRepository
+        menuRepo    output.MenuRepository
+        fileRepo    output.FileRepository
+        transaction output.Transaction
+}
+
+// NewReviewUseCase は ReviewUseCase の実装を生成します
+func NewReviewUseCase(
+        reviewRepo output.ReviewRepository,
+        storeRepo output.StoreRepository,
+        menuRepo output.MenuRepository,
+        fileRepo output.FileRepository,
+        transaction output.Transaction,
+) input.ReviewUseCase <span class="cov8" title="1">{
+        return &amp;reviewUseCase{
+                reviewRepo:  reviewRepo,
+                storeRepo:   storeRepo,
+                menuRepo:    menuRepo,
+                fileRepo:    fileRepo,
+                transaction: transaction,
+        }
+}</span>
+
+func (uc *reviewUseCase) GetReviewsByStoreID(ctx context.Context, storeID string, sort string, viewerID string) ([]entity.Review, error) <span class="cov8" title="1">{
+        if err := ensureStoreExists(ctx, uc.storeRepo, storeID); err != nil </span><span class="cov8" title="1">{
+                return nil, err
+        }</span>
+
+        <span class="cov8" title="1">return uc.reviewRepo.FindByStoreID(ctx, storeID, normalizeReviewSort(sort), viewerID)</span>
+}
+
+func (uc *reviewUseCase) Create(ctx context.Context, storeID string, userID string, input input.CreateReview) error <span class="cov8" title="1">{
+        if storeID == "" || userID == "" </span><span class="cov8" title="1">{
+                return ErrInvalidInput
+        }</span>
+
+        <span class="cov8" title="1">if err := ensureStoreExists(ctx, uc.storeRepo, storeID); err != nil </span><span class="cov8" title="1">{
+                return err
+        }</span>
+
+        <span class="cov8" title="1">if input.Rating &lt; 1 || input.Rating &gt; 5 </span><span class="cov8" title="1">{
+                return ErrInvalidRating
+        }</span>
+
+        <span class="cov8" title="1">menuIDs := dedupeStrings(input.MenuIDs)
+        if len(menuIDs) &gt; 0 </span><span class="cov8" title="1">{
+                menus, err := uc.menuRepo.FindByStoreAndIDs(ctx, storeID, menuIDs)
+                if err != nil </span><span class="cov8" title="1">{
+                        return err
+                }</span>
+                <span class="cov8" title="1">if len(menus) != len(menuIDs) </span><span class="cov8" title="1">{
+                        return ErrInvalidInput
+                }</span>
+        }
+
+        <span class="cov8" title="1">fileIDs := dedupeStrings(input.FileIDs)
+        if len(fileIDs) &gt; 0 </span><span class="cov8" title="1">{
+                files, err := uc.fileRepo.FindByStoreAndIDs(ctx, storeID, fileIDs)
+                if err != nil </span><span class="cov8" title="1">{
+                        return err
+                }</span>
+                <span class="cov8" title="1">if len(files) != len(fileIDs) </span><span class="cov8" title="1">{
+                        return ErrInvalidFileIDs
+                }</span>
+        }
+
+        <span class="cov8" title="1">if uc.transaction == nil </span><span class="cov8" title="1">{
+                return output.ErrInvalidTransaction
+        }</span>
+
+        <span class="cov8" title="1">return uc.transaction.StartTransaction(func(tx interface{}) error </span><span class="cov8" title="1">{
+                return uc.reviewRepo.CreateInTx(ctx, tx, output.CreateReview{
+                        StoreID: storeID,
+                        UserID:  userID,
+                        Rating:  input.Rating,
+                        Content: input.Content,
+                        MenuIDs: menuIDs,
+                        FileIDs: fileIDs,
+                })
+        }</span>)
+}
+
+func (uc *reviewUseCase) LikeReview(ctx context.Context, reviewID string, userID string) error <span class="cov8" title="1">{
+        if reviewID == "" || userID == "" </span><span class="cov8" title="1">{
+                return ErrInvalidInput
+        }</span>
+        <span class="cov8" title="1">if err := ensureReviewExists(ctx, uc.reviewRepo, reviewID); err != nil </span><span class="cov8" title="1">{
+                return err
+        }</span>
+        <span class="cov8" title="1">return uc.reviewRepo.AddLike(ctx, reviewID, userID)</span>
+}
+
+func (uc *reviewUseCase) UnlikeReview(ctx context.Context, reviewID string, userID string) error <span class="cov8" title="1">{
+        if reviewID == "" || userID == "" </span><span class="cov8" title="1">{
+                return ErrInvalidInput
+        }</span>
+        <span class="cov8" title="1">if err := ensureReviewExists(ctx, uc.reviewRepo, reviewID); err != nil </span><span class="cov8" title="1">{
+                return err
+        }</span>
+        <span class="cov8" title="1">return uc.reviewRepo.RemoveLike(ctx, reviewID, userID)</span>
+}
+
+func normalizeReviewSort(sort string) string <span class="cov8" title="1">{
+        switch sort </span>{
+        case "liked":<span class="cov8" title="1">
+                return "liked"</span>
+        default:<span class="cov8" title="1">
+                return "new"</span>
+        }
+}
+
+func dedupeStrings(values []string) []string <span class="cov8" title="1">{
+        if len(values) == 0 </span><span class="cov8" title="1">{
+                return nil
+        }</span>
+        <span class="cov8" title="1">seen := make(map[string]struct{}, len(values))
+        result := make([]string, 0, len(values))
+        for _, value := range values </span><span class="cov8" title="1">{
+                if value == "" </span><span class="cov8" title="1">{
+                        continue</span>
+                }
+                <span class="cov8" title="1">if _, ok := seen[value]; ok </span><span class="cov8" title="1">{
+                        continue</span>
+                }
+                <span class="cov8" title="1">seen[value] = struct{}{}
+                result = append(result, value)</span>
+        }
+        <span class="cov8" title="1">return result</span>
+}
+</pre>
+		
+		<pre class="file" id="file8" style="display: none">package usecase
+
+import (
+        "context"
+        "math"
+        "time"
+
+        "github.com/TeamH04/team-production/apps/backend/internal/domain/entity"
+        "github.com/TeamH04/team-production/apps/backend/internal/usecase/input"
+        "github.com/TeamH04/team-production/apps/backend/internal/usecase/output"
+)
+
+// StoreUseCase はストアに関するビジネスロジックを提供します
+type StoreUseCase interface {
+        GetAllStores(ctx context.Context) ([]entity.Store, error)
+        GetStoreByID(ctx context.Context, id string) (*entity.Store, error)
+        CreateStore(ctx context.Context, input input.CreateStoreInput) (*entity.Store, error)
+        UpdateStore(ctx context.Context, id string, input input.UpdateStoreInput) (*entity.Store, error)
+        DeleteStore(ctx context.Context, id string) error
+}
+
+type storeUseCase struct {
+        storeRepo output.StoreRepository
+}
+
+// NewStoreUseCase は StoreUseCase の実装を生成します
+func NewStoreUseCase(storeRepo output.StoreRepository) StoreUseCase <span class="cov8" title="1">{
+        return &amp;storeUseCase{
+                storeRepo: storeRepo,
+        }
+}</span>
+
+func (uc *storeUseCase) GetAllStores(ctx context.Context) ([]entity.Store, error) <span class="cov8" title="1">{
+        return uc.storeRepo.FindAll(ctx)
+}</span>
+
+func (uc *storeUseCase) GetStoreByID(ctx context.Context, id string) (*entity.Store, error) <span class="cov8" title="1">{
+        return mustFindStore(ctx, uc.storeRepo, id)
+}</span>
+
+func (uc *storeUseCase) CreateStore(ctx context.Context, in input.CreateStoreInput) (*entity.Store, error) <span class="cov8" title="1">{
+        if in.Name == "" || in.Address == "" </span><span class="cov8" title="1">{
+                return nil, ErrInvalidInput
+        }</span>
+        <span class="cov8" title="1">if in.PlaceID == "" </span><span class="cov8" title="1">{
+                return nil, ErrInvalidInput
+        }</span>
+        // Validate latitude range: -90 to 90
+        <span class="cov8" title="1">if in.Latitude &lt; -90.0 || in.Latitude &gt; 90.0 || math.IsNaN(in.Latitude) || math.IsInf(in.Latitude, 0) </span><span class="cov8" title="1">{
+                return nil, ErrInvalidCoordinates
+        }</span>
+        // Validate longitude range: -180 to 180
+        <span class="cov8" title="1">if in.Longitude &lt; -180.0 || in.Longitude &gt; 180.0 || math.IsNaN(in.Longitude) || math.IsInf(in.Longitude, 0) </span><span class="cov8" title="1">{
+                return nil, ErrInvalidCoordinates
+        }</span>
+        <span class="cov8" title="1">if in.ThumbnailFileID == nil </span><span class="cov8" title="1">{
+                return nil, ErrInvalidInput
+        }</span>
+
+        <span class="cov8" title="1">store := &amp;entity.Store{
+                Name:            in.Name,
+                Address:         in.Address,
+                ThumbnailFileID: in.ThumbnailFileID,
+                OpenedAt:        in.OpenedAt,
+                Description:     in.Description,
+                OpeningHours:    in.OpeningHours,
+                Latitude:        in.Latitude,
+                Longitude:       in.Longitude,
+                GoogleMapURL:    in.GoogleMapURL,
+                PlaceID:         in.PlaceID,
+                IsApproved:      false,
+        }
+
+        if err := uc.storeRepo.Create(ctx, store); err != nil </span><span class="cov8" title="1">{
+                return nil, err
+        }</span>
+
+        <span class="cov8" title="1">return store, nil</span>
+}
+
+func (uc *storeUseCase) UpdateStore(ctx context.Context, id string, in input.UpdateStoreInput) (*entity.Store, error) <span class="cov8" title="1">{
+        store, err := mustFindStore(ctx, uc.storeRepo, id)
+        if err != nil </span><span class="cov8" title="1">{
+                return nil, err
+        }</span>
+
+        <span class="cov8" title="1">if err := applyStoreUpdates(store, in); err != nil </span><span class="cov8" title="1">{
+                return nil, err
+        }</span>
+
+        <span class="cov8" title="1">if err := uc.storeRepo.Update(ctx, store); err != nil </span><span class="cov8" title="1">{
+                return nil, err
+        }</span>
+
+        <span class="cov8" title="1">return uc.storeRepo.FindByID(ctx, id)</span>
+}
+
+func applyStoreUpdates(store *entity.Store, in input.UpdateStoreInput) error <span class="cov8" title="1">{
+        if err := validateStoreUpdateInput(in); err != nil </span><span class="cov8" title="1">{
+                return err
+        }</span>
+
+        <span class="cov8" title="1">applyBasicFields(store, in)
+        applyOptionalFields(store, in)
+        store.UpdatedAt = time.Now()
+
+        return nil</span>
+}
+
+func validateStoreUpdateInput(in input.UpdateStoreInput) error <span class="cov8" title="1">{
+        if in.Latitude != nil &amp;&amp; !isValidLatitude(*in.Latitude) </span><span class="cov8" title="1">{
+                return ErrInvalidCoordinates
+        }</span>
+        <span class="cov8" title="1">if in.Longitude != nil &amp;&amp; !isValidLongitude(*in.Longitude) </span><span class="cov8" title="1">{
+                return ErrInvalidCoordinates
+        }</span>
+        <span class="cov8" title="1">if in.PlaceID != nil &amp;&amp; *in.PlaceID == "" </span><span class="cov8" title="1">{
+                return ErrInvalidInput
+        }</span>
+        <span class="cov8" title="1">return nil</span>
+}
+
+func isValidLatitude(lat float64) bool <span class="cov8" title="1">{
+        return lat &gt;= -90.0 &amp;&amp; lat &lt;= 90.0 &amp;&amp; !math.IsNaN(lat) &amp;&amp; !math.IsInf(lat, 0)
+}</span>
+
+func isValidLongitude(lng float64) bool <span class="cov8" title="1">{
+        return lng &gt;= -180.0 &amp;&amp; lng &lt;= 180.0 &amp;&amp; !math.IsNaN(lng) &amp;&amp; !math.IsInf(lng, 0)
+}</span>
+
+func applyBasicFields(store *entity.Store, in input.UpdateStoreInput) <span class="cov8" title="1">{
+        if in.Name != nil </span><span class="cov8" title="1">{
+                store.Name = *in.Name
+        }</span>
+        <span class="cov8" title="1">if in.Address != nil </span><span class="cov8" title="1">{
+                store.Address = *in.Address
+        }</span>
+        <span class="cov8" title="1">if in.PlaceID != nil </span><span class="cov8" title="1">{
+                store.PlaceID = *in.PlaceID
+        }</span>
+        <span class="cov8" title="1">if in.Latitude != nil </span><span class="cov8" title="1">{
+                store.Latitude = *in.Latitude
+        }</span>
+        <span class="cov8" title="1">if in.Longitude != nil </span><span class="cov8" title="1">{
+                store.Longitude = *in.Longitude
+        }</span>
+}
+
+func applyOptionalFields(store *entity.Store, in input.UpdateStoreInput) <span class="cov8" title="1">{
+        if in.ThumbnailFileID != nil </span><span class="cov8" title="1">{
+                store.ThumbnailFileID = in.ThumbnailFileID
+        }</span>
+        <span class="cov8" title="1">if in.OpenedAt != nil </span><span class="cov8" title="1">{
+                store.OpenedAt = in.OpenedAt
+        }</span>
+        <span class="cov8" title="1">if in.Description != nil </span><span class="cov8" title="1">{
+                store.Description = in.Description
+        }</span>
+        <span class="cov8" title="1">if in.OpeningHours != nil </span><span class="cov8" title="1">{
+                store.OpeningHours = in.OpeningHours
+        }</span>
+        <span class="cov8" title="1">if in.GoogleMapURL != nil </span><span class="cov8" title="1">{
+                store.GoogleMapURL = in.GoogleMapURL
+        }</span>
+}
+
+func (uc *storeUseCase) DeleteStore(ctx context.Context, id string) error <span class="cov8" title="1">{
+        if err := ensureStoreExists(ctx, uc.storeRepo, id); err != nil </span><span class="cov8" title="1">{
+                return err
+        }</span>
+
+        <span class="cov8" title="1">return uc.storeRepo.Delete(ctx, id)</span>
+}
+</pre>
+		
+		<pre class="file" id="file9" style="display: none">package usecase
+
+import (
+        "context"
+        "strings"
+        "time"
+
+        "github.com/TeamH04/team-production/apps/backend/internal/apperr"
+        "github.com/TeamH04/team-production/apps/backend/internal/domain/entity"
+        "github.com/TeamH04/team-production/apps/backend/internal/domain/role"
+        "github.com/TeamH04/team-production/apps/backend/internal/usecase/input"
+        "github.com/TeamH04/team-production/apps/backend/internal/usecase/output"
+)
+
+type userUseCase struct {
+        userRepo   output.UserRepository
+        reviewRepo output.ReviewRepository
+}
+
+const providerOAuth = "oauth"
+
+// NewUserUseCase は UserUseCase の実装を生成します
+func NewUserUseCase(userRepo output.UserRepository, reviewRepo output.ReviewRepository) input.UserUseCase <span class="cov8" title="1">{
+        return &amp;userUseCase{
+                userRepo:   userRepo,
+                reviewRepo: reviewRepo,
+        }
+}</span>
+
+func (uc *userUseCase) FindByID(ctx context.Context, userID string) (entity.User, error) <span class="cov8" title="1">{
+        return mustFindUser(ctx, uc.userRepo, userID)
+}</span>
+
+func (uc *userUseCase) EnsureUser(ctx context.Context, input input.EnsureUserInput) (entity.User, error) <span class="cov8" title="1">{
+        if input.UserID == "" </span><span class="cov8" title="1">{
+                return entity.User{}, ErrInvalidInput
+        }</span>
+
+        <span class="cov8" title="1">provider := normalizeProvider(input.Provider)
+
+        user, err := uc.userRepo.FindByID(ctx, input.UserID)
+        if err == nil </span><span class="cov8" title="1">{
+                if shouldUpdateProvider(user.Provider, provider) </span><span class="cov8" title="1">{
+                        user.Provider = provider
+                        user.UpdatedAt = time.Now()
+                        if updateErr := uc.userRepo.Update(ctx, user); updateErr != nil </span><span class="cov8" title="1">{
+                                return entity.User{}, updateErr
+                        }</span>
+                }
+                <span class="cov8" title="1">return user, nil</span>
+        }
+        <span class="cov8" title="1">if !apperr.IsCode(err, apperr.CodeNotFound) </span><span class="cov8" title="1">{
+                return entity.User{}, err
+        }</span>
+
+        <span class="cov8" title="1">email := strings.ToLower(strings.TrimSpace(input.Email))
+        if email == "" </span><span class="cov8" title="1">{
+                return entity.User{}, ErrInvalidInput
+        }</span>
+
+        <span class="cov8" title="1">userRole := strings.ToLower(strings.TrimSpace(input.Role))
+        if !IsValidRole(userRole) </span><span class="cov8" title="1">{
+                userRole = role.User
+        }</span>
+
+        <span class="cov8" title="1">name := deriveNameFromEmail(email)
+        now := time.Now()
+        newUser := &amp;entity.User{
+                UserID:    input.UserID,
+                Name:      name,
+                Email:     email,
+                Provider:  provider,
+                Role:      userRole,
+                CreatedAt: now,
+                UpdatedAt: now,
+        }
+
+        if err := uc.userRepo.Create(ctx, newUser); err != nil </span><span class="cov8" title="1">{
+                existing, fetchErr := uc.userRepo.FindByID(ctx, input.UserID)
+                if fetchErr == nil </span><span class="cov8" title="1">{
+                        if shouldUpdateProvider(existing.Provider, provider) </span><span class="cov8" title="1">{
+                                existing.Provider = provider
+                                existing.UpdatedAt = time.Now()
+                                if updateErr := uc.userRepo.Update(ctx, existing); updateErr != nil </span><span class="cov8" title="1">{
+                                        return entity.User{}, updateErr
+                                }</span>
+                        }
+                        <span class="cov8" title="1">return existing, nil</span>
+                }
+                <span class="cov0" title="0">return entity.User{}, err</span>
+        }
+
+        <span class="cov8" title="1">return *newUser, nil</span>
+}
+
+func (uc *userUseCase) UpdateUser(ctx context.Context, userID string, input input.UpdateUserInput) (entity.User, error) <span class="cov8" title="1">{
+        user, err := mustFindUser(ctx, uc.userRepo, userID)
+        if err != nil </span><span class="cov8" title="1">{
+                return entity.User{}, err
+        }</span>
+
+        <span class="cov8" title="1">if input.Name != nil </span><span class="cov8" title="1">{
+                user.Name = *input.Name
+        }</span>
+        <span class="cov8" title="1">if input.IconURL != nil </span><span class="cov8" title="1">{
+                user.IconURL = input.IconURL
+        }</span>
+        <span class="cov8" title="1">if input.IconFileID != nil </span><span class="cov8" title="1">{
+                user.IconFileID = input.IconFileID
+        }</span>
+        <span class="cov8" title="1">if input.Gender != nil </span><span class="cov8" title="1">{
+                user.Gender = input.Gender
+        }</span>
+        <span class="cov8" title="1">if input.Birthday != nil </span><span class="cov8" title="1">{
+                user.Birthday = input.Birthday
+        }</span>
+        <span class="cov8" title="1">user.UpdatedAt = time.Now()
+
+        if err := uc.userRepo.Update(ctx, user); err != nil </span><span class="cov8" title="1">{
+                return entity.User{}, err
+        }</span>
+
+        <span class="cov8" title="1">return user, nil</span>
+}
+
+func (uc *userUseCase) UpdateUserRole(ctx context.Context, userID string, role string) error <span class="cov8" title="1">{
+        if !IsValidRole(role) </span><span class="cov8" title="1">{
+                return ErrInvalidRole
+        }</span>
+
+        <span class="cov8" title="1">if err := ensureUserExists(ctx, uc.userRepo, userID); err != nil </span><span class="cov8" title="1">{
+                return err
+        }</span>
+
+        <span class="cov8" title="1">return uc.userRepo.UpdateRole(ctx, userID, role)</span>
+}
+
+func (uc *userUseCase) GetUserReviews(ctx context.Context, userID string) ([]entity.Review, error) <span class="cov8" title="1">{
+        if err := ensureUserExists(ctx, uc.userRepo, userID); err != nil </span><span class="cov8" title="1">{
+                return nil, err
+        }</span>
+
+        <span class="cov8" title="1">return uc.reviewRepo.FindByUserID(ctx, userID)</span>
+}
+
+func deriveNameFromEmail(email string) string <span class="cov8" title="1">{
+        local := strings.TrimSpace(email)
+        if local == "" </span><span class="cov0" title="0">{
+                return "user"
+        }</span>
+        <span class="cov8" title="1">if at := strings.Index(local, "@"); at &gt;= 0 </span><span class="cov8" title="1">{
+                local = local[:at]
+        }</span>
+        <span class="cov8" title="1">local = strings.TrimSpace(local)
+        if local == "" </span><span class="cov8" title="1">{
+                return "user"
+        }</span>
+        <span class="cov8" title="1">return local</span>
+}
+
+func normalizeProvider(provider string) string <span class="cov8" title="1">{
+        trimmed := strings.ToLower(strings.TrimSpace(provider))
+        validProviders := map[string]bool{
+                "google":      true,
+                "apple":       true,
+                "email":       true,
+                providerOAuth: true,
+        }
+        if !validProviders[trimmed] </span><span class="cov8" title="1">{
+                return providerOAuth
+        }</span>
+        <span class="cov8" title="1">return trimmed</span>
+}
+
+func shouldUpdateProvider(current string, incoming string) bool <span class="cov8" title="1">{
+        if incoming == "" || incoming == providerOAuth </span><span class="cov8" title="1">{
+                return false
+        }</span>
+        <span class="cov8" title="1">currentTrimmed := strings.ToLower(strings.TrimSpace(current))
+        return currentTrimmed == "" || currentTrimmed == providerOAuth</span>
+}
+</pre>
+		
+		</div>
+	</body>
+	<script>
+	(function() {
+		var files = document.getElementById('files');
+		var visible;
+		files.addEventListener('change', onChange, false);
+		function select(part) {
+			if (visible)
+				visible.style.display = 'none';
+			visible = document.getElementById(part);
+			if (!visible)
+				return;
+			files.value = part;
+			visible.style.display = 'block';
+			location.hash = part;
+		}
+		function onChange() {
+			select(files.value);
+			window.scrollTo(0, 0);
+		}
+		if (location.hash != "") {
+			select(location.hash.substr(1));
+		}
+		if (!visible) {
+			select("file0");
+		}
+	})();
+	</script>
+</html>

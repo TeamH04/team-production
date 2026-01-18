@@ -1,85 +1,24 @@
 package handlers_test
 
 import (
-	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 
 	"github.com/TeamH04/team-production/apps/backend/internal/domain/entity"
 	"github.com/TeamH04/team-production/apps/backend/internal/handlers"
+	"github.com/TeamH04/team-production/apps/backend/internal/handlers/testutil"
+	"github.com/TeamH04/team-production/apps/backend/internal/presentation/presenter"
 	"github.com/TeamH04/team-production/apps/backend/internal/usecase"
-	"github.com/TeamH04/team-production/apps/backend/internal/usecase/input"
-	"github.com/TeamH04/team-production/apps/backend/internal/usecase/output"
 )
 
-// mockStoreUseCase implements input.StoreUseCase for testing
-type mockStoreUseCase struct {
-	stores         []entity.Store
-	store          *entity.Store
-	getAllErr      error
-	getByIDErr     error
-	createErr      error
-	updateErr      error
-	deleteErr      error
-	createdStore   *entity.Store
-}
-
-func (m *mockStoreUseCase) GetAllStores(ctx context.Context) ([]entity.Store, error) {
-	if m.getAllErr != nil {
-		return nil, m.getAllErr
-	}
-	return m.stores, nil
-}
-
-func (m *mockStoreUseCase) GetStoreByID(ctx context.Context, id string) (*entity.Store, error) {
-	if m.getByIDErr != nil {
-		return nil, m.getByIDErr
-	}
-	return m.store, nil
-}
-
-func (m *mockStoreUseCase) CreateStore(ctx context.Context, in input.CreateStoreInput) (*entity.Store, error) {
-	if m.createErr != nil {
-		return nil, m.createErr
-	}
-	if m.createdStore != nil {
-		return m.createdStore, nil
-	}
-	return &entity.Store{
-		StoreID: "new-store-id",
-		Name:    in.Name,
-		Address: in.Address,
-	}, nil
-}
-
-func (m *mockStoreUseCase) UpdateStore(ctx context.Context, id string, in input.UpdateStoreInput) (*entity.Store, error) {
-	if m.updateErr != nil {
-		return nil, m.updateErr
-	}
-	return m.store, nil
-}
-
-func (m *mockStoreUseCase) DeleteStore(ctx context.Context, id string) error {
-	return m.deleteErr
-}
-
-// mockStorageProviderForStore implements output.StorageProvider for testing
-type mockStorageProviderForStore struct{}
-
-func (m *mockStorageProviderForStore) CreateSignedUpload(ctx context.Context, bucket, objectPath, contentType string, expiresIn time.Duration, upsert bool) (*output.SignedUpload, error) {
-	return nil, nil
-}
-
-func (m *mockStorageProviderForStore) CreateSignedDownload(ctx context.Context, bucket, objectPath string, expiresIn time.Duration) (*output.SignedDownload, error) {
-	return &output.SignedDownload{URL: "https://example.com/signed-url"}, nil
-}
+const testUpdateStoreBody = `{"name":"Updated Store"}`
 
 // --- GetStores Tests ---
 
@@ -89,16 +28,15 @@ func TestStoreHandler_GetStores_Success(t *testing.T) {
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
 
-	mockUC := &mockStoreUseCase{
-		stores: []entity.Store{
+	mockUC := &testutil.MockStoreUseCase{
+		Stores: []entity.Store{
 			{StoreID: "store-1", Name: "Store 1"},
 			{StoreID: "store-2", Name: "Store 2"},
 		},
 	}
-	h := handlers.NewStoreHandler(mockUC, &mockStorageProviderForStore{}, "test-bucket")
+	h := handlers.NewStoreHandler(mockUC, &testutil.MockStorageProvider{}, "test-bucket")
 
 	err := h.GetStores(c)
-
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -121,13 +59,12 @@ func TestStoreHandler_GetStores_Empty(t *testing.T) {
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
 
-	mockUC := &mockStoreUseCase{
-		stores: []entity.Store{},
+	mockUC := &testutil.MockStoreUseCase{
+		Stores: []entity.Store{},
 	}
-	h := handlers.NewStoreHandler(mockUC, &mockStorageProviderForStore{}, "test-bucket")
+	h := handlers.NewStoreHandler(mockUC, &testutil.MockStorageProvider{}, "test-bucket")
 
 	err := h.GetStores(c)
-
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -142,10 +79,10 @@ func TestStoreHandler_GetStores_UseCaseError(t *testing.T) {
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
 
-	mockUC := &mockStoreUseCase{
-		getAllErr: usecase.ErrStoreNotFound,
+	mockUC := &testutil.MockStoreUseCase{
+		GetAllErr: usecase.ErrStoreNotFound,
 	}
-	h := handlers.NewStoreHandler(mockUC, &mockStorageProviderForStore{}, "test-bucket")
+	h := handlers.NewStoreHandler(mockUC, &testutil.MockStorageProvider{}, "test-bucket")
 
 	err := h.GetStores(c)
 
@@ -166,13 +103,12 @@ func TestStoreHandler_GetStoreByID_Success(t *testing.T) {
 	c.SetParamNames("id")
 	c.SetParamValues(storeID)
 
-	mockUC := &mockStoreUseCase{
-		store: &entity.Store{StoreID: storeID, Name: "Test Store"},
+	mockUC := &testutil.MockStoreUseCase{
+		Store: &entity.Store{StoreID: storeID, Name: "Test Store"},
 	}
-	h := handlers.NewStoreHandler(mockUC, &mockStorageProviderForStore{}, "test-bucket")
+	h := handlers.NewStoreHandler(mockUC, &testutil.MockStorageProvider{}, "test-bucket")
 
 	err := h.GetStoreByID(c)
-
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -190,8 +126,8 @@ func TestStoreHandler_GetStoreByID_InvalidUUID(t *testing.T) {
 	c.SetParamNames("id")
 	c.SetParamValues("invalid-uuid")
 
-	mockUC := &mockStoreUseCase{}
-	h := handlers.NewStoreHandler(mockUC, &mockStorageProviderForStore{}, "test-bucket")
+	mockUC := &testutil.MockStoreUseCase{}
+	h := handlers.NewStoreHandler(mockUC, &testutil.MockStorageProvider{}, "test-bucket")
 
 	err := h.GetStoreByID(c)
 
@@ -210,10 +146,10 @@ func TestStoreHandler_GetStoreByID_NotFound(t *testing.T) {
 	c.SetParamNames("id")
 	c.SetParamValues(storeID)
 
-	mockUC := &mockStoreUseCase{
-		getByIDErr: usecase.ErrStoreNotFound,
+	mockUC := &testutil.MockStoreUseCase{
+		GetByIDErr: usecase.ErrStoreNotFound,
 	}
-	h := handlers.NewStoreHandler(mockUC, &mockStorageProviderForStore{}, "test-bucket")
+	h := handlers.NewStoreHandler(mockUC, &testutil.MockStorageProvider{}, "test-bucket")
 
 	err := h.GetStoreByID(c)
 
@@ -232,17 +168,16 @@ func TestStoreHandler_CreateStore_Success(t *testing.T) {
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
 
-	mockUC := &mockStoreUseCase{
-		createdStore: &entity.Store{
+	mockUC := &testutil.MockStoreUseCase{
+		CreatedStore: &entity.Store{
 			StoreID: "new-store-id",
 			Name:    "New Store",
 			Address: "New Address",
 		},
 	}
-	h := handlers.NewStoreHandler(mockUC, &mockStorageProviderForStore{}, "test-bucket")
+	h := handlers.NewStoreHandler(mockUC, &testutil.MockStorageProvider{}, "test-bucket")
 
 	err := h.CreateStore(c)
-
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -259,8 +194,8 @@ func TestStoreHandler_CreateStore_InvalidJSON(t *testing.T) {
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
 
-	mockUC := &mockStoreUseCase{}
-	h := handlers.NewStoreHandler(mockUC, &mockStorageProviderForStore{}, "test-bucket")
+	mockUC := &testutil.MockStoreUseCase{}
+	h := handlers.NewStoreHandler(mockUC, &testutil.MockStorageProvider{}, "test-bucket")
 
 	err := h.CreateStore(c)
 
@@ -277,10 +212,10 @@ func TestStoreHandler_CreateStore_UseCaseError(t *testing.T) {
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
 
-	mockUC := &mockStoreUseCase{
-		createErr: usecase.ErrInvalidInput,
+	mockUC := &testutil.MockStoreUseCase{
+		CreateErr: usecase.ErrInvalidInput,
 	}
-	h := handlers.NewStoreHandler(mockUC, &mockStorageProviderForStore{}, "test-bucket")
+	h := handlers.NewStoreHandler(mockUC, &testutil.MockStorageProvider{}, "test-bucket")
 
 	err := h.CreateStore(c)
 
@@ -294,7 +229,7 @@ func TestStoreHandler_CreateStore_UseCaseError(t *testing.T) {
 func TestStoreHandler_UpdateStore_Success(t *testing.T) {
 	e := echo.New()
 	storeID := uuid.New().String()
-	body := `{"name":"Updated Store"}`
+	body := testUpdateStoreBody
 	req := httptest.NewRequest(http.MethodPut, "/stores/"+storeID, strings.NewReader(body))
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
@@ -303,13 +238,12 @@ func TestStoreHandler_UpdateStore_Success(t *testing.T) {
 	c.SetParamNames("id")
 	c.SetParamValues(storeID)
 
-	mockUC := &mockStoreUseCase{
-		store: &entity.Store{StoreID: storeID, Name: "Updated Store"},
+	mockUC := &testutil.MockStoreUseCase{
+		Store: &entity.Store{StoreID: storeID, Name: "Updated Store"},
 	}
-	h := handlers.NewStoreHandler(mockUC, &mockStorageProviderForStore{}, "test-bucket")
+	h := handlers.NewStoreHandler(mockUC, &testutil.MockStorageProvider{}, "test-bucket")
 
 	err := h.UpdateStore(c)
-
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -320,7 +254,7 @@ func TestStoreHandler_UpdateStore_Success(t *testing.T) {
 
 func TestStoreHandler_UpdateStore_InvalidUUID(t *testing.T) {
 	e := echo.New()
-	body := `{"name":"Updated Store"}`
+	body := testUpdateStoreBody
 	req := httptest.NewRequest(http.MethodPut, "/stores/invalid-uuid", strings.NewReader(body))
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
@@ -329,8 +263,8 @@ func TestStoreHandler_UpdateStore_InvalidUUID(t *testing.T) {
 	c.SetParamNames("id")
 	c.SetParamValues("invalid-uuid")
 
-	mockUC := &mockStoreUseCase{}
-	h := handlers.NewStoreHandler(mockUC, &mockStorageProviderForStore{}, "test-bucket")
+	mockUC := &testutil.MockStoreUseCase{}
+	h := handlers.NewStoreHandler(mockUC, &testutil.MockStorageProvider{}, "test-bucket")
 
 	err := h.UpdateStore(c)
 
@@ -351,13 +285,37 @@ func TestStoreHandler_UpdateStore_InvalidJSON(t *testing.T) {
 	c.SetParamNames("id")
 	c.SetParamValues(storeID)
 
-	mockUC := &mockStoreUseCase{}
-	h := handlers.NewStoreHandler(mockUC, &mockStorageProviderForStore{}, "test-bucket")
+	mockUC := &testutil.MockStoreUseCase{}
+	h := handlers.NewStoreHandler(mockUC, &testutil.MockStorageProvider{}, "test-bucket")
 
 	err := h.UpdateStore(c)
 
 	if err == nil {
 		t.Fatal("expected error for invalid JSON, got nil")
+	}
+}
+
+func TestStoreHandler_UpdateStore_UseCaseError(t *testing.T) {
+	e := echo.New()
+	storeID := uuid.New().String()
+	body := testUpdateStoreBody
+	req := httptest.NewRequest(http.MethodPut, "/stores/"+storeID, strings.NewReader(body))
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+	c.SetPath("/stores/:id")
+	c.SetParamNames("id")
+	c.SetParamValues(storeID)
+
+	mockUC := &testutil.MockStoreUseCase{
+		UpdateErr: usecase.ErrStoreNotFound,
+	}
+	h := handlers.NewStoreHandler(mockUC, &testutil.MockStorageProvider{}, "test-bucket")
+
+	err := h.UpdateStore(c)
+
+	if err == nil {
+		t.Fatal("expected error, got nil")
 	}
 }
 
@@ -373,11 +331,10 @@ func TestStoreHandler_DeleteStore_Success(t *testing.T) {
 	c.SetParamNames("id")
 	c.SetParamValues(storeID)
 
-	mockUC := &mockStoreUseCase{}
-	h := handlers.NewStoreHandler(mockUC, &mockStorageProviderForStore{}, "test-bucket")
+	mockUC := &testutil.MockStoreUseCase{}
+	h := handlers.NewStoreHandler(mockUC, &testutil.MockStorageProvider{}, "test-bucket")
 
 	err := h.DeleteStore(c)
-
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -395,8 +352,8 @@ func TestStoreHandler_DeleteStore_InvalidUUID(t *testing.T) {
 	c.SetParamNames("id")
 	c.SetParamValues("invalid-uuid")
 
-	mockUC := &mockStoreUseCase{}
-	h := handlers.NewStoreHandler(mockUC, &mockStorageProviderForStore{}, "test-bucket")
+	mockUC := &testutil.MockStoreUseCase{}
+	h := handlers.NewStoreHandler(mockUC, &testutil.MockStorageProvider{}, "test-bucket")
 
 	err := h.DeleteStore(c)
 
@@ -415,14 +372,403 @@ func TestStoreHandler_DeleteStore_NotFound(t *testing.T) {
 	c.SetParamNames("id")
 	c.SetParamValues(storeID)
 
-	mockUC := &mockStoreUseCase{
-		deleteErr: usecase.ErrStoreNotFound,
+	mockUC := &testutil.MockStoreUseCase{
+		DeleteErr: usecase.ErrStoreNotFound,
 	}
-	h := handlers.NewStoreHandler(mockUC, &mockStorageProviderForStore{}, "test-bucket")
+	h := handlers.NewStoreHandler(mockUC, &testutil.MockStorageProvider{}, "test-bucket")
 
 	err := h.DeleteStore(c)
 
 	if err == nil {
 		t.Fatal("expected error, got nil")
+	}
+}
+
+// --- Storage Integration Failure Tests ---
+// These tests verify that storage signing failures are handled gracefully
+// and do not cause the entire request to fail.
+
+// TestGetStoreByID_StorageSigningError verifies that when the storage provider
+// returns an error from CreateSignedDownload, the response still succeeds
+// but the file URL remains unset (nil).
+func TestGetStoreByID_StorageSigningError(t *testing.T) {
+	e := echo.New()
+	storeID := uuid.New().String()
+	fileID := uuid.New().String()
+	objectKey := "stores/thumbnail.jpg"
+
+	req := httptest.NewRequest(http.MethodGet, "/stores/"+storeID, nil)
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+	c.SetPath("/stores/:id")
+	c.SetParamNames("id")
+	c.SetParamValues(storeID)
+
+	// Create a store with a thumbnail file that has an object key
+	mockUC := &testutil.MockStoreUseCase{
+		Store: &entity.Store{
+			StoreID: storeID,
+			Name:    "Test Store",
+			ThumbnailFile: &entity.File{
+				FileID:    fileID,
+				FileName:  "thumbnail.jpg",
+				ObjectKey: objectKey,
+			},
+		},
+	}
+
+	// Configure storage to return an error for all keys
+	mockStorage := &testutil.MockStorageProvider{
+		CreateSignedDownloadErr: errors.New("storage service unavailable"),
+	}
+
+	h := handlers.NewStoreHandler(mockUC, mockStorage, "test-bucket")
+
+	err := h.GetStoreByID(c)
+	// The request should still succeed even though storage signing failed
+	if err != nil {
+		t.Fatalf("unexpected error: %v - storage signing errors should be silent", err)
+	}
+	if rec.Code != http.StatusOK {
+		t.Errorf("expected status %d, got %d", http.StatusOK, rec.Code)
+	}
+
+	// Parse the response
+	var response presenter.StoreResponse
+	if err := json.Unmarshal(rec.Body.Bytes(), &response); err != nil {
+		t.Fatalf("failed to unmarshal response: %v", err)
+	}
+
+	// Verify the store data is present
+	if response.StoreID != storeID {
+		t.Errorf("expected store_id %s, got %s", storeID, response.StoreID)
+	}
+
+	// The thumbnail file should exist but URL should be nil (not signed)
+	if response.ThumbnailFile == nil {
+		t.Fatal("expected thumbnail_file to be present")
+	}
+	if response.ThumbnailFile.URL != nil {
+		t.Errorf("expected URL to be nil when storage signing fails, got %v", *response.ThumbnailFile.URL)
+	}
+
+	// Verify that the storage provider was called
+	if len(mockStorage.RequestedKeys) == 0 {
+		t.Error("expected storage provider to be called, but no keys were requested")
+	}
+}
+
+// TestGetStores_StorageSigningPartialFailure verifies that when the storage provider
+// fails for some keys but succeeds for others, partial success is handled correctly.
+func TestGetStores_StorageSigningPartialFailure(t *testing.T) {
+	e := echo.New()
+	req := httptest.NewRequest(http.MethodGet, "/stores", nil)
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+
+	store1ID := uuid.New().String()
+	store2ID := uuid.New().String()
+	file1ID := uuid.New().String()
+	file2ID := uuid.New().String()
+	objectKey1 := "stores/thumb1.jpg"
+	objectKey2 := "stores/thumb2.jpg"
+
+	// Create two stores, each with a thumbnail file
+	mockUC := &testutil.MockStoreUseCase{
+		Stores: []entity.Store{
+			{
+				StoreID: store1ID,
+				Name:    "Store 1",
+				ThumbnailFile: &entity.File{
+					FileID:    file1ID,
+					FileName:  "thumb1.jpg",
+					ObjectKey: objectKey1,
+				},
+			},
+			{
+				StoreID: store2ID,
+				Name:    "Store 2",
+				ThumbnailFile: &entity.File{
+					FileID:    file2ID,
+					FileName:  "thumb2.jpg",
+					ObjectKey: objectKey2,
+				},
+			},
+		},
+	}
+
+	// Configure storage to fail for the first key but succeed for the second
+	mockStorage := &testutil.MockStorageProvider{
+		ErrorsByKey: map[string]error{
+			objectKey1: errors.New("storage error for key1"),
+		},
+		SignedURLsByKey: map[string]string{
+			objectKey2: "https://example.com/signed-thumb2.jpg",
+		},
+	}
+
+	h := handlers.NewStoreHandler(mockUC, mockStorage, "test-bucket")
+
+	err := h.GetStores(c)
+	// The request should succeed despite partial storage failures
+	if err != nil {
+		t.Fatalf("unexpected error: %v - partial storage failures should not cause request failure", err)
+	}
+	if rec.Code != http.StatusOK {
+		t.Errorf("expected status %d, got %d", http.StatusOK, rec.Code)
+	}
+
+	// Parse the response
+	var response []presenter.StoreResponse
+	if err := json.Unmarshal(rec.Body.Bytes(), &response); err != nil {
+		t.Fatalf("failed to unmarshal response: %v", err)
+	}
+
+	if len(response) != 2 {
+		t.Fatalf("expected 2 stores, got %d", len(response))
+	}
+
+	// Find the stores by ID
+	var store1Resp, store2Resp *presenter.StoreResponse
+	for i := range response {
+		if response[i].StoreID == store1ID {
+			store1Resp = &response[i]
+		}
+		if response[i].StoreID == store2ID {
+			store2Resp = &response[i]
+		}
+	}
+
+	// Store 1: signing failed, so URL should be nil
+	if store1Resp == nil {
+		t.Fatal("expected store 1 to be in response")
+	}
+	if store1Resp.ThumbnailFile == nil {
+		t.Fatal("expected store 1 to have thumbnail_file")
+	}
+	if store1Resp.ThumbnailFile.URL != nil {
+		t.Errorf("expected store 1 thumbnail URL to be nil (signing failed), got %v", *store1Resp.ThumbnailFile.URL)
+	}
+
+	// Store 2: signing succeeded, so URL should be set
+	if store2Resp == nil {
+		t.Fatal("expected store 2 to be in response")
+	}
+	if store2Resp.ThumbnailFile == nil {
+		t.Fatal("expected store 2 to have thumbnail_file")
+	}
+	if store2Resp.ThumbnailFile.URL == nil {
+		t.Error("expected store 2 thumbnail URL to be set (signing succeeded)")
+	} else if *store2Resp.ThumbnailFile.URL != "https://example.com/signed-thumb2.jpg" {
+		t.Errorf("expected store 2 thumbnail URL to be 'https://example.com/signed-thumb2.jpg', got %s", *store2Resp.ThumbnailFile.URL)
+	}
+}
+
+// TestGetStoreByID_StorageEdgeCases verifies graceful handling when the storage
+// provider returns nil results or empty URLs.
+func TestGetStoreByID_StorageEdgeCases(t *testing.T) {
+	tests := []struct {
+		name           string
+		returnNil      bool
+		returnEmptyURL bool
+		description    string
+	}{
+		{
+			name:           "StorageReturnsNil",
+			returnNil:      true,
+			returnEmptyURL: false,
+			description:    "nil storage result should be handled gracefully",
+		},
+		{
+			name:           "StorageReturnsEmptyURL",
+			returnNil:      false,
+			returnEmptyURL: true,
+			description:    "empty URL result should be handled gracefully",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			e := echo.New()
+			storeID := uuid.New().String()
+			fileID := uuid.New().String()
+			objectKey := "stores/thumbnail.jpg"
+
+			req := httptest.NewRequest(http.MethodGet, "/stores/"+storeID, nil)
+			rec := httptest.NewRecorder()
+			c := e.NewContext(req, rec)
+			c.SetPath("/stores/:id")
+			c.SetParamNames("id")
+			c.SetParamValues(storeID)
+
+			mockUC := &testutil.MockStoreUseCase{
+				Store: &entity.Store{
+					StoreID: storeID,
+					Name:    "Test Store",
+					ThumbnailFile: &entity.File{
+						FileID:    fileID,
+						FileName:  "thumbnail.jpg",
+						ObjectKey: objectKey,
+					},
+				},
+			}
+
+			mockStorage := &testutil.MockStorageProvider{
+				ReturnNil:      tt.returnNil,
+				ReturnEmptyURL: tt.returnEmptyURL,
+			}
+
+			h := handlers.NewStoreHandler(mockUC, mockStorage, "test-bucket")
+
+			err := h.GetStoreByID(c)
+			if err != nil {
+				t.Fatalf("unexpected error: %v - %s", err, tt.description)
+			}
+			if rec.Code != http.StatusOK {
+				t.Errorf("expected status %d, got %d", http.StatusOK, rec.Code)
+			}
+
+			var response presenter.StoreResponse
+			if err := json.Unmarshal(rec.Body.Bytes(), &response); err != nil {
+				t.Fatalf("failed to unmarshal response: %v", err)
+			}
+
+			if response.StoreID != storeID {
+				t.Errorf("expected store_id %s, got %s", storeID, response.StoreID)
+			}
+
+			if response.ThumbnailFile == nil {
+				t.Fatal("expected thumbnail_file to be present")
+			}
+			if response.ThumbnailFile.URL != nil {
+				t.Errorf("expected URL to be nil, got %v", *response.ThumbnailFile.URL)
+			}
+		})
+	}
+}
+
+// TestGetStores_StorageSigningError_AllFail verifies that when storage signing
+// fails for all stores, the request still succeeds with all URLs unset.
+func TestGetStores_StorageSigningError_AllFail(t *testing.T) {
+	e := echo.New()
+	req := httptest.NewRequest(http.MethodGet, "/stores", nil)
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+
+	store1ID := uuid.New().String()
+	store2ID := uuid.New().String()
+
+	mockUC := &testutil.MockStoreUseCase{
+		Stores: []entity.Store{
+			{
+				StoreID: store1ID,
+				Name:    "Store 1",
+				ThumbnailFile: &entity.File{
+					FileID:    uuid.New().String(),
+					FileName:  "thumb1.jpg",
+					ObjectKey: "stores/thumb1.jpg",
+				},
+			},
+			{
+				StoreID: store2ID,
+				Name:    "Store 2",
+				ThumbnailFile: &entity.File{
+					FileID:    uuid.New().String(),
+					FileName:  "thumb2.jpg",
+					ObjectKey: "stores/thumb2.jpg",
+				},
+			},
+		},
+	}
+
+	// Configure storage to return an error for all keys
+	mockStorage := &testutil.MockStorageProvider{
+		CreateSignedDownloadErr: errors.New("storage service completely unavailable"),
+	}
+
+	h := handlers.NewStoreHandler(mockUC, mockStorage, "test-bucket")
+
+	err := h.GetStores(c)
+	// The request should succeed even though all signing failed
+	if err != nil {
+		t.Fatalf("unexpected error: %v - total storage failure should not cause request failure", err)
+	}
+	if rec.Code != http.StatusOK {
+		t.Errorf("expected status %d, got %d", http.StatusOK, rec.Code)
+	}
+
+	// Parse the response
+	var response []presenter.StoreResponse
+	if err := json.Unmarshal(rec.Body.Bytes(), &response); err != nil {
+		t.Fatalf("failed to unmarshal response: %v", err)
+	}
+
+	if len(response) != 2 {
+		t.Fatalf("expected 2 stores, got %d", len(response))
+	}
+
+	// Verify all URLs are nil
+	for _, store := range response {
+		if store.ThumbnailFile != nil && store.ThumbnailFile.URL != nil {
+			t.Errorf("expected store %s thumbnail URL to be nil, got %v", store.StoreID, *store.ThumbnailFile.URL)
+		}
+	}
+}
+
+// TestGetStoreByID_StorageSigningTracksRequestedKeys verifies that the mock
+// correctly tracks which keys were requested from the storage provider.
+func TestGetStoreByID_StorageSigningTracksRequestedKeys(t *testing.T) {
+	e := echo.New()
+	storeID := uuid.New().String()
+	fileID := uuid.New().String()
+	objectKey := "stores/specific-thumbnail.jpg"
+
+	req := httptest.NewRequest(http.MethodGet, "/stores/"+storeID, nil)
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+	c.SetPath("/stores/:id")
+	c.SetParamNames("id")
+	c.SetParamValues(storeID)
+
+	mockUC := &testutil.MockStoreUseCase{
+		Store: &entity.Store{
+			StoreID: storeID,
+			Name:    "Test Store",
+			ThumbnailFile: &entity.File{
+				FileID:    fileID,
+				FileName:  "specific-thumbnail.jpg",
+				ObjectKey: objectKey,
+			},
+		},
+	}
+
+	// Use a storage mock that tracks requested keys
+	mockStorage := &testutil.MockStorageProvider{
+		SignedURLsByKey: map[string]string{
+			objectKey: "https://example.com/signed-specific-thumbnail.jpg",
+		},
+	}
+
+	h := handlers.NewStoreHandler(mockUC, mockStorage, "test-bucket")
+
+	err := h.GetStoreByID(c)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// Verify the correct key was requested
+	if len(mockStorage.RequestedKeys) == 0 {
+		t.Fatal("expected at least one key to be requested from storage")
+	}
+
+	found := false
+	for _, key := range mockStorage.RequestedKeys {
+		if key == objectKey {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Errorf("expected object key %q to be requested, but got: %v", objectKey, mockStorage.RequestedKeys)
 	}
 }

@@ -1,0 +1,50 @@
+run:
+  timeout: 5m
+  tests: true
+
+linters:
+  disable-all: true
+  enable:
+    - errcheck
+    - govet
+    - staticcheck
+    - ineffassign
+    - unused
+    - gofumpt
+    - bodyclose
+    - errorlint
+    - errname
+    - nilerr
+    - noctx
+    - unconvert
+    - unparam
+    - prealloc
+    - goconst
+    - gocritic
+    - gocyclo
+    - gocognit
+    - dupl
+    - stylecheck
+    - gosimple
+
+linters-settings:
+  errcheck:
+    check-type-assertions: true
+    check-blank: true
+  govet:
+    enable-all: true
+    disable:
+      - fieldalignment
+  gocyclo:
+    min-complexity: 15
+  gocognit:
+    min-complexity: 20
+  goconst:
+    min-occurrences: 3
+    min-length: 3
+  errorlint:
+    errorf: true
+
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0

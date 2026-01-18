@@ -92,3 +92,14 @@ func ensureReportExists(ctx context.Context, repo output.ReportRepository, repor
 	_, err := mustFindReport(ctx, repo, reportID)
 	return err
 }
+
+// validateNotEmpty checks if any of the provided strings are empty.
+// Returns ErrInvalidInput if any string is empty.
+func validateNotEmpty(fields ...string) error {
+	for _, field := range fields {
+		if field == "" {
+			return ErrInvalidInput
+		}
+	}
+	return nil
+}

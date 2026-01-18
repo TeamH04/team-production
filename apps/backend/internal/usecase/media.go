@@ -9,6 +9,7 @@ import (
 
 	"github.com/TeamH04/team-production/apps/backend/internal/apperr"
 	"github.com/TeamH04/team-production/apps/backend/internal/config"
+	"github.com/TeamH04/team-production/apps/backend/internal/domain/constants"
 	"github.com/TeamH04/team-production/apps/backend/internal/domain/entity"
 	"github.com/TeamH04/team-production/apps/backend/internal/usecase/input"
 	"github.com/TeamH04/team-production/apps/backend/internal/usecase/output"
@@ -80,7 +81,7 @@ func (uc *mediaUseCase) CreateReviewUploads(ctx context.Context, storeID string,
 
 		createdBy := userID
 		record := entity.File{
-			FileKind:    "review",
+			FileKind:    constants.TargetTypeReview,
 			FileName:    fileName,
 			FileSize:    file.FileSize,
 			ObjectKey:   objectKey,

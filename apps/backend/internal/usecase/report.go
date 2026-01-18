@@ -3,6 +3,7 @@ package usecase
 import (
 	"context"
 
+	"github.com/TeamH04/team-production/apps/backend/internal/domain/constants"
 	"github.com/TeamH04/team-production/apps/backend/internal/domain/entity"
 	"github.com/TeamH04/team-production/apps/backend/internal/usecase/input"
 	"github.com/TeamH04/team-production/apps/backend/internal/usecase/output"
@@ -33,13 +34,13 @@ func (uc *reportUseCase) CreateReport(ctx context.Context, req input.CreateRepor
 		return nil, err
 	}
 
-	if req.TargetType == "" || req.Reason == "" {
-		return nil, ErrInvalidInput
+	if err := validateNotEmpty(req.TargetType, req.Reason); err != nil {
+		return nil, err
 	}
 
 	validTargetTypes := map[string]bool{
-		"review": true,
-		"store":  true,
+		constants.TargetTypeReview: true,
+		constants.TargetTypeStore:  true,
 	}
 	if !validTargetTypes[req.TargetType] {
 		return nil, ErrInvalidTargetType
@@ -50,7 +51,7 @@ func (uc *reportUseCase) CreateReport(ctx context.Context, req input.CreateRepor
 		TargetType: req.TargetType,
 		TargetID:   req.TargetID,
 		Reason:     req.Reason,
-		Status:     "pending",
+		Status:     constants.ReportStatusPending,
 	}
 
 	if err := uc.reportRepo.Create(ctx, report); err != nil {
@@ -71,8 +72,8 @@ func (uc *reportUseCase) HandleReport(ctx context.Context, reportID int64, actio
 
 	// アクションのバリデーション
 	validActions := map[input.HandleReportAction]string{
-		input.HandleReportResolve: "resolved",
-		input.HandleReportReject:  "rejected",
+		input.HandleReportResolve: constants.ReportStatusResolved,
+		input.HandleReportReject:  constants.ReportStatusRejected,
 	}
 
 	status, ok := validActions[action]

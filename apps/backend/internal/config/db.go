@@ -1,7 +1,7 @@
 package config
 
 import (
-	"time"
+	"github.com/TeamH04/team-production/apps/backend/internal/domain/constants"
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -21,9 +21,9 @@ func OpenDB(dsn string) (*gorm.DB, error) {
 	if err != nil {
 		return nil, err
 	}
-	sqlDB.SetMaxOpenConns(10)
-	sqlDB.SetMaxIdleConns(5)
-	sqlDB.SetConnMaxLifetime(30 * time.Minute)
+	sqlDB.SetMaxOpenConns(constants.DBMaxOpenConns)
+	sqlDB.SetMaxIdleConns(constants.DBMaxIdleConns)
+	sqlDB.SetConnMaxLifetime(DBConnMaxLifetime)
 
 	return db, nil
 }

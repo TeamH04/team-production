@@ -47,7 +47,7 @@ func (r *reportRepository) Create(ctx context.Context, report *entity.Report) er
 		Reason:     report.Reason,
 		Status:     report.Status,
 	}
-	if err := r.db.WithContext(ctx).Create(record).Error; err != nil {
+	if err := r.db.WithContext(ctx).Create(&record).Error; err != nil {
 		return mapDBError(err)
 	}
 	return nil

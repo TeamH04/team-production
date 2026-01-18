@@ -6,230 +6,149 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/uuid"
+	"github.com/stretchr/testify/require"
+
 	"github.com/TeamH04/team-production/apps/backend/internal/apperr"
 	"github.com/TeamH04/team-production/apps/backend/internal/domain/entity"
 	"github.com/TeamH04/team-production/apps/backend/internal/repository"
 	"github.com/TeamH04/team-production/apps/backend/internal/repository/testutil"
+	"github.com/TeamH04/team-production/apps/backend/internal/usecase/output"
 )
 
-func TestUserRepository_Create_Success(t *testing.T) {
+// setupUserTest creates common test dependencies for user tests
+func setupUserTest(t *testing.T) output.UserRepository {
+	t.Helper()
 	db := testutil.SetupTestDB(t)
-	defer testutil.CleanupTestDB(t, db)
-
 	repo := repository.NewUserRepository(db)
+	t.Cleanup(func() {
+		testutil.CleanupTestDB(t, db)
+	})
+	return repo
+}
 
-	user := &entity.User{
-		UserID:    "user-123",
-		Email:     "test@example.com",
+// newTestUser creates a test user with unique ID
+func newTestUser(t *testing.T) *entity.User {
+	t.Helper()
+	return &entity.User{
+		UserID:    "user-" + uuid.New().String()[:8],
+		Email:     "test-" + uuid.New().String()[:8] + "@example.com",
 		Role:      "user",
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
 	}
+}
+
+func TestUserRepository_Create_Success(t *testing.T) {
+	repo := setupUserTest(t)
+
+	user := newTestUser(t)
 
 	err := repo.Create(context.Background(), user)
-
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	require.NoError(t, err)
 }
 
 func TestUserRepository_FindByID_Success(t *testing.T) {
-	db := testutil.SetupTestDB(t)
-	defer testutil.CleanupTestDB(t, db)
-
-	repo := repository.NewUserRepository(db)
+	repo := setupUserTest(t)
 
 	// Create a user first
-	user := &entity.User{
-		UserID:    "user-123",
-		Email:     "test@example.com",
-		Role:      "user",
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
-	}
-	if err := repo.Create(context.Background(), user); err != nil {
-		t.Fatalf("failed to create user: %v", err)
-	}
+	user := newTestUser(t)
+	require.NoError(t, repo.Create(context.Background(), user))
 
 	// Find the user
-	found, err := repo.FindByID(context.Background(), "user-123")
-
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	if found.UserID != "user-123" {
-		t.Errorf("expected UserID user-123, got %s", found.UserID)
-	}
-	if found.Email != "test@example.com" {
-		t.Errorf("expected Email test@example.com, got %s", found.Email)
-	}
+	found, err := repo.FindByID(context.Background(), user.UserID)
+	require.NoError(t, err)
+	require.Equal(t, user.UserID, found.UserID)
+	require.Equal(t, user.Email, found.Email)
 }
 
 func TestUserRepository_FindByID_NotFound(t *testing.T) {
-	db := testutil.SetupTestDB(t)
-	defer testutil.CleanupTestDB(t, db)
+	repo := setupUserTest(t)
 
-	repo := repository.NewUserRepository(db)
+	nonexistentID := "user-" + uuid.New().String()[:8]
+	_, err := repo.FindByID(context.Background(), nonexistentID)
 
-	_, err := repo.FindByID(context.Background(), "nonexistent")
-
-	if !apperr.IsCode(err, apperr.CodeNotFound) {
-		t.Errorf("expected CodeNotFound error, got %v", err)
-	}
+	require.True(t, apperr.IsCode(err, apperr.CodeNotFound), "expected CodeNotFound error, got %v", err)
 }
 
 func TestUserRepository_FindByEmail_Success(t *testing.T) {
-	db := testutil.SetupTestDB(t)
-	defer testutil.CleanupTestDB(t, db)
-
-	repo := repository.NewUserRepository(db)
+	repo := setupUserTest(t)
 
 	// Create a user first
-	user := &entity.User{
-		UserID:    "user-123",
-		Email:     "test@example.com",
-		Role:      "user",
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
-	}
-	if err := repo.Create(context.Background(), user); err != nil {
-		t.Fatalf("failed to create user: %v", err)
-	}
+	user := newTestUser(t)
+	require.NoError(t, repo.Create(context.Background(), user))
 
 	// Find by email
-	found, err := repo.FindByEmail(context.Background(), "test@example.com")
-
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	if found.UserID != "user-123" {
-		t.Errorf("expected UserID user-123, got %s", found.UserID)
-	}
+	found, err := repo.FindByEmail(context.Background(), user.Email)
+	require.NoError(t, err)
+	require.Equal(t, user.UserID, found.UserID)
 }
 
 func TestUserRepository_FindByEmail_NotFound(t *testing.T) {
-	db := testutil.SetupTestDB(t)
-	defer testutil.CleanupTestDB(t, db)
+	repo := setupUserTest(t)
 
-	repo := repository.NewUserRepository(db)
+	nonexistentEmail := "nonexistent-" + uuid.New().String()[:8] + "@example.com"
+	_, err := repo.FindByEmail(context.Background(), nonexistentEmail)
 
-	_, err := repo.FindByEmail(context.Background(), "nonexistent@example.com")
-
-	if !apperr.IsCode(err, apperr.CodeNotFound) {
-		t.Errorf("expected CodeNotFound error, got %v", err)
-	}
+	require.True(t, apperr.IsCode(err, apperr.CodeNotFound), "expected CodeNotFound error, got %v", err)
 }
 
 func TestUserRepository_Update_Success(t *testing.T) {
-	db := testutil.SetupTestDB(t)
-	defer testutil.CleanupTestDB(t, db)
-
-	repo := repository.NewUserRepository(db)
+	repo := setupUserTest(t)
 
 	// Create a user first
-	user := &entity.User{
-		UserID:    "user-123",
-		Email:     "test@example.com",
-		Role:      "user",
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
-	}
-	if err := repo.Create(context.Background(), user); err != nil {
-		t.Fatalf("failed to create user: %v", err)
-	}
+	user := newTestUser(t)
+	require.NoError(t, repo.Create(context.Background(), user))
 
 	// Update the user
-	user.Email = "updated@example.com"
+	updatedEmail := "updated-" + uuid.New().String()[:8] + "@example.com"
+	user.Email = updatedEmail
 	err := repo.Update(context.Background(), *user)
-
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	require.NoError(t, err)
 
 	// Verify the update
-	found, err := repo.FindByID(context.Background(), "user-123")
-	if err != nil {
-		t.Fatalf("failed to find user: %v", err)
-	}
-	if found.Email != "updated@example.com" {
-		t.Errorf("expected Email updated@example.com, got %s", found.Email)
-	}
+	found, err := repo.FindByID(context.Background(), user.UserID)
+	require.NoError(t, err)
+	require.Equal(t, updatedEmail, found.Email)
 }
 
 func TestUserRepository_UpdateRole_Success(t *testing.T) {
-	db := testutil.SetupTestDB(t)
-	defer testutil.CleanupTestDB(t, db)
-
-	repo := repository.NewUserRepository(db)
+	repo := setupUserTest(t)
 
 	// Create a user first
-	user := &entity.User{
-		UserID:    "user-123",
-		Email:     "test@example.com",
-		Role:      "user",
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
-	}
-	if err := repo.Create(context.Background(), user); err != nil {
-		t.Fatalf("failed to create user: %v", err)
-	}
+	user := newTestUser(t)
+	require.NoError(t, repo.Create(context.Background(), user))
 
 	// Update role
-	err := repo.UpdateRole(context.Background(), "user-123", "admin")
-
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	err := repo.UpdateRole(context.Background(), user.UserID, "admin")
+	require.NoError(t, err)
 
 	// Verify the update
-	found, err := repo.FindByID(context.Background(), "user-123")
-	if err != nil {
-		t.Fatalf("failed to find user: %v", err)
-	}
-	if found.Role != "admin" {
-		t.Errorf("expected Role admin, got %s", found.Role)
-	}
+	found, err := repo.FindByID(context.Background(), user.UserID)
+	require.NoError(t, err)
+	require.Equal(t, "admin", found.Role)
 }
 
-func TestMapDBError_NilError(t *testing.T) {
-	// Test that mapDBError returns nil for nil input
-	// This is tested implicitly through successful repository operations
-	db := testutil.SetupTestDB(t)
-	defer testutil.CleanupTestDB(t, db)
+func TestUserRepository_Create_ReturnsNilOnSuccess(t *testing.T) {
+	// Verifies that successful operations return nil error
+	// (implicitly tests mapDBError returns nil for nil input)
+	repo := setupUserTest(t)
 
-	repo := repository.NewUserRepository(db)
-
-	user := &entity.User{
-		UserID:    "user-123",
-		Email:     "test@example.com",
-		Role:      "user",
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
-	}
+	user := newTestUser(t)
 
 	err := repo.Create(context.Background(), user)
-
-	if err != nil {
-		t.Errorf("expected nil error for successful operation, got %v", err)
-	}
+	require.NoError(t, err, "expected nil error for successful operation")
 }
 
-func TestMapDBError_NotFoundError(t *testing.T) {
-	// Test that mapDBError returns CodeNotFound for record not found
-	db := testutil.SetupTestDB(t)
-	defer testutil.CleanupTestDB(t, db)
+func TestUserRepository_FindByID_ReturnsNotFoundError(t *testing.T) {
+	// Verifies that non-existent records return CodeNotFound and ErrNotFound
+	// (implicitly tests mapDBError returns CodeNotFound for record not found)
+	repo := setupUserTest(t)
 
-	repo := repository.NewUserRepository(db)
+	nonexistentID := "user-" + uuid.New().String()[:8]
+	_, err := repo.FindByID(context.Background(), nonexistentID)
 
-	_, err := repo.FindByID(context.Background(), "nonexistent")
-
-	if err == nil {
-		t.Fatal("expected error, got nil")
-	}
-	if !apperr.IsCode(err, apperr.CodeNotFound) {
-		t.Errorf("expected CodeNotFound, got %v", err)
-	}
-	if !errors.Is(err, entity.ErrNotFound) {
-		t.Errorf("expected underlying error to be ErrNotFound, got %v", err)
-	}
+	require.Error(t, err, "expected error, got nil")
+	require.True(t, apperr.IsCode(err, apperr.CodeNotFound), "expected CodeNotFound, got %v", err)
+	require.True(t, errors.Is(err, entity.ErrNotFound), "expected underlying error to be ErrNotFound, got %v", err)
 }

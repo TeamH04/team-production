@@ -74,7 +74,7 @@ func (h *StoreHandler) UpdateStore(c echo.Context) error {
 		return err
 	}
 	var dto updateStoreDTO
-	if err := bindJSON(c, &dto); err != nil {
+	if err = bindJSON(c, &dto); err != nil {
 		return err
 	}
 	store, err := h.storeUseCase.UpdateStore(c.Request().Context(), id, dto.toInput())
@@ -89,7 +89,7 @@ func (h *StoreHandler) DeleteStore(c echo.Context) error {
 	if err != nil {
 		return err
 	}
-	if err := h.storeUseCase.DeleteStore(c.Request().Context(), id); err != nil {
+	if err = h.storeUseCase.DeleteStore(c.Request().Context(), id); err != nil {
 		return err
 	}
 	return c.NoContent(http.StatusNoContent)

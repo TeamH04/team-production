@@ -5,6 +5,7 @@ import (
 
 	"github.com/labstack/echo/v4"
 
+	infrahttp "github.com/TeamH04/team-production/apps/backend/internal/infra/http"
 	"github.com/TeamH04/team-production/apps/backend/internal/presentation/presenter"
 	"github.com/TeamH04/team-production/apps/backend/internal/security"
 	"github.com/TeamH04/team-production/apps/backend/internal/usecase/input"
@@ -40,9 +41,9 @@ func (h *ReviewHandler) GetReviewsByStoreID(c echo.Context) error {
 
 	sort := c.QueryParam("sort")
 	viewerID := ""
-	if token := bearerTokenFromHeader(c.Request().Header.Get("Authorization")); token != "" {
-		claims, err := h.tokenVerifier.Verify(c.Request().Context(), token)
-		if err == nil {
+	if token := bearerTokenFromHeader(c.Request().Header.Get(infrahttp.HeaderAuthorization)); token != "" {
+		claims, verifyErr := h.tokenVerifier.Verify(c.Request().Context(), token)
+		if verifyErr == nil {
 			viewerID = claims.UserID
 		}
 		// 無効なトークンでもエラーを返さず、viewerIDを空のまま続行
@@ -69,11 +70,11 @@ func (h *ReviewHandler) Create(c echo.Context) error {
 	}
 
 	var in input.CreateReview
-	if err := bindJSON(c, &in); err != nil {
+	if err = bindJSON(c, &in); err != nil {
 		return err
 	}
 
-	if err := h.reviewUseCase.Create(c.Request().Context(), storeID, user.UserID, in); err != nil {
+	if err = h.reviewUseCase.Create(c.Request().Context(), storeID, user.UserID, in); err != nil {
 		return err
 	}
 	return c.NoContent(http.StatusCreated)
@@ -90,7 +91,7 @@ func (h *ReviewHandler) LikeReview(c echo.Context) error {
 		return err
 	}
 
-	if err := h.reviewUseCase.LikeReview(c.Request().Context(), reviewID, user.UserID); err != nil {
+	if err = h.reviewUseCase.LikeReview(c.Request().Context(), reviewID, user.UserID); err != nil {
 		return err
 	}
 	return c.NoContent(http.StatusNoContent)
@@ -107,7 +108,7 @@ func (h *ReviewHandler) UnlikeReview(c echo.Context) error {
 		return err
 	}
 
-	if err := h.reviewUseCase.UnlikeReview(c.Request().Context(), reviewID, user.UserID); err != nil {
+	if err = h.reviewUseCase.UnlikeReview(c.Request().Context(), reviewID, user.UserID); err != nil {
 		return err
 	}
 	return c.NoContent(http.StatusNoContent)

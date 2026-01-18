@@ -1,6 +1,7 @@
 package handlers_test
 
 import (
+	"encoding/json"
 	"net/http"
 	"testing"
 
@@ -26,6 +27,15 @@ func TestUserHandler_GetMe_Success(t *testing.T) {
 	err := h.GetMe(tc.Context)
 
 	testutil.AssertSuccess(t, err, tc.Recorder, http.StatusOK)
+
+	// Verify response body
+	var response map[string]interface{}
+	if err := json.Unmarshal(tc.Recorder.Body.Bytes(), &response); err != nil {
+		t.Fatalf("failed to parse response body: %v", err)
+	}
+	if response["user_id"] != "user-1" {
+		t.Errorf("expected user_id 'user-1', got %v", response["user_id"])
+	}
 }
 
 func TestUserHandler_GetMe_Unauthorized(t *testing.T) {
@@ -72,6 +82,15 @@ func TestUserHandler_UpdateUser_Success(t *testing.T) {
 	err := h.UpdateUser(tc.Context)
 
 	testutil.AssertSuccess(t, err, tc.Recorder, http.StatusOK)
+
+	// Verify response body
+	var response map[string]interface{}
+	if err := json.Unmarshal(tc.Recorder.Body.Bytes(), &response); err != nil {
+		t.Fatalf("failed to parse response body: %v", err)
+	}
+	if response["user_id"] != "user-1" {
+		t.Errorf("expected user_id 'user-1', got %v", response["user_id"])
+	}
 }
 
 func TestUserHandler_UpdateUser_Unauthorized(t *testing.T) {
@@ -150,6 +169,15 @@ func TestUserHandler_GetUserReviews_Success(t *testing.T) {
 	err := h.GetUserReviews(tc.Context)
 
 	testutil.AssertSuccess(t, err, tc.Recorder, http.StatusOK)
+
+	// Verify response body
+	var response []map[string]interface{}
+	if err := json.Unmarshal(tc.Recorder.Body.Bytes(), &response); err != nil {
+		t.Fatalf("failed to parse response body: %v", err)
+	}
+	if len(response) != 2 {
+		t.Errorf("expected 2 reviews, got %d", len(response))
+	}
 }
 
 func TestUserHandler_GetUserReviews_Empty(t *testing.T) {

@@ -47,7 +47,7 @@ func (h *MediaHandler) CreateReviewUploads(c echo.Context) error {
 	}
 
 	var dto createUploadDTO
-	if err := bindJSON(c, &dto); err != nil {
+	if err = bindJSON(c, &dto); err != nil {
 		return err
 	}
 	if dto.StoreID == "" || len(dto.Files) == 0 {

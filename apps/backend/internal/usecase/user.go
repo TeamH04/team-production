@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/TeamH04/team-production/apps/backend/internal/apperr"
+	"github.com/TeamH04/team-production/apps/backend/internal/domain/constants"
 	"github.com/TeamH04/team-production/apps/backend/internal/domain/entity"
 	"github.com/TeamH04/team-production/apps/backend/internal/domain/role"
 	"github.com/TeamH04/team-production/apps/backend/internal/usecase/input"
@@ -41,8 +42,8 @@ func (uc *userUseCase) EnsureUser(ctx context.Context, input input.EnsureUserInp
 		if shouldUpdateProvider(user.Provider, provider) {
 			user.Provider = provider
 			user.UpdatedAt = time.Now()
-			if err := uc.userRepo.Update(ctx, user); err != nil {
-				return entity.User{}, err
+			if updateErr := uc.userRepo.Update(ctx, user); updateErr != nil {
+				return entity.User{}, updateErr
 			}
 		}
 		return user, nil
@@ -79,8 +80,8 @@ func (uc *userUseCase) EnsureUser(ctx context.Context, input input.EnsureUserInp
 			if shouldUpdateProvider(existing.Provider, provider) {
 				existing.Provider = provider
 				existing.UpdatedAt = time.Now()
-				if err := uc.userRepo.Update(ctx, existing); err != nil {
-					return entity.User{}, err
+				if updateErr := uc.userRepo.Update(ctx, existing); updateErr != nil {
+					return entity.User{}, updateErr
 				}
 			}
 			return existing, nil
@@ -144,14 +145,14 @@ func (uc *userUseCase) GetUserReviews(ctx context.Context, userID string) ([]ent
 func deriveNameFromEmail(email string) string {
 	local := strings.TrimSpace(email)
 	if local == "" {
-		return "user"
+		return constants.DefaultUserName
 	}
 	if at := strings.Index(local, "@"); at >= 0 {
 		local = local[:at]
 	}
 	local = strings.TrimSpace(local)
 	if local == "" {
-		return "user"
+		return constants.DefaultUserName
 	}
 	return local
 }
@@ -159,21 +160,21 @@ func deriveNameFromEmail(email string) string {
 func normalizeProvider(provider string) string {
 	trimmed := strings.ToLower(strings.TrimSpace(provider))
 	validProviders := map[string]bool{
-		"google": true,
-		"apple":  true,
-		"email":  true,
-		"oauth":  true,
+		constants.ProviderGoogle: true,
+		constants.ProviderApple:  true,
+		constants.ProviderEmail:  true,
+		constants.ProviderOAuth:  true,
 	}
 	if !validProviders[trimmed] {
-		return "oauth"
+		return constants.ProviderOAuth
 	}
 	return trimmed
 }
 
 func shouldUpdateProvider(current string, incoming string) bool {
-	if incoming == "" || incoming == "oauth" {
+	if incoming == "" || incoming == constants.ProviderOAuth {
 		return false
 	}
 	currentTrimmed := strings.ToLower(strings.TrimSpace(current))
-	return currentTrimmed == "" || currentTrimmed == "oauth"
+	return currentTrimmed == "" || currentTrimmed == constants.ProviderOAuth
 }
