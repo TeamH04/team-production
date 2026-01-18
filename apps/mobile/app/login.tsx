@@ -10,6 +10,7 @@ import { Alert, Platform, Pressable, StatusBar, StyleSheet, Text, View } from 'r
 
 import KuguriTitle from '@/assets/icons/kaguri.svg';
 import { palette } from '@/constants/palette';
+import { fonts } from '@/constants/typography';
 import { useUser } from '@/features/user/UserContext';
 import { checkIsOwner, ensureUserExistsInDB } from '@/lib/auth';
 import { DEV_GUEST_FLAG_KEY, DEV_LOGIN_ENABLED } from '@/lib/devMode';
@@ -390,6 +391,7 @@ const styles = StyleSheet.create({
   },
   buttonOutlineText: {
     color: palette.grayDark,
+    fontFamily: fonts.medium,
     fontSize: 20,
     fontWeight: '700',
     textAlign: 'center',
@@ -418,6 +420,7 @@ const styles = StyleSheet.create({
   },
   devButtonText: {
     color: palette.black,
+    fontFamily: fonts.medium,
     fontWeight: '700',
     textAlign: 'center',
   },
@@ -428,6 +431,7 @@ const styles = StyleSheet.create({
   },
   devLead: {
     color: palette.black,
+    fontFamily: fonts.medium,
     fontSize: 14,
     fontWeight: '700',
     marginLeft: 6,
@@ -453,6 +457,7 @@ const styles = StyleSheet.create({
   },
   ownerLeadText: {
     color: palette.white,
+    fontFamily: fonts.regular,
     fontSize: 16,
   },
   ownerLineSide: {
@@ -462,6 +467,7 @@ const styles = StyleSheet.create({
   },
   ownerLink: {
     color: palette.white,
+    fontFamily: fonts.medium,
     fontSize: 18,
     fontWeight: '700',
     marginTop: 20,

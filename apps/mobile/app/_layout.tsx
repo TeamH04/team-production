@@ -1,8 +1,9 @@
 // ポリフィルは他のモジュールより先にロードする必要がある
-import '@/polyfills/crypto';
 import '@/global.css';
+import '@/polyfills/crypto';
 
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
+import { fontFamilies } from '@team/theme';
 import { useFonts } from 'expo-font';
 import { router, Stack, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -84,6 +85,8 @@ export default function RootLayout() {
   const colorScheme = useColorScheme();
   const [loaded] = useFonts({
     SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
+    [fontFamilies.sans]: require('../assets/fonts/KiwiMaru-Regular.ttf'),
+    [fontFamilies.medium]: require('../assets/fonts/KiwiMaru-Medium.ttf'),
   });
 
   if (!loaded) {

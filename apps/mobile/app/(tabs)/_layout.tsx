@@ -8,6 +8,7 @@ import { HapticTab } from '@/components/HapticTab';
 import { IconSymbol } from '@/components/ui/IconSymbol';
 import { HEADER_HEIGHT } from '@/constants/layout';
 import { palette } from '@/constants/palette';
+import { fonts } from '@/constants/typography';
 
 export default function TabLayout() {
   const headerLogo = (
@@ -30,6 +31,11 @@ export default function TabLayout() {
           screenOptions={{
             tabBarActiveTintColor: palette.textOnAccent,
             tabBarInactiveTintColor: palette.textOnAccent,
+            tabBarLabelStyle: {
+              fontFamily: fonts.medium,
+              fontSize: 10,
+              fontWeight: undefined,
+            },
             headerStyle: styles.header,
             headerStatusBarHeight: 0,
             headerTitleAlign: 'center',

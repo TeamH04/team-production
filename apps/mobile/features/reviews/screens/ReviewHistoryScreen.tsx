@@ -5,6 +5,7 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { palette } from '@/constants/palette';
 import { TAB_BAR_SPACING } from '@/constants/TabBarSpacing';
+import { fonts } from '@/constants/typography';
 import { useFavorites } from '@/features/favorites/FavoritesContext';
 import { useReviews } from '@/features/reviews/ReviewsContext';
 import { useStores } from '@/features/stores/StoresContext';
@@ -267,7 +268,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 24,
   },
-  emptyText: { color: palette.mutedText, textAlign: 'center' },
+  emptyText: { color: palette.mutedText, fontFamily: fonts.regular, textAlign: 'center' },
   likePill: {
     backgroundColor: palette.secondarySurface,
     borderColor: palette.border,
@@ -276,8 +277,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 6,
   },
-  likeText: { color: palette.mutedText, fontSize: 12, fontWeight: '700' },
-  menuText: { color: palette.mutedText, marginTop: 6 },
+  likeText: { color: palette.mutedText, fontFamily: fonts.medium, fontSize: 12 },
+  menuText: { color: palette.mutedText, fontFamily: fonts.regular, marginTop: 6 },
   reviewHeader: {
     alignItems: 'center',
     flexDirection: 'row',
@@ -291,15 +292,15 @@ const styles = StyleSheet.create({
     gap: 10,
     marginTop: 12,
   },
-  reviewText: { color: palette.primary, marginTop: 8 },
+  reviewText: { color: palette.primary, fontFamily: fonts.regular, marginTop: 8 },
   rowCard: {
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
   rowCardMeta: { flex: 1, paddingRight: 12 },
-  rowCardSub: { color: palette.mutedText, marginTop: 4 },
-  rowCardTitle: { color: palette.primary, fontSize: 16, fontWeight: '700' },
+  rowCardSub: { color: palette.mutedText, fontFamily: fonts.regular, marginTop: 4 },
+  rowCardTitle: { color: palette.primary, fontFamily: fonts.medium, fontSize: 16 },
   screen: { backgroundColor: palette.background, flex: 1 },
   secondaryBtn: {
     backgroundColor: palette.secondarySurface,
@@ -311,7 +312,7 @@ const styles = StyleSheet.create({
   },
   secondaryBtnText: {
     color: palette.textOnSecondary,
-    fontWeight: '700',
+    fontFamily: fonts.medium,
     textAlign: 'center',
   },
   tabButton: {
@@ -324,8 +325,8 @@ const styles = StyleSheet.create({
   },
   tabButtonText: {
     color: palette.mutedText,
+    fontFamily: fonts.medium,
     fontSize: 14,
-    fontWeight: '600',
     textAlign: 'center',
   },
   tabButtonTextActive: {
@@ -339,8 +340,8 @@ const styles = StyleSheet.create({
   },
   tabTitle: {
     color: palette.primary,
+    fontFamily: fonts.medium,
     fontSize: 20,
-    fontWeight: '700',
     marginBottom: 12,
   },
 });

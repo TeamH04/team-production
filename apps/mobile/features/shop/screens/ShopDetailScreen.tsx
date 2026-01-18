@@ -18,6 +18,7 @@ import {
 } from 'react-native';
 
 import { palette } from '@/constants/palette';
+import { fonts } from '@/constants/typography';
 import { useFavorites } from '@/features/favorites/FavoritesContext';
 import { useReviews } from '@/features/reviews/ReviewsContext';
 import { useStores } from '@/features/stores/StoresContext';
@@ -102,8 +103,8 @@ const ratingStyles = StyleSheet.create({
   },
   label: {
     color: palette.primaryText,
+    fontFamily: fonts.medium,
     fontSize: 12,
-    fontWeight: '600',
   },
 });
 
@@ -698,6 +699,7 @@ const styles = StyleSheet.create({
   },
   descriptionText: {
     color: palette.primary,
+    fontFamily: fonts.regular,
     fontSize: 16,
     lineHeight: 22,
     marginBottom: 16,
@@ -731,7 +733,7 @@ const styles = StyleSheet.create({
     backgroundColor: palette.highlight,
     borderColor: palette.accent,
   },
-  likeText: { color: palette.muted, fontSize: 12, fontWeight: '600' },
+  likeText: { color: palette.muted, fontFamily: fonts.medium, fontSize: 12 },
   likeTextActive: { color: palette.accent },
   mapIcon: { marginRight: 8 },
   menuAddressBlock: {
@@ -740,12 +742,17 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     padding: 12,
   },
-  menuAddressLabel: { color: palette.secondaryText, fontSize: 12, fontWeight: '700' },
-  menuAddressText: { color: palette.primaryText, fontSize: 14, fontWeight: '600', marginTop: 6 },
+  menuAddressLabel: { color: palette.secondaryText, fontFamily: fonts.medium, fontSize: 12 },
+  menuAddressText: {
+    color: palette.primaryText,
+    fontFamily: fonts.medium,
+    fontSize: 14,
+    marginTop: 6,
+  },
   menuIcon: { marginRight: 10 },
-  menuItemText: { color: palette.primaryText, fontSize: 15, fontWeight: '700' },
+  menuItemText: { color: palette.primaryText, fontFamily: fonts.medium, fontSize: 15 },
   menuSection: { marginTop: 8 },
-  meta: { color: palette.muted, marginBottom: 12, marginTop: 4 },
+  meta: { color: palette.muted, fontFamily: fonts.regular, marginBottom: 12, marginTop: 4 },
   moreBtnOutline: {
     alignItems: 'center',
     borderColor: palette.primary,
@@ -756,8 +763,8 @@ const styles = StyleSheet.create({
     marginTop: 12,
     paddingVertical: 14,
   },
-  moreBtnText: { color: palette.primary, fontWeight: '700' },
-  muted: { color: palette.muted, marginTop: 6 },
+  moreBtnText: { color: palette.primary, fontFamily: fonts.medium, fontSize: 15 },
+  muted: { color: palette.muted, fontFamily: fonts.regular, marginTop: 6 },
   paginationContainer: {
     bottom: 12,
     flexDirection: 'row',
@@ -783,7 +790,7 @@ const styles = StyleSheet.create({
   },
   primaryBtnText: {
     color: palette.primaryOnAccent,
-    fontWeight: '700',
+    fontFamily: fonts.medium,
     textAlign: 'center',
   },
   recommendedBox: {
@@ -801,11 +808,11 @@ const styles = StyleSheet.create({
   },
   recommendedLabel: {
     color: palette.primaryText,
+    fontFamily: fonts.medium,
     fontSize: 13,
-    fontWeight: '800',
     marginBottom: 8,
   },
-  reviewBody: { color: palette.primaryText, marginTop: 8 },
+  reviewBody: { color: palette.primaryText, fontFamily: fonts.regular, marginTop: 8 },
   reviewDivider: {
     borderBottomColor: palette.divider,
     borderBottomWidth: 1,
@@ -820,11 +827,16 @@ const styles = StyleSheet.create({
   },
   reviewImage: { borderRadius: 12, height: 88, marginRight: 10, width: 88 },
   reviewIntro: { marginBottom: 8 },
-  reviewMenu: { color: palette.muted, marginTop: 6 },
+  reviewMenu: { color: palette.muted, fontFamily: fonts.regular, marginTop: 6 },
   reviewPrimaryBtn: { marginBottom: 12, marginTop: 4 },
   reviewSortRow: { marginBottom: 12 },
-  reviewSub: { color: palette.secondaryText, fontSize: 13, marginTop: 2 },
-  reviewTitle: { color: palette.primary, fontWeight: '700' },
+  reviewSub: {
+    color: palette.secondaryText,
+    fontFamily: fonts.regular,
+    fontSize: 13,
+    marginTop: 2,
+  },
+  reviewTitle: { color: palette.primary, fontFamily: fonts.medium },
   screen: { backgroundColor: palette.background, flex: 1 },
   secondaryBtn: {
     backgroundColor: palette.secondarySurface,
@@ -835,8 +847,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 10,
   },
-  secondaryBtnText: { color: palette.textOnSecondary, fontWeight: '700' },
-  sectionTitle: { color: palette.primary, fontSize: 18, fontWeight: '700' },
+  secondaryBtnText: { color: palette.textOnSecondary, fontFamily: fonts.medium },
+  sectionTitle: { color: palette.primary, fontFamily: fonts.medium, fontSize: 18 },
   shareBtn: { marginLeft: 8, padding: 4 },
   shareBtnDisabled: { opacity: 0.4 },
   sortPill: {
@@ -853,7 +865,7 @@ const styles = StyleSheet.create({
     borderColor: palette.accent,
   },
   sortRow: { flexDirection: 'row', marginBottom: 8 },
-  sortText: { color: palette.muted, fontSize: 12, fontWeight: '600' },
+  sortText: { color: palette.muted, fontFamily: fonts.medium, fontSize: 12 },
   sortTextActive: { color: palette.primaryOnAccent },
   tagPill: {
     backgroundColor: palette.tagSurface,
@@ -864,14 +876,14 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
   },
   tagRow: { flexDirection: 'row', flexWrap: 'wrap', marginBottom: 16 },
-  tagText: { color: palette.tagText, fontSize: 12, fontWeight: '600' },
+  tagText: { color: palette.tagText, fontFamily: fonts.medium, fontSize: 12 },
   title: {
     color: palette.primary,
     flex: 1,
+    fontFamily: fonts.medium,
     fontSize: 22,
-    fontWeight: '800',
     marginRight: 0,
   },
-  titleLoading: { color: palette.secondaryText, fontSize: 18, fontWeight: '700' },
+  titleLoading: { color: palette.secondaryText, fontFamily: fonts.medium, fontSize: 18 },
   visitedBtn: { marginLeft: 8 },
 });

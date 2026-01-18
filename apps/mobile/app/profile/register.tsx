@@ -13,6 +13,7 @@ import {
 
 import { GENRES } from '@/constants/genres';
 import { palette } from '@/constants/palette';
+import { fonts } from '@/constants/typography';
 import { useUser } from '@/features/user/UserContext';
 
 export default function RegisterProfileScreen() {
@@ -101,16 +102,21 @@ const styles = StyleSheet.create({
   chipOff: { backgroundColor: palette.secondarySurface, borderColor: palette.border },
   chipOn: { backgroundColor: palette.accent },
 
-  chipTextOff: { color: palette.primaryText, fontWeight: '700' },
+  chipTextOff: { color: palette.primaryText, fontFamily: fonts.medium },
 
-  chipTextOn: { color: palette.primaryOnAccent, fontWeight: '700' },
+  chipTextOn: { color: palette.primaryOnAccent, fontFamily: fonts.medium },
   chipsWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
 
   content: { padding: 16 },
 
   keyboard: { flex: 1 },
 
-  label: { color: palette.primaryText, fontWeight: '700', marginBottom: 20, marginTop: 4 },
+  label: {
+    color: palette.primaryText,
+    fontFamily: fonts.medium,
+    marginBottom: 20,
+    marginTop: 4,
+  },
 
   // プライマリボタン（登録）
   primaryBtn: {
@@ -122,7 +128,11 @@ const styles = StyleSheet.create({
   primaryBtnDisabled: {
     opacity: 0.5,
   },
-  primaryBtnText: { color: palette.primaryOnAccent, fontWeight: '700', textAlign: 'center' },
+  primaryBtnText: {
+    color: palette.primaryOnAccent,
+    fontFamily: fonts.medium,
+    textAlign: 'center',
+  },
 
   screen: { backgroundColor: palette.surface, flex: 1 },
 
@@ -136,16 +146,21 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 12,
   },
-  secondaryBtnText: { color: palette.primaryText, fontWeight: '700', textAlign: 'center' },
+  secondaryBtnText: {
+    color: palette.primaryText,
+    fontFamily: fonts.medium,
+    textAlign: 'center',
+  },
 
   subtitle: {
     color: palette.secondaryText,
+    fontFamily: fonts.regular,
     marginBottom: 16,
     marginTop: 8,
   },
   title: {
     color: palette.primaryText,
+    fontFamily: fonts.medium,
     fontSize: 24,
-    fontWeight: '700',
   },
 });
