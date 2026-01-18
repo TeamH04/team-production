@@ -1,8 +1,7 @@
 import { FONT_SIZE, FONT_WEIGHT, SPACING } from '@team/constants';
+import { palette } from '@team/mobile-ui';
 import React from 'react';
 import { Pressable, StyleSheet, Text } from 'react-native';
-
-import { palette } from '@/constants/palette';
 
 import type { StyleProp, ViewStyle } from 'react-native';
 

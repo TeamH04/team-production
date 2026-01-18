@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ERROR_MESSAGES, ROUTES } from '@team/constants';
+import { palette } from '@team/mobile-ui';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import * as Crypto from 'expo-crypto';
 import { type Href, useRouter } from 'expo-router';
@@ -8,7 +9,6 @@ import { useCallback, useLayoutEffect } from 'react';
 import { Alert, Platform, Pressable, StatusBar, StyleSheet, Text, View } from 'react-native';
 
 import KuguriTitle from '@/assets/icons/kaguri.svg';
-import { palette } from '@/constants/palette';
 import { useOAuthFlow } from '@/hooks/useOAuthFlow';
 import { DEV_GUEST_FLAG_KEY, DEV_LOGIN_ENABLED } from '@/lib/devMode';
 

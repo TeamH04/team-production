@@ -1,11 +1,10 @@
 import { Ionicons } from '@expo/vector-icons';
 import { BORDER_RADIUS, SPACING } from '@team/constants';
 import { formatDateJa } from '@team/core-utils';
+import { palette } from '@team/mobile-ui';
 import { Image } from 'expo-image';
 import { memo } from 'react';
 import { Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
-
-import { palette } from '@/constants/palette';
 
 import type { Review } from '@/features/reviews/ReviewsContext';
 

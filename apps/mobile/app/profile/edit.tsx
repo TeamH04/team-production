@@ -1,5 +1,6 @@
 import { Picker } from '@react-native-picker/picker';
 import { isValidEmail, VALIDATION_MESSAGES } from '@team/constants';
+import { palette } from '@team/mobile-ui';
 import { useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import {
@@ -14,8 +15,7 @@ import {
   View,
 } from 'react-native';
 
-import { GENRES, toggleGenre as toggleGenreUtil } from '@/constants/genres';
-import { palette } from '@/constants/palette';
+import { GENRES, toggleGenre as toggleGenreUtil, type Genre } from '@/constants/genres';
 import { TAB_BAR_SPACING } from '@/constants/TabBarSpacing';
 import { useUser } from '@/features/user/UserContext';
 
@@ -55,8 +55,8 @@ export default function EditProfileScreen() {
   }, [email, name, saving]);
 
   /** ジャンルの選択状態をトグルする */
-  const toggleGenre = (genre: string) => {
-    setFavoriteGenres(prev => toggleGenreUtil(prev, genre));
+  const toggleGenre = (genre: Genre) => {
+    setFavoriteGenres(prev => toggleGenreUtil(prev as Genre[], genre));
   };
 
   const validateForm = (): boolean => {

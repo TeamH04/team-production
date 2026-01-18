@@ -1,4 +1,11 @@
-import { formatDateInput, isValidDateYYYYMMDD, isValidEmail, ROUTES } from '@team/constants';
+import {
+  formatDateInput,
+  isValidDateYYYYMMDD,
+  isValidEmail,
+  ROUTES,
+  SHADOW_STYLES,
+} from '@team/constants';
+import { palette } from '@team/mobile-ui';
 import { useNavigation, useRouter } from 'expo-router';
 import { useLayoutEffect, useState } from 'react';
 import {
@@ -13,7 +20,7 @@ import {
   View,
 } from 'react-native';
 
-import { palette } from '@/constants/palette';
+const MOCK_SUBMIT_DELAY_MS = 600;
 
 export default function OwnerSignupScreen() {
   const router = useRouter();
@@ -75,7 +82,7 @@ export default function OwnerSignupScreen() {
     try {
       setSubmitting(true);
       // NOTE: Backend 未実装。将来的にここで API に POST する想定。
-      await new Promise(r => setTimeout(r, 600));
+      await new Promise(r => setTimeout(r, MOCK_SUBMIT_DELAY_MS));
       Alert.alert('作成完了', 'オーナー用アカウントの申請を受け付けました');
       router.replace(ROUTES.HOME);
     } catch (e: unknown) {
@@ -188,18 +195,14 @@ export default function OwnerSignupScreen() {
 
 const styles = StyleSheet.create({
   buttonContainer: {
+    ...SHADOW_STYLES.DEFAULT,
     backgroundColor: palette.button,
     borderColor: palette.buttonBorder,
     borderRadius: 999,
     borderWidth: 1,
-    elevation: 4,
     height: 44,
     minWidth: 160,
     overflow: 'hidden',
-    shadowColor: palette.shadowColor,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.16,
-    shadowRadius: 10,
   },
   buttonPressable: {
     alignItems: 'center',

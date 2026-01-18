@@ -1,9 +1,9 @@
 import { ROUTES } from '@team/constants';
+import { palette } from '@team/mobile-ui';
 import { type Href, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { palette } from '@/constants/palette';
 import { checkIsOwner } from '@/lib/auth';
 
 export default function OwnerHomeScreen() {

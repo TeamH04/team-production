@@ -1,8 +1,7 @@
 import { SPACING, FONT_SIZE } from '@team/constants';
+import { palette } from '@team/mobile-ui';
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-
-import { palette } from '@/constants/palette';
 
 import { BackButton } from './BackButton';
 

@@ -5,12 +5,13 @@ import {
   isValidEmail,
   ROUTES,
   SESSION_NOT_FOUND,
+  SHADOW_STYLES,
 } from '@team/constants';
+import { palette } from '@team/mobile-ui';
 import { type Href, useNavigation, useRouter } from 'expo-router';
 import { useLayoutEffect, useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
-import { palette } from '@/constants/palette';
 import { ensureUserExistsInDB } from '@/lib/auth';
 import { getSupabase, isSupabaseConfigured } from '@/lib/supabase';
 
@@ -197,18 +198,14 @@ const styles = StyleSheet.create({
   inputGroup: { marginBottom: 14 },
   label: { color: palette.secondaryText, fontSize: 12, marginBottom: 6 },
   loginButtonContainer: {
+    ...SHADOW_STYLES.DEFAULT,
     backgroundColor: palette.button,
     borderColor: palette.buttonBorder,
     borderRadius: 999,
     borderWidth: 1,
-    elevation: 4,
     height: 44,
     minWidth: 160,
     overflow: 'hidden',
-    shadowColor: palette.shadowColor,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.16,
-    shadowRadius: 10,
   },
   loginButtonPressable: {
     alignItems: 'center',

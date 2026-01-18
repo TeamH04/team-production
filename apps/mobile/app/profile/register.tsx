@@ -1,4 +1,5 @@
 import { ROUTES } from '@team/constants';
+import { palette } from '@team/mobile-ui';
 import { Stack, useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import {
@@ -13,7 +14,6 @@ import {
 } from 'react-native';
 
 import { GENRES } from '@/constants/genres';
-import { palette } from '@/constants/palette';
 import { useUser } from '@/features/user/UserContext';
 
 export default function RegisterProfileScreen() {

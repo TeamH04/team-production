@@ -8,13 +8,13 @@ import {
   ROUTES,
 } from '@team/constants';
 import { formatDateJa } from '@team/core-utils';
+import { palette } from '@team/mobile-ui';
 import { SHOPS } from '@team/shop-core';
 import { useRouter } from 'expo-router';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { Alert, Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { HeaderWithBack } from '@/components/HeaderWithBack';
-import { palette } from '@/constants/palette';
 import { TAB_BAR_SPACING } from '@/constants/TabBarSpacing';
 import { useReviews } from '@/features/reviews/ReviewsContext';
 import { useUser } from '@/features/user/UserContext';

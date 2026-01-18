@@ -1,14 +1,19 @@
 import { AUTH_ERROR_MESSAGES, ERROR_MESSAGES, FONT_WEIGHT, ROUTES } from '@team/constants';
+import { palette } from '@team/mobile-ui';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
 import { useEffect, useLayoutEffect, useMemo, useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
-import { palette } from '@/constants/palette';
 import { useReviews } from '@/features/reviews/ReviewsContext';
 import { useStores } from '@/features/stores/StoresContext';
 import { api } from '@/lib/api';
+
+const REVIEW_CONFIG = {
+  MAX_IMAGES: 6,
+  IMAGE_QUALITY: 0.8,
+} as const;
 
 // レビュー投稿画面のコンポーネント
 export default function ReviewModalScreen() {
@@ -74,8 +79,8 @@ export default function ReviewModalScreen() {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsMultipleSelection: true,
-      selectionLimit: 6,
-      quality: 0.8,
+      selectionLimit: REVIEW_CONFIG.MAX_IMAGES,
+      quality: REVIEW_CONFIG.IMAGE_QUALITY,
     });
     if (!result.canceled) {
       setAssets(result.assets);

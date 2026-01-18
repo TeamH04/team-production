@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { ERROR_MESSAGES, FONT_WEIGHT } from '@team/constants';
+import { palette } from '@team/mobile-ui';
 import { BUDGET_LABEL, type Shop } from '@team/shop-core';
 import { withAlpha } from '@team/theme';
 import { useFocusEffect } from 'expo-router';
@@ -7,29 +8,12 @@ import { useCallback, useState } from 'react';
 import { Alert, FlatList, Modal, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { ShopCard } from '@/components/ShopCard';
-import { palette } from '@/constants/palette';
+import { FAVORITES_SORT_OPTIONS } from '@/constants/sortOptions';
 import { TAB_BAR_SPACING } from '@/constants/TabBarSpacing';
 import { useFavorites } from '@/features/favorites/FavoritesContext';
 import { useStores } from '@/features/stores/StoresContext';
 import { useShopFilter, type SortType } from '@/hooks/useShopFilter';
 import { useShopNavigator } from '@/hooks/useShopNavigator';
-
-/**
- * ソート機能のオプション設定
- */
-interface SortOption {
-  label: string;
-  value: SortType;
-}
-
-/**
- * ソート方法の選択肢
- */
-const SORT_OPTIONS: SortOption[] = [
-  { label: '新着順', value: 'newest' },
-  { label: '評価が高い順', value: 'rating-high' },
-  { label: '評価が低い順', value: 'rating-low' },
-];
 
 export default function FavoritesScreen() {
   const { navigateToShop } = useShopNavigator();
@@ -77,7 +61,7 @@ export default function FavoritesScreen() {
    * @returns ソート方法の表示名
    */
   const getCurrentSortLabel = () => {
-    const option = SORT_OPTIONS.find(opt => opt.value === sortType);
+    const option = FAVORITES_SORT_OPTIONS.find(opt => opt.value === sortType);
     return option?.label || '新着順';
   };
 
@@ -136,7 +120,7 @@ export default function FavoritesScreen() {
         <Pressable style={styles.modalOverlay} onPress={() => setShowSortModal(false)}>
           <View style={styles.sortModalContent}>
             <FlatList
-              data={SORT_OPTIONS}
+              data={FAVORITES_SORT_OPTIONS}
               keyExtractor={item => item.value}
               scrollEnabled={false}
               contentContainerStyle={styles.sortOptionsList}

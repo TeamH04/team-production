@@ -10,7 +10,8 @@ import {
 } from '@team/constants';
 import { formatDateJa } from '@team/core-utils';
 import { useAuthErrorHandler } from '@team/hooks';
-import { BUDGET_LABEL, getShopImages } from '@team/shop-core';
+import { palette } from '@team/mobile-ui';
+import { BUDGET_LABEL, getShopImages, resolveMenuName } from '@team/shop-core';
 import { Image } from 'expo-image';
 import { useFocusEffect, useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -28,7 +29,6 @@ import {
   View,
 } from 'react-native';
 
-import { palette } from '@/constants/palette';
 import { useFavorites } from '@/features/favorites/FavoritesContext';
 import { useReviews } from '@/features/reviews/ReviewsContext';
 import { useStores } from '@/features/stores/StoresContext';
@@ -154,17 +154,8 @@ export default function ShopDetailScreen() {
     Linking.openURL(mapOpenUrl).catch(() => Alert.alert('マップを開けませんでした'));
   }, [mapOpenUrl]);
 
-  const resolveMenuName = useCallback(
-    (review: { menuItemIds?: string[]; menuItemName?: string }) => {
-      if (review.menuItemName) return review.menuItemName;
-      if (!review.menuItemIds || review.menuItemIds.length === 0 || !shop?.menu) return undefined;
-
-      const names = shop.menu
-        .filter(item => review.menuItemIds?.includes(item.id))
-        .map(item => item.name);
-
-      return names.length > 0 ? names.join(' / ') : undefined;
-    },
+  const getMenuName = useCallback(
+    (review: { menuItemIds?: string[]; menuItemName?: string }) => resolveMenuName(shop, review),
     [shop],
   );
 
@@ -529,7 +520,7 @@ export default function ShopDetailScreen() {
                       </View>
 
                       {(() => {
-                        const menuName = resolveMenuName(review);
+                        const menuName = getMenuName(review);
                         if (!menuName) return null;
                         return <Text style={styles.reviewMenu}>メニュー: {menuName}</Text>;
                       })()}

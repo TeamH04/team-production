@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { BORDER_RADIUS, FONT_WEIGHT, SPACING } from '@team/constants';
+import { palette } from '@team/mobile-ui';
 import { colors as themeColors, withAlpha } from '@team/theme';
 import { MENU_TAB_MAP, type ShopMenuItem } from '@team/types';
 import { useLocalSearchParams, useNavigation } from 'expo-router';
@@ -14,7 +15,7 @@ import { api } from '@/lib/api';
 const COLORS = {
   BADGE_BG: withAlpha(themeColors.accent, 0.12),
   BADGE_TEXT: themeColors.accent,
-  BLACK: '#000000',
+  BLACK: palette.black,
   BORDER_LIGHT: withAlpha(themeColors.primary, 0.12),
   BORDER_MEDIUM: withAlpha(themeColors.primary, 0.2),
   BORDER_SOFT: withAlpha(themeColors.primary, 0.08),
@@ -28,13 +29,13 @@ const COLORS = {
   IMAGE_BG: withAlpha(themeColors.background, 0.92),
   SUB_TEXT: withAlpha(themeColors.primary, 0.6),
 
-  TAB_BG: '#FFFFFF',
+  TAB_BG: palette.white,
   TAB_BORDER: themeColors.secondary,
   TAB_TEXT: themeColors.secondary,
 
   TRANSPARENT: 'transparent',
 
-  WHITE: '#FFFFFF',
+  WHITE: palette.white,
 
   TAX_TEXT: withAlpha(themeColors.primary, 0.6),
 };

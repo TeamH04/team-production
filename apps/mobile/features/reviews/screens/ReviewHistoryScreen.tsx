@@ -1,21 +1,20 @@
 import { BORDER_RADIUS, FONT_WEIGHT, formatRating, ROUTES } from '@team/constants';
 import { formatDateJa } from '@team/core-utils';
 import { useAuthErrorHandler } from '@team/hooks';
+import { TabContent } from '@team/mobile-ui';
+import { palette } from '@team/mobile-ui';
+import { resolveMenuName, type Shop } from '@team/shop-core';
 import { Image } from 'expo-image';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { TabContent } from '@/components/TabContent';
-import { palette } from '@/constants/palette';
 import { TAB_BAR_SPACING } from '@/constants/TabBarSpacing';
 import { useFavorites } from '@/features/favorites/FavoritesContext';
 import { useReviews } from '@/features/reviews/ReviewsContext';
 import { useStores } from '@/features/stores/StoresContext';
 import { useShopNavigator } from '@/hooks/useShopNavigator';
 import { storage } from '@/lib/storage';
-
-import type { Shop } from '@team/shop-core';
 
 type TabType = 'favorites' | 'history' | 'likes';
 
@@ -67,24 +66,10 @@ export default function ReviewHistoryScreen() {
     return sorted;
   }, [getLikedReviews]);
 
-  const resolveMenuName = useCallback(
-    (shop: Shop | undefined, menuItemIds?: string[], menuItemName?: string) => {
-      if (menuItemName) {
-        return menuItemName;
-      }
-      if (!menuItemIds || menuItemIds.length === 0 || !shop?.menu) {
-        return undefined;
-      }
-      const names = shop.menu.filter(item => menuItemIds.includes(item.id)).map(item => item.name);
-      return names.length > 0 ? names.join(' / ') : undefined;
-    },
-    [],
-  );
-
   const renderReviewCard = useCallback(
     (review: (typeof reviews)[number]) => {
       const shop = stores.find(s => s.id === review.shopId);
-      const menuName = resolveMenuName(shop, review.menuItemIds, review.menuItemName);
+      const menuName = resolveMenuName(shop, review);
 
       return (
         <View style={styles.cardShadow}>
@@ -124,7 +109,7 @@ export default function ReviewHistoryScreen() {
         </View>
       );
     },
-    [resolveMenuName, stores],
+    [stores],
   );
 
   const renderFavoriteCard = useCallback(

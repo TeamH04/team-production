@@ -1,5 +1,6 @@
 import { HeaderBackButton } from '@react-navigation/elements';
-import { FONT_WEIGHT, ROUTES } from '@team/constants';
+import { FONT_WEIGHT, ROUTES, SHADOW_STYLES } from '@team/constants';
+import { palette } from '@team/mobile-ui';
 import { type Href, useNavigation, useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
@@ -15,7 +16,6 @@ import {
 } from 'react-native';
 
 import { HEADER_HEIGHT } from '@/constants/layout';
-import { palette } from '@/constants/palette';
 import {
   toStepData,
   validateStep,
@@ -24,6 +24,8 @@ import {
   type MultiValueStep,
   type SingleValueStep,
 } from '@/features/owner/logic/shop-registration';
+
+const MOCK_SUBMIT_DELAY_MS = 700;
 
 type SingleValueStepUI = SingleValueStep & {
   onChange: (text: string) => void;
@@ -195,7 +197,7 @@ export default function RegisterShopScreen() {
       setLoading(true);
       // TODO: Backend エンドポイントに置き換え予定。現在はモック送信。
       // 実際のペイロード: { storeName, menuItems, minutesFromStation, tags: tagItems, address, minBudget, maxBudget }
-      await new Promise(resolve => setTimeout(resolve, 700));
+      await new Promise(resolve => setTimeout(resolve, MOCK_SUBMIT_DELAY_MS));
       Alert.alert('送信完了', '店舗登録リクエストを受け付けました');
       router.replace(ROUTES.OWNER as Href);
     } catch (e: unknown) {
@@ -400,18 +402,14 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   buttonContainer: {
+    ...SHADOW_STYLES.DEFAULT,
     backgroundColor: palette.button,
     borderColor: palette.buttonBorder,
     borderRadius: 999,
     borderWidth: 1,
-    elevation: 4,
     height: 48,
     minWidth: 180,
     overflow: 'hidden',
-    shadowColor: palette.shadowColor,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.16,
-    shadowRadius: 10,
   },
   buttonPressable: {
     alignItems: 'center',

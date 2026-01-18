@@ -1,4 +1,5 @@
 import { BORDER_RADIUS, formatRating, SPACING } from '@team/constants';
+import { palette } from '@team/mobile-ui';
 import { BUDGET_LABEL, type Shop } from '@team/shop-core';
 import { Image } from 'expo-image';
 import { memo } from 'react';
@@ -11,8 +12,6 @@ import {
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
-
-import { palette } from '@/constants/palette';
 
 /**
  * ShopCard の表示バリエーション

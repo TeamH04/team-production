@@ -13,6 +13,11 @@ import { getSupabase, isSupabaseConfigured } from '@/lib/supabase';
 import type { OAuthErrorInfo } from '@team/hooks';
 import type { OAuthProvider, UserProfile } from '@team/types';
 
+const OAUTH_CONFIG = {
+  SCHEME: 'shopmobile',
+  CALLBACK_PATH: 'auth/callback',
+} as const;
+
 WebBrowser.maybeCompleteAuthSession();
 
 export interface UseOAuthFlowOptions {
@@ -141,8 +146,8 @@ export function useOAuthFlow(options: UseOAuthFlowOptions) {
    */
   const createRedirectUrl = useCallback(() => {
     return AuthSession.makeRedirectUri({
-      scheme: 'shopmobile',
-      path: 'auth/callback',
+      scheme: OAUTH_CONFIG.SCHEME,
+      path: OAUTH_CONFIG.CALLBACK_PATH,
     });
   }, []);
 

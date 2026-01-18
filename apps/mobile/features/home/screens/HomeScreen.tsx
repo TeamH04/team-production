@@ -1,5 +1,6 @@
 import { ERROR_MESSAGES, FONT_WEIGHT, MOBILE_PAGE_SIZE, ROUTES } from '@team/constants';
 import { usePagination } from '@team/hooks';
+import { palette } from '@team/mobile-ui';
 import { type Shop } from '@team/shop-core';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { type ReactElement, useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -15,11 +16,12 @@ import {
 import Animated, { useAnimatedRef } from 'react-native-reanimated';
 
 import { ShopCard } from '@/components/ShopCard';
-import { palette } from '@/constants/palette';
 import { TAB_BAR_SPACING } from '@/constants/TabBarSpacing';
 import { useStores } from '@/features/stores/StoresContext';
 import { useShopFilter } from '@/hooks/useShopFilter';
 import { useShopNavigator } from '@/hooks/useShopNavigator';
+
+const LOAD_MORE_DELAY_MS = 350;
 
 const KEY_EXTRACTOR = (item: Shop) => item.id;
 
@@ -79,7 +81,7 @@ function ShopResultsList({
       loadMore();
       setIsLoadingMore(false);
       loadMoreTimeout.current = null;
-    }, 350);
+    }, LOAD_MORE_DELAY_MS);
   }, [hasMoreResults, isLoadingMore, loadMore]);
 
   return (

@@ -1,4 +1,6 @@
 import { BORDER_RADIUS, ERROR_MESSAGES, FONT_WEIGHT, ROUTES, SPACING } from '@team/constants';
+import { ToggleButton } from '@team/mobile-ui';
+import { palette } from '@team/mobile-ui';
 import { sortShops, type Shop } from '@team/shop-core';
 import { useRouter } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
@@ -14,8 +16,7 @@ import {
 } from 'react-native';
 
 import { ShopCard } from '@/components/ShopCard';
-import { ToggleButton } from '@/components/ToggleButton';
-import { palette } from '@/constants/palette';
+import { SEARCH_SORT_OPTIONS } from '@/constants/sortOptions';
 import { TAB_BAR_SPACING } from '@/constants/TabBarSpacing';
 import { useStores } from '@/features/stores/StoresContext';
 import { useVisited } from '@/features/visited/VisitedContext';
@@ -24,13 +25,6 @@ import { useShopFilter } from '@/hooks/useShopFilter';
 type SortType = 'default' | 'newest' | 'rating' | 'registered';
 type SortOrder = 'asc' | 'desc';
 type VisitedFilter = 'all' | 'visited' | 'not_visited';
-
-const SORT_OPTIONS: { label: string; value: SortType }[] = [
-  { label: 'おすすめ', value: 'default' },
-  { label: '新着順', value: 'newest' },
-  { label: '評価順(★)', value: 'rating' },
-  { label: '登録順', value: 'registered' },
-];
 
 const VISITED_FILTER_OPTIONS: { label: string; value: VisitedFilter }[] = [
   { label: 'すべて', value: 'all' },
@@ -353,7 +347,7 @@ export default function SearchScreen() {
                   style={styles.sortOptionsScroll}
                   contentContainerStyle={styles.sortOptionsContent}
                 >
-                  {SORT_OPTIONS.map(option => (
+                  {SEARCH_SORT_OPTIONS.map(option => (
                     <ToggleButton
                       key={option.value}
                       label={option.label}
