@@ -21,14 +21,19 @@ func NewReviewRepository(db *gorm.DB) output.ReviewRepository {
 }
 
 type reviewRow struct {
-	ReviewID   string    `gorm:"column:review_id"`
-	StoreID    string    `gorm:"column:store_id"`
-	UserID     string    `gorm:"column:user_id"`
-	Rating     int       `gorm:"column:rating"`
-	Content    *string   `gorm:"column:content"`
-	CreatedAt  time.Time `gorm:"column:created_at"`
-	LikesCount int64     `gorm:"column:likes_count"`
-	LikedByMe  bool      `gorm:"column:liked_by_me"`
+	ReviewID          string    `gorm:"column:review_id"`
+	StoreID           string    `gorm:"column:store_id"`
+	UserID            string    `gorm:"column:user_id"`
+	Rating            int       `gorm:"column:rating"`
+	RatingTaste       *int      `gorm:"column:rating_taste"`
+	RatingAtmosphere  *int      `gorm:"column:rating_atmosphere"`
+	RatingService     *int      `gorm:"column:rating_service"`
+	RatingSpeed       *int      `gorm:"column:rating_speed"`
+	RatingCleanliness *int      `gorm:"column:rating_cleanliness"`
+	Content           *string   `gorm:"column:content"`
+	CreatedAt         time.Time `gorm:"column:created_at"`
+	LikesCount        int64     `gorm:"column:likes_count"`
+	LikedByMe         bool      `gorm:"column:liked_by_me"`
 }
 
 func (r *reviewRepository) FindByStoreID(ctx context.Context, storeID string, sort string, viewerID string) ([]entity.Review, error) {
@@ -85,6 +90,14 @@ func (r *reviewRepository) CreateInTx(ctx context.Context, tx interface{}, revie
 		Content: review.Content,
 	}
 
+	if review.RatingDetails != nil {
+		record.RatingTaste = review.RatingDetails.Taste
+		record.RatingAtmosphere = review.RatingDetails.Atmosphere
+		record.RatingService = review.RatingDetails.Service
+		record.RatingSpeed = review.RatingDetails.Speed
+		record.RatingCleanliness = review.RatingDetails.Cleanliness
+	}
+
 	if err := txAsserted.WithContext(ctx).Create(&record).Error; err != nil {
 		return mapDBError(err)
 	}
@@ -132,19 +145,21 @@ func (r *reviewRepository) RemoveLike(ctx context.Context, reviewID string, user
 }
 
 func (r *reviewRepository) baseReviewQuery(ctx context.Context, viewerID string) *gorm.DB {
+	baseFields := "r.review_id, r.store_id, r.user_id, r.rating, r.rating_taste, r.rating_atmosphere, r.rating_service, r.rating_speed, r.rating_cleanliness, r.content, r.created_at, COUNT(rl.review_id) AS likes_count"
+
 	query := r.db.WithContext(ctx).
 		Table("reviews r").
-		Select("r.review_id, r.store_id, r.user_id, r.rating, r.content, r.created_at, COUNT(rl.review_id) AS likes_count").
+		Select(baseFields).
 		Joins("LEFT JOIN review_likes rl ON rl.review_id = r.review_id")
 
 	if viewerID != "" {
 		query = query.Select(
-			"r.review_id, r.store_id, r.user_id, r.rating, r.content, r.created_at, COUNT(rl.review_id) AS likes_count, EXISTS(SELECT 1 FROM review_likes rl2 WHERE rl2.review_id = r.review_id AND rl2.user_id = ?) AS liked_by_me",
+			baseFields+", EXISTS(SELECT 1 FROM review_likes rl2 WHERE rl2.review_id = r.review_id AND rl2.user_id = ?) AS liked_by_me",
 			viewerID,
 		)
 	} else {
 		query = query.Select(
-			"r.review_id, r.store_id, r.user_id, r.rating, r.content, r.created_at, COUNT(rl.review_id) AS likes_count, FALSE AS liked_by_me",
+			baseFields + ", FALSE AS liked_by_me",
 		)
 	}
 
@@ -172,15 +187,26 @@ func (r *reviewRepository) attachReviewRelations(ctx context.Context, rows []rev
 
 	result := make([]entity.Review, len(rows))
 	for i, row := range rows {
+		var ratingDetails *entity.RatingDetails
+		if row.RatingTaste != nil || row.RatingAtmosphere != nil || row.RatingService != nil || row.RatingSpeed != nil || row.RatingCleanliness != nil {
+			ratingDetails = &entity.RatingDetails{
+				Taste:       row.RatingTaste,
+				Atmosphere:  row.RatingAtmosphere,
+				Service:     row.RatingService,
+				Speed:       row.RatingSpeed,
+				Cleanliness: row.RatingCleanliness,
+			}
+		}
 		review := entity.Review{
-			ReviewID:   row.ReviewID,
-			StoreID:    row.StoreID,
-			UserID:     row.UserID,
-			Rating:     row.Rating,
-			Content:    row.Content,
-			CreatedAt:  row.CreatedAt,
-			LikesCount: int(row.LikesCount),
-			LikedByMe:  row.LikedByMe,
+			ReviewID:      row.ReviewID,
+			StoreID:       row.StoreID,
+			UserID:        row.UserID,
+			Rating:        row.Rating,
+			RatingDetails: ratingDetails,
+			Content:       row.Content,
+			CreatedAt:     row.CreatedAt,
+			LikesCount:    int(row.LikesCount),
+			LikedByMe:     row.LikedByMe,
 		}
 		if files, ok := filesByReview[row.ReviewID]; ok {
 			review.Files = files

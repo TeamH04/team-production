@@ -6,13 +6,22 @@ import (
 	"github.com/TeamH04/team-production/apps/backend/internal/domain/entity"
 )
 
+type RatingDetails struct {
+	Taste       *int
+	Atmosphere  *int
+	Service     *int
+	Speed       *int
+	Cleanliness *int
+}
+
 type CreateReview struct {
-	StoreID string
-	UserID  string
-	MenuIDs []string
-	Rating  int
-	Content *string
-	FileIDs []string
+	StoreID       string
+	UserID        string
+	MenuIDs       []string
+	Rating        int
+	RatingDetails *RatingDetails
+	Content       *string
+	FileIDs       []string
 }
 
 // ReviewRepository abstracts review persistence boundary.

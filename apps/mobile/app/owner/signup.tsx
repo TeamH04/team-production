@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 
 import { palette } from '@/constants/palette';
+import { fonts } from '@/constants/typography';
 
 const isLikelyEmail = (value: string) => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(value.trim());
 
@@ -231,8 +232,8 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     color: palette.surface,
+    fontFamily: fonts.medium,
     fontSize: 16,
-    fontWeight: '700',
     height: 44,
     lineHeight: 44,
     textAlign: 'center',
@@ -243,6 +244,7 @@ const styles = StyleSheet.create({
   },
   errorText: {
     color: palette.dangerBorder,
+    fontFamily: fonts.regular,
     fontSize: 12,
     marginTop: 4,
   },
@@ -255,13 +257,14 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 1,
     color: palette.primaryText,
+    fontFamily: fonts.regular,
     paddingHorizontal: 14,
     paddingVertical: 12,
   },
   label: {
     color: palette.primaryText,
+    fontFamily: fonts.medium,
     fontSize: 14,
-    fontWeight: '500',
     marginTop: 10,
   },
   screen: {
@@ -277,12 +280,13 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     color: palette.secondaryText,
+    fontFamily: fonts.regular,
     marginBottom: 16,
     marginTop: 8,
   },
   title: {
     color: palette.primaryText,
+    fontFamily: fonts.medium,
     fontSize: 24,
-    fontWeight: '700',
   },
 });

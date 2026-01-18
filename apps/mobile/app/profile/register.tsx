@@ -10,13 +10,16 @@ import {
   Text,
   View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { GENRES } from '@/constants/genres';
 import { palette } from '@/constants/palette';
+import { fonts } from '@/constants/typography';
 import { useUser } from '@/features/user/UserContext';
 
 export default function RegisterProfileScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { user, setUser } = useUser();
   const name = user?.name ?? '';
   const email = user?.email ?? '';
@@ -53,8 +56,13 @@ export default function RegisterProfileScreen() {
         behavior={Platform.select({ ios: 'padding', default: undefined })}
         style={styles.keyboard}
       >
-        <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
-          <Text style={styles.title}>ジャンル選択</Text>
+        <ScrollView
+          style={styles.screen}
+          contentContainerStyle={[styles.content, { paddingTop: insets.top + 16 }]}
+        >
+          <View style={styles.headerContainer}>
+            <Text style={styles.title}>ジャンル選択</Text>
+          </View>
           <Text style={styles.subtitle}>自身の選んだ店舗がおすすめに表示されやすくなります</Text>
           <Text style={styles.label}>好きな店舗のジャンル（複数選択可）</Text>
           <View style={styles.chipsWrap}>
@@ -101,16 +109,26 @@ const styles = StyleSheet.create({
   chipOff: { backgroundColor: palette.secondarySurface, borderColor: palette.border },
   chipOn: { backgroundColor: palette.accent },
 
-  chipTextOff: { color: palette.primaryText, fontWeight: '700' },
+  chipTextOff: { color: palette.primaryText, fontFamily: fonts.medium },
 
-  chipTextOn: { color: palette.primaryOnAccent, fontWeight: '700' },
+  chipTextOn: { color: palette.primaryOnAccent, fontFamily: fonts.medium },
   chipsWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
 
   content: { padding: 16 },
 
+  headerContainer: {
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+
   keyboard: { flex: 1 },
 
-  label: { color: palette.primaryText, fontWeight: '700', marginBottom: 20, marginTop: 4 },
+  label: {
+    color: palette.primaryText,
+    fontFamily: fonts.medium,
+    marginBottom: 20,
+    marginTop: 4,
+  },
 
   // プライマリボタン（登録）
   primaryBtn: {
@@ -122,7 +140,11 @@ const styles = StyleSheet.create({
   primaryBtnDisabled: {
     opacity: 0.5,
   },
-  primaryBtnText: { color: palette.primaryOnAccent, fontWeight: '700', textAlign: 'center' },
+  primaryBtnText: {
+    color: palette.primaryOnAccent,
+    fontFamily: fonts.medium,
+    textAlign: 'center',
+  },
 
   screen: { backgroundColor: palette.surface, flex: 1 },
 
@@ -136,16 +158,23 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 12,
   },
-  secondaryBtnText: { color: palette.primaryText, fontWeight: '700', textAlign: 'center' },
+  secondaryBtnText: {
+    color: palette.primaryText,
+    fontFamily: fonts.medium,
+    textAlign: 'center',
+  },
 
   subtitle: {
     color: palette.secondaryText,
+    fontFamily: fonts.regular,
     marginBottom: 16,
     marginTop: 8,
   },
+
   title: {
-    color: palette.primaryText,
-    fontSize: 24,
-    fontWeight: '700',
+    color: palette.primary,
+    fontFamily: fonts.medium,
+    fontSize: 20,
+    textAlign: 'center',
   },
 });

@@ -16,6 +16,7 @@ import {
 import { GENRES, toggleGenre as toggleGenreUtil } from '@/constants/genres';
 import { palette } from '@/constants/palette';
 import { TAB_BAR_SPACING } from '@/constants/TabBarSpacing';
+import { fonts } from '@/constants/typography';
 import { type Gender, useUser } from '@/features/user/UserContext';
 
 const modalOverlayOpacity = 0.3;
@@ -359,7 +360,7 @@ const styles = StyleSheet.create({
     marginTop: 16,
     width: 88,
   },
-  avatarText: { color: palette.primary, fontSize: 32, fontWeight: '800' },
+  avatarText: { color: palette.primary, fontFamily: fonts.medium, fontSize: 32 },
 
   // カード背景
   card: {
@@ -394,9 +395,9 @@ const styles = StyleSheet.create({
   },
   chipOn: { backgroundColor: palette.accent },
 
-  chipTextOff: { color: palette.primaryText, fontWeight: '700' },
+  chipTextOff: { color: palette.primaryText, fontFamily: fonts.medium },
 
-  chipTextOn: { color: palette.primaryOnAccent, fontWeight: '700' },
+  chipTextOn: { color: palette.primaryOnAccent, fontFamily: fonts.medium },
   chipsWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
 
   // コンテンツの余白
@@ -408,7 +409,7 @@ const styles = StyleSheet.create({
 
   dobRow: { flexDirection: 'row', gap: 12, marginBottom: 4 },
 
-  errorText: { color: palette.errorText, marginBottom: 8 },
+  errorText: { color: palette.errorText, fontFamily: fonts.regular, marginBottom: 8 },
 
   // フォームグループ
   formGroup: {
@@ -428,6 +429,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 1,
     color: palette.primary,
+    fontFamily: fonts.regular,
     marginTop: 8,
     paddingHorizontal: 14,
     paddingVertical: 12,
@@ -437,7 +439,7 @@ const styles = StyleSheet.create({
   keyboard: { flex: 1 },
 
   // ラベル（表示名・メールなどの見出し）
-  label: { color: palette.primaryText, fontWeight: '700', marginBottom: 8 },
+  label: { color: palette.primaryText, fontFamily: fonts.medium, marginBottom: 8 },
   labelContainer: { flexDirection: 'row' },
 
   modalContent: {
@@ -445,7 +447,7 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 12,
     borderTopRightRadius: 12,
   },
-  modalDoneText: { color: palette.accent, fontWeight: '700' },
+  modalDoneText: { color: palette.accent, fontFamily: fonts.medium },
   modalOverlay: {
     backgroundColor: palette.shadow,
     flex: 1,
@@ -469,8 +471,8 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   pickerContainer: { flex: 1 },
-  pickerText: { color: palette.primaryText },
-  pickerUnselectedText: { color: palette.secondaryText },
+  pickerText: { color: palette.primaryText, fontFamily: fonts.regular },
+  pickerUnselectedText: { color: palette.secondaryText, fontFamily: fonts.regular },
 
   // プライマリボタン（保存）
   primaryBtn: {
@@ -484,7 +486,7 @@ const styles = StyleSheet.create({
   },
   primaryBtnText: {
     color: palette.primaryOnAccent,
-    fontWeight: '700',
+    fontFamily: fonts.medium,
     textAlign: 'center',
   },
 
@@ -500,7 +502,7 @@ const styles = StyleSheet.create({
   radioCircleSelected: { backgroundColor: palette.accent, borderWidth: 3.5 },
   radioGroup: { flexDirection: 'row', gap: 12, marginBottom: 22, marginTop: 2 },
   radioOption: { alignItems: 'center', flexDirection: 'row', marginRight: 12 },
-  radioOptionText: { color: palette.primaryText, fontWeight: '600' },
+  radioOptionText: { color: palette.primaryText, fontFamily: fonts.medium },
 
   // 画面背景
   screen: { backgroundColor: palette.background, flex: 1 },
@@ -518,15 +520,15 @@ const styles = StyleSheet.create({
   },
   secondaryBtnText: {
     color: palette.primaryText,
-    fontWeight: '700',
+    fontFamily: fonts.medium,
     textAlign: 'center',
   },
 
   // タイトル
   title: {
     color: palette.primary,
+    fontFamily: fonts.medium,
     fontSize: 20,
-    fontWeight: '700',
     textAlign: 'center',
   },
 });

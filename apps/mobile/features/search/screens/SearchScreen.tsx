@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 
 import { palette } from '@/constants/palette';
+import { fonts } from '@/constants/typography';
 import { useStores } from '@/features/stores/StoresContext';
 import { useVisited } from '@/features/visited/VisitedContext';
 import { AREA_OPTIONS } from '@/lib/stationArea';
@@ -599,11 +600,12 @@ const styles = StyleSheet.create({
   },
   categoryButtonTextActive: {
     color: COLOR_WHITE,
+    fontFamily: fonts.medium,
     fontSize: 14,
-    fontWeight: '600',
   },
   categoryButtonTextInactive: {
     color: palette.textOnSecondary,
+    fontFamily: fonts.regular,
     fontSize: 14,
   },
   categorySection: {
@@ -617,6 +619,7 @@ const styles = StyleSheet.create({
   },
   clearButtonText: {
     color: palette.secondaryText,
+    fontFamily: fonts.regular,
     fontSize: 20,
   },
   container: {
@@ -642,6 +645,7 @@ const styles = StyleSheet.create({
   },
   emptyHistoryText: {
     color: palette.secondaryText,
+    fontFamily: fonts.regular,
     fontSize: 16,
   },
   emptyImage: {
@@ -654,8 +658,8 @@ const styles = StyleSheet.create({
   },
   emptyTitle: {
     color: palette.secondaryText,
+    fontFamily: fonts.medium,
     fontSize: 16,
-    fontWeight: '600',
     marginBottom: 40,
   },
   filterBody: {
@@ -663,8 +667,8 @@ const styles = StyleSheet.create({
   },
   filterHeaderIcon: {
     color: palette.secondaryText,
+    fontFamily: fonts.medium,
     fontSize: 18,
-    fontWeight: '600',
   },
   filterHeaderRow: {
     alignItems: 'center',
@@ -673,13 +677,13 @@ const styles = StyleSheet.create({
   },
   filterHeaderText: {
     color: palette.primaryText,
+    fontFamily: fonts.medium,
     fontSize: 15,
-    fontWeight: '600',
   },
   filterSectionLabel: {
     color: palette.secondaryText,
+    fontFamily: fonts.medium,
     fontSize: 12,
-    fontWeight: '600',
     marginBottom: 8,
   },
   fixedOrderContainer: {
@@ -704,6 +708,7 @@ const styles = StyleSheet.create({
   },
   historyText: {
     color: palette.primaryText,
+    fontFamily: fonts.regular,
     fontSize: 16,
   },
   historyTextContainer: {
@@ -711,8 +716,8 @@ const styles = StyleSheet.create({
   },
   historyTitle: {
     color: palette.primaryText,
+    fontFamily: fonts.medium,
     fontSize: 20,
-    fontWeight: '600',
     marginBottom: 16,
   },
   orderButton: {
@@ -726,6 +731,7 @@ const styles = StyleSheet.create({
   },
   orderButtonText: {
     color: palette.secondaryText,
+    fontFamily: fonts.regular,
     fontSize: 12,
     textAlign: 'center',
   },
@@ -737,8 +743,8 @@ const styles = StyleSheet.create({
   },
   ratingText: {
     color: palette.ratingText,
+    fontFamily: fonts.medium,
     fontSize: 11,
-    fontWeight: '600',
   },
   removeBtn: {
     color: palette.secondaryText,
@@ -756,14 +762,14 @@ const styles = StyleSheet.create({
   resultsSection: {},
   resultsTitle: {
     color: palette.primaryText,
+    fontFamily: fonts.medium,
     fontSize: 14,
-    fontWeight: '600',
     marginBottom: 16,
   },
   screenTitle: {
     color: palette.primaryText,
+    fontFamily: fonts.medium,
     fontSize: 28,
-    fontWeight: '700',
   },
   searchBarContainer: {
     marginBottom: 16,
@@ -775,6 +781,7 @@ const styles = StyleSheet.create({
   searchInput: {
     color: palette.primaryText,
     flex: 1,
+    fontFamily: fonts.regular,
     fontSize: 16,
   },
   searchWrapper: {
@@ -788,8 +795,8 @@ const styles = StyleSheet.create({
   },
   sectionLabel: {
     color: palette.secondaryText,
+    fontFamily: fonts.medium,
     fontSize: 14,
-    fontWeight: '600',
     marginBottom: 16,
   },
   shadowLight: {
@@ -813,6 +820,7 @@ const styles = StyleSheet.create({
   },
   shopDescription: {
     color: palette.secondaryText,
+    fontFamily: fonts.regular,
     fontSize: 12,
     lineHeight: 16,
   },
@@ -832,13 +840,14 @@ const styles = StyleSheet.create({
   },
   shopMeta: {
     color: palette.secondaryText,
+    fontFamily: fonts.regular,
     fontSize: 12,
     marginBottom: 4,
   },
   shopName: {
     color: palette.primaryText,
+    fontFamily: fonts.medium,
     fontSize: 14,
-    fontWeight: '600',
   },
   sortMenu: {
     alignItems: 'center',
@@ -854,8 +863,8 @@ const styles = StyleSheet.create({
   },
   sortMenuIcon: {
     color: palette.secondaryText,
+    fontFamily: fonts.medium,
     fontSize: 16,
-    fontWeight: '600',
   },
   sortMenuItem: {
     backgroundColor: palette.background,
@@ -864,12 +873,13 @@ const styles = StyleSheet.create({
   },
   sortMenuItemText: {
     color: palette.primaryText,
+    fontFamily: fonts.regular,
     fontSize: 13,
   },
   sortMenuItemTextActive: {
     color: palette.primary,
+    fontFamily: fonts.medium,
     fontSize: 13,
-    fontWeight: '600',
   },
   sortMenuList: {
     borderColor: palette.border,
@@ -880,8 +890,8 @@ const styles = StyleSheet.create({
   },
   sortMenuText: {
     color: palette.primaryText,
+    fontFamily: fonts.medium,
     fontSize: 13,
-    fontWeight: '600',
   },
   sortRow: {
     alignItems: 'center',
@@ -896,13 +906,13 @@ const styles = StyleSheet.create({
   },
   subSectionLabel: {
     color: palette.secondaryText,
+    fontFamily: fonts.medium,
     fontSize: 13,
-    fontWeight: '600',
   },
   subSectionToggle: {
     color: palette.secondaryText,
+    fontFamily: fonts.medium,
     fontSize: 16,
-    fontWeight: '600',
   },
   subTagSection: {
     marginTop: 0,
@@ -920,10 +930,12 @@ const styles = StyleSheet.create({
   },
   tagButtonTextActive: {
     color: COLOR_WHITE,
+    fontFamily: fonts.regular,
     fontSize: 13,
   },
   tagButtonTextInactive: {
     color: palette.secondaryText,
+    fontFamily: fonts.regular,
     fontSize: 13,
   },
   tagGroup: {
@@ -961,11 +973,12 @@ const styles = StyleSheet.create({
   },
   visitedFilterButtonTextActive: {
     color: COLOR_WHITE,
+    fontFamily: fonts.medium,
     fontSize: 13,
-    fontWeight: '600',
   },
   visitedFilterButtonTextInactive: {
     color: palette.secondaryText,
+    fontFamily: fonts.regular,
     fontSize: 13,
   },
   visitedFilterContainer: {

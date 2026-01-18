@@ -2,6 +2,7 @@ import React from 'react';
 import { Pressable, StyleSheet, Text } from 'react-native';
 
 import { palette } from '@/constants/palette';
+import { fonts } from '@/constants/typography';
 
 import type { StyleProp, ViewStyle } from 'react-native';
 
@@ -31,13 +32,13 @@ const styles = StyleSheet.create({
   },
   icon: {
     color: palette.primary,
+    fontFamily: fonts.medium,
     fontSize: 20,
-    fontWeight: '700',
     marginRight: 4,
   },
   text: {
     color: palette.primary,
+    fontFamily: fonts.medium,
     fontSize: 14,
-    fontWeight: '600',
   },
 });

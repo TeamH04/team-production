@@ -17,6 +17,7 @@ import {
 
 import { palette } from '@/constants/palette';
 import { TAB_BAR_SPACING } from '@/constants/TabBarSpacing';
+import { fonts } from '@/constants/typography';
 import { useFavorites } from '@/features/favorites/FavoritesContext';
 import { useStores } from '@/features/stores/StoresContext';
 
@@ -263,6 +264,7 @@ const styles = StyleSheet.create({
   },
   emptyTitle: {
     color: palette.secondaryText,
+    fontFamily: fonts.regular,
     fontSize: 14,
   },
   headerTextBlock: {
@@ -286,17 +288,18 @@ const styles = StyleSheet.create({
   },
   ratingText: {
     color: palette.ratingText,
+    fontFamily: fonts.medium,
     fontSize: 11,
-    fontWeight: '600',
   },
   screenTitle: {
     color: palette.primaryText,
+    fontFamily: fonts.medium,
     fontSize: 28,
-    fontWeight: '700',
   },
   searchInput: {
     color: palette.primaryText,
     flex: 1,
+    fontFamily: fonts.regular,
     fontSize: 14,
     marginHorizontal: 8,
   },
@@ -327,6 +330,7 @@ const styles = StyleSheet.create({
   },
   shopDescription: {
     color: palette.secondaryText,
+    fontFamily: fonts.regular,
     fontSize: 12,
     lineHeight: 16,
   },
@@ -346,14 +350,15 @@ const styles = StyleSheet.create({
   },
   shopMeta: {
     color: palette.secondaryText,
+    fontFamily: fonts.regular,
     fontSize: 12,
     marginBottom: 4,
   },
   shopName: {
     color: palette.primaryText,
     flex: 1,
+    fontFamily: fonts.medium,
     fontSize: 14,
-    fontWeight: '600',
   },
   sortButton: {
     alignItems: 'center',
@@ -368,8 +373,8 @@ const styles = StyleSheet.create({
   },
   sortButtonText: {
     color: palette.primaryText,
+    fontFamily: fonts.medium,
     fontSize: 13,
-    fontWeight: '600',
   },
   sortModalContent: {
     backgroundColor: palette.surface,
@@ -399,11 +404,11 @@ const styles = StyleSheet.create({
   },
   sortOptionText: {
     color: palette.primaryText,
+    fontFamily: fonts.medium,
     fontSize: 14,
-    fontWeight: '500',
   },
   sortOptionTextActive: {
-    fontWeight: '700',
+    // fontWeight is handled by fontFamily fonts.medium
   },
   sortOptionsFlatList: {
     width: 280,
