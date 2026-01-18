@@ -70,11 +70,8 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
 
-      - name: Lint
-        run: make lint
-
-      - name: TypeScript type check
-        run: make typecheck
+      - name: Lint & TypeCheck
+        run: pnpm turbo lint typecheck
 
       - name: Format check
         run: pnpm run format:check

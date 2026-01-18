@@ -140,7 +140,7 @@ export function mockFetchWithoutArrayBuffer(blobData: Uint8Array): () => void {
 
   globalThis.fetch = mock.fn(async () => ({
     arrayBuffer: undefined,
-    blob: async () => new Blob([blobData as BlobPart]),
+    blob: async () => new Blob([blobData]),
   })) as unknown as typeof fetch;
 
   return () => {
