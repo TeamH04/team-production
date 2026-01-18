@@ -56,3 +56,19 @@ export { useShare } from './useShare';
 export type { ShareOptions, UseShareResult } from './useShare';
 export { useImageGallery } from './useImageGallery';
 export type { UseImageGalleryOptions, UseImageGalleryResult } from './useImageGallery';
+export { useReviewsState } from './useReviewsState';
+export type {
+  ReviewItem,
+  ReviewFileItem,
+  ReviewInput,
+  ReviewAssetInfo,
+  UploadFileInputItem,
+  SignedUploadFileItem,
+  CreateReviewInput,
+  ReviewSortType,
+  ReviewsApiDependencies,
+  ReviewsAuthDependencies,
+  UseReviewsStateOptions,
+  ReviewsByShopState,
+  UseReviewsStateResult,
+} from './useReviewsState';

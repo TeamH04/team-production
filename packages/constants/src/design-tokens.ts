@@ -13,9 +13,9 @@ export const BORDER_RADIUS = {
   /** Small rounded corners */
   SMALL: 4,
   /** Medium rounded corners */
-  MEDIUM: 8,
+  MEDIUM: 12,
   /** Large rounded corners */
-  LARGE: 12,
+  LARGE: 16,
   /** Extra large rounded corners */
   XLARGE: 16,
 } as const;
@@ -102,7 +102,17 @@ export const LAYOUT = {
    */
   TAB_BAR_SPACING: 125,
   /** Header height for mobile app */
-  HEADER_HEIGHT: 100,
+  HEADER_HEIGHT: 50,
+  /** Review image size */
+  REVIEW_IMAGE_SIZE: 88,
+  /** Hero image height */
+  HERO_IMAGE_HEIGHT: 220,
+  /** Shop card image height */
+  SHOP_CARD_IMAGE_HEIGHT: 176,
+  /** Medium button height */
+  BUTTON_HEIGHT_MD: 44,
+  /** Large button height */
+  BUTTON_HEIGHT_LG: 48,
 } as const;
 
 // Type exports for TypeScript consumers

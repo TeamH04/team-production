@@ -1,4 +1,4 @@
-import { includesIgnoreCase, normalizeString } from '@team/core-utils/stringUtils';
+import { includesIgnoreCase, normalizeString } from '@team/core-utils';
 
 import type { Shop, ShopCategory } from '@team/types';
 

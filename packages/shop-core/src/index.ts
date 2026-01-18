@@ -5,3 +5,4 @@ export * from './search';
 export * from './storeMapping';
 export * from './sorting';
 export * from './shopUtils';
+export * from './menuUtils';

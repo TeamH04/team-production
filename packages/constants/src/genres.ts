@@ -23,6 +23,8 @@ export type Genre = (typeof GENRES)[number];
  * @param genre - トグル対象のジャンル名
  * @returns 新しいジャンル配列
  */
-export const toggleGenre = (genres: string[], genre: string): string[] => {
-  return genres.includes(genre) ? genres.filter(g => g !== genre) : [...genres, genre];
-};
+export function toggleGenre(genres: Genre[], genre: Genre): Genre[] {
+  return genres.includes(genre)
+    ? genres.filter(existing => existing !== genre)
+    : [...genres, genre];
+}

@@ -25,3 +25,4 @@ export {
   type SupabaseStorageAdapter,
   type SupabaseConfig,
 } from './supabase';
+export { toggleArrayItem, addToArray, removeFromArray } from './arrayUtils';

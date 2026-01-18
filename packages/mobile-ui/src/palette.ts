@@ -4,6 +4,9 @@ const { primary, secondary, background } = colors;
 const { error, success, warning, providers } = semanticColors;
 const textOnBackground = textOn.background;
 
+// 影の色定数（palette内での再利用のため）
+const BLACK = '#000000';
+
 export const palette = {
   // 基本のサーフェスとテキスト
   background,
@@ -44,7 +47,7 @@ export const palette = {
 
   // ユーティリティ
   white: '#FFFFFF',
-  black: '#000000',
+  black: BLACK,
   grayMid: '#999999',
   grayDark: '#333333',
   grayLight: '#F6F5F3',
@@ -53,8 +56,8 @@ export const palette = {
   accentSoft: withAlpha(secondary, 0.45),
 
   // 影
-  shadow: '#000000',
-  shadowColor: '#000000',
+  shadow: BLACK,
+  shadowColor: BLACK,
 
   // サーフェス
   tagSurface: withAlpha(secondary, 0.1),
