@@ -1,7 +1,9 @@
 import { fontFamilies } from '@team/theme';
-import preset from 'nativewind/preset';
 
 import type { Config } from 'tailwindcss';
+
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const preset = require('nativewind/preset');
 
 const config: Config = {
   content: [

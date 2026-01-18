@@ -80,12 +80,20 @@ const FloatingCircle = ({
     );
   }, [delay, duration, opacity, translateY]);
 
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ translateY: translateY.value }],
+  const animatedProps = useAnimatedStyle(() => ({
+    cy: cy + translateY.value,
     opacity: opacity.value,
   }));
 
-  return <AnimatedCircle cx={cx} cy={cy} r={r} fill='url(#star_grad)' style={animatedStyle} />;
+  return (
+    <AnimatedCircle
+      cx={cx}
+      cy={animatedProps.cy}
+      r={r}
+      fill='url(#star_grad)'
+      opacity={animatedProps.opacity}
+    />
+  );
 };
 
 const AnimatedMeshBlob = ({
