@@ -81,14 +81,26 @@ func (uc *reviewUseCase) Create(ctx context.Context, storeID string, userID stri
 		return output.ErrInvalidTransaction
 	}
 
+	var ratingDetails *output.RatingDetails
+	if input.RatingDetails != nil {
+		ratingDetails = &output.RatingDetails{
+			Taste:       input.RatingDetails.Taste,
+			Atmosphere:  input.RatingDetails.Atmosphere,
+			Service:     input.RatingDetails.Service,
+			Speed:       input.RatingDetails.Speed,
+			Cleanliness: input.RatingDetails.Cleanliness,
+		}
+	}
+
 	return uc.transaction.StartTransaction(func(tx interface{}) error {
 		return uc.reviewRepo.CreateInTx(ctx, tx, output.CreateReview{
-			StoreID: storeID,
-			UserID:  userID,
-			Rating:  input.Rating,
-			Content: input.Content,
-			MenuIDs: menuIDs,
-			FileIDs: fileIDs,
+			StoreID:       storeID,
+			UserID:        userID,
+			Rating:        input.Rating,
+			RatingDetails: ratingDetails,
+			Content:       input.Content,
+			MenuIDs:       menuIDs,
+			FileIDs:       fileIDs,
 		})
 	})
 }

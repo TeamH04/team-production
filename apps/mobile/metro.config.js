@@ -7,7 +7,7 @@ const workspaceRoot = path.resolve(projectRoot, '../..');
 const workspaceSvg = path.resolve(workspaceRoot, 'node_modules/react-native-svg');
 
 // Ensure NativeWind uses the mobile app Tailwind config within the monorepo
-const tailwindConfigPath = path.join(projectRoot, 'tailwind.config.js');
+const tailwindConfigPath = path.join(projectRoot, 'tailwind.config.ts');
 process.env.TAILWIND_CONFIG_PATH = tailwindConfigPath;
 process.env.TAILWIND_CONFIG = tailwindConfigPath;
 
@@ -27,6 +27,11 @@ config.resolver = {
   extraNodeModules: {
     ...(config.resolver?.extraNodeModules ?? {}),
     'react-native-svg': workspaceSvg,
+    'react-native': path.resolve(workspaceRoot, 'node_modules/react-native'),
+    'react-native/Libraries/Core/InitializeCore': path.resolve(
+      workspaceRoot,
+      'node_modules/react-native/Libraries/Core/InitializeCore.js',
+    ),
   },
   assetExts: assetExts.filter(ext => ext !== 'svg'),
   sourceExts: [...new Set([...sourceExts, 'svg'])],
@@ -36,6 +41,7 @@ config.resolver = {
   ],
 
   disableHierarchicalLookup: false,
+  unstable_enablePackageExports: false,
 };
 
 module.exports = withNativeWind(config, {

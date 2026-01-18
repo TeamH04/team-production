@@ -100,10 +100,30 @@ export default [
 
   // テストファイル用設定
   {
-    files: ['**/__tests__/**/*.{ts,tsx}', '**/*.test.{ts,tsx}'],
+    files: [
+      '**/__tests__/**/*.{ts,tsx}',
+      '**/*.test.{ts,tsx}',
+      '**/vitest.config.ts',
+      '**/vitest.setup.ts',
+    ],
     rules: {
       '@typescript-eslint/no-explicit-any': 'off',
       '@typescript-eslint/no-non-null-assertion': 'off',
+      'import/no-unresolved': [
+        'error',
+        {
+          ignore: [
+            '@testing-library/react',
+            '@testing-library/user-event',
+            '@testing-library/jest-dom',
+            '@testing-library/jest-dom/vitest',
+            'vitest',
+            'vitest/config',
+            '@vitejs/plugin-react',
+            '@team/test-utils',
+          ],
+        },
+      ],
     },
   },
 

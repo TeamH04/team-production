@@ -14,9 +14,18 @@ type ReviewUseCase interface {
 	UnlikeReview(ctx context.Context, reviewID string, userID string) error
 }
 
+type RatingDetails struct {
+	Taste       *int `json:"taste,omitempty"`
+	Atmosphere  *int `json:"atmosphere,omitempty"`
+	Service     *int `json:"service,omitempty"`
+	Speed       *int `json:"speed,omitempty"`
+	Cleanliness *int `json:"cleanliness,omitempty"`
+}
+
 type CreateReview struct {
-	MenuIDs []string `json:"menu_ids"`
-	Rating  int      `json:"rating"`
-	Content *string  `json:"content"`
-	FileIDs []string `json:"file_ids"`
+	MenuIDs       []string       `json:"menu_ids"`
+	Rating        int            `json:"rating"`
+	RatingDetails *RatingDetails `json:"rating_details,omitempty"`
+	Content       *string        `json:"content"`
+	FileIDs       []string       `json:"file_ids"`
 }

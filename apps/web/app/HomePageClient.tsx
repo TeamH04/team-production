@@ -70,7 +70,7 @@ export default function HomePageClient() {
       <header className='relative overflow-hidden bg-gradient-to-br from-sky-700 via-sky-600 to-indigo-700 text-white'>
         <div className='absolute -left-10 top-0 h-64 w-64 rounded-full bg-white/10 blur-3xl' />
         <div className='absolute -right-10 bottom-0 h-72 w-72 rounded-full bg-indigo-400/20 blur-3xl' />
-        <div className='mx-auto flex max-w-6xl flex-col gap-6 px-6 py-16 lg:flex-row lg:items-center lg:px-10'>
+        <div className='mx-auto flex max-w-6xl flex-col gap-6 px-6 py-8 lg:flex-row lg:items-center lg:px-10'>
           <div className='flex-1 space-y-4'>
             <p className='text-sm font-semibold uppercase tracking-[0.28em] text-sky-100'>
               Shop Discovery

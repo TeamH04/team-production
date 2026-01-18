@@ -51,11 +51,20 @@ export type ApiStore = {
   menus?: ApiMenu[];
 };
 
+export type ApiRatingDetails = {
+  taste?: number | null;
+  atmosphere?: number | null;
+  service?: number | null;
+  speed?: number | null;
+  cleanliness?: number | null;
+};
+
 export type ApiReview = {
   review_id: string;
   store_id: string;
   user_id: string;
   rating: number;
+  rating_details?: ApiRatingDetails | null;
   content?: string | null;
   created_at: string;
   likes_count?: number;
