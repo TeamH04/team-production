@@ -549,22 +549,24 @@ const styles = StyleSheet.create({
     position: 'absolute',
   },
   button: {
-    borderRadius: 32, // Pill shape inside the wrapper
-    height: 64, // Slightly taller for better touch target
+    borderRadius: 36,
+    height: 72,
     justifyContent: 'center',
     width: '100%',
   },
   buttonBlurWrapper: {
-    backgroundColor: palette.glassBg, // Subtle base for the glass
+    backgroundColor: palette.glassBg,
     borderColor: palette.glassBorder,
-    borderRadius: 32, // Pill shape
+    borderRadius: 36,
     borderWidth: 1,
+    height: 48,
     overflow: 'hidden',
   },
   buttonContent: {
     alignItems: 'center',
     flexDirection: 'row',
     gap: 12,
+    height: '100%',
     justifyContent: 'center',
     paddingHorizontal: 12,
   },
