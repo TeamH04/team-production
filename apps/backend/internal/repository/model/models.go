@@ -38,14 +38,19 @@ type Menu struct {
 }
 
 type Review struct {
-	ReviewID  string    `gorm:"column:review_id;primaryKey;type:uuid;default:gen_random_uuid()"`
-	StoreID   string    `gorm:"column:store_id;type:uuid"`
-	UserID    string    `gorm:"column:user_id;type:uuid"`
-	Rating    int       `gorm:"column:rating"`
-	Content   *string   `gorm:"column:content"`
-	CreatedAt time.Time `gorm:"column:created_at"`
-	Menus     []Menu    `gorm:"many2many:review_menus;joinForeignKey:ReviewID;joinReferences:MenuID"`
-	Files     []File    `gorm:"many2many:review_files;joinForeignKey:ReviewID;joinReferences:FileID"`
+	ReviewID          string    `gorm:"column:review_id;primaryKey;type:uuid;default:gen_random_uuid()"`
+	StoreID           string    `gorm:"column:store_id;type:uuid"`
+	UserID            string    `gorm:"column:user_id;type:uuid"`
+	Rating            int       `gorm:"column:rating"`
+	RatingTaste       *int      `gorm:"column:rating_taste"`
+	RatingAtmosphere  *int      `gorm:"column:rating_atmosphere"`
+	RatingService     *int      `gorm:"column:rating_service"`
+	RatingSpeed       *int      `gorm:"column:rating_speed"`
+	RatingCleanliness *int      `gorm:"column:rating_cleanliness"`
+	Content           *string   `gorm:"column:content"`
+	CreatedAt         time.Time `gorm:"column:created_at"`
+	Menus             []Menu    `gorm:"many2many:review_menus;joinForeignKey:ReviewID;joinReferences:MenuID"`
+	Files             []File    `gorm:"many2many:review_files;joinForeignKey:ReviewID;joinReferences:FileID"`
 }
 
 type File struct {

@@ -68,15 +68,26 @@ func (m Menu) Entity() entity.Menu {
 }
 
 func (r Review) Entity() entity.Review {
+	var ratingDetails *entity.RatingDetails
+	if r.RatingTaste != nil || r.RatingAtmosphere != nil || r.RatingService != nil || r.RatingSpeed != nil || r.RatingCleanliness != nil {
+		ratingDetails = &entity.RatingDetails{
+			Taste:       r.RatingTaste,
+			Atmosphere:  r.RatingAtmosphere,
+			Service:     r.RatingService,
+			Speed:       r.RatingSpeed,
+			Cleanliness: r.RatingCleanliness,
+		}
+	}
 	return entity.Review{
-		ReviewID:  r.ReviewID,
-		StoreID:   r.StoreID,
-		UserID:    r.UserID,
-		Rating:    r.Rating,
-		Content:   r.Content,
-		CreatedAt: r.CreatedAt,
-		Menus:     ToEntities[entity.Menu, Menu](r.Menus),
-		Files:     ToEntities[entity.File, File](r.Files),
+		ReviewID:      r.ReviewID,
+		StoreID:       r.StoreID,
+		UserID:        r.UserID,
+		Rating:        r.Rating,
+		RatingDetails: ratingDetails,
+		Content:       r.Content,
+		CreatedAt:     r.CreatedAt,
+		Menus:         ToEntities[entity.Menu, Menu](r.Menus),
+		Files:         ToEntities[entity.File, File](r.Files),
 	}
 }
 
