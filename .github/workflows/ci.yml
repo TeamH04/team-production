@@ -71,10 +71,10 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
 
       - name: Lint
-        run: pnpm run lint
+        run: make lint
 
       - name: TypeScript type check
-        run: pnpm run typecheck
+        run: make typecheck
 
       - name: Format check
         run: pnpm run format:check
@@ -244,16 +244,11 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           working-directory: apps/mobile
 
-      # Lint は lint ジョブで実行されるため省略
-
-      - name: Format check mobile
-        working-directory: .
-        run: |
-          pnpm run format:mobile
-          git diff --exit-code || (echo "Code is not formatted. Please run 'pnpm run format:mobile'" && exit 1)
+      # Lint/Format check は lint ジョブで実行されるため省略
 
       - name: Run tests
-        run: pnpm test
+        working-directory: .
+        run: make test-mobile
 
   # ----- Web Tests -----
   web-test:
@@ -261,9 +256,6 @@ jobs:
     needs: changes
     if: ${{ needs.changes.outputs.web == 'true' || needs.changes.outputs.root == 'true' }}
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: apps/web
 
     steps:
       - name: Checkout
@@ -273,10 +265,9 @@ jobs:
         uses: ./.github/actions/pnpm-setup
         with:
           node-version: ${{ env.NODE_VERSION }}
-          working-directory: apps/web
 
       - name: Run tests
-        run: pnpm test
+        run: make test-web
 
   # ----- Mobile Build Check -----
   mobile-build:

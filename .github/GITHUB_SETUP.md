@@ -89,7 +89,7 @@ GITHUB_TOKEN=<github-token-for-deployment>
 DOCKER_REGISTRY=ghcr.io
 IMAGE_NAME=teamh04/team-production/backend
 NODE_VERSION=24.x
-GO_VERSION=1.24
+GO_VERSION=1.25
 PNPM_VERSION=10.17.1
 ```
 

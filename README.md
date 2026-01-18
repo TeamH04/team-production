@@ -1,108 +1,118 @@
-# team-production モノレポ
+# team-production
 
-## 概要
+モバイル・Web・バックエンドのモノレポ
 
-- モバイル（Expo）・Web（Next.js）・バックエンド（Go）を一体管理するモノレポ
-- パッケージ管理：pnpm
-- ビルドシステム：Turborepo（キャッシュ・並列実行）
-- 共通タスク：Makefile 経由で提供
+## 技術スタック
 
-> **Windows ユーザーへ**: 本プロジェクトは POSIX 環境を前提としています。
-> **WSL2 の使用を強く推奨します。** 詳細は [docs/windows-setup.md](docs/windows-setup.md) を参照してください。
+| レイヤー | 技術                |
+| -------- | ------------------- |
+| Mobile   | Expo + React Native |
+| Web      | Next.js             |
+| Backend  | Go + Echo           |
+| DB       | PostgreSQL          |
+| ビルド   | Turborepo + pnpm    |
 
----
+## セットアップ
 
-## 前提条件
+### 前提条件
 
-- Node.js 24 系
-- Go 1.24 以上
+- Node.js 24系
+- Go 1.25+
 - Docker
 
----
-
-## クイックスタート
+### 手順
 
 ```bash
-# 1. 依存関係をインストール
+# 1. クローン & インストール
+git clone <repo>
+cd team-production
 make install
 
-# 2. 環境変数を設定
+# 2. 環境変数をコピー
 cp .env.example .env
 cp apps/backend/.env.example apps/backend/.env
 cp apps/mobile/.env.example apps/mobile/.env
 
-# 3. DB起動 + マイグレーション
+# 3. DB起動 & マイグレーション
 make db-migrate
 
-# 4. 開発サーバーを起動
-make dev        # DB + backend + mobile 同時起動
-# または個別に起動
-make backend    # バックエンドのみ
-make mobile     # モバイルのみ
-make web        # Web のみ
+# 4. 開発サーバー起動
+make dev
+
+# 5. 動作確認
+curl http://localhost:8080/health
+# → {"status":"ok"}
 ```
 
----
+> Windows: WSL2推奨。詳細は [docs/windows-setup.md](docs/windows-setup.md)
 
-## 主なコマンド
+## コマンド早見表
 
-### よく使うコマンド
+### 日常作業
 
-| コマンド            | 説明                 |
-| ------------------- | -------------------- |
-| `make test`         | 全テスト実行         |
-| `make typecheck`    | 型チェック           |
-| `make lint`         | Lint実行             |
-| `pnpm format`       | フォーマット修正     |
-| `pnpm format:check` | フォーマットチェック |
+| やりたいこと             | コマンド                   |
+| ------------------------ | -------------------------- |
+| 開発サーバー起動（全部） | `make dev`                 |
+| バックエンドだけ起動     | `make backend` or `make b` |
+| モバイルだけ起動         | `make mobile` or `make m`  |
+| Webだけ起動              | `make web` or `make w`     |
+| テスト実行               | `make test`                |
+| 型チェック               | `make typecheck`           |
+| Lint                     | `make lint`                |
+| フォーマット修正         | `pnpm format`              |
 
-### 開発サーバー
+### DB操作
 
-| コマンド       | 説明                         |
-| -------------- | ---------------------------- |
-| `make dev`     | DB + backend + mobile 起動   |
-| `make backend` | バックエンドのみ（`make b`） |
-| `make mobile`  | モバイルのみ（`make m`）     |
-| `make web`     | Webのみ（`make w`）          |
+| やりたいこと              | コマンド          |
+| ------------------------- | ----------------- |
+| DB起動 + マイグレーション | `make db-migrate` |
+| DB停止                    | `make db-stop`    |
+| DBリセット（データ削除）  | `make db-reset`   |
+| DB完全削除                | `make db-destroy` |
 
-### セットアップ・DB操作
+### ビルド
 
-| コマンド          | 説明                         |
-| ----------------- | ---------------------------- |
-| `make install`    | 依存インストール + Git hooks |
-| `make db-migrate` | DB起動 + マイグレーション    |
-| `make db-reset`   | DBリセット                   |
-| `make db-stop`    | DB停止                       |
+| やりたいこと       | コマンド                     |
+| ------------------ | ---------------------------- |
+| 全アプリビルド     | `make build`                 |
+| 新規パッケージ作成 | `pnpm create-package <name>` |
 
-### ビルド・その他
+### Goバックエンド専用
 
-| コマンド                     | 説明               |
-| ---------------------------- | ------------------ |
-| `make build`                 | 全アプリビルド     |
-| `pnpm create-package <name>` | 新規パッケージ生成 |
+| やりたいこと       | コマンド                     |
+| ------------------ | ---------------------------- |
+| lint実行           | `make -C apps/backend lint`  |
+| フォーマット       | `make -C apps/backend fmt`   |
+| ツールインストール | `make -C apps/backend tools` |
 
-全コマンド一覧: `make help`
-
----
+**全コマンド一覧**: `make help`
 
 ## ディレクトリ構成
 
-| パス           | 説明                             |
-| -------------- | -------------------------------- |
-| `apps/mobile`  | Expo + React Native クライアント |
-| `apps/web`     | Next.js Web アプリ               |
-| `apps/backend` | Go 製 API サーバ                 |
-| `packages/`    | 共有パッケージ群                 |
-| `docs/`        | ドキュメント                     |
+```
+apps/
+├── backend/     # Go API サーバー (port 8080)
+├── mobile/      # Expo + React Native
+└── web/         # Next.js
 
----
+packages/        # 共有パッケージ (@team/*)
+docs/            # ドキュメント
+```
+
+## 起動後のポート
+
+| サービス      | ポート | URL                   |
+| ------------- | ------ | --------------------- |
+| Backend API   | 8080   | http://localhost:8080 |
+| PostgreSQL    | 5432   | -                     |
+| pgAdmin       | 5050   | http://localhost:5050 |
+| Expo (Metro)  | 8081   | -                     |
+| Web (Next.js) | 3000   | http://localhost:3000 |
 
 ## ドキュメント
 
-| ドキュメント                                     | 内容                        |
-| ------------------------------------------------ | --------------------------- |
-| [docs/development.md](docs/development.md)       | 開発ガイド・CI/CD・環境変数 |
-| [docs/windows-setup.md](docs/windows-setup.md)   | Windows 環境のセットアップ  |
-| [apps/backend/README.md](apps/backend/README.md) | バックエンド詳細            |
-| [apps/mobile/README.md](apps/mobile/README.md)   | モバイルアプリ詳細          |
-| [apps/web/README.md](apps/web/README.md)         | Web アプリ詳細              |
+- [詳細セットアップ](docs/setup.md) - トラブルシューティング含む
+- [コマンドリファレンス](docs/commands.md) - 全コマンド詳細
+- [共有パッケージ](docs/packages.md) - @team/\* の使い方
+- [API設計](docs/specs/api.md)
+- [DB設計](docs/specs/database.md)

@@ -53,16 +53,26 @@ team-production/
 
 ### Code Sharing Guidelines
 
-- **ロジックは `packages/` に配置**: ビジネスロジック、ユーティリティ、型定義、バリデーション等は全て `packages/` に置く
-- **`apps/` にはUIとプラットフォーム固有コードのみ**: コンポーネント、画面、ナビゲーション、AsyncStorage等のプラットフォーム依存のみ
+**原則: 統一できるものは全て `packages/` に作成する**
+
+- **`apps/mobile/` と `apps/web/` にはプラットフォーム固有コードのみ配置**
+  - Expo / React Native 固有のAPI（AsyncStorage, Linking, etc.）
+  - Next.js 固有のAPI（next/router, next/image, SSR, etc.）
+  - プラットフォーム固有のUIコンポーネント
+  - 画面コンポーネント、ナビゲーション設定
+- **共通化できるロジックは全て `packages/` に配置**
+  - ビジネスロジック、ユーティリティ関数
+  - 型定義、バリデーションルール
+  - React Hooks（プラットフォーム非依存のもの）
+  - 定数、設定値
 - **DRY原則**: mobile/web で重複コードを見つけたら即座に `packages/` に抽出
 - **後方互換**: 元ファイルは再エクスポートに変更し、既存importを壊さない
 
 ```
-packages/          → ロジック（共通で使える全てのコード）
-apps/mobile/       → UI + React Native固有コード
-apps/web/          → UI + Next.js固有コード
-apps/backend/      → APIサーバ
+packages/          → 共通ロジック（統一できる全てのコード）
+apps/mobile/       → Expo/React Native 固有のUI・ロジックのみ
+apps/web/          → Next.js 固有のUI・ロジックのみ
+apps/backend/      → Go APIサーバ
 ```
 
 ### 新規パッケージの作成
@@ -86,20 +96,27 @@ pnpm create-package date-utils --with-test
 
 ```bash
 # テスト・品質チェック（最頻出）
-make test                       # 全体テスト（Turbo経由）
+make test                       # 全体テスト
 make typecheck                  # 型チェック（Turbo経由）
 make lint                       # Lint実行
 pnpm format                     # フォーマット修正
 pnpm format:check               # フォーマットチェック
 
 # セットアップ
-make install                    # 依存関係インストール
+make install                    # 依存関係インストール + Git hooks設定
+
+# DB操作
+make db-migrate                 # DB起動 + マイグレーション
+make db-start                   # DB起動のみ
+make db-stop                    # DB停止
+make db-reset                   # DBリセット（drop + migrate）
+make db-destroy                 # DB完全削除（ボリューム含む）
 
 # 開発サーバ
 make dev                        # DB + backend + mobile 同時起動
-make mobile                     # モバイルのみ
-make web                        # Webのみ
-make backend                    # バックエンドのみ
+make mobile   # or make m       # モバイルのみ
+make web      # or make w       # Webのみ
+make backend  # or make b       # バックエンドのみ
 
 # 個別テスト
 make test-mobile                # モバイルのみ
@@ -109,6 +126,55 @@ pnpm --filter @team/* test      # パッケージ単体テスト
 
 # Lint修正
 pnpm lint:fix                   # 自動修正
+
+# ビルド
+make build                      # 全アプリビルド
+make clean                      # ビルド成果物削除
+
+# ヘルプ
+make help                       # 全コマンド一覧
+```
+
+### 直接コマンド（make なしで実行）
+
+LLM agent が直接実行する場合:
+
+```bash
+# Backend (Go) - apps/backend で実行
+go test ./...                              # テスト
+go test -v ./internal/handlers/...         # 特定パッケージのテスト
+go run ./cmd/server                        # サーバー起動
+go build ./...                             # ビルド
+go mod tidy                                # 依存整理
+golangci-lint run                          # Lint
+gofumpt -w .                               # フォーマット
+
+# Mobile - リポジトリルートで実行
+pnpm --dir apps/mobile test                # テスト
+pnpm --dir apps/mobile start               # Expo 起動
+pnpm --dir apps/mobile android             # Android 起動
+pnpm --dir apps/mobile ios                 # iOS 起動
+
+# Web - リポジトリルートで実行
+pnpm --dir apps/web test                   # テスト
+pnpm --dir apps/web dev                    # 開発サーバー
+pnpm --dir apps/web build                  # ビルド
+
+# Packages - リポジトリルートで実行
+pnpm --dir packages/core-utils test        # 特定パッケージのテスト
+pnpm --dir packages/validators test
+
+# 全体
+pnpm test                                  # 全テスト
+pnpm typecheck                             # 型チェック
+pnpm lint                                  # Lint
+pnpm lint:fix                              # Lint + 自動修正
+pnpm format                                # フォーマット
+pnpm format:check                          # フォーマットチェック
+
+# DB (Docker)
+docker compose up -d postgres pgadmin      # DB起動
+docker compose down                        # DB停止
 ```
 
 ### Turborepo
@@ -121,6 +187,7 @@ turbo run build --force
 
 # 特定パッケージのみ実行
 turbo run build --filter=@team/core-utils
+turbo run test --filter=@team/validators
 ```
 
 ---
@@ -133,6 +200,91 @@ turbo run build --filter=@team/core-utils
 - **React Hooks**: `exhaustive-deps` に従い依存配列を正しく設定
 - **スタイル**: インラインスタイル・カラーコード直書き禁止
 - **色定義**: `packages/theme/src/colors.ts` が正解
+
+---
+
+## Backend (Go) Guidelines
+
+### 定数の使用
+
+文字列リテラルの直書きを避け、定義済み定数を使用する。
+
+```go
+// ロール定数 - "user", "owner", "admin" を直書きしない
+import "github.com/TeamH04/team-production/apps/backend/internal/domain/role"
+
+role.User              // "user"
+role.Owner             // "owner"
+role.Admin             // "admin"
+role.OwnerOrAdmin      // []string{"owner", "admin"}
+
+// エラーメッセージ定数 (handlers/http_helpers.go)
+handlers.ErrMsgInvalidJSON      // "invalid JSON"
+handlers.ErrMsgInvalidStoreID   // "invalid store id"
+handlers.ErrMsgInvalidReviewID  // "invalid review id"
+
+// エンドポイントパス定数 (router/endpoints.go)
+router.StoresPath, router.StoreByIDPath, router.HealthPath, etc.
+
+// 時間定数 (config/constants.go)
+config.SignedURLTTL  // 15 * time.Minute
+```
+
+### ハンドラーのヘルパー関数
+
+handlers パッケージ内では共通ヘルパー関数を使用する。
+
+```go
+// 推奨: ヘルパー関数を使用
+user, err := getRequiredUser(c)
+if err := bindJSON(c, &dto); err != nil { return err }
+id, err := parseUUIDParam(c, "id", ErrMsgInvalidStoreID)
+
+// 非推奨: 直接呼び出し
+requestcontext.GetUserFromContext(c.Request().Context())  // NG
+c.Bind(&dto)                                               // NG
+```
+
+### HTTPエラー判定
+
+ステータスコードのエラー判定には定数を使用する。
+
+```go
+import infrahttp "github.com/TeamH04/team-production/apps/backend/internal/infra/http"
+
+// 推奨
+if infrahttp.IsHTTPError(resp.StatusCode) { ... }
+
+// 非推奨: マジックナンバー
+if resp.StatusCode >= 300 { ... }  // NG
+```
+
+### テストユーティリティ
+
+テストでは `handlers/testutil` パッケージのヘルパーとモックを使用する。
+
+```go
+import "github.com/TeamH04/team-production/apps/backend/internal/handlers/testutil"
+
+// ポインタヘルパー
+testutil.StringPtr("value")
+testutil.IntPtr(100)
+
+// テストコンテキスト
+tc := testutil.NewTestContextWithJSON(http.MethodPost, "/path", jsonBody)
+tc := testutil.NewTestContextNoBody(http.MethodGet, "/path")
+
+// モック
+testutil.MockStorageProvider{}
+testutil.MockMenuUseCase{}
+testutil.MockStoreUseCase{}
+```
+
+### セキュリティ
+
+- **ログインジェクション対策**: ユーザー入力をログ出力する際は `sanitizeLogInput()` で改行文字を除去（CWE-117）
+- **入力バリデーション**: UUID パラメータは `parseUUIDParam()` で検証
+- **認証チェック**: `getRequiredUser()` で認証済みユーザーを取得
 
 ---
 
@@ -250,7 +402,10 @@ cp apps/mobile/.env.example apps/mobile/.env
 
 ## Additional Resources
 
-- [docs/development.md](docs/development.md) - 詳細な開発ガイド
-- [docs/screen-flow.md](docs/screen-flow.md) - 画面遷移図
-- [apps/backend/README.md](apps/backend/README.md) - バックエンド詳細
-- [apps/mobile/README.md](apps/mobile/README.md) - モバイル詳細
+- [docs/setup.md](docs/setup.md) - 詳細セットアップガイド
+- [docs/commands.md](docs/commands.md) - コマンドリファレンス
+- [docs/packages.md](docs/packages.md) - 共有パッケージガイド
+- [docs/specs/api.md](docs/specs/api.md) - API設計書
+- [docs/specs/database.md](docs/specs/database.md) - DB設計書
+- [docs/specs/screen-flow.md](docs/specs/screen-flow.md) - 画面遷移図
+- [docs/specs/backend-architecture.md](docs/specs/backend-architecture.md) - バックエンドアーキテクチャ

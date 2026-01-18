@@ -28,7 +28,6 @@
     "create-package": "node scripts/create-package.mjs"
   },
   "devDependencies": {
-    "turbo": "^2.5.0",
     "@actions/core": "^2.0.2",
     "@actions/github": "^7.0.0",
     "@babel/core": "^7.28.6",
@@ -45,6 +44,7 @@
     "eslint-plugin-react-native": "^5.0.0",
     "globals": "^17.0.0",
     "prettier": "^3.8.0",
+    "turbo": "^2.7.5",
     "typescript": "~5.9.3"
   },
   "pnpm": {

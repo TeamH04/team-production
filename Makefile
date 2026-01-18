@@ -7,7 +7,7 @@ SHELL := /usr/bin/env bash
 .DEFAULT_GOAL := help
 .PHONY: help install dev mobile web backend \
 	db-start db-stop db-migrate db-reset db-destroy \
-	test test-backend test-web test-mobile lint typecheck build clean \
+	test test-backend test-web test-mobile lint lint-fix typecheck build clean \
 	m w b
 
 # Colors for output (ANSI escape sequences)
@@ -45,7 +45,7 @@ install: ## Install dependencies + setup Git hooks
 	@if [ ! -f .git/hooks/pre-commit ]; then \
 		printf '%s\n' '#!/bin/sh' \
 			'printf "\\033[34m▶ Running pre-commit checks...\\033[0m\\n"' \
-			'pnpm run format:check --log-level=warn && pnpm run lint --quiet && pnpm run typecheck' \
+			'pnpm run format:check --log-level=warn && pnpm turbo run lint typecheck' \
 			'printf "\\033[32m✓ All checks passed\\033[0m\\n"' \
 			> .git/hooks/pre-commit; \
 		chmod +x .git/hooks/pre-commit; \
@@ -108,6 +108,11 @@ lint: ## Run linters
 	@printf '%b\n' "$(BLUE)Running linters...$(NC)"
 	$(PNPM) run lint
 	@printf '%b\n' "$(GREEN)✅ Linting completed!$(NC)"
+
+lint-fix: ## Run linters with auto-fix
+	@printf '%b\n' "$(BLUE)Running linters with auto-fix...$(NC)"
+	$(PNPM) run lint:fix
+	@printf '%b\n' "$(GREEN)✅ Linting with auto-fix completed!$(NC)"
 
 typecheck: ## Run type checking (Turbo cached)
 	@printf '%b\n' "$(BLUE)Running type check...$(NC)"
