@@ -24,7 +24,88 @@ import { useStores } from '@/features/stores/StoresContext';
 import { useVisited } from '@/features/visited/VisitedContext';
 import { getPublicStorageUrl } from '@/lib/storage';
 
+import type { RatingDetails } from '@/features/reviews/ReviewsContext';
 import type { ReviewSort } from '@/lib/api';
+
+const RATING_CATEGORIES = [
+  { key: 'taste', label: '味', icon: 'restaurant-outline' as const },
+  { key: 'atmosphere', label: '雰囲気', icon: 'cafe-outline' as const },
+  { key: 'service', label: '接客', icon: 'people-outline' as const },
+  { key: 'speed', label: '提供速度', icon: 'time-outline' as const },
+  { key: 'cleanliness', label: '清潔感', icon: 'sparkles-outline' as const },
+] as const;
+
+const getRatingEmoji = (value: number) => {
+  if (value === 3) return { icon: 'happy' as const, color: palette.errorText, label: '満足' };
+  if (value === 2) return { icon: 'remove' as const, color: palette.accent, label: '普通' };
+  return { icon: 'sad' as const, color: palette.primary, label: '不満' };
+};
+
+type RatingDetailsDisplayProps = {
+  ratingDetails: RatingDetails;
+};
+
+function RatingDetailsDisplay({ ratingDetails }: RatingDetailsDisplayProps) {
+  const hasAnyRating = RATING_CATEGORIES.some(cat => {
+    const value = ratingDetails[cat.key as keyof RatingDetails];
+    return value !== null && value !== undefined && value > 0;
+  });
+
+  if (!hasAnyRating) return null;
+
+  return (
+    <View style={ratingStyles.container}>
+      <View style={ratingStyles.grid}>
+        {RATING_CATEGORIES.map(cat => {
+          const value = ratingDetails[cat.key as keyof RatingDetails];
+          if (value === null || value === undefined || value === 0) return null;
+          const emoji = getRatingEmoji(value);
+          return (
+            <View key={cat.key} style={ratingStyles.item}>
+              <View style={[ratingStyles.iconBadge, { backgroundColor: emoji.color + '15' }]}>
+                <Ionicons name={emoji.icon} size={16} color={emoji.color} />
+              </View>
+              <Text style={ratingStyles.label}>{cat.label}</Text>
+            </View>
+          );
+        })}
+      </View>
+    </View>
+  );
+}
+
+const ratingStyles = StyleSheet.create({
+  container: {
+    marginBottom: 4,
+    marginTop: 8,
+  },
+  grid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+  },
+  iconBadge: {
+    alignItems: 'center',
+    borderRadius: 11,
+    height: 22,
+    justifyContent: 'center',
+    width: 22,
+  },
+  item: {
+    alignItems: 'center',
+    backgroundColor: palette.grayLight,
+    borderRadius: 16,
+    flexDirection: 'row',
+    gap: 5,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+  },
+  label: {
+    color: palette.primaryText,
+    fontSize: 12,
+    fontWeight: '600',
+  },
+});
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
@@ -523,6 +604,10 @@ export default function ShopDetailScreen() {
                           </Text>
                         </Pressable>
                       </View>
+
+                      {review.ratingDetails && (
+                        <RatingDetailsDisplay ratingDetails={review.ratingDetails} />
+                      )}
 
                       {(() => {
                         const menuName = resolveMenuName(review);

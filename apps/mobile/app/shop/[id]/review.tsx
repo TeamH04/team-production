@@ -166,6 +166,19 @@ export default function ReviewModalScreen() {
       ratedValues.length > 0
         ? Math.round(ratedValues.reduce((sum, value) => sum + value, 0) / ratedValues.length)
         : 0;
+
+    // Build rating details with only non-zero values
+    const ratingDetails =
+      ratedValues.length > 0
+        ? {
+            taste: categoryRatings.taste > 0 ? categoryRatings.taste : undefined,
+            atmosphere: categoryRatings.atmosphere > 0 ? categoryRatings.atmosphere : undefined,
+            service: categoryRatings.service > 0 ? categoryRatings.service : undefined,
+            speed: categoryRatings.speed > 0 ? categoryRatings.speed : undefined,
+            cleanliness: categoryRatings.cleanliness > 0 ? categoryRatings.cleanliness : undefined,
+          }
+        : undefined;
+
     const trimmedComment = comment.trim();
     const trimmedSuggestion = suggestion.trim();
     const combinedComment = trimmedSuggestion
@@ -179,6 +192,7 @@ export default function ReviewModalScreen() {
         shop.id,
         {
           rating: averagedRating,
+          ratingDetails,
           comment: combinedComment,
           menuItemIds: selectedMenuIds,
           menuItemName:
