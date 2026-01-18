@@ -1,6 +1,6 @@
 'use client';
 
-import { formatRating, TIMING, WEB_PAGE_SIZE } from '@team/constants';
+import { formatRating, TIMING, UI_LABELS, WEB_PAGE_SIZE } from '@team/constants';
 import { useCompositionInput, usePagination, useShopFilter } from '@team/hooks';
 import { BUDGET_LABEL, CATEGORIES, SHOPS, type Shop, type ShopCategory } from '@team/shop-core';
 import Image from 'next/image';
@@ -10,7 +10,7 @@ import { useEffect, useState } from 'react';
 
 type CategoryFilter = ShopCategory | typeof CATEGORY_ALL;
 
-const CATEGORY_ALL = 'すべて';
+const CATEGORY_ALL = UI_LABELS.ALL;
 const CATEGORY_OPTIONS: CategoryFilter[] = [CATEGORY_ALL, ...[...CATEGORIES].sort()];
 
 export default function HomePageClient() {
@@ -150,6 +150,7 @@ export default function HomePageClient() {
                     key={category}
                     type='button'
                     onClick={() => handleCategoryClick(category)}
+                    aria-pressed={isSelected}
                     className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
                       isSelected
                         ? 'bg-slate-900 text-white shadow-lg shadow-slate-900/20'

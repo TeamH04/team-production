@@ -1,80 +1,34 @@
-# Web フロントエンド (Next.js)
+# Web (Next.js)
 
-## 概要
+Next.js 15 (App Router) の店舗探索アプリ。
 
-- Next.js 15 (App Router) の店舗探索アプリ。
-- データは `@team/shop-core` のダミー店舗を参照。
-
-## 前提条件
-
-- Node.js 24 以上 / pnpm 10 以上。
-
-## セットアップ手順
-
-1. 依存を取得する。
-
-   ```bash
-   pnpm install
-   ```
-
-2. 開発サーバーを起動する。
-
-   ```bash
-   pnpm --dir apps/web dev
-   ```
-
-   - アクセス: http://localhost:3000
-
-## 主なコマンド
-
-### テスト・品質チェック
+## クイックスタート
 
 ```bash
-# テスト
-make test                          # 全テスト
-pnpm --dir apps/web test           # Webのみ（単発）
-pnpm --dir apps/web test:watch     # ウォッチモード
-pnpm --dir apps/web test:coverage  # カバレッジ付き
-
-# 型チェック
-make typecheck                     # 全パッケージ
-pnpm --dir apps/web typecheck      # Webのみ
-
-# Lint・フォーマット
-pnpm lint
-pnpm format
+# リポジトリルートから
+make web    # Web 起動
 ```
 
-### 開発サーバー
+## コマンド
 
-| コマンド                  | 用途                     |
-| ------------------------- | ------------------------ |
-| `make web`                | 開発サーバー起動（推奨） |
-| `pnpm dev:web`            | 開発サーバー起動         |
-| `pnpm --dir apps/web dev` | 開発サーバー起動         |
-
-### ビルド
-
-| コマンド                    | 用途             |
+| コマンド                    | 説明             |
 | --------------------------- | ---------------- |
-| `make build`                | 全アプリビルド   |
-| `pnpm --dir apps/web build` | Webのみビルド    |
-| `pnpm --dir apps/web clean` | ビルド成果物削除 |
+| `make web`                  | 開発サーバー起動 |
+| `make test-web`             | テスト実行       |
+| `pnpm --dir apps/web build` | ビルド           |
 
-## 画面と機能
+## 画面構成
 
 ### トップページ `/`
 
-- 検索ボックスとカテゴリチップで絞り込み。
-- タグクリックで検索語に反映。
-- 「さらに読み込む」で 9 件ずつ追加表示。
+- 検索ボックスとカテゴリチップで絞り込み
+- 「さらに読み込む」で 9 件ずつ追加表示
 
 ### 店舗詳細 `/shop/[id]`
 
-- 画像スライダー、タグ、メニュー、地図リンク。
-- 共有/お気に入りボタンはローカル状態で動作。
-- 存在しない ID はカスタム 404 を表示し、一覧へ誘導。
+- 画像スライダー、タグ、メニュー、地図リンク
+- 共有/お気に入りボタン
 
-## 環境変数
+## ポート
 
-- なし（ダミーデータで動作）。
+http://localhost:3000

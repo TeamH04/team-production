@@ -1,5 +1,7 @@
 import { createConfiguredApiClient } from '@team/api';
 
+import { ENV } from './config';
+
 export type {
   ApiFavorite,
   ApiFile,
@@ -13,6 +15,6 @@ export type {
 } from '@team/api';
 
 export const api = createConfiguredApiClient({
-  baseUrl: process.env.NEXT_PUBLIC_API_BASE_URL,
+  baseUrl: ENV.API_BASE_URL,
   defaultFetchOptions: { cache: 'no-store' },
 });
