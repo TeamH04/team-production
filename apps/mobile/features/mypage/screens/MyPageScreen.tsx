@@ -1,7 +1,7 @@
 ﻿import Ionicons from '@expo/vector-icons/Ionicons';
 import { SHOPS } from '@team/shop-core';
 import { useRouter } from 'expo-router';
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Alert, Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { BackButton } from '@/components/BackButton';
@@ -9,6 +9,8 @@ import { palette } from '@/constants/palette';
 import { TAB_BAR_SPACING } from '@/constants/TabBarSpacing';
 import { useReviews } from '@/features/reviews/ReviewsContext';
 import { useUser } from '@/features/user/UserContext';
+import { fetchAuthMe } from '@/lib/api';
+import { getAccessToken } from '@/lib/auth';
 import { getSupabase } from '@/lib/supabase';
 
 /**
@@ -29,6 +31,12 @@ export default function MyPageScreen({
 
   // ユーザー情報
   const { user } = useUser();
+  const [authUser, setAuthUser] = useState<Awaited<ReturnType<typeof fetchAuthMe>> | null>(null);
+  const [authUserLoading, setAuthUserLoading] = useState(false);
+
+  const lastAuthMeFetchedAtRef = useRef<number | null>(null);
+
+  const AUTH_ME_TTL_MS = 60_000;
 
   // 全店舗のレビューを一つの配列にまとめ、新しい順で最大20件を返す
   const reviews = useMemo(() => {
@@ -125,8 +133,84 @@ export default function MyPageScreen({
       Alert.alert('ユーザー情報が見つかりません', 'ログインし直してください');
       return;
     }
+    lastAuthMeFetchedAtRef.current = null;
     router.push('/profile/edit');
   }, [router, user]);
+
+  useEffect(() => {
+    if (currentScreen !== 'main') {
+      return;
+    }
+
+    const now = Date.now();
+    const last = lastAuthMeFetchedAtRef.current;
+    if (last && now - last < AUTH_ME_TTL_MS) {
+      return;
+    }
+
+    let isActive = true;
+
+    const loadAuthUser = async () => {
+      setAuthUserLoading(true);
+
+      const token = await getAccessToken();
+      if (!token) {
+        if (isActive) {
+          setAuthUser(null);
+          setAuthUserLoading(false);
+        }
+        return;
+      }
+
+      try {
+        const me = await fetchAuthMe(token);
+        if (isActive) {
+          setAuthUser(me);
+          lastAuthMeFetchedAtRef.current = Date.now();
+        }
+      } catch {
+        if (isActive) {
+          setAuthUser(null);
+        }
+      } finally {
+        if (isActive) {
+          setAuthUserLoading(false);
+        }
+      }
+    };
+
+    void loadAuthUser();
+
+    return () => {
+      isActive = false;
+    };
+  }, [currentScreen]);
+
+  const displayName = authUser?.name ?? user?.name ?? '未設定';
+  const displayEmail = authUser?.email ?? user?.email ?? '未設定';
+  const displayGender = authUser?.gender ?? user?.gender ?? null;
+  const displayProvider = authUser?.provider ?? '未設定';
+  const displayIconUrl = authUser?.icon_url ?? null;
+  const displayInitials = useMemo(() => {
+    if (!displayName || displayName === '未設定') return '';
+    return displayName.slice(0, 2).toUpperCase();
+  }, [displayName]);
+
+  const formattedGender = useMemo(() => {
+    if (!displayGender) return '未設定';
+    if (displayGender === 'male') return '男性';
+    if (displayGender === 'female') return '女性';
+    if (displayGender === 'other') return 'その他';
+    return displayGender;
+  }, [displayGender]);
+
+  const formattedProvider = useMemo(() => {
+    if (displayProvider === 'google') return 'Google';
+    if (displayProvider === 'apple') return 'Apple';
+    if (displayProvider === 'email') return 'メール';
+    if (displayProvider === 'oauth') return 'OAuth';
+    return displayProvider;
+  }, [displayProvider]);
 
   // 画面の描画（switch 文で管理）
   switch (currentScreen) {
@@ -335,18 +419,35 @@ export default function MyPageScreen({
             <View style={styles.card}>
               <View style={styles.profileRow}>
                 <View style={styles.avatar}>
-                  <Text style={styles.avatarText}>
-                    {user?.name ? user.name.slice(0, 2).toUpperCase() : ''}
-                  </Text>
+                  {displayIconUrl ? (
+                    <Image source={{ uri: displayIconUrl }} style={styles.avatarImage} />
+                  ) : (
+                    <Text style={styles.avatarText}>{displayInitials}</Text>
+                  )}
                 </View>
 
                 <View style={styles.profileMeta}>
-                  <Text style={styles.profileName}>{user?.name ?? '未設定'}</Text>
-                  <Text style={styles.profileSub}>{user?.email ?? '未設定'}</Text>
+                  <Text style={styles.profileName}>{displayName}</Text>
+                  <Text style={styles.profileSub}>{displayEmail}</Text>
                 </View>
                 <Pressable onPress={handleLogout} style={styles.logoutBtn} hitSlop={8}>
                   <Text style={styles.logoutText}>ログアウト</Text>
                 </Pressable>
+              </View>
+
+              <View style={styles.profileInfo}>
+                <View style={styles.profileInfoRow}>
+                  <Text style={styles.profileInfoLabel}>プロバイダー</Text>
+                  <Text style={styles.profileInfoValue}>
+                    {authUserLoading ? '読み込み中' : formattedProvider}
+                  </Text>
+                </View>
+                <View style={styles.profileInfoRow}>
+                  <Text style={styles.profileInfoLabel}>性別</Text>
+                  <Text style={styles.profileInfoValue}>
+                    {authUserLoading ? '読み込み中' : formattedGender}
+                  </Text>
+                </View>
               </View>
 
               <Pressable onPress={handleGoToProfileEdit} style={styles.primaryBtn}>
@@ -486,6 +587,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     width: 64,
   },
+  avatarImage: {
+    borderRadius: 999,
+    height: 64,
+    width: 64,
+  },
   avatarText: { color: palette.avatarText, fontSize: 22, fontWeight: '800' },
   card: { backgroundColor: palette.surface, borderRadius: 20, padding: 12 },
   cardShadow: {
@@ -583,6 +689,28 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '700',
     textAlign: 'center',
+  },
+  profileInfo: {
+    borderTopColor: palette.divider,
+    borderTopWidth: 1,
+    marginTop: 12,
+    paddingTop: 12,
+  },
+  profileInfoLabel: {
+    color: palette.mutedText,
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  profileInfoRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 6,
+  },
+  profileInfoValue: {
+    color: palette.primary,
+    fontSize: 13,
+    fontWeight: '600',
   },
   profileMeta: { flex: 1, marginLeft: 14 },
   profileName: { color: palette.primary, fontSize: 18, fontWeight: '700' },

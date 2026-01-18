@@ -34,11 +34,32 @@ func (uc *userUseCase) EnsureUser(ctx context.Context, input input.EnsureUserInp
 	}
 
 	provider := normalizeProvider(input.Provider)
+	incomingName := strings.TrimSpace(input.Name)
+	incomingIconURL := strings.TrimSpace(input.IconURL)
+	incomingGender := strings.TrimSpace(input.Gender)
 
 	user, err := uc.userRepo.FindByID(ctx, input.UserID)
 	if err == nil {
+		updated := false
 		if shouldUpdateProvider(user.Provider, provider) {
 			user.Provider = provider
+			updated = true
+		}
+		if shouldUpdateName(user.Name, incomingName, user.Email) {
+			user.Name = incomingName
+			updated = true
+		}
+		if incomingIconURL != "" && user.IconFileID == nil && isEmptyStringPtr(user.IconURL) {
+			iconURL := incomingIconURL
+			user.IconURL = &iconURL
+			updated = true
+		}
+		if incomingGender != "" && isEmptyStringPtr(user.Gender) {
+			gender := incomingGender
+			user.Gender = &gender
+			updated = true
+		}
+		if updated {
 			user.UpdatedAt = time.Now()
 			if err := uc.userRepo.Update(ctx, user); err != nil {
 				return entity.User{}, err
@@ -60,13 +81,26 @@ func (uc *userUseCase) EnsureUser(ctx context.Context, input input.EnsureUserInp
 		role = "user"
 	}
 
-	name := deriveNameFromEmail(email)
+	name := incomingName
+	if name == "" {
+		name = deriveNameFromEmail(email)
+	}
+	var iconURL *string
+	if incomingIconURL != "" {
+		iconURL = &incomingIconURL
+	}
+	var gender *string
+	if incomingGender != "" {
+		gender = &incomingGender
+	}
 	now := time.Now()
 	newUser := &entity.User{
 		UserID:    input.UserID,
 		Name:      name,
 		Email:     email,
+		IconURL:   iconURL,
 		Provider:  provider,
+		Gender:    gender,
 		Role:      role,
 		CreatedAt: now,
 		UpdatedAt: now,
@@ -75,8 +109,26 @@ func (uc *userUseCase) EnsureUser(ctx context.Context, input input.EnsureUserInp
 	if err := uc.userRepo.Create(ctx, newUser); err != nil {
 		existing, fetchErr := uc.userRepo.FindByID(ctx, input.UserID)
 		if fetchErr == nil {
+			updated := false
 			if shouldUpdateProvider(existing.Provider, provider) {
 				existing.Provider = provider
+				updated = true
+			}
+			if shouldUpdateName(existing.Name, incomingName, existing.Email) {
+				existing.Name = incomingName
+				updated = true
+			}
+			if incomingIconURL != "" && existing.IconFileID == nil && isEmptyStringPtr(existing.IconURL) {
+				iconURL := incomingIconURL
+				existing.IconURL = &iconURL
+				updated = true
+			}
+			if incomingGender != "" && isEmptyStringPtr(existing.Gender) {
+				gender := incomingGender
+				existing.Gender = &gender
+				updated = true
+			}
+			if updated {
 				existing.UpdatedAt = time.Now()
 				if err := uc.userRepo.Update(ctx, existing); err != nil {
 					return entity.User{}, err
@@ -179,4 +231,24 @@ func shouldUpdateProvider(current string, incoming string) bool {
 	}
 	currentTrimmed := strings.ToLower(strings.TrimSpace(current))
 	return currentTrimmed == "" || currentTrimmed == "oauth"
+}
+
+func shouldUpdateName(current string, incoming string, email string) bool {
+	incomingTrimmed := strings.TrimSpace(incoming)
+	if incomingTrimmed == "" {
+		return false
+	}
+	currentTrimmed := strings.TrimSpace(current)
+	if currentTrimmed == "" {
+		return true
+	}
+	derived := deriveNameFromEmail(strings.ToLower(strings.TrimSpace(email)))
+	return strings.EqualFold(currentTrimmed, derived)
+}
+
+func isEmptyStringPtr(value *string) bool {
+	if value == nil {
+		return true
+	}
+	return strings.TrimSpace(*value) == ""
 }

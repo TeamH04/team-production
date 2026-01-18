@@ -1,4 +1,5 @@
 // eslint.config.js（ルート）
+
 import js from '@eslint/js';
 import tsPlugin from '@typescript-eslint/eslint-plugin';
 import tsParser from '@typescript-eslint/parser';
@@ -11,6 +12,20 @@ import globals from 'globals';
 import path from 'node:path';
 
 const MOBILE_NODE_MODULES = path.resolve(process.cwd(), 'apps/mobile/node_modules');
+const IMPORT_NO_UNRESOLVED_IGNORE = [
+  '^next/',
+  'react-native-svg',
+  '^expo',
+  '^@expo/',
+  'react-native',
+  '^react-native/',
+];
+const WEB_TEST_IMPORT_IGNORE = [
+  ...IMPORT_NO_UNRESOLVED_IGNORE,
+  '^@testing-library/',
+  '^vitest',
+  '^@vitejs/plugin-react',
+];
 
 export default [
   {
@@ -64,14 +79,7 @@ export default [
       'import/no-unresolved': [
         'error',
         {
-          ignore: [
-            '^next/',
-            'react-native-svg',
-            '^expo',
-            '^@expo/',
-            'react-native',
-            '^react-native/',
-          ],
+          ignore: IMPORT_NO_UNRESOLVED_IGNORE,
         },
       ],
       'import/extensions': [
@@ -150,6 +158,36 @@ export default [
     },
     rules: {
       'react-native/no-raw-text': 'off',
+    },
+  },
+
+  {
+    files: [
+      'apps/web/**/__tests__/**/*.{ts,tsx,js,jsx}',
+      'apps/web/**/*.{test,spec}.{ts,tsx,js,jsx}',
+      'apps/web/vitest.config.{ts,js}',
+      'apps/web/vitest.setup.{ts,js}',
+    ],
+    rules: {
+      'import/no-unresolved': [
+        'error',
+        {
+          ignore: WEB_TEST_IMPORT_IGNORE,
+        },
+      ],
+    },
+  },
+
+  {
+    files: ['packages/shop-core/**/*.{ts,tsx}'],
+    settings: {
+      'import/resolver': {
+        node: { extensions: ['.ts', '.tsx', '.js', '.jsx', '.json'] },
+        typescript: {
+          project: [path.resolve(process.cwd(), 'packages/shop-core/tsconfig.json')],
+          alwaysTryTypes: true,
+        },
+      },
     },
   },
 

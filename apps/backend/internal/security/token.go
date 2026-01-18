@@ -8,6 +8,9 @@ type TokenClaims struct {
 	Role     string
 	Email    string
 	Provider string
+	Name     string
+	IconURL  string
+	Gender   string
 }
 
 // TokenVerifier is responsible for validating access tokens issued by Supabase Auth.

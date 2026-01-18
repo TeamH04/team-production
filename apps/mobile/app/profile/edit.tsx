@@ -1,7 +1,8 @@
 import { Picker } from '@react-native-picker/picker';
 import { useRouter } from 'expo-router';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
+  Image,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -17,6 +18,8 @@ import { GENRES, toggleGenre as toggleGenreUtil } from '@/constants/genres';
 import { palette } from '@/constants/palette';
 import { TAB_BAR_SPACING } from '@/constants/TabBarSpacing';
 import { type Gender, useUser } from '@/features/user/UserContext';
+import { fetchAuthMe } from '@/lib/api';
+import { getAccessToken } from '@/lib/auth';
 
 const modalOverlayOpacity = 0.3;
 
@@ -24,6 +27,8 @@ const modalOverlayOpacity = 0.3;
 export default function EditProfileScreen() {
   const router = useRouter();
   const { user, setUser } = useUser();
+  const didInitFromAuthRef = useRef(false);
+  const hasTouchedRef = useRef(false);
 
   // ローカルなフォーム state（表示名・メールアドレス）
   const [name, setName] = useState(user?.name ?? '');
@@ -32,6 +37,8 @@ export default function EditProfileScreen() {
   const [birthYear, setBirthYear] = useState<string>(user?.birthYear ?? '');
   const [birthMonth, setBirthMonth] = useState<string>(user?.birthMonth ?? '');
   const [favoriteGenres, setFavoriteGenres] = useState<string[]>(user?.favoriteGenres ?? []);
+  const [authUser, setAuthUser] = useState<Awaited<ReturnType<typeof fetchAuthMe>> | null>(null);
+  const [authUserLoading, setAuthUserLoading] = useState(false);
   const [showYearPicker, setShowYearPicker] = useState(false);
   const [showMonthPicker, setShowMonthPicker] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -50,6 +57,29 @@ export default function EditProfileScreen() {
   const canSave = useMemo(() => {
     return name.trim().length > 0 && email.trim().length > 0 && !saving;
   }, [email, name, saving]);
+  const formattedGender = useMemo(() => {
+    if (!authUser?.gender) return '未設定';
+    if (authUser.gender === 'male') return '男性';
+    if (authUser.gender === 'female') return '女性';
+    if (authUser.gender === 'other') return 'その他';
+    return authUser.gender;
+  }, [authUser?.gender]);
+  const formattedProvider = useMemo(() => {
+    if (!authUser?.provider) return '未設定';
+    if (authUser.provider === 'google') return 'Google';
+    if (authUser.provider === 'apple') return 'Apple';
+    if (authUser.provider === 'email') return 'メール';
+    if (authUser.provider === 'oauth') return 'OAuth';
+    return authUser.provider;
+  }, [authUser?.provider]);
+  const avatarLabel = useMemo(() => {
+    const base = name || authUser?.name || 'U';
+    return base.slice(0, 2).toUpperCase();
+  }, [authUser?.name, name]);
+  const avatarIconUrl = useMemo(() => {
+    const url = authUser?.icon_url ?? '';
+    return url.trim().length > 0 ? url : null;
+  }, [authUser?.icon_url]);
 
   /** ジャンルの選択状態をトグルする */
   const toggleGenre = (genre: string) => {
@@ -109,6 +139,57 @@ export default function EditProfileScreen() {
     router.back();
   };
 
+  useEffect(() => {
+    let isActive = true;
+    const loadAuthUser = async () => {
+      setAuthUserLoading(true);
+      const token = await getAccessToken();
+      if (!token) {
+        if (isActive) {
+          setAuthUser(null);
+          setAuthUserLoading(false);
+        }
+        return;
+      }
+      try {
+        const me = await fetchAuthMe(token);
+        if (isActive) {
+          setAuthUser(me);
+        }
+      } catch {
+        if (isActive) {
+          setAuthUser(null);
+        }
+      } finally {
+        if (isActive) {
+          setAuthUserLoading(false);
+        }
+      }
+    };
+
+    void loadAuthUser();
+
+    return () => {
+      isActive = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!authUser || didInitFromAuthRef.current || hasTouchedRef.current) {
+      return;
+    }
+    didInitFromAuthRef.current = true;
+    if (authUser.name) {
+      setName(authUser.name);
+    }
+    if (authUser.email) {
+      setEmail(authUser.email);
+    }
+    if (authUser.gender === 'male' || authUser.gender === 'female' || authUser.gender === 'other') {
+      setGender(authUser.gender);
+    }
+  }, [authUser]);
+
   return (
     <KeyboardAvoidingView
       behavior={Platform.select({ ios: 'padding', default: undefined })}
@@ -122,7 +203,28 @@ export default function EditProfileScreen() {
 
         {/* アバター（表示名の先頭2文字を表示） */}
         <View style={styles.avatar}>
-          <Text style={styles.avatarText}>{(name || 'U').slice(0, 2).toUpperCase()}</Text>
+          {avatarIconUrl ? (
+            <Image source={{ uri: avatarIconUrl }} style={styles.avatarImage} />
+          ) : (
+            <Text style={styles.avatarText}>{avatarLabel}</Text>
+          )}
+        </View>
+
+        <View style={styles.cardShadow}>
+          <View style={styles.card}>
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>プロバイダー</Text>
+              <Text style={styles.infoValue}>
+                {authUserLoading ? '読み込み中' : formattedProvider}
+              </Text>
+            </View>
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>性別</Text>
+              <Text style={styles.infoValue}>
+                {authUserLoading ? '読み込み中' : formattedGender}
+              </Text>
+            </View>
+          </View>
         </View>
 
         {/* フォームカード */}
@@ -136,7 +238,10 @@ export default function EditProfileScreen() {
               </View>
               <TextInput
                 value={name}
-                onChangeText={setName}
+                onChangeText={value => {
+                  hasTouchedRef.current = true;
+                  setName(value);
+                }}
                 placeholder='例: Hanako Tanaka'
                 placeholderTextColor={palette.mutedText}
                 style={styles.input}
@@ -152,7 +257,10 @@ export default function EditProfileScreen() {
               </View>
               <TextInput
                 value={email}
-                onChangeText={setEmail}
+                onChangeText={value => {
+                  hasTouchedRef.current = true;
+                  setEmail(value);
+                }}
                 placeholder='example@domain.com'
                 placeholderTextColor={palette.mutedText}
                 style={styles.input}
@@ -169,7 +277,10 @@ export default function EditProfileScreen() {
             <Text style={styles.label}>性別（任意） </Text>
             <View style={styles.radioGroup}>
               <Pressable
-                onPress={() => setGender('male')}
+                onPress={() => {
+                  hasTouchedRef.current = true;
+                  setGender('male');
+                }}
                 style={styles.radioOption}
                 accessibilityRole='radio'
                 accessibilityState={{ selected: gender === 'male' }}
@@ -181,7 +292,10 @@ export default function EditProfileScreen() {
               </Pressable>
 
               <Pressable
-                onPress={() => setGender('female')}
+                onPress={() => {
+                  hasTouchedRef.current = true;
+                  setGender('female');
+                }}
                 style={styles.radioOption}
                 accessibilityRole='radio'
                 accessibilityState={{ selected: gender === 'female' }}
@@ -193,7 +307,10 @@ export default function EditProfileScreen() {
               </Pressable>
 
               <Pressable
-                onPress={() => setGender('other')}
+                onPress={() => {
+                  hasTouchedRef.current = true;
+                  setGender('other');
+                }}
                 style={styles.radioOption}
                 accessibilityRole='radio'
                 accessibilityState={{ selected: gender === 'other' }}
@@ -359,6 +476,11 @@ const styles = StyleSheet.create({
     marginTop: 16,
     width: 88,
   },
+  avatarImage: {
+    borderRadius: 999,
+    height: 88,
+    width: 88,
+  },
   avatarText: { color: palette.primary, fontSize: 32, fontWeight: '800' },
 
   // カード背景
@@ -419,6 +541,23 @@ const styles = StyleSheet.create({
   headerContainer: {
     alignItems: 'center',
     marginBottom: 16,
+  },
+
+  infoLabel: {
+    color: palette.mutedText,
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  infoRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  infoValue: {
+    color: palette.primary,
+    fontSize: 13,
+    fontWeight: '700',
   },
 
   // 入力欄のスタイル
