@@ -18,8 +18,8 @@ import { GENRES, toggleGenre as toggleGenreUtil } from '@/constants/genres';
 import { palette } from '@/constants/palette';
 import { TAB_BAR_SPACING } from '@/constants/TabBarSpacing';
 import { type Gender, useUser } from '@/features/user/UserContext';
-import { fetchAuthMe } from '@/lib/api';
-import { getAccessToken } from '@/lib/auth';
+import { useAuthMe } from '@/hooks/useAuthMe';
+import { formatGenderLabel, formatProviderLabel } from '@/lib/profile';
 
 const modalOverlayOpacity = 0.3;
 
@@ -37,8 +37,9 @@ export default function EditProfileScreen() {
   const [birthYear, setBirthYear] = useState<string>(user?.birthYear ?? '');
   const [birthMonth, setBirthMonth] = useState<string>(user?.birthMonth ?? '');
   const [favoriteGenres, setFavoriteGenres] = useState<string[]>(user?.favoriteGenres ?? []);
-  const [authUser, setAuthUser] = useState<Awaited<ReturnType<typeof fetchAuthMe>> | null>(null);
-  const [authUserLoading, setAuthUserLoading] = useState(false);
+  // authUser: DB側の最新プロフィール（Supabase連携含む）をフォーム初期値と表示に反映する
+  // authUserLoading: 取得状態をUIに反映する（読み込み中表示など）
+  const { data: authUser, loading: authUserLoading } = useAuthMe();
   const [showYearPicker, setShowYearPicker] = useState(false);
   const [showMonthPicker, setShowMonthPicker] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -58,19 +59,10 @@ export default function EditProfileScreen() {
     return name.trim().length > 0 && email.trim().length > 0 && !saving;
   }, [email, name, saving]);
   const formattedGender = useMemo(() => {
-    if (!authUser?.gender) return '未設定';
-    if (authUser.gender === 'male') return '男性';
-    if (authUser.gender === 'female') return '女性';
-    if (authUser.gender === 'other') return 'その他';
-    return authUser.gender;
+    return formatGenderLabel(authUser?.gender);
   }, [authUser?.gender]);
   const formattedProvider = useMemo(() => {
-    if (!authUser?.provider) return '未設定';
-    if (authUser.provider === 'google') return 'Google';
-    if (authUser.provider === 'apple') return 'Apple';
-    if (authUser.provider === 'email') return 'メール';
-    if (authUser.provider === 'oauth') return 'OAuth';
-    return authUser.provider;
+    return formatProviderLabel(authUser?.provider);
   }, [authUser?.provider]);
   const avatarLabel = useMemo(() => {
     const base = name || authUser?.name || 'U';
@@ -138,41 +130,6 @@ export default function EditProfileScreen() {
 
     router.back();
   };
-
-  useEffect(() => {
-    let isActive = true;
-    const loadAuthUser = async () => {
-      setAuthUserLoading(true);
-      const token = await getAccessToken();
-      if (!token) {
-        if (isActive) {
-          setAuthUser(null);
-          setAuthUserLoading(false);
-        }
-        return;
-      }
-      try {
-        const me = await fetchAuthMe(token);
-        if (isActive) {
-          setAuthUser(me);
-        }
-      } catch {
-        if (isActive) {
-          setAuthUser(null);
-        }
-      } finally {
-        if (isActive) {
-          setAuthUserLoading(false);
-        }
-      }
-    };
-
-    void loadAuthUser();
-
-    return () => {
-      isActive = false;
-    };
-  }, []);
 
   useEffect(() => {
     if (!authUser || didInitFromAuthRef.current || hasTouchedRef.current) {

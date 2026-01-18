@@ -1,7 +1,7 @@
 ﻿import Ionicons from '@expo/vector-icons/Ionicons';
 import { SHOPS } from '@team/shop-core';
 import { useRouter } from 'expo-router';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { Alert, Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { BackButton } from '@/components/BackButton';
@@ -9,8 +9,8 @@ import { palette } from '@/constants/palette';
 import { TAB_BAR_SPACING } from '@/constants/TabBarSpacing';
 import { useReviews } from '@/features/reviews/ReviewsContext';
 import { useUser } from '@/features/user/UserContext';
-import { fetchAuthMe } from '@/lib/api';
-import { getAccessToken } from '@/lib/auth';
+import { useAuthMe } from '@/hooks/useAuthMe';
+import { formatGenderLabel, formatProviderLabel } from '@/lib/profile';
 import { getSupabase } from '@/lib/supabase';
 
 /**
@@ -31,12 +31,6 @@ export default function MyPageScreen({
 
   // ユーザー情報
   const { user } = useUser();
-  const [authUser, setAuthUser] = useState<Awaited<ReturnType<typeof fetchAuthMe>> | null>(null);
-  const [authUserLoading, setAuthUserLoading] = useState(false);
-
-  const lastAuthMeFetchedAtRef = useRef<number | null>(null);
-
-  const AUTH_ME_TTL_MS = 60_000;
 
   // 全店舗のレビューを一つの配列にまとめ、新しい順で最大20件を返す
   const reviews = useMemo(() => {
@@ -56,6 +50,11 @@ export default function MyPageScreen({
 
   // 現在表示している画面を管理（Union 型で一元管理）
   const [currentScreen, setCurrentScreen] = useState<ScreenType>('main');
+  // authUser: DB側の最新プロフィール（Supabase連携含む）を取得して表示に反映する
+  // authUserLoading: 上記の取得状態をUIに反映する（読み込み中表示など）
+  const { data: authUser, loading: authUserLoading } = useAuthMe({
+    enabled: currentScreen === 'main',
+  });
 
   // プロフィール編集用の状態管理
 
@@ -133,58 +132,8 @@ export default function MyPageScreen({
       Alert.alert('ユーザー情報が見つかりません', 'ログインし直してください');
       return;
     }
-    lastAuthMeFetchedAtRef.current = null;
     router.push('/profile/edit');
   }, [router, user]);
-
-  useEffect(() => {
-    if (currentScreen !== 'main') {
-      return;
-    }
-
-    const now = Date.now();
-    const last = lastAuthMeFetchedAtRef.current;
-    if (last && now - last < AUTH_ME_TTL_MS) {
-      return;
-    }
-
-    let isActive = true;
-
-    const loadAuthUser = async () => {
-      setAuthUserLoading(true);
-
-      const token = await getAccessToken();
-      if (!token) {
-        if (isActive) {
-          setAuthUser(null);
-          setAuthUserLoading(false);
-        }
-        return;
-      }
-
-      try {
-        const me = await fetchAuthMe(token);
-        if (isActive) {
-          setAuthUser(me);
-          lastAuthMeFetchedAtRef.current = Date.now();
-        }
-      } catch {
-        if (isActive) {
-          setAuthUser(null);
-        }
-      } finally {
-        if (isActive) {
-          setAuthUserLoading(false);
-        }
-      }
-    };
-
-    void loadAuthUser();
-
-    return () => {
-      isActive = false;
-    };
-  }, [currentScreen]);
 
   const displayName = authUser?.name ?? user?.name ?? '未設定';
   const displayEmail = authUser?.email ?? user?.email ?? '未設定';
@@ -197,19 +146,11 @@ export default function MyPageScreen({
   }, [displayName]);
 
   const formattedGender = useMemo(() => {
-    if (!displayGender) return '未設定';
-    if (displayGender === 'male') return '男性';
-    if (displayGender === 'female') return '女性';
-    if (displayGender === 'other') return 'その他';
-    return displayGender;
+    return formatGenderLabel(displayGender);
   }, [displayGender]);
 
   const formattedProvider = useMemo(() => {
-    if (displayProvider === 'google') return 'Google';
-    if (displayProvider === 'apple') return 'Apple';
-    if (displayProvider === 'email') return 'メール';
-    if (displayProvider === 'oauth') return 'OAuth';
-    return displayProvider;
+    return formatProviderLabel(displayProvider);
   }, [displayProvider]);
 
   // 画面の描画（switch 文で管理）
