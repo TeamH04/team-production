@@ -288,7 +288,7 @@ describe('URL処理の詳細', () => {
   });
 });
 
-describe('その他エッジケース', () => {
+describe('数値フィールドのゼロ値処理', () => {
   test('rating が 0 の場合そのまま返す', () => {
     const apiStore = createMockApiStore({ average_rating: 0 });
     const shop = mapApiStoreToShop(apiStore);
@@ -299,5 +299,25 @@ describe('その他エッジケース', () => {
     const apiStore = createMockApiStore({ distance_minutes: 0 });
     const shop = mapApiStoreToShop(apiStore);
     assert.equal(shop.distanceMinutes, 0);
+  });
+});
+
+describe('価格のエッジケース', () => {
+  test('price が負の値の場合もフォーマットされる', () => {
+    const apiStore = createMockApiStore({
+      menus: [{ menu_id: 'm1', name: '割引品', price: -100 }],
+    });
+
+    const shop = mapApiStoreToShop(apiStore);
+    // 実装の挙動を確認（-100 が ¥-100 になるか等）
+    assert.ok(shop.menu![0].price.includes('-'));
+  });
+});
+
+describe('store_id のエッジケース', () => {
+  test('store_id が空文字列の場合', () => {
+    const apiStore = createMockApiStore({ store_id: '' });
+    const shop = mapApiStoreToShop(apiStore);
+    assert.equal(shop.id, '');
   });
 });

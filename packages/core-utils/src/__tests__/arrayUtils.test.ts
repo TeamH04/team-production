@@ -230,3 +230,63 @@ describe('removeFromArray', () => {
     });
   });
 });
+
+describe('null/undefined/NaN 要素の処理', () => {
+  describe('toggleArrayItem', () => {
+    test('null 要素のトグル（追加）', () => {
+      const arr = [1, 2, 3];
+      const result = toggleArrayItem(arr, null as unknown as number);
+      assert.deepEqual(result, [1, 2, 3, null]);
+    });
+
+    test('null 要素のトグル（削除）', () => {
+      const arr = [1, null, 3] as (number | null)[];
+      const result = toggleArrayItem(arr, null);
+      assert.deepEqual(result, [1, 3]);
+    });
+
+    test('undefined 要素のトグル', () => {
+      const arr = [1, undefined, 3] as (number | undefined)[];
+      const result = toggleArrayItem(arr, undefined);
+      assert.deepEqual(result, [1, 3]);
+    });
+  });
+
+  describe('addToArray', () => {
+    test('NaN 要素の重複追加を防ぐ（Array.includes は SameValueZero を使用）', () => {
+      const arr = [NaN, 2, 3];
+      const result = addToArray(arr, NaN);
+      // Array.includes() は SameValueZero アルゴリズムを使用し、NaN === NaN を true として扱う
+      // そのため、既存の NaN は重複として検出され、追加されない
+      assert.equal(result.length, 3);
+      assert.deepEqual(result, [NaN, 2, 3]);
+    });
+
+    test('null 要素の重複追加を防ぐ', () => {
+      const arr = [1, null, 3] as (number | null)[];
+      const result = addToArray(arr, null);
+      assert.deepEqual(result, [1, null, 3]);
+    });
+  });
+
+  describe('removeFromArray', () => {
+    test('null 要素の削除', () => {
+      const arr = [1, null, 3, null] as (number | null)[];
+      const result = removeFromArray(arr, null);
+      assert.deepEqual(result, [1, 3]);
+    });
+
+    test('undefined 要素の削除', () => {
+      const arr = [1, undefined, 3] as (number | undefined)[];
+      const result = removeFromArray(arr, undefined);
+      assert.deepEqual(result, [1, 3]);
+    });
+
+    test('NaN 要素の削除（NaN === NaN は false なので削除されない）', () => {
+      const arr = [1, NaN, 3];
+      const result = removeFromArray(arr, NaN);
+      // NaN は自身と等しくないため、削除されない
+      assert.equal(result.length, 3);
+    });
+  });
+});

@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, test } from 'node:test';
 
-import { normalizeString, includesIgnoreCase } from '../stringUtils';
+import { normalizeString, includesIgnoreCase, getIdNum } from '../stringUtils';
 
 describe('normalizeString', () => {
   describe('前後の空白をトリム', () => {
@@ -44,7 +44,7 @@ describe('normalizeString', () => {
     });
   });
 
-  describe('その他のケース', () => {
+  describe('内部空白と特殊文字の処理', () => {
     test('複数の連続した空白文字（内部の空白は保持される）', () => {
       assert.equal(normalizeString('hello   world'), 'hello   world');
     });
@@ -139,8 +139,48 @@ describe('includesIgnoreCase', () => {
       assert.equal(includesIgnoreCase('Hello World Test', 'o wo'), true);
     });
 
-    test('Unicode絵文字を含む場合', () => {
+    test('空文字列で検索した場合はtrueを返す', () => {
       assert.equal(includesIgnoreCase('Hello World', ''), true);
+    });
+  });
+});
+
+describe('getIdNum', () => {
+  describe('数字の抽出', () => {
+    test('文字列から数字を抽出する', () => {
+      assert.equal(getIdNum('abc123def'), 123);
+    });
+
+    test('先頭の数字を抽出する', () => {
+      assert.equal(getIdNum('123abc'), 123);
+    });
+
+    test('末尾の数字を抽出する', () => {
+      assert.equal(getIdNum('abc456'), 456);
+    });
+  });
+
+  describe('全角数字の変換', () => {
+    test('全角数字を半角に変換して抽出する', () => {
+      assert.equal(getIdNum('ID：１２３'), 123);
+    });
+
+    test('全角と半角の混在', () => {
+      assert.equal(getIdNum('１２３abc456'), 123);
+    });
+  });
+
+  describe('エッジケース', () => {
+    test('空文字列の場合は0を返す', () => {
+      assert.equal(getIdNum(''), 0);
+    });
+
+    test('数字がない文字列の場合は0を返す', () => {
+      assert.equal(getIdNum('abcdef'), 0);
+    });
+
+    test('数字のみの文字列', () => {
+      assert.equal(getIdNum('12345'), 12345);
     });
   });
 });

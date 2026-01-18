@@ -458,7 +458,50 @@ describe('validateStep', () => {
     });
   });
 
-  describe('その他のケース', () => {
+  describe('address（住所）のバリデーション', () => {
+    test('必須の住所フィールドが空の場合エラーを返す', () => {
+      const step = createSingleValueStep({
+        key: 'address',
+        title: '住所',
+        required: true,
+        value: '',
+      });
+
+      const result = validateStep(step);
+
+      assert.equal(result.isValid, false);
+      assert.equal(result.errorTitle, '入力不足');
+      assert.equal(result.errorMessage, '住所 は必須です');
+    });
+
+    test('必須の住所フィールドに値がある場合成功を返す', () => {
+      const step = createSingleValueStep({
+        key: 'address',
+        title: '住所',
+        required: true,
+        value: '東京都渋谷区',
+      });
+
+      const result = validateStep(step);
+
+      assert.equal(result.isValid, true);
+    });
+  });
+
+  describe('予算の桁数制限', () => {
+    test('11桁以上の予算値の場合エラーを返す', () => {
+      const step = createBudgetRangeStep({
+        value: { min: '12345678901', max: '99999999999' }, // 11桁
+      });
+
+      const result = validateStep(step);
+
+      assert.equal(result.isValid, false);
+      assert.ok(result.errorMessage?.includes('10桁以内'));
+    });
+  });
+
+  describe('キーボードタイプとメタデータのバリデーション', () => {
     test('keyboardType が number-pad でも通常のバリデーションが適用される', () => {
       const step = createSingleValueStep({
         key: 'phoneNumber',

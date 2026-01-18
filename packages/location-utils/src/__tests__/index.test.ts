@@ -78,6 +78,34 @@ describe('getAreaForCoordinates', () => {
       assert.equal(result, undefined);
     });
   });
+
+  describe('無効な座標値の処理', () => {
+    test('latitude が NaN の場合は undefined を返す', () => {
+      const result = getAreaForCoordinates(NaN, 135.194942);
+      assert.equal(result, undefined);
+    });
+
+    test('longitude が NaN の場合は undefined を返す', () => {
+      const result = getAreaForCoordinates(34.694839, NaN);
+      assert.equal(result, undefined);
+    });
+
+    test('latitude が Infinity の場合は undefined を返す', () => {
+      const result = getAreaForCoordinates(Infinity, 135.194942);
+      assert.equal(result, undefined);
+    });
+
+    test('longitude が -Infinity の場合は undefined を返す', () => {
+      const result = getAreaForCoordinates(34.694839, -Infinity);
+      assert.equal(result, undefined);
+    });
+
+    test('日本国外の座標（0, 0）の場合', () => {
+      const result = getAreaForCoordinates(0, 0);
+      // 最も近い駅が返されるか、または undefined
+      assert.ok(result === undefined || typeof result === 'string');
+    });
+  });
 });
 
 describe('STATION_AREAS', () => {
@@ -94,36 +122,54 @@ describe('STATION_AREAS', () => {
   describe('各駅に必須プロパティがあること', () => {
     test('全ての駅に name プロパティがあること', () => {
       for (const station of STATION_AREAS) {
-        assert.ok(typeof station.name === 'string');
-        assert.ok(station.name.length > 0);
+        assert.ok(
+          typeof station.name === 'string',
+          `駅「${station.name || 'undefined'}」の name が文字列ではありません`,
+        );
+        assert.ok(station.name.length > 0, `駅の name が空文字列です`);
       }
     });
 
     test('全ての駅に kana プロパティがあること', () => {
       for (const station of STATION_AREAS) {
-        assert.ok(typeof station.kana === 'string');
-        assert.ok(station.kana.length > 0);
+        assert.ok(
+          typeof station.kana === 'string',
+          `駅「${station.name}」の kana が文字列ではありません`,
+        );
+        assert.ok(station.kana.length > 0, `駅「${station.name}」の kana が空文字列です`);
       }
     });
 
     test('全ての駅に area プロパティがあること', () => {
       for (const station of STATION_AREAS) {
-        assert.ok(typeof station.area === 'string');
-        assert.ok(station.area.length > 0);
+        assert.ok(
+          typeof station.area === 'string',
+          `駅「${station.name}」の area が文字列ではありません`,
+        );
+        assert.ok(station.area.length > 0, `駅「${station.name}」の area が空文字列です`);
       }
     });
 
     test('全ての駅に latitude プロパティがあること', () => {
       for (const station of STATION_AREAS) {
-        assert.ok(typeof station.latitude === 'number');
-        assert.ok(!Number.isNaN(station.latitude));
+        assert.ok(
+          typeof station.latitude === 'number',
+          `駅「${station.name}」の latitude が数値ではありません`,
+        );
+        assert.ok(!Number.isNaN(station.latitude), `駅「${station.name}」の latitude が NaN です`);
       }
     });
 
     test('全ての駅に longitude プロパティがあること', () => {
       for (const station of STATION_AREAS) {
-        assert.ok(typeof station.longitude === 'number');
-        assert.ok(!Number.isNaN(station.longitude));
+        assert.ok(
+          typeof station.longitude === 'number',
+          `駅「${station.name}」の longitude が数値ではありません`,
+        );
+        assert.ok(
+          !Number.isNaN(station.longitude),
+          `駅「${station.name}」の longitude が NaN です`,
+        );
       }
     });
   });
@@ -132,14 +178,20 @@ describe('STATION_AREAS', () => {
     test('全ての駅の緯度が日本の範囲内であること', () => {
       for (const station of STATION_AREAS) {
         // 日本の緯度は約20度〜46度
-        assert.ok(station.latitude >= 20 && station.latitude <= 46);
+        assert.ok(
+          station.latitude >= 20 && station.latitude <= 46,
+          `駅「${station.name}」の緯度 ${station.latitude} が日本の範囲外です（20〜46度）`,
+        );
       }
     });
 
     test('全ての駅の経度が日本の範囲内であること', () => {
       for (const station of STATION_AREAS) {
         // 日本の経度は約122度〜154度
-        assert.ok(station.longitude >= 122 && station.longitude <= 154);
+        assert.ok(
+          station.longitude >= 122 && station.longitude <= 154,
+          `駅「${station.name}」の経度 ${station.longitude} が日本の範囲外です（122〜154度）`,
+        );
       }
     });
   });

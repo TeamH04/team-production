@@ -303,3 +303,49 @@ describe('filterShops エッジケース', () => {
     assert.equal(result.length, 1);
   });
 });
+
+describe('matchesTags エッジケース', () => {
+  test('shop.tags が空配列の場合、タグフィルターにマッチしない', () => {
+    const shop = createMockShop({
+      id: 'shop-1',
+      tags: [],
+    });
+
+    // タグフィルターがある場合、空配列の店舗はマッチしない
+    assert.equal(matchesTags(shop, ['Wi-Fi']), false);
+  });
+
+  test('shop.tags が空配列でフィルタータグも空の場合、マッチする', () => {
+    const shop = createMockShop({
+      id: 'shop-1',
+      tags: [],
+    });
+
+    // タグフィルターが空の場合は全てマッチ
+    assert.equal(matchesTags(shop, []), true);
+  });
+
+  test('フィルタータグが undefined の場合、全てマッチする', () => {
+    const shop = createMockShop({
+      id: 'shop-1',
+      tags: ['Wi-Fi'],
+    });
+
+    // undefinedはmatchesTagsでは空配列として扱われ全てマッチ
+    assert.equal(matchesTags(shop, undefined as unknown as string[]), true);
+  });
+});
+
+describe('filterShops - tags が空配列の店舗', () => {
+  test('tags が空配列の店舗はタグフィルターにマッチしない', () => {
+    const shops = [
+      createMockShop({ id: 'shop-1', tags: [] }),
+      createMockShop({ id: 'shop-2', tags: ['Wi-Fi'] }),
+    ];
+
+    const result = filterShops(shops, { tags: ['Wi-Fi'] });
+
+    assert.equal(result.length, 1);
+    assert.equal(result[0].id, 'shop-2');
+  });
+});

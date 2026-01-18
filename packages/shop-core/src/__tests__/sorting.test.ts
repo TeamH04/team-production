@@ -266,4 +266,52 @@ describe('sortShops', () => {
       assert.equal(result[0].id, 'shop-1');
     });
   });
+
+  describe('openedAt が不正な日付の場合', () => {
+    test('不正な日付文字列を含む店舗のソート', () => {
+      const shops = [
+        createMockShop({ id: 'shop-1', openedAt: 'invalid-date' }),
+        createMockShop({ id: 'shop-2', openedAt: '2024-06-01T00:00:00.000Z' }),
+        createMockShop({ id: 'shop-3', openedAt: '' }),
+      ];
+
+      // 不正な日付は NaN になるため、ソート結果の安定性を確認
+      const result = sortShops(shops, 'newest');
+
+      // 有効な日付を持つ shop-2 が結果に含まれていることを確認
+      assert.ok(result.some(s => s.id === 'shop-2'));
+      // 配列の長さが維持されていることを確認
+      assert.equal(result.length, 3);
+    });
+  });
+
+  describe('name が空文字列の場合', () => {
+    test('空文字列の名前を含む店舗のソート（name-asc）', () => {
+      const shops = [
+        createMockShop({ id: 'shop-1', name: 'カフェB' }),
+        createMockShop({ id: 'shop-2', name: '' }),
+        createMockShop({ id: 'shop-3', name: 'カフェA' }),
+      ];
+
+      const result = sortShops(shops, 'name-asc');
+
+      // 空文字列は辞書順で先頭に来る
+      assert.equal(result[0].id, 'shop-2');
+      assert.equal(result[1].name, 'カフェA');
+      assert.equal(result[2].name, 'カフェB');
+    });
+
+    test('空文字列の名前を含む店舗のソート（name-desc）', () => {
+      const shops = [
+        createMockShop({ id: 'shop-1', name: 'カフェB' }),
+        createMockShop({ id: 'shop-2', name: '' }),
+        createMockShop({ id: 'shop-3', name: 'カフェA' }),
+      ];
+
+      const result = sortShops(shops, 'name-desc');
+
+      // 空文字列は辞書順で最後に来る
+      assert.equal(result[2].id, 'shop-2');
+    });
+  });
 });
