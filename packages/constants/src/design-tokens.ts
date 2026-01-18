@@ -44,14 +44,20 @@ export const SPACING = {
  * Icon size values in pixels.
  */
 export const ICON_SIZE = {
+  /** Extra small: 18px */
+  XS: 18,
   /** Small: 16px */
   SM: 16,
   /** Medium: 20px */
   MD: 20,
+  /** Medium-large: 22px */
+  ML: 22,
   /** Large: 24px */
   LG: 24,
-  /** Extra large: 32px */
-  XL: 32,
+  /** Extra large: 28px */
+  XL: 28,
+  /** Extra extra large: 32px */
+  XXL: 32,
 } as const;
 
 /**
@@ -82,14 +88,23 @@ export const TIMING = {
   DEBOUNCE_SEARCH: 180,
   /** Duration for toast notifications */
   TOAST_DURATION: 2400,
+  /** Delay for load more pagination */
+  LOAD_MORE_DELAY: 350,
+  /** Delay for mock form submissions (dev/testing) */
+  MOCK_SUBMIT_DELAY: 600,
+  /** Scroll event throttle for ScrollView */
+  SCROLL_THROTTLE: 16,
 } as const;
 
 /**
  * Font weight values for text styling.
  */
 export const FONT_WEIGHT = {
+  NORMAL: '400' as const,
+  MEDIUM: '500' as const,
   SEMIBOLD: '600' as const,
-  BOLD: '800' as const,
+  BOLD: '700' as const,
+  EXTRA_BOLD: '800' as const,
 } as const;
 
 /**
@@ -113,6 +128,8 @@ export const LAYOUT = {
   BUTTON_HEIGHT_MD: 44,
   /** Large button height */
   BUTTON_HEIGHT_LG: 48,
+  /** Parallax scroll view header height */
+  PARALLAX_HEADER_HEIGHT: 250,
 } as const;
 
 // Type exports for TypeScript consumers

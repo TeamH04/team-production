@@ -59,3 +59,14 @@ export function toUint8Array(data: CryptoBufferSource): Uint8Array {
   }
   throw new TypeError('Unsupported BufferSource type');
 }
+
+/**
+ * OAuth認証用のランダムなnonce文字列を生成
+ * @param length 生成する文字列の長さ（デフォルト: 32）
+ * @returns ランダムな16進数文字列
+ */
+export function createNonce(length = 32): string {
+  const randomBytes = new Uint8Array(length);
+  crypto.getRandomValues(randomBytes);
+  return Array.from(randomBytes, byte => byte.toString(16).padStart(2, '0')).join('');
+}

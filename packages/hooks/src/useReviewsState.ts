@@ -4,31 +4,7 @@ import { useOptimisticMutation } from './useOptimisticUpdate';
 import { useSafeState } from './useSafeState';
 
 import type { AuthResult } from './useOptimisticUpdate';
-
-/**
- * Review型（フロントエンド用）
- */
-export type ReviewItem = {
-  id: string;
-  shopId: string;
-  userId: string;
-  rating: number;
-  comment?: string;
-  createdAt: string;
-  menuItemIds?: string[];
-  menuItemName?: string;
-  likesCount: number;
-  likedByMe: boolean;
-  files: ReviewFileItem[];
-};
-
-export type ReviewFileItem = {
-  id: string;
-  fileName: string;
-  objectKey: string;
-  url?: string;
-  contentType?: string | null;
-};
+import type { Review, ReviewAsset, SignedUploadFile, UploadFileInput } from '@team/types';
 
 /**
  * レビュー投稿時の入力
@@ -38,36 +14,6 @@ export type ReviewInput = {
   comment?: string;
   menuItemIds?: string[];
   menuItemName?: string;
-};
-
-/**
- * アップロード用アセット情報
- */
-export type ReviewAssetInfo = {
-  uri: string;
-  fileName: string;
-  contentType: string;
-  fileSize?: number;
-};
-
-/**
- * アップロード用ファイル入力
- */
-export type UploadFileInputItem = {
-  file_name: string;
-  file_size?: number;
-  content_type: string;
-};
-
-/**
- * 署名付きアップロードファイル
- */
-export type SignedUploadFileItem = {
-  file_id: string;
-  object_key: string;
-  path: string;
-  token: string;
-  content_type: string;
 };
 
 /**
@@ -90,27 +36,23 @@ export type ReviewSortType = 'new' | 'liked';
  */
 export type ReviewsApiDependencies<TToken = string> = {
   /** 店舗のレビュー一覧を取得 */
-  fetchStoreReviews: (
-    shopId: string,
-    sort: ReviewSortType,
-    token?: TToken,
-  ) => Promise<ReviewItem[]>;
+  fetchStoreReviews: (shopId: string, sort: ReviewSortType, token?: TToken) => Promise<Review[]>;
   /** ユーザーのレビュー一覧を取得 */
-  fetchUserReviews: (userId: string, token: TToken) => Promise<ReviewItem[]>;
+  fetchUserReviews: (userId: string, token: TToken) => Promise<Review[]>;
   /** レビューを作成 */
   createReview: (shopId: string, input: CreateReviewInput, token: TToken) => Promise<void>;
   /** アップロード用署名を取得 */
   createReviewUploads: (
     shopId: string,
-    files: UploadFileInputItem[],
+    files: UploadFileInput[],
     token: TToken,
-  ) => Promise<{ files: SignedUploadFileItem[] }>;
+  ) => Promise<{ files: SignedUploadFile[] }>;
   /** レビューにいいね */
   likeReview: (reviewId: string, token: TToken) => Promise<void>;
   /** レビューのいいねを解除 */
   unlikeReview: (reviewId: string, token: TToken) => Promise<void>;
   /** ファイルをストレージにアップロード */
-  uploadToStorage: (path: string, token: string, asset: ReviewAssetInfo) => Promise<void>;
+  uploadToStorage: (path: string, token: string, asset: ReviewAsset) => Promise<void>;
 };
 
 /**
@@ -140,7 +82,18 @@ export type UseReviewsStateOptions<TToken = string> = {
 /**
  * 店舗ごとのレビュー状態
  */
-export type ReviewsByShopState = Record<string, ReviewItem[]>;
+export type ReviewsByShopState = Record<string, Review[]>;
+
+/**
+ * ReviewsByShopStateからレビューIDで検索
+ * @param reviewsByShop 店舗ごとのレビュー状態
+ * @param reviewId 検索するレビューID
+ * @returns 見つかったレビュー、またはundefined
+ */
+function findReviewById(reviewsByShop: ReviewsByShopState, reviewId: string): Review | undefined {
+  const all = Object.values(reviewsByShop).flat();
+  return all.find(item => item.id === reviewId);
+}
 
 /**
  * useReviewsState の戻り値
@@ -149,15 +102,15 @@ export type UseReviewsStateResult = {
   /** 店舗ごとのレビュー */
   reviewsByShop: ReviewsByShopState;
   /** ユーザーのレビュー */
-  userReviews: ReviewItem[];
+  userReviews: Review[];
   /** 店舗ごとのローディング状態 */
   loadingByShop: Record<string, boolean>;
   /** 店舗のレビュー一覧を取得 */
-  getReviews: (shopId: string) => ReviewItem[];
+  getReviews: (shopId: string) => Review[];
   /** 店舗のレビューをロード */
   loadReviews: (shopId: string, sort: ReviewSortType) => Promise<void>;
   /** レビューを追加 */
-  addReview: (shopId: string, input: ReviewInput, assets: ReviewAssetInfo[]) => Promise<void>;
+  addReview: (shopId: string, input: ReviewInput, assets: ReviewAsset[]) => Promise<void>;
   /** レビューを削除（ローカル状態のみ） */
   deleteReview: (reviewId: string) => void;
   /** レビューIDからいいねをトグル */
@@ -167,7 +120,7 @@ export type UseReviewsStateResult = {
   /** レビューのいいね数を取得 */
   getReviewLikesCount: (reviewId: string) => number;
   /** いいね済みレビュー一覧を取得 */
-  getLikedReviews: () => ReviewItem[];
+  getLikedReviews: () => Review[];
   /** 店舗IDとレビューIDを指定していいねをトグル */
   toggleLike: (shopId: string, reviewId: string) => Promise<void>;
   /** ユーザーのレビューをロード */
@@ -235,7 +188,7 @@ export function useReviewsState<TToken = string>(
   const { api, auth, authRequiredMessage = DEFAULT_AUTH_REQUIRED_MESSAGE } = options;
 
   const [reviewsByShop, setReviewsByShop] = useSafeState<ReviewsByShopState>({});
-  const [userReviews, setUserReviews] = useSafeState<ReviewItem[]>([]);
+  const [userReviews, setUserReviews] = useSafeState<Review[]>([]);
   const [loadingByShop, setLoadingByShop] = useSafeState<Record<string, boolean>>({});
 
   // レースコンディション対策: 最新の reviewsByShop を参照
@@ -276,7 +229,7 @@ export function useReviewsState<TToken = string>(
   );
 
   const addReview = useCallback(
-    async (shopId: string, input: ReviewInput, assets: ReviewAssetInfo[]) => {
+    async (shopId: string, input: ReviewInput, assets: ReviewAsset[]) => {
       const token = await auth.getAccessToken();
       if (!token) {
         throw new Error(authRequiredMessage);
@@ -284,7 +237,7 @@ export function useReviewsState<TToken = string>(
 
       let fileIDs: string[] = [];
       if (assets.length > 0) {
-        const uploadInputs: UploadFileInputItem[] = assets.map(asset => ({
+        const uploadInputs: UploadFileInput[] = assets.map(asset => ({
           file_name: asset.fileName,
           file_size: asset.fileSize,
           content_type: asset.contentType,
@@ -396,8 +349,7 @@ export function useReviewsState<TToken = string>(
 
   const isReviewLiked = useCallback(
     (reviewId: string) => {
-      const all = Object.values(reviewsByShop).flat();
-      const review = all.find(item => item.id === reviewId);
+      const review = findReviewById(reviewsByShop, reviewId);
       return review?.likedByMe ?? false;
     },
     [reviewsByShop],
@@ -405,8 +357,7 @@ export function useReviewsState<TToken = string>(
 
   const getReviewLikesCount = useCallback(
     (reviewId: string) => {
-      const all = Object.values(reviewsByShop).flat();
-      const review = all.find(item => item.id === reviewId);
+      const review = findReviewById(reviewsByShop, reviewId);
       return review?.likesCount ?? 0;
     },
     [reviewsByShop],

@@ -1,4 +1,4 @@
-import { SPACING } from '@team/constants';
+import { FONT_SIZE, SPACING } from '@team/constants';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { palette } from '../palette';
@@ -56,6 +56,6 @@ const styles = StyleSheet.create({
   },
   text: {
     color: palette.secondaryText,
-    fontSize: 14,
+    fontSize: FONT_SIZE.MD,
   },
 });

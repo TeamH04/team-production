@@ -88,6 +88,23 @@ export type ApiFavorite = {
 
 export type ReviewSort = 'new' | 'liked';
 
+/**
+ * Sort type for shop listings
+ * - 'rating-high': Sort by rating descending (highest first)
+ * - 'rating-low': Sort by rating ascending (lowest first)
+ * - 'name-asc': Sort by name ascending (A to Z)
+ * - 'name-desc': Sort by name descending (Z to A)
+ * - 'newest': Sort by openedAt descending (newest first)
+ * - 'default': Keep original order
+ */
+export type SortType =
+  | 'rating-high'
+  | 'rating-low'
+  | 'name-asc'
+  | 'name-desc'
+  | 'newest'
+  | 'default';
+
 export type UploadFileInput = {
   file_name: string;
   file_size?: number;
@@ -219,3 +236,17 @@ export type OAuthProvider = 'google' | 'apple';
  * - null: ローディングなし
  */
 export type OAuthLoadingState = OAuthProvider | 'guest' | null;
+
+// =============================================================================
+// Filter & Sort Types
+// =============================================================================
+
+/**
+ * ソート順序
+ * @see @team/constants/src/sort.ts - SortOrder is defined in @team/constants to avoid duplication
+ */
+
+/**
+ * 訪問済みフィルター
+ */
+export type VisitedFilter = 'all' | 'visited' | 'not_visited';

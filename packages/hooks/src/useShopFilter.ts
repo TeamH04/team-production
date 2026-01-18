@@ -3,8 +3,6 @@ import { useMemo } from 'react';
 
 import type { Shop, ShopCategory } from '@team/types';
 
-export type { SortType } from '@team/shop-core';
-
 export interface UseShopFilterOptions {
   shops: Shop[];
   searchText?: string;

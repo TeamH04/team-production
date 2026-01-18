@@ -93,4 +93,21 @@ export const palette = {
   menuSelectedBorder: primary,
   menuSelectedText: primary,
   muted: withAlpha(textOnBackground, 0.4),
+
+  // メニュー画面固有のカラー
+  menuBadgeBg: withAlpha(secondary, 0.12),
+  menuBadgeText: secondary,
+  menuBorderLight: withAlpha(primary, 0.12),
+  menuBorderMedium: withAlpha(primary, 0.2),
+  menuBorderSoft: withAlpha(primary, 0.08),
+  menuGrayDark: primary,
+  menuGrayLight: withAlpha(background, 0.9),
+  menuGrayMuted: withAlpha(primary, 0.5),
+  menuGrayText: withAlpha(primary, 0.72),
+  menuHeaderGreen: secondary,
+  menuImageBg: withAlpha(background, 0.92),
+  menuSubText: withAlpha(primary, 0.6),
+  menuTabBorder: secondary,
+  menuTabText: secondary,
+  menuTaxText: withAlpha(primary, 0.6),
 };

@@ -7,17 +7,24 @@ export type {
 } from './useCompositionInput';
 export { useSafeState, useMounted } from './useSafeState';
 export { useAsyncOperation } from './useAsyncOperation';
-export { useOptimisticUpdate, useOptimisticMutation } from './useOptimisticUpdate';
+export {
+  useOptimisticUpdate,
+  useOptimisticMutation,
+  createOptimisticToggle,
+} from './useOptimisticUpdate';
 export type {
   OptimisticUpdateOptions,
   OptimisticMutationConfig,
   AuthResult,
+  CreateOptimisticToggleConfig,
+  OptimisticToggleOperationOptions,
+  OptimisticToggleOperations,
 } from './useOptimisticUpdate';
 export { useLocalStorage } from './useLocalStorage';
 export { useAuthErrorHandler } from './useAuthErrorHandler';
 export type { AuthErrorHandler, AuthErrorHandlerOptions } from './useAuthErrorHandler';
 export { useShopFilter } from './useShopFilter';
-export type { UseShopFilterOptions, UseShopFilterResult, SortType } from './useShopFilter';
+export type { UseShopFilterOptions, UseShopFilterResult } from './useShopFilter';
 export { usePagination } from './usePagination';
 export type { UsePaginationOptions, UsePaginationResult } from './usePagination';
 export {
@@ -46,8 +53,7 @@ export { useUserState } from './useUserState';
 export type { UserState } from './useUserState';
 export { useOAuthState } from './useOAuthState';
 export type {
-  OAuthProvider,
-  OAuthLoadingState,
+  OAuthErrorType,
   OAuthErrorInfo,
   UseOAuthStateOptions,
   UseOAuthStateResult,
@@ -58,12 +64,7 @@ export { useImageGallery } from './useImageGallery';
 export type { UseImageGalleryOptions, UseImageGalleryResult } from './useImageGallery';
 export { useReviewsState } from './useReviewsState';
 export type {
-  ReviewItem,
-  ReviewFileItem,
   ReviewInput,
-  ReviewAssetInfo,
-  UploadFileInputItem,
-  SignedUploadFileItem,
   CreateReviewInput,
   ReviewSortType,
   ReviewsApiDependencies,
@@ -72,3 +73,22 @@ export type {
   ReviewsByShopState,
   UseReviewsStateResult,
 } from './useReviewsState';
+export { mapApiReview, mapApiReviewFile, getReviewFileUrl } from './reviewMapping';
+export { getThemeColor, createUseThemeColor } from './useThemeColor';
+export type { GetThemeColorOptions, UseThemeColorOptions } from './useThemeColor';
+export { useHydrationState } from './useHydrationState';
+export { createUseShopNavigator } from './createUseShopNavigator';
+export type { RouterLike, UseShopNavigatorResult } from './createUseShopNavigator';
+export { createNavigateAfterLogin } from './createNavigateAfterLogin';
+export type {
+  NavigateAfterLoginRouter,
+  UseNavigateAfterLoginResult,
+} from './createNavigateAfterLogin';
+export { useSearchState } from './useSearchState';
+export type {
+  SearchSortOrders,
+  SearchState,
+  SearchStateDependencies,
+  UseSearchStateOptions,
+  UseSearchStateResult,
+} from './useSearchState';

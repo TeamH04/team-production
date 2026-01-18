@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 
-import { useOptimisticMutation } from './useOptimisticUpdate';
+import { createOptimisticToggle, useOptimisticMutation } from './useOptimisticUpdate';
 import { useSafeState } from './useSafeState';
 
 import type { AuthResult } from './useOptimisticUpdate';
@@ -121,35 +121,32 @@ export function useFavoritesState<TToken = string>(
     safeSetFavorites(() => new Set(data.map(item => item.store_id)));
   }, [resolveAuth, api, safeSetFavorites]);
 
-  // --- お気に入りに追加する処理（楽観的更新） ---
-  const addFavorite = useCallback(
-    (shopId: string) =>
-      execute({
-        key: shopId,
-        optimisticUpdate: prev => new Set(prev).add(shopId),
-        apiCall: token => api.addFavorite(shopId, token),
-        rollback: prev => {
-          const next = new Set(prev);
-          next.delete(shopId);
-          return next;
+  // --- お気に入りの追加/削除操作（楽観的更新、createOptimisticToggle で共通化） ---
+  const { add: addFavorite, remove: removeFavorite } = useMemo(
+    () =>
+      createOptimisticToggle<FavoritesState, string, TToken>(
+        { execute },
+        {
+          add: {
+            optimisticUpdate: (prev, shopId) => new Set(prev).add(shopId),
+            apiCall: (shopId, token) => api.addFavorite(shopId, token),
+            rollback: (prev, shopId) => {
+              const next = new Set(prev);
+              next.delete(shopId);
+              return next;
+            },
+          },
+          remove: {
+            optimisticUpdate: (prev, shopId) => {
+              const next = new Set(prev);
+              next.delete(shopId);
+              return next;
+            },
+            apiCall: (shopId, token) => api.removeFavorite(shopId, token),
+            rollback: (prev, shopId) => new Set(prev).add(shopId),
+          },
         },
-      }),
-    [execute, api],
-  );
-
-  // --- お気に入りから削除する処理（楽観的更新） ---
-  const removeFavorite = useCallback(
-    (shopId: string) =>
-      execute({
-        key: shopId,
-        optimisticUpdate: prev => {
-          const next = new Set(prev);
-          next.delete(shopId);
-          return next;
-        },
-        apiCall: token => api.removeFavorite(shopId, token),
-        rollback: prev => new Set(prev).add(shopId),
-      }),
+      ),
     [execute, api],
   );
 

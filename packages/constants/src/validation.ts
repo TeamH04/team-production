@@ -104,3 +104,39 @@ export function isValidDateYYYYMMDD(digits8: string): boolean {
   const date = new Date(y, m - 1, d);
   return date.getFullYear() === y && date.getMonth() === m - 1 && date.getDate() === d;
 }
+
+// =============================================================================
+// Password Validation
+// =============================================================================
+
+export const PASSWORD_MIN_LENGTH = 8;
+
+export function validatePassword(
+  password: string | undefined,
+  minLength = PASSWORD_MIN_LENGTH,
+): ValidationResult {
+  if (!password) {
+    return VALIDATION_SUCCESS;
+  }
+  if (password.length < minLength) {
+    return createValidationError(
+      VALIDATION_MESSAGES.INPUT_ERROR_TITLE,
+      `パスワードは${minLength}文字以上で入力してください`,
+    );
+  }
+  return VALIDATION_SUCCESS;
+}
+
+// =============================================================================
+// Required String Validation
+// =============================================================================
+
+export function validateRequiredString(
+  value: string | undefined,
+  fieldName: string,
+): ValidationResult {
+  if (!value || !value.trim()) {
+    return createValidationError(VALIDATION_MESSAGES.INPUT_MISSING_TITLE, `${fieldName}は必須です`);
+  }
+  return VALIDATION_SUCCESS;
+}

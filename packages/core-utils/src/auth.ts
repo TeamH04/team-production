@@ -1,4 +1,4 @@
-import { AUTH_REQUIRED } from '@team/constants';
+import { AUTH_REQUIRED, ROLES } from '@team/constants';
 
 export type AuthState =
   | { mode: 'local' }
@@ -65,13 +65,13 @@ export function hasOwnerRole(user: UserWithMetadata): boolean {
   const app = (user.app_metadata ?? {}) as Record<string, unknown>;
 
   const metaRole = getString(meta['role']);
-  if (metaRole === 'owner') return true;
+  if (metaRole === ROLES.OWNER) return true;
 
   const appRoles = getStringArray(app['roles']);
-  if (appRoles?.includes('owner')) return true;
+  if (appRoles?.includes(ROLES.OWNER)) return true;
 
   const appRole = getString(app['role']);
-  if (appRole === 'owner') return true;
+  if (appRole === ROLES.OWNER) return true;
 
   return false;
 }
@@ -88,3 +88,28 @@ export type OwnerCheck<TUser = UserWithMetadata> = {
   isOwner: boolean;
   user: TUser | null;
 };
+
+// =============================================================================
+// Optimistic Update Auth Resolution
+// =============================================================================
+
+/**
+ * 楽観的更新時の認証解決結果
+ */
+export type OptimisticAuthResult = { skipped: true } | { skipped: false; token: string };
+
+/**
+ * 楽観的更新用の認証解決
+ * ensureAuthenticated を呼び出し、スキップ時は skipped: true を返す
+ * @param authResolver 認証状態を解決する関数
+ * @returns OptimisticAuthResult
+ */
+export async function resolveAuthForOptimisticUpdate(
+  authResolver: () => Promise<AuthState>,
+): Promise<OptimisticAuthResult> {
+  const result = await ensureAuthenticated(authResolver);
+  if (result.skipped) {
+    return { skipped: true };
+  }
+  return { skipped: false, token: result.token! };
+}

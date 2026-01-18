@@ -21,6 +21,7 @@
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",
     "@team/constants": "workspace:*",
-    "@team/theme": "workspace:*"
+    "@team/theme": "workspace:*",
+    "@team/types": "workspace:*"
   }
 }

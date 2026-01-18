@@ -3,11 +3,13 @@ export { createDependencyInjector, type DependencyInjector } from './createDepen
 export {
   ensureAuthenticated,
   hasOwnerRole,
+  resolveAuthForOptimisticUpdate,
   type AuthState,
   type AuthResolver,
   type EnsureAuthResult,
   type UserWithMetadata,
   type OwnerCheck,
+  type OptimisticAuthResult,
 } from './auth';
 export {
   parseOAuthTokensFromUrl,
@@ -16,7 +18,7 @@ export {
   type OAuthTokens,
 } from './oauth';
 export { extractErrorMessage } from './extractErrorMessage';
-export { normalizeString, includesIgnoreCase } from './stringUtils';
+export { normalizeString, includesIgnoreCase, getIdNum } from './stringUtils';
 export { formatDateJa } from './dateUtils';
 export {
   createSupabaseClient,

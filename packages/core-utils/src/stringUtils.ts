@@ -20,3 +20,22 @@ export function normalizeString(str: string): string {
 export function includesIgnoreCase(haystack: string, needle: string): boolean {
   return haystack.toLowerCase().includes(needle.toLowerCase());
 }
+
+/**
+ * 文字列からID番号を抽出する
+ * 全角数字を半角に変換してから数値を抽出
+ * @param id ID文字列
+ * @returns 抽出した数値（見つからない場合は0）
+ */
+export function getIdNum(id: string): number {
+  if (!id) return 0;
+  // 全角数字を半角に変換
+  const normalized = id.replace(/[０-９]/g, s => {
+    return String.fromCharCode(s.charCodeAt(0) - 0xfee0);
+  });
+  const match = normalized.match(/(\d+)/);
+  if (match) {
+    return parseInt(match[0], 10);
+  }
+  return 0;
+}

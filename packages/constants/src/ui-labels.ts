@@ -20,6 +20,10 @@ export const UI_LABELS = {
   LOGIN: 'ログイン',
   /** "キャンセル" label for cancel */
   CANCEL: 'キャンセル',
+  /** "戻る" label for back button */
+  BACK: '戻る',
+  /** "おすすめメニュー" label for recommended menu section */
+  RECOMMENDED_MENU: 'おすすめメニュー',
 } as const;
 
 export type UILabelKey = keyof typeof UI_LABELS;

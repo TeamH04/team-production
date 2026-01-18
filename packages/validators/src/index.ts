@@ -5,7 +5,6 @@ export {
   type MultiValueStep,
   type BudgetRangeStep,
   type StepData,
-  type ValidationResult,
   toStepData,
   validateStep,
 } from './shop-registration';

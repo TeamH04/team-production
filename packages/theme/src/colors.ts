@@ -53,3 +53,13 @@ export function withAlpha(hex: string, alpha: number): string {
 export function textColorFor(color: ThemeColor): string {
   return textOn[color];
 }
+
+// Mobile UI colors (used by apps/mobile/constants/Colors.ts)
+export const mobileUIColors = {
+  text: textOn.background,
+  background: colors.background,
+  tint: colors.primary,
+  icon: withAlpha(colors.accent, 0.65),
+  tabIconDefault: withAlpha(colors.accent, 0.65),
+  tabIconSelected: colors.primary,
+} as const;

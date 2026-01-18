@@ -55,9 +55,6 @@ type StepLike = StepBase & {
   isBudgetRange?: boolean;
 };
 
-// Re-export ValidationResult from constants for backward compatibility
-export type { ValidationResult } from '@team/constants';
-
 /**
  * UI層のStep型からバリデーション用のStepDataを抽出する
  */
