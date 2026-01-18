@@ -135,7 +135,7 @@ export function mockFetchError(error: Error): () => void {
  * cleanup();
  * ```
  */
-export function mockFetchWithoutArrayBuffer(blobData: Uint8Array): () => void {
+export function mockFetchWithoutArrayBuffer(blobData: Uint8Array<ArrayBuffer>): () => void {
   const originalFetch = globalThis.fetch;
 
   globalThis.fetch = mock.fn(async () => ({
