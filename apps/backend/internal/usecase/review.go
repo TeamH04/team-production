@@ -34,7 +34,6 @@ func NewReviewUseCase(
 }
 
 func (uc *reviewUseCase) GetReviewsByStoreID(ctx context.Context, storeID string, sort string, viewerID string) ([]entity.Review, error) {
-	// ストアの存在確認
 	if err := ensureStoreExists(ctx, uc.storeRepo, storeID); err != nil {
 		return nil, err
 	}
@@ -47,7 +46,6 @@ func (uc *reviewUseCase) Create(ctx context.Context, storeID string, userID stri
 		return ErrInvalidInput
 	}
 
-	// ストアの存在確認
 	if err := ensureStoreExists(ctx, uc.storeRepo, storeID); err != nil {
 		return err
 	}

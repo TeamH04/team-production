@@ -69,7 +69,7 @@ func (h *StoreHandler) CreateStore(c echo.Context) error {
 }
 
 func (h *StoreHandler) UpdateStore(c echo.Context) error {
-	id, err := parseUUIDParam(c, "id", "invalid store id")
+	id, err := parseUUIDParam(c, "id", ErrMsgInvalidStoreID)
 	if err != nil {
 		return err
 	}
@@ -85,7 +85,7 @@ func (h *StoreHandler) UpdateStore(c echo.Context) error {
 }
 
 func (h *StoreHandler) DeleteStore(c echo.Context) error {
-	id, err := parseUUIDParam(c, "id", "invalid store id")
+	id, err := parseUUIDParam(c, "id", ErrMsgInvalidStoreID)
 	if err != nil {
 		return err
 	}

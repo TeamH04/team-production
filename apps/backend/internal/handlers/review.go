@@ -33,7 +33,7 @@ func NewReviewHandler(
 }
 
 func (h *ReviewHandler) GetReviewsByStoreID(c echo.Context) error {
-	storeID, err := parseUUIDParam(c, "id", "invalid store id")
+	storeID, err := parseUUIDParam(c, "id", ErrMsgInvalidStoreID)
 	if err != nil {
 		return err
 	}
@@ -63,7 +63,7 @@ func (h *ReviewHandler) Create(c echo.Context) error {
 		return err
 	}
 
-	storeID, err := parseUUIDParam(c, "id", "invalid store id")
+	storeID, err := parseUUIDParam(c, "id", ErrMsgInvalidStoreID)
 	if err != nil {
 		return err
 	}
@@ -85,7 +85,7 @@ func (h *ReviewHandler) LikeReview(c echo.Context) error {
 		return err
 	}
 
-	reviewID, err := parseUUIDParam(c, "id", "invalid review id")
+	reviewID, err := parseUUIDParam(c, "id", ErrMsgInvalidReviewID)
 	if err != nil {
 		return err
 	}
@@ -102,7 +102,7 @@ func (h *ReviewHandler) UnlikeReview(c echo.Context) error {
 		return err
 	}
 
-	reviewID, err := parseUUIDParam(c, "id", "invalid review id")
+	reviewID, err := parseUUIDParam(c, "id", ErrMsgInvalidReviewID)
 	if err != nil {
 		return err
 	}

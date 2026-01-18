@@ -3,13 +3,11 @@ package handlers
 import (
 	"context"
 	"strings"
-	"time"
 
+	"github.com/TeamH04/team-production/apps/backend/internal/config"
 	"github.com/TeamH04/team-production/apps/backend/internal/presentation/presenter"
 	"github.com/TeamH04/team-production/apps/backend/internal/usecase/output"
 )
-
-const signedURLTTL = 15 * time.Minute
 
 func attachSignedURLsToFileResponses(
 	ctx context.Context,
@@ -41,7 +39,7 @@ func attachSignedURLsToFileResponses(
 
 	urlByKey := make(map[string]string, len(keys))
 	for _, key := range keys {
-		signed, err := storage.CreateSignedDownload(ctx, bucket, key, signedURLTTL)
+		signed, err := storage.CreateSignedDownload(ctx, bucket, key, config.SignedURLTTL)
 		if err != nil || signed == nil || signed.URL == "" {
 			continue
 		}
@@ -103,7 +101,7 @@ func normalizeAndSignImageURLs(
 
 	urlByKey := make(map[string]string, len(keys))
 	for _, key := range keys {
-		signed, err := storage.CreateSignedDownload(ctx, bucket, key, signedURLTTL)
+		signed, err := storage.CreateSignedDownload(ctx, bucket, key, config.SignedURLTTL)
 		if err != nil || signed == nil || signed.URL == "" {
 			continue
 		}

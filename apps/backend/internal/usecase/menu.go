@@ -28,7 +28,6 @@ func NewMenuUseCase(menuRepo output.MenuRepository, storeRepo output.StoreReposi
 }
 
 func (uc *menuUseCase) GetMenusByStoreID(ctx context.Context, storeID string) ([]entity.Menu, error) {
-	// ストアの存在確認
 	if err := ensureStoreExists(ctx, uc.storeRepo, storeID); err != nil {
 		return nil, err
 	}
@@ -37,12 +36,10 @@ func (uc *menuUseCase) GetMenusByStoreID(ctx context.Context, storeID string) ([
 }
 
 func (uc *menuUseCase) CreateMenu(ctx context.Context, storeID string, in input.CreateMenuInput) (*entity.Menu, error) {
-	// ストアの存在確認
 	if err := ensureStoreExists(ctx, uc.storeRepo, storeID); err != nil {
 		return nil, err
 	}
 
-	// バリデーション
 	if in.Name == "" {
 		return nil, ErrInvalidInput
 	}

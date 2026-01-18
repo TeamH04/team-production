@@ -38,7 +38,6 @@ func (uc *storeUseCase) GetStoreByID(ctx context.Context, id string) (*entity.St
 }
 
 func (uc *storeUseCase) CreateStore(ctx context.Context, in input.CreateStoreInput) (*entity.Store, error) {
-	// バリデーション
 	if in.Name == "" || in.Address == "" {
 		return nil, ErrInvalidInput
 	}
@@ -80,7 +79,6 @@ func (uc *storeUseCase) UpdateStore(ctx context.Context, id string, in input.Upd
 		return nil, err
 	}
 
-	// 更新フィールドの適用
 	if in.Name != nil {
 		store.Name = *in.Name
 	}
@@ -125,7 +123,6 @@ func (uc *storeUseCase) UpdateStore(ctx context.Context, id string, in input.Upd
 }
 
 func (uc *storeUseCase) DeleteStore(ctx context.Context, id string) error {
-	// 存在確認
 	if err := ensureStoreExists(ctx, uc.storeRepo, id); err != nil {
 		return err
 	}
