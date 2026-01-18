@@ -1,33 +1,11 @@
 import { Ionicons } from '@expo/vector-icons';
-import { BORDER_RADIUS, SPACING } from '@team/constants';
+import { BORDER_RADIUS, FONT_WEIGHT, SPACING } from '@team/constants';
 import { formatDateJa } from '@team/core-utils';
-import { palette } from '@team/mobile-ui';
+import { getReviewFileUrl } from '@team/hooks';
+import { palette, type ReviewCardProps } from '@team/mobile-ui';
 import { Image } from 'expo-image';
 import { memo } from 'react';
-import { Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
-
-import type { Review } from '@/features/reviews/ReviewsContext';
-
-interface ReviewCardProps {
-  /** レビューデータ */
-  review: Review;
-  /** 店舗名（showShopInfo=trueの場合に表示） */
-  shopName?: string;
-  /** 店舗画像URL（showShopInfo=trueの場合に表示） */
-  shopImage?: string;
-  /** カード押下時のコールバック */
-  onPress?: () => void;
-  /** いいねボタン押下時のコールバック */
-  onLikePress?: () => void;
-  /** いいね済みかどうか（指定しない場合はreview.likedByMeを使用） */
-  isLiked?: boolean;
-  /** いいね数（指定しない場合はreview.likesCountを使用） */
-  likeCount?: number;
-  /** 店舗情報を表示するか */
-  showShopInfo?: boolean;
-  /** カスタムスタイル */
-  style?: StyleProp<ViewStyle>;
-}
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 /**
  * レビューカードの共通コンポーネント
@@ -110,7 +88,7 @@ function ReviewCardComponent({
       {review.files.length > 0 && (
         <View style={styles.imagesContainer}>
           {review.files.map(file => {
-            const url = file.url ?? file.objectKey;
+            const url = getReviewFileUrl(file);
             if (!url) return null;
             return (
               <Image
@@ -210,7 +188,7 @@ const styles = StyleSheet.create({
   ratingText: {
     color: palette.ratingText,
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: FONT_WEIGHT.SEMIBOLD,
   },
   reviewImage: {
     borderRadius: BORDER_RADIUS.MEDIUM,
@@ -218,12 +196,9 @@ const styles = StyleSheet.create({
     width: 60,
   },
   shadow: {
+    boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.05)',
     elevation: 2,
     marginBottom: SPACING.MD,
-    shadowColor: palette.shadow,
-    shadowOffset: { height: 2, width: 0 },
-    shadowOpacity: 0.05,
-    shadowRadius: SPACING.XS,
   },
   shopImage: {
     borderRadius: BORDER_RADIUS.MEDIUM,
@@ -234,7 +209,7 @@ const styles = StyleSheet.create({
   shopName: {
     color: palette.primaryText,
     fontSize: 15,
-    fontWeight: '600',
+    fontWeight: FONT_WEIGHT.SEMIBOLD,
   },
   textContainer: {
     flex: 1,

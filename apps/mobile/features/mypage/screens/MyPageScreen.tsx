@@ -6,6 +6,7 @@ import {
   formatRating,
   ICON_SIZE,
   ROUTES,
+  SHADOW_STYLES,
 } from '@team/constants';
 import { formatDateJa } from '@team/core-utils';
 import { palette } from '@team/mobile-ui';
@@ -14,11 +15,12 @@ import { useRouter } from 'expo-router';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { Alert, Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
+import { EmptyState } from '@/components/EmptyState';
 import { HeaderWithBack } from '@/components/HeaderWithBack';
 import { TAB_BAR_SPACING } from '@/constants/TabBarSpacing';
 import { useReviews } from '@/features/reviews/ReviewsContext';
 import { useUser } from '@/features/user/UserContext';
-import { getSupabase } from '@/lib/supabase';
+import { getSupabase } from '@/lib/auth';
 
 /**
  * マイページ画面コンポーネント
@@ -154,9 +156,7 @@ export default function MyPageScreen({
           <HeaderWithBack title='いいねしたレビュー' onBack={handleBackPress} />
 
           {likedReviews.length === 0 ? (
-            <View style={styles.emptyContainer}>
-              <Text style={styles.emptyText}>いいねしたレビューがありません</Text>
-            </View>
+            <EmptyState message='いいねしたレビューがありません' />
           ) : (
             <View>
               {likedReviews.map(review => {
@@ -219,9 +219,7 @@ export default function MyPageScreen({
           <HeaderWithBack title='レビュー履歴' onBack={handleBackPress} />
 
           {reviews.length === 0 ? (
-            <View style={styles.emptyContainer}>
-              <Text style={styles.emptyText}>まだレビューがありません</Text>
-            </View>
+            <EmptyState message='まだレビューがありません' />
           ) : (
             <View>
               {reviews.map(review => {
@@ -283,9 +281,7 @@ export default function MyPageScreen({
           {/* お知らせヘッダー */}
           <HeaderWithBack title='お知らせ' onBack={handleBackPress} />
 
-          <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>お知らせはありません</Text>
-          </View>
+          <EmptyState message='お知らせはありません' />
         </ScrollView>
       );
     }
@@ -303,9 +299,7 @@ export default function MyPageScreen({
           {/* 設定ヘッダー */}
           <HeaderWithBack title='設定' onBack={handleBackPress} />
 
-          <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>設定オプションはまもなく追加されます</Text>
-          </View>
+          <EmptyState message='設定オプションはまもなく追加されます' />
         </ScrollView>
       );
     }
@@ -480,12 +474,8 @@ const styles = StyleSheet.create({
   avatarText: { color: palette.avatarText, fontSize: 22, fontWeight: FONT_WEIGHT.BOLD },
   card: { backgroundColor: palette.surface, borderRadius: 20, padding: 12 },
   cardShadow: {
-    elevation: 4,
+    ...SHADOW_STYLES.CARD,
     marginBottom: 16,
-    shadowColor: palette.shadow,
-    shadowOffset: { height: 6, width: 0 },
-    shadowOpacity: 0.06,
-    shadowRadius: 12,
   },
   comment: {
     color: palette.primary,
@@ -498,23 +488,15 @@ const styles = StyleSheet.create({
     color: palette.mutedText,
     fontSize: 11,
   },
-  emptyContainer: {
-    alignItems: 'center',
-    marginTop: 60,
-  },
-  emptyText: { color: palette.mutedText },
   gridCard: {
     alignItems: 'center',
     backgroundColor: palette.surface,
     borderRadius: 16,
+    boxShadow: '0px 2px 8px rgba(0, 0, 0, 0.06)',
     elevation: 2,
     justifyContent: 'center',
     marginBottom: 12,
     paddingVertical: 24,
-    shadowColor: palette.shadow,
-    shadowOffset: { height: 2, width: 0 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
     width: '48%',
   },
   gridCardLabel: {
@@ -532,7 +514,7 @@ const styles = StyleSheet.create({
   gridIconBadge: {
     alignItems: 'center',
     backgroundColor: palette.secondarySurface,
-    borderRadius: 12,
+    borderRadius: BORDER_RADIUS.MEDIUM,
     height: 44,
     justifyContent: 'center',
     marginBottom: 10,
@@ -553,7 +535,7 @@ const styles = StyleSheet.create({
   },
   primaryBtn: {
     backgroundColor: palette.accent,
-    borderRadius: 12,
+    borderRadius: BORDER_RADIUS.MEDIUM,
     marginTop: 16,
     paddingHorizontal: 16,
     paddingVertical: 12,
@@ -561,11 +543,11 @@ const styles = StyleSheet.create({
   primaryBtnText: {
     color: palette.primaryOnAccent,
     fontSize: 16,
-    fontWeight: '700',
+    fontWeight: FONT_WEIGHT.BOLD,
     textAlign: 'center',
   },
   profileMeta: { flex: 1, marginLeft: 14 },
-  profileName: { color: palette.primary, fontSize: 18, fontWeight: '700' },
+  profileName: { color: palette.primary, fontSize: 18, fontWeight: FONT_WEIGHT.BOLD },
   profileRow: { alignItems: 'center', flexDirection: 'row' },
   profileSub: { color: palette.mutedText, marginTop: 4 },
   rating: {
@@ -598,13 +580,10 @@ const styles = StyleSheet.create({
   sectionCard: {
     backgroundColor: palette.surface,
     borderRadius: 18,
+    boxShadow: '0px 4px 10px rgba(0, 0, 0, 0.05)',
     elevation: 3,
     marginBottom: 16,
     padding: 16,
-    shadowColor: palette.shadow,
-    shadowOffset: { height: 4, width: 0 },
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
   },
   sectionHeaderRow: {
     alignItems: 'center',
@@ -625,7 +604,7 @@ const styles = StyleSheet.create({
   },
   sectionSub: { color: palette.mutedText, fontSize: 12, marginTop: 2 },
   sectionTextContainer: { flex: 1 },
-  sectionTitle: { color: palette.primary, fontSize: 16, fontWeight: '700' },
+  sectionTitle: { color: palette.primary, fontSize: 16, fontWeight: FONT_WEIGHT.BOLD },
   shopCategory: {
     color: palette.mutedText,
     fontSize: 11,

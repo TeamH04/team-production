@@ -1,6 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { ERROR_MESSAGES, ROUTES } from '@team/constants';
+import { ERROR_MESSAGES, FONT_WEIGHT, ROUTES } from '@team/constants';
+import { DEV_GUEST_FLAG_KEY, DEV_LOGIN_ENABLED } from '@team/constants';
+import { createNonce } from '@team/crypto-utils';
 import { palette } from '@team/mobile-ui';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import * as Crypto from 'expo-crypto';
@@ -10,20 +12,8 @@ import { Alert, Platform, Pressable, StatusBar, StyleSheet, Text, View } from 'r
 
 import KuguriTitle from '@/assets/icons/kaguri.svg';
 import { useOAuthFlow } from '@/hooks/useOAuthFlow';
-import { DEV_GUEST_FLAG_KEY, DEV_LOGIN_ENABLED } from '@/lib/devMode';
 
 import type { OAuthProvider } from '@team/types';
-
-function createNonce(length = 32) {
-  const charset = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
-  const randomValues =
-    typeof globalThis.crypto?.getRandomValues === 'function'
-      ? globalThis.crypto.getRandomValues(new Uint8Array(length))
-      : Crypto.getRandomBytes(length);
-  return Array.from(randomValues, v => charset[v % charset.length])
-    .slice(0, length)
-    .join('');
-}
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -302,7 +292,7 @@ const styles = StyleSheet.create({
   buttonOutlineText: {
     color: palette.grayDark,
     fontSize: 20,
-    fontWeight: '700',
+    fontWeight: FONT_WEIGHT.BOLD,
     textAlign: 'center',
   },
   buttonPressed: {
@@ -329,7 +319,7 @@ const styles = StyleSheet.create({
   },
   devButtonText: {
     color: palette.black,
-    fontWeight: '700',
+    fontWeight: FONT_WEIGHT.BOLD,
     textAlign: 'center',
   },
   devHeader: {
@@ -340,7 +330,7 @@ const styles = StyleSheet.create({
   devLead: {
     color: palette.black,
     fontSize: 14,
-    fontWeight: '700',
+    fontWeight: FONT_WEIGHT.BOLD,
     marginLeft: 6,
   },
   logoContainer: {
@@ -374,7 +364,7 @@ const styles = StyleSheet.create({
   ownerLink: {
     color: palette.white,
     fontSize: 18,
-    fontWeight: '700',
+    fontWeight: FONT_WEIGHT.BOLD,
     marginTop: 20,
   },
   screen: {

@@ -1,19 +1,21 @@
 import { Ionicons } from '@expo/vector-icons';
 import {
+  BORDER_RADIUS,
   ERROR_MESSAGES,
   FONT_WEIGHT,
   isValidEmail,
+  LAYOUT,
   ROUTES,
   SESSION_NOT_FOUND,
   SHADOW_STYLES,
+  UI_LABELS,
 } from '@team/constants';
 import { palette } from '@team/mobile-ui';
 import { type Href, useNavigation, useRouter } from 'expo-router';
 import { useLayoutEffect, useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
-import { ensureUserExistsInDB } from '@/lib/auth';
-import { getSupabase, isSupabaseConfigured } from '@/lib/supabase';
+import { ensureUserExistsInDB, getSupabase, isSupabaseConfigured } from '@/lib/auth';
 
 export default function OwnerLoginScreen() {
   const router = useRouter();
@@ -26,7 +28,7 @@ export default function OwnerLoginScreen() {
   useLayoutEffect(() => {
     navigation.setOptions?.({
       title: 'オーナーログイン',
-      headerBackTitle: 'ログイン',
+      headerBackTitle: UI_LABELS.LOGIN,
     });
   }, [navigation]);
 
@@ -139,7 +141,9 @@ export default function OwnerLoginScreen() {
                     (pressed || loading) && styles.loginButtonPressed,
                   ]}
                 >
-                  <Text style={styles.loginButtonText}>{loading ? 'ログイン中…' : 'ログイン'}</Text>
+                  <Text style={styles.loginButtonText}>
+                    {loading ? 'ログイン中…' : UI_LABELS.LOGIN}
+                  </Text>
                 </Pressable>
               </View>
             </View>
@@ -168,14 +172,11 @@ const styles = StyleSheet.create({
   },
   cardShadow: {
     alignSelf: 'center',
+    boxShadow: '0px 8px 16px rgba(0, 0, 0, 0.08)',
     elevation: 5,
     marginHorizontal: 24,
     marginVertical: 28,
     maxWidth: 480,
-    shadowColor: palette.shadow,
-    shadowOffset: { height: 8, width: 0 },
-    shadowOpacity: 0.08,
-    shadowRadius: 16,
     width: '100%',
   },
   dividerLine: {
@@ -189,7 +190,7 @@ const styles = StyleSheet.create({
   input: {
     backgroundColor: palette.surface,
     borderColor: palette.border,
-    borderRadius: 12,
+    borderRadius: BORDER_RADIUS.MEDIUM,
     borderWidth: 1,
     color: palette.primaryText,
     paddingHorizontal: 12,
@@ -201,9 +202,9 @@ const styles = StyleSheet.create({
     ...SHADOW_STYLES.DEFAULT,
     backgroundColor: palette.button,
     borderColor: palette.buttonBorder,
-    borderRadius: 999,
+    borderRadius: BORDER_RADIUS.PILL,
     borderWidth: 1,
-    height: 44,
+    height: LAYOUT.BUTTON_HEIGHT_MD,
     minWidth: 160,
     overflow: 'hidden',
   },
@@ -219,9 +220,9 @@ const styles = StyleSheet.create({
   loginButtonText: {
     color: palette.surface,
     fontSize: 16,
-    fontWeight: '700',
-    height: 44,
-    lineHeight: 44,
+    fontWeight: FONT_WEIGHT.BOLD,
+    height: LAYOUT.BUTTON_HEIGHT_MD,
+    lineHeight: LAYOUT.BUTTON_HEIGHT_MD,
     textAlign: 'center',
   },
   loginButtonWrapper: {
@@ -244,7 +245,7 @@ const styles = StyleSheet.create({
   secondaryBtn: {
     backgroundColor: palette.surface,
     borderColor: palette.border,
-    borderRadius: 12,
+    borderRadius: BORDER_RADIUS.MEDIUM,
     borderWidth: 1,
     marginTop: 16,
     paddingVertical: 12,
@@ -254,7 +255,7 @@ const styles = StyleSheet.create({
   },
   secondaryBtnText: {
     color: palette.link,
-    fontWeight: '700',
+    fontWeight: FONT_WEIGHT.BOLD,
     textAlign: 'center',
   },
   title: { color: palette.primaryText, fontSize: 20, fontWeight: FONT_WEIGHT.BOLD },

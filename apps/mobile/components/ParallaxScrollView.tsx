@@ -1,3 +1,4 @@
+import { LAYOUT } from '@team/constants';
 import { StyleSheet } from 'react-native';
 import Animated, {
   interpolate,
@@ -12,7 +13,7 @@ import { useColorScheme } from '@/hooks/useColorScheme';
 
 import type { PropsWithChildren, ReactElement } from 'react';
 
-const HEADER_HEIGHT = 250;
+const HEADER_HEIGHT = LAYOUT.PARALLAX_HEADER_HEIGHT;
 
 type Props = PropsWithChildren<{
   headerImage: ReactElement;

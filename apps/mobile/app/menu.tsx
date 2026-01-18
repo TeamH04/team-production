@@ -1,7 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
-import { BORDER_RADIUS, FONT_WEIGHT, SPACING } from '@team/constants';
+import { BORDER_RADIUS, FONT_WEIGHT, LAYOUT, SPACING, UI_LABELS } from '@team/constants';
 import { palette } from '@team/mobile-ui';
-import { colors as themeColors, withAlpha } from '@team/theme';
 import { MENU_TAB_MAP, type ShopMenuItem } from '@team/types';
 import { useLocalSearchParams, useNavigation } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -13,31 +12,31 @@ import { api } from '@/lib/api';
 
 // --- 定数 ---
 const COLORS = {
-  BADGE_BG: withAlpha(themeColors.accent, 0.12),
-  BADGE_TEXT: themeColors.accent,
+  BADGE_BG: palette.menuBadgeBg,
+  BADGE_TEXT: palette.menuBadgeText,
   BLACK: palette.black,
-  BORDER_LIGHT: withAlpha(themeColors.primary, 0.12),
-  BORDER_MEDIUM: withAlpha(themeColors.primary, 0.2),
-  BORDER_SOFT: withAlpha(themeColors.primary, 0.08),
+  BORDER_LIGHT: palette.menuBorderLight,
+  BORDER_MEDIUM: palette.menuBorderMedium,
+  BORDER_SOFT: palette.menuBorderSoft,
 
-  GRAY_DARK: themeColors.primary,
-  GRAY_LIGHT: withAlpha(themeColors.background, 0.9),
-  GRAY_MUTED: withAlpha(themeColors.primary, 0.5),
-  GRAY_TEXT: withAlpha(themeColors.primary, 0.72),
+  GRAY_DARK: palette.menuGrayDark,
+  GRAY_LIGHT: palette.menuGrayLight,
+  GRAY_MUTED: palette.menuGrayMuted,
+  GRAY_TEXT: palette.menuGrayText,
 
-  HEADER_GREEN: themeColors.secondary,
-  IMAGE_BG: withAlpha(themeColors.background, 0.92),
-  SUB_TEXT: withAlpha(themeColors.primary, 0.6),
+  HEADER_GREEN: palette.menuHeaderGreen,
+  IMAGE_BG: palette.menuImageBg,
+  SUB_TEXT: palette.menuSubText,
 
   TAB_BG: palette.white,
-  TAB_BORDER: themeColors.secondary,
-  TAB_TEXT: themeColors.secondary,
+  TAB_BORDER: palette.menuTabBorder,
+  TAB_TEXT: palette.menuTabText,
 
-  TRANSPARENT: 'transparent',
+  TRANSPARENT: palette.transparent,
 
   WHITE: palette.white,
 
-  TAX_TEXT: withAlpha(themeColors.primary, 0.6),
+  TAX_TEXT: palette.menuTaxText,
 };
 
 interface ExtendedMenuItem {
@@ -76,14 +75,14 @@ export default function ShopMenuScreen() {
   const hasCategoryTabs = apiCategories.length > 0;
 
   const categories = useMemo(() => {
-    if (!hasCategoryTabs) return ['すべて'];
+    if (!hasCategoryTabs) return [UI_LABELS.ALL];
 
     const orderedFromMap = mappedCategories.filter(category => apiCategories.includes(category));
     const remainingCategories = apiCategories.filter(
       category => !orderedFromMap.includes(category),
     );
 
-    return ['すべて', 'おすすめ', ...orderedFromMap, ...remainingCategories];
+    return [UI_LABELS.ALL, 'おすすめ', ...orderedFromMap, ...remainingCategories];
   }, [apiCategories, hasCategoryTabs, mappedCategories]);
 
   const [selectedCategory, setSelectedCategory] = useState('');
@@ -143,7 +142,7 @@ export default function ShopMenuScreen() {
   useLayoutEffect(() => {
     navigation.setOptions({
       headerStatusBarHeight: 0,
-      headerStyle: { backgroundColor: COLORS.HEADER_GREEN, height: 50 },
+      headerStyle: { backgroundColor: COLORS.HEADER_GREEN, height: LAYOUT.HEADER_HEIGHT },
       headerTintColor: COLORS.WHITE,
       headerTitleAlign: 'center',
       headerTitleStyle: { fontSize: 18, fontWeight: 'bold' },
@@ -155,7 +154,7 @@ export default function ShopMenuScreen() {
     if (!menuItems || menuItems.length === 0) return [];
     const items = menuItems;
 
-    if (activeCategory === 'すべて' || activeCategory === 'おすすめ') {
+    if (activeCategory === UI_LABELS.ALL || activeCategory === 'おすすめ') {
       const targetItems = activeCategory === 'おすすめ' ? items.slice(0, 2) : items;
 
       if (targetItems.length === 0) return [];
@@ -191,7 +190,7 @@ export default function ShopMenuScreen() {
       section: { title: string };
     }) => {
       const showBadge =
-        activeCategory === 'すべて' && index === 0 && item.category === section.title;
+        activeCategory === UI_LABELS.ALL && index === 0 && item.category === section.title;
 
       return (
         <View style={styles.menuCard}>
@@ -218,7 +217,7 @@ export default function ShopMenuScreen() {
               {(item.category || item.description) && (
                 <View style={styles.metaRow}>
                   {item.category &&
-                  (activeCategory === 'すべて' || activeCategory === 'おすすめ') ? (
+                  (activeCategory === UI_LABELS.ALL || activeCategory === 'おすすめ') ? (
                     <View style={styles.categoryBadge}>
                       <Text style={styles.categoryBadgeText}>{item.category}</Text>
                     </View>
@@ -240,7 +239,7 @@ export default function ShopMenuScreen() {
 
   const renderSectionHeader = useCallback(
     ({ section: { title } }: { section: { title: string } }) => {
-      if (activeCategory !== 'すべて' && activeCategory !== 'おすすめ') {
+      if (activeCategory !== UI_LABELS.ALL && activeCategory !== 'おすすめ') {
         return null;
       }
       return (
@@ -321,7 +320,7 @@ export default function ShopMenuScreen() {
             <Ionicons color={COLORS.TAX_TEXT} name='restaurant-outline' size={48} />
             <Text style={styles.emptyText}>
               {activeCategory === 'おすすめ'
-                ? 'おすすめメニューは現在ありません'
+                ? UI_LABELS.RECOMMENDED_MENU
                 : `「${activeCategory}」のメニューは準備中です`}
             </Text>
           </View>

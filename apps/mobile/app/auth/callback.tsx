@@ -4,11 +4,12 @@ import { type Href, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, StyleSheet, Text, View } from 'react-native';
 
-import { checkIsOwner, ensureUserExistsInDB } from '@/lib/auth';
-import { getSupabase } from '@/lib/supabase';
+import { checkIsOwner, ensureUserExistsInDB, getSupabase } from '@/lib/auth';
+import { useNavigateAfterLogin } from '@/lib/auth/navigation';
 
 export default function OAuthCallback() {
   const router = useRouter();
+  const { navigateAfterLogin } = useNavigateAfterLogin();
   const [status, setStatus] = useState<'pending' | 'done' | 'error'>('pending');
 
   useEffect(() => {
@@ -43,7 +44,7 @@ export default function OAuthCallback() {
 
         setStatus('done');
         const { isOwner } = await checkIsOwner();
-        router.replace((isOwner ? ROUTES.OWNER : ROUTES.TABS) as Href);
+        navigateAfterLogin(isOwner);
       } catch (e: unknown) {
         setStatus('error');
         const message = e instanceof Error ? e.message : 'サインイン処理に失敗しました';
@@ -51,7 +52,7 @@ export default function OAuthCallback() {
       }
     };
     complete();
-  }, [router]);
+  }, [router, navigateAfterLogin]);
 
   return (
     <View style={styles.container}>

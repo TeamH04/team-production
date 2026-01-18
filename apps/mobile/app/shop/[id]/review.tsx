@@ -1,5 +1,13 @@
-import { AUTH_ERROR_MESSAGES, ERROR_MESSAGES, FONT_WEIGHT, ROUTES } from '@team/constants';
-import { palette } from '@team/mobile-ui';
+import {
+  AUTH_ERROR_MESSAGES,
+  BORDER_RADIUS,
+  ERROR_MESSAGES,
+  FONT_WEIGHT,
+  LAYOUT,
+  REVIEW_CONFIG,
+  UI_LABELS,
+} from '@team/constants';
+import { palette, showAuthRequiredAlert } from '@team/mobile-ui';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
@@ -9,11 +17,6 @@ import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 
 import { useReviews } from '@/features/reviews/ReviewsContext';
 import { useStores } from '@/features/stores/StoresContext';
 import { api } from '@/lib/api';
-
-const REVIEW_CONFIG = {
-  MAX_IMAGES: 6,
-  IMAGE_QUALITY: 0.8,
-} as const;
 
 // レビュー投稿画面のコンポーネント
 export default function ReviewModalScreen() {
@@ -34,7 +37,7 @@ export default function ReviewModalScreen() {
   useLayoutEffect(() => {
     navigation.setOptions?.({
       title: 'レビュー',
-      headerBackTitle: '戻る',
+      headerBackTitle: UI_LABELS.BACK,
       headerStyle: { backgroundColor: palette.accent },
       headerTintColor: palette.textOnAccent,
       headerShadowVisible: false,
@@ -117,10 +120,7 @@ export default function ReviewModalScreen() {
     } catch (err) {
       const message = err instanceof Error ? err.message : ERROR_MESSAGES.UNKNOWN;
       if (message === 'auth_required') {
-        Alert.alert(AUTH_ERROR_MESSAGES.LOGIN_REQUIRED_TITLE, AUTH_ERROR_MESSAGES.REVIEW, [
-          { text: 'キャンセル', style: 'cancel' },
-          { text: 'ログイン', onPress: () => router.push(ROUTES.LOGIN) },
-        ]);
+        showAuthRequiredAlert(AUTH_ERROR_MESSAGES.REVIEW, () => router.push('/login'));
       } else {
         Alert.alert('投稿に失敗しました', message);
       }
@@ -252,7 +252,6 @@ export default function ReviewModalScreen() {
   );
 }
 
-// スタイル定義（見た目の調整）
 const styles = StyleSheet.create({
   centered: { alignItems: 'center', justifyContent: 'center' }, // 中央寄せ
   content: { padding: 16 }, // 画面内余白
@@ -264,12 +263,16 @@ const styles = StyleSheet.create({
     gap: 12,
     marginTop: 12,
   },
-  imageThumb: { borderRadius: 12, height: 88, width: 88 },
+  imageThumb: {
+    borderRadius: BORDER_RADIUS.MEDIUM,
+    height: LAYOUT.REVIEW_IMAGE_SIZE,
+    width: LAYOUT.REVIEW_IMAGE_SIZE,
+  },
   imageWrapper: { position: 'relative' },
   input: {
     backgroundColor: palette.background,
     borderColor: palette.border,
-    borderRadius: 12,
+    borderRadius: BORDER_RADIUS.MEDIUM,
     borderWidth: 1,
     color: palette.primary,
     minHeight: 100,
@@ -278,7 +281,7 @@ const styles = StyleSheet.create({
   menuItem: {
     backgroundColor: palette.menuBackground,
     borderColor: palette.border,
-    borderRadius: 999,
+    borderRadius: BORDER_RADIUS.PILL,
     borderWidth: 1,
     marginRight: 8,
     marginTop: 8,
@@ -296,13 +299,13 @@ const styles = StyleSheet.create({
   muted: { color: palette.muted, marginTop: 6 },
   primaryBtn: {
     backgroundColor: palette.secondarySurface,
-    borderRadius: 12,
+    borderRadius: BORDER_RADIUS.MEDIUM,
     marginTop: 18,
     paddingVertical: 12,
   },
   primaryBtnText: {
     color: palette.primaryOnAccent,
-    fontWeight: '700',
+    fontWeight: FONT_WEIGHT.BOLD,
     textAlign: 'center',
   },
   removeImageBtn: {
@@ -331,12 +334,12 @@ const styles = StyleSheet.create({
   },
   secondaryBtnText: {
     color: palette.primary,
-    fontWeight: '700',
+    fontWeight: FONT_WEIGHT.BOLD,
     textAlign: 'center',
   },
   sectionLabel: {
     color: palette.primary,
-    fontWeight: '700',
+    fontWeight: FONT_WEIGHT.BOLD,
     marginBottom: 8,
     marginTop: 12,
   },

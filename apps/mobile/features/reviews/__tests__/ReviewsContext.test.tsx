@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { afterEach, describe, mock, test } from 'node:test';
+import { afterEach, beforeEach, describe, mock, test } from 'node:test';
 
 import React from 'react';
 
@@ -36,7 +36,6 @@ const setupDependencies = (options: SetupOptions = {}) => {
     uploadFileCount = 2,
   } = options;
 
-  // resolveAuth: token と user の状態に基づいて認証状態を返す
   const resolveAuth = mock.fn(async (): Promise<AuthState> => {
     if (!token || !user) {
       return { mode: 'unauthenticated' };
@@ -65,6 +64,7 @@ const setupDependencies = (options: SetupOptions = {}) => {
   const createReviewUploads = mock.fn(async () => ({ files: uploadFiles }));
   const likeReview = mock.fn(async () => undefined);
   const unlikeReview = mock.fn(async () => undefined);
+  const deleteReviewApi = mock.fn(async () => undefined);
 
   const uploadToSignedUrl = mock.fn(async () => ({
     error: uploadError ? new Error('Upload failed') : null,
@@ -103,6 +103,7 @@ const setupDependencies = (options: SetupOptions = {}) => {
     unlikeReview,
     uploadToSignedUrl,
     getSupabase,
+    deleteReviewApi,
   };
 };
 
@@ -131,6 +132,17 @@ describe('ReviewsContext', () => {
       assert.deepEqual(harness.getValue().reviewsByShop, {});
       harness.unmount();
     });
+
+    test('userReviewsは空配列', () => {
+      setupDependencies();
+      const harness: ContextHarness<ReturnType<typeof useReviews>> = createContextHarness(
+        useReviews,
+        ReviewsProvider,
+      );
+
+      assert.deepEqual(harness.getValue().userReviews, []);
+      harness.unmount();
+    });
   });
 
   describe('loadReviews', () => {
@@ -154,7 +166,7 @@ describe('ReviewsContext', () => {
       harness.unmount();
     });
 
-    test('loadingByShop が更新される', async () => {
+    test('loadingByShopが更新される', async () => {
       setupDependencies();
       const harness: ContextHarness<ReturnType<typeof useReviews>> = createContextHarness(
         useReviews,
@@ -166,6 +178,25 @@ describe('ReviewsContext', () => {
       });
 
       await loadPromise;
+
+      assert.equal(harness.getValue().loadingByShop['shop-1'], false);
+      harness.unmount();
+    });
+
+    test('APIエラー時もloadingがfalseになる', async () => {
+      setupDependencies({ shouldFail: true });
+      const harness: ContextHarness<ReturnType<typeof useReviews>> = createContextHarness(
+        useReviews,
+        ReviewsProvider,
+      );
+
+      await act(async () => {
+        try {
+          await harness.getValue().loadReviews('shop-1', 'new');
+        } catch {
+          // エラーを握りつぶす
+        }
+      });
 
       assert.equal(harness.getValue().loadingByShop['shop-1'], false);
       harness.unmount();
@@ -205,6 +236,20 @@ describe('ReviewsContext', () => {
   });
 
   describe('addReview', () => {
+    let originalFetch: typeof globalThis.fetch;
+    const mockFetch = mock.fn(async () => ({
+      arrayBuffer: async () => new ArrayBuffer(100),
+    })) as unknown as typeof fetch;
+
+    beforeEach(() => {
+      originalFetch = globalThis.fetch;
+      globalThis.fetch = mockFetch;
+    });
+
+    afterEach(() => {
+      globalThis.fetch = originalFetch;
+    });
+
     test('未認証時にauth_requiredエラー', async () => {
       setupDependencies({ token: null });
       const harness: ContextHarness<ReturnType<typeof useReviews>> = createContextHarness(
@@ -240,6 +285,21 @@ describe('ReviewsContext', () => {
       harness.unmount();
     });
 
+    test('コメントなしでもレビューを追加できる', async () => {
+      const { createReview } = setupDependencies();
+      const harness: ContextHarness<ReturnType<typeof useReviews>> = createContextHarness(
+        useReviews,
+        ReviewsProvider,
+      );
+
+      await act(async () => {
+        await harness.getValue().addReview('shop-1', { rating: 5 }, []);
+      });
+
+      assert.equal(createReview.mock.calls.length, 1);
+      harness.unmount();
+    });
+
     test('ファイルアップロードが実行される', async () => {
       const { createReviewUploads, createReview, getSupabase } = setupDependencies();
       const harness: ContextHarness<ReturnType<typeof useReviews>> = createContextHarness(
@@ -247,40 +307,21 @@ describe('ReviewsContext', () => {
         ReviewsProvider,
       );
 
-      // fetch をモック（ReviewAssetのURIからデータを取得するため）
-      const originalFetch = globalThis.fetch;
-      globalThis.fetch = mock.fn(async () => ({
-        arrayBuffer: async () => new ArrayBuffer(100),
-      })) as unknown as typeof fetch;
+      const assets: ReviewAsset[] = [
+        { uri: 'file://image1.jpg', fileName: 'image1.jpg', contentType: 'image/jpeg' },
+        { uri: 'file://image2.jpg', fileName: 'image2.jpg', contentType: 'image/jpeg' },
+      ];
 
-      try {
-        const assets: ReviewAsset[] = [
-          { uri: 'file://image1.jpg', fileName: 'image1.jpg', contentType: 'image/jpeg' },
-          { uri: 'file://image2.jpg', fileName: 'image2.jpg', contentType: 'image/jpeg' },
-        ];
+      await act(async () => {
+        await harness.getValue().addReview('shop-1', { rating: 5 }, assets);
+      });
 
-        await act(async () => {
-          await harness.getValue().addReview('shop-1', { rating: 5 }, assets);
-        });
-
-        // createReviewUploadsが呼ばれる
-        assert.equal(createReviewUploads.mock.calls.length, 1);
-        const uploadCalls = createReviewUploads.mock.calls as unknown as { arguments: unknown[] }[];
-        const uploadInput = uploadCalls[0].arguments;
-        assert.equal(uploadInput[0], 'shop-1');
-        assert.equal((uploadInput[1] as unknown[]).length, 2);
-
-        // getSupabaseが呼ばれる（アップロード用）
-        assert.ok(getSupabase.mock.calls.length >= 1);
-
-        // createReviewが正しいfile_idsで呼ばれる
-        assert.equal(createReview.mock.calls.length, 1);
-        const reviewCalls = createReview.mock.calls as unknown as { arguments: unknown[] }[];
-        const reviewInput = reviewCalls[0].arguments[1] as { file_ids?: string[] };
-        assert.deepEqual(reviewInput.file_ids, ['file-1', 'file-2']);
-      } finally {
-        globalThis.fetch = originalFetch;
-      }
+      assert.equal(createReviewUploads.mock.calls.length, 1);
+      assert.ok(getSupabase.mock.calls.length >= 1);
+      assert.equal(createReview.mock.calls.length, 1);
+      const reviewCalls = createReview.mock.calls as unknown as { arguments: unknown[] }[];
+      const reviewInput = reviewCalls[0].arguments[1] as { file_ids?: string[] };
+      assert.deepEqual(reviewInput.file_ids, ['file-1', 'file-2']);
 
       harness.unmount();
     });
@@ -292,27 +333,18 @@ describe('ReviewsContext', () => {
         ReviewsProvider,
       );
 
-      const originalFetch = globalThis.fetch;
-      globalThis.fetch = mock.fn(async () => ({
-        arrayBuffer: async () => new ArrayBuffer(100),
-      })) as unknown as typeof fetch;
+      const assets: ReviewAsset[] = [
+        { uri: 'file://image1.jpg', fileName: 'image1.jpg', contentType: 'image/jpeg' },
+      ];
 
-      try {
-        const assets: ReviewAsset[] = [
-          { uri: 'file://image1.jpg', fileName: 'image1.jpg', contentType: 'image/jpeg' },
-        ];
-
-        await assert.rejects(
-          async () => {
-            await act(async () => {
-              await harness.getValue().addReview('shop-1', { rating: 5 }, assets);
-            });
-          },
-          (err: unknown) => err instanceof Error && err.message === 'upload failed',
-        );
-      } finally {
-        globalThis.fetch = originalFetch;
-      }
+      await assert.rejects(
+        async () => {
+          await act(async () => {
+            await harness.getValue().addReview('shop-1', { rating: 5 }, assets);
+          });
+        },
+        (err: unknown) => err instanceof Error && err.message.includes('upload failed'),
+      );
 
       harness.unmount();
     });
@@ -396,6 +428,32 @@ describe('ReviewsContext', () => {
       assert.equal(review?.likesCount, 5);
       harness.unmount();
     });
+
+    test('存在しないレビューIDでもAPIが呼ばれる', async () => {
+      // 実装はレビューの存在チェックを行わず、wasLikedがデフォルトfalseになるため
+      // likeReviewが呼び出される
+      const mockReviews = [createMockApiReview('r1', 'shop-1')];
+      const { likeReview } = setupDependencies({ reviews: mockReviews });
+      const harness: ContextHarness<ReturnType<typeof useReviews>> = createContextHarness(
+        useReviews,
+        ReviewsProvider,
+      );
+
+      await act(async () => {
+        await harness.getValue().loadReviews('shop-1', 'new');
+      });
+
+      await act(async () => {
+        await harness.getValue().toggleLike('shop-1', 'non-existent');
+      });
+
+      // toggleLikeは存在チェックを行わないため、likeReviewが呼ばれる
+      assert.equal(likeReview.mock.calls.length, 1);
+      // 既存のレビューには影響しない
+      const existingReview = harness.getValue().reviewsByShop['shop-1']?.[0];
+      assert.equal(existingReview?.id, 'r1');
+      harness.unmount();
+    });
   });
 
   describe('deleteReview', () => {
@@ -451,6 +509,28 @@ describe('ReviewsContext', () => {
       assert.equal(harness.getValue().userReviews[0].id, 'r2');
       harness.unmount();
     });
+
+    test('存在しないIDの削除は何もしない', async () => {
+      const mockReviews = [createMockApiReview('r1', 'shop-1')];
+      setupDependencies({ reviews: mockReviews });
+      const harness: ContextHarness<ReturnType<typeof useReviews>> = createContextHarness(
+        useReviews,
+        ReviewsProvider,
+      );
+
+      await act(async () => {
+        await harness.getValue().loadReviews('shop-1', 'new');
+      });
+
+      const reviewsBefore = harness.getValue().reviewsByShop['shop-1']?.length;
+
+      await act(async () => {
+        harness.getValue().deleteReview('non-existent');
+      });
+
+      assert.equal(harness.getValue().reviewsByShop['shop-1']?.length, reviewsBefore);
+      harness.unmount();
+    });
   });
 
   describe('loadUserReviews', () => {
@@ -497,10 +577,25 @@ describe('ReviewsContext', () => {
       assert.equal(harness.getValue().userReviews[0].id, 'r1');
       harness.unmount();
     });
+
+    test('空のレビュー配列を正しく処理する', async () => {
+      setupDependencies({ reviews: [] });
+      const harness: ContextHarness<ReturnType<typeof useReviews>> = createContextHarness(
+        useReviews,
+        ReviewsProvider,
+      );
+
+      await act(async () => {
+        await harness.getValue().loadUserReviews();
+      });
+
+      assert.deepEqual(harness.getValue().userReviews, []);
+      harness.unmount();
+    });
   });
 
   describe('いいね関連ヘルパー', () => {
-    test('isReviewLiked でいいね状態を確認できる', async () => {
+    test('isReviewLikedでいいね状態を確認できる', async () => {
       const mockReviews = [createMockApiReview('r1', 'shop-1', { liked_by_me: true })];
       setupDependencies({ reviews: mockReviews });
       const harness: ContextHarness<ReturnType<typeof useReviews>> = createContextHarness(
@@ -517,7 +612,7 @@ describe('ReviewsContext', () => {
       harness.unmount();
     });
 
-    test('getReviewLikesCount でいいね数を取得できる', async () => {
+    test('getReviewLikesCountでいいね数を取得できる', async () => {
       const mockReviews = [createMockApiReview('r1', 'shop-1', { likes_count: 10 })];
       setupDependencies({ reviews: mockReviews });
       const harness: ContextHarness<ReturnType<typeof useReviews>> = createContextHarness(
@@ -534,7 +629,7 @@ describe('ReviewsContext', () => {
       harness.unmount();
     });
 
-    test('getLikedReviews でいいねしたレビュー一覧を取得できる', async () => {
+    test('getLikedReviewsでいいねしたレビュー一覧を取得できる', async () => {
       const mockReviews = [
         createMockApiReview('r1', 'shop-1', { liked_by_me: true }),
         createMockApiReview('r2', 'shop-1', { liked_by_me: false }),

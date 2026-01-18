@@ -10,7 +10,8 @@ export {
   type MultiValueStep,
   type BudgetRangeStep,
   type StepData,
-  type ValidationResult,
   toStepData,
   validateStep,
 } from '@team/validators';
+
+export type { ValidationResult } from '@team/constants';

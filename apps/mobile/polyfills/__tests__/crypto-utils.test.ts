@@ -39,14 +39,30 @@ describe('normalizeAlgorithm', () => {
 });
 
 describe('toArrayBuffer', () => {
-  test('ArrayBufferをそのまま返す', () => {
-    const buffer = new ArrayBuffer(8);
-    assert.equal(toArrayBuffer(buffer), buffer);
-  });
+  describe('ArrayBuffer入力', () => {
+    test('ArrayBufferをそのまま返す（同一参照）', () => {
+      const buffer = new ArrayBuffer(8);
+      const result = toArrayBuffer(buffer);
+      // 同一参照であることを確認
+      assert.equal(result, buffer);
+      // コンテンツも保持されていることを確認
+      assert.equal(result.byteLength, 8);
+    });
 
-  test('空のArrayBufferをそのまま返す', () => {
-    const buffer = new ArrayBuffer(0);
-    assert.equal(toArrayBuffer(buffer), buffer);
+    test('空のArrayBufferをそのまま返す', () => {
+      const buffer = new ArrayBuffer(0);
+      const result = toArrayBuffer(buffer);
+      assert.equal(result, buffer);
+      assert.equal(result.byteLength, 0);
+    });
+
+    test('データ入りArrayBufferの内容が保持される', () => {
+      const buffer = new ArrayBuffer(4);
+      const view = new Uint8Array(buffer);
+      view.set([1, 2, 3, 4]);
+      const result = toArrayBuffer(buffer);
+      assert.deepEqual([...new Uint8Array(result)], [1, 2, 3, 4]);
+    });
   });
 
   describe('TypedArray/DataView変換', () => {
@@ -81,34 +97,132 @@ describe('toArrayBuffer', () => {
     assert.deepEqual([...new Uint8Array(result)], [10, 20, 30, 40]);
   });
 
-  test('サポートされていない型でTypeErrorをスロー', () => {
-    assert.throws(
-      // @ts-expect-error - テスト用に不正な型を渡す
-      () => toArrayBuffer('invalid'),
-      { name: 'TypeError', message: 'Unsupported BufferSource type' },
-    );
+  describe('エラーハンドリング', () => {
+    test('サポートされていない型でTypeErrorをスロー', () => {
+      assert.throws(
+        // @ts-expect-error - テスト用に不正な型を渡す
+        () => toArrayBuffer('invalid'),
+        { name: 'TypeError', message: 'Unsupported BufferSource type' },
+      );
+    });
+
+    test('nullでTypeErrorをスロー', () => {
+      assert.throws(
+        // @ts-expect-error - テスト用に不正な型を渡す
+        () => toArrayBuffer(null),
+        { name: 'TypeError' },
+      );
+    });
+
+    test('undefinedでTypeErrorをスロー', () => {
+      assert.throws(
+        // @ts-expect-error - テスト用に不正な型を渡す
+        () => toArrayBuffer(undefined),
+        { name: 'TypeError' },
+      );
+    });
+
+    test('数値でTypeErrorをスロー', () => {
+      assert.throws(
+        // @ts-expect-error - テスト用に不正な型を渡す
+        () => toArrayBuffer(123),
+        { name: 'TypeError' },
+      );
+    });
+
+    test('オブジェクトでTypeErrorをスロー', () => {
+      assert.throws(
+        // @ts-expect-error - テスト用に不正な型を渡す
+        () => toArrayBuffer({ data: [1, 2, 3] }),
+        { name: 'TypeError' },
+      );
+    });
   });
 });
 
 describe('toUint8Array', () => {
-  test('Uint8Arrayをそのまま返す', () => {
-    const uint8 = new Uint8Array([1, 2, 3]);
-    assert.equal(toUint8Array(uint8), uint8);
+  describe('Uint8Array入力', () => {
+    test('Uint8Arrayをそのまま返す（同一参照）', () => {
+      const uint8 = new Uint8Array([1, 2, 3]);
+      const result = toUint8Array(uint8);
+      // 同一参照であることを確認
+      assert.equal(result, uint8);
+      // コンテンツも保持されていることを確認
+      assert.deepEqual([...result], [1, 2, 3]);
+    });
+
+    test('空のUint8Arrayをそのまま返す', () => {
+      const uint8 = new Uint8Array([]);
+      const result = toUint8Array(uint8);
+      assert.equal(result, uint8);
+      assert.equal(result.byteLength, 0);
+    });
   });
 
-  test('ArrayBufferをUint8Arrayに変換', () => {
-    const buffer = new ArrayBuffer(4);
-    const result = toUint8Array(buffer);
-    assert.ok(result instanceof Uint8Array);
-    assert.equal(result.byteLength, 4);
+  describe('ArrayBuffer入力', () => {
+    test('ArrayBufferをUint8Arrayに変換', () => {
+      const buffer = new ArrayBuffer(4);
+      const result = toUint8Array(buffer);
+      assert.ok(result instanceof Uint8Array);
+      assert.equal(result.byteLength, 4);
+    });
+
+    test('データ入りArrayBufferの内容が保持される', () => {
+      const buffer = new ArrayBuffer(4);
+      new Uint8Array(buffer).set([10, 20, 30, 40]);
+      const result = toUint8Array(buffer);
+      assert.deepEqual([...result], [10, 20, 30, 40]);
+    });
+
+    test('空のArrayBufferを変換', () => {
+      const buffer = new ArrayBuffer(0);
+      const result = toUint8Array(buffer);
+      assert.ok(result instanceof Uint8Array);
+      assert.equal(result.byteLength, 0);
+    });
   });
 
-  test('オフセット付きTypedArrayを正しく変換', () => {
-    const buffer = new ArrayBuffer(8);
-    const view = new Uint8Array(buffer, 2, 4);
-    view.set([5, 6, 7, 8]);
-    const result = toUint8Array(view);
-    assert.equal(result.byteLength, 4);
-    assert.deepEqual([...result], [5, 6, 7, 8]);
+  describe('TypedArray入力', () => {
+    test('オフセット付きTypedArrayを正しく変換', () => {
+      const buffer = new ArrayBuffer(8);
+      const view = new Uint8Array(buffer, 2, 4);
+      view.set([5, 6, 7, 8]);
+      const result = toUint8Array(view);
+      assert.equal(result.byteLength, 4);
+      assert.deepEqual([...result], [5, 6, 7, 8]);
+    });
+
+    test('Int16ArrayをUint8Arrayに変換', () => {
+      const int16 = new Int16Array([256, 512]);
+      const result = toUint8Array(int16);
+      assert.ok(result instanceof Uint8Array);
+      assert.equal(result.byteLength, 4);
+    });
+  });
+
+  describe('エラーハンドリング', () => {
+    test('サポートされていない型でTypeErrorをスロー', () => {
+      assert.throws(
+        // @ts-expect-error - テスト用に不正な型を渡す
+        () => toUint8Array('invalid'),
+        { name: 'TypeError', message: 'Unsupported BufferSource type' },
+      );
+    });
+
+    test('nullでTypeErrorをスロー', () => {
+      assert.throws(
+        // @ts-expect-error - テスト用に不正な型を渡す
+        () => toUint8Array(null),
+        { name: 'TypeError' },
+      );
+    });
+
+    test('undefinedでTypeErrorをスロー', () => {
+      assert.throws(
+        // @ts-expect-error - テスト用に不正な型を渡す
+        () => toUint8Array(undefined),
+        { name: 'TypeError' },
+      );
+    });
   });
 });

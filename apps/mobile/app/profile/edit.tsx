@@ -1,6 +1,13 @@
 import { Picker } from '@react-native-picker/picker';
-import { isValidEmail, VALIDATION_MESSAGES } from '@team/constants';
-import { palette } from '@team/mobile-ui';
+import {
+  BORDER_RADIUS,
+  FONT_WEIGHT,
+  isValidEmail,
+  LAYOUT,
+  SHADOW_STYLES,
+  VALIDATION_MESSAGES,
+} from '@team/constants';
+import { GenreChipSelector, palette } from '@team/mobile-ui';
 import { useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import {
@@ -15,7 +22,6 @@ import {
   View,
 } from 'react-native';
 
-import { GENRES, toggleGenre as toggleGenreUtil, type Genre } from '@/constants/genres';
 import { TAB_BAR_SPACING } from '@/constants/TabBarSpacing';
 import { useUser } from '@/features/user/UserContext';
 
@@ -53,11 +59,6 @@ export default function EditProfileScreen() {
   const canSave = useMemo(() => {
     return name.trim().length > 0 && email.trim().length > 0 && !saving;
   }, [email, name, saving]);
-
-  /** ジャンルの選択状態をトグルする */
-  const toggleGenre = (genre: Genre) => {
-    setFavoriteGenres(prev => toggleGenreUtil(prev as Genre[], genre));
-  };
 
   const validateForm = (): boolean => {
     setErrorName('');
@@ -294,21 +295,10 @@ export default function EditProfileScreen() {
 
         <View style={styles.cardShadow}>
           <View style={styles.card}>
-            <Text style={styles.label}>好きな店舗のジャンル（複数選択可）</Text>
-            <View style={styles.chipsWrap}>
-              {GENRES.map(g => {
-                const on = favoriteGenres.includes(g);
-                return (
-                  <Pressable
-                    key={g}
-                    onPress={() => toggleGenre(g)}
-                    style={[styles.chip, on ? styles.chipOn : styles.chipOff]}
-                  >
-                    <Text style={on ? styles.chipTextOn : styles.chipTextOff}>{g}</Text>
-                  </Pressable>
-                );
-              })}
-            </View>
+            <GenreChipSelector
+              selectedGenres={favoriteGenres}
+              onSelectionChange={setFavoriteGenres}
+            />
           </View>
         </View>
 
@@ -347,21 +337,19 @@ export default function EditProfileScreen() {
   );
 }
 
-// スタイル定義（見た目の調整）
 const styles = StyleSheet.create({
-  // Avatar
   avatar: {
     alignItems: 'center',
     alignSelf: 'center',
     backgroundColor: palette.secondarySurface,
-    borderRadius: 999,
-    height: 88,
+    borderRadius: BORDER_RADIUS.PILL,
+    height: LAYOUT.REVIEW_IMAGE_SIZE,
     justifyContent: 'center',
     marginBottom: 24,
     marginTop: 16,
-    width: 88,
+    width: LAYOUT.REVIEW_IMAGE_SIZE,
   },
-  avatarText: { color: palette.primary, fontSize: 32, fontWeight: '800' },
+  avatarText: { color: palette.primary, fontSize: 32, fontWeight: FONT_WEIGHT.EXTRA_BOLD },
 
   // カード背景
   card: {
@@ -370,36 +358,11 @@ const styles = StyleSheet.create({
     padding: 16,
   },
 
-  // カードシャドウ
   cardShadow: {
-    elevation: 4,
+    ...SHADOW_STYLES.CARD,
     marginBottom: 24,
     marginTop: 16,
-    shadowColor: palette.shadow,
-    shadowOffset: { height: 6, width: 0 },
-    shadowOpacity: 0.06,
-    shadowRadius: 12,
   },
-
-  // チップ（ジャンル選択）
-  chip: {
-    borderRadius: 999,
-    marginBottom: 8,
-    marginRight: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-  },
-  chipOff: {
-    backgroundColor: palette.secondarySurface,
-    borderColor: palette.border,
-    borderWidth: 1,
-  },
-  chipOn: { backgroundColor: palette.accent },
-
-  chipTextOff: { color: palette.primaryText, fontWeight: '700' },
-
-  chipTextOn: { color: palette.primaryOnAccent, fontWeight: '700' },
-  chipsWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
 
   // コンテンツの余白
   content: {
@@ -427,7 +390,7 @@ const styles = StyleSheet.create({
   input: {
     backgroundColor: palette.background,
     borderColor: palette.border,
-    borderRadius: 12,
+    borderRadius: BORDER_RADIUS.MEDIUM,
     borderWidth: 1,
     color: palette.primary,
     marginTop: 8,
@@ -439,15 +402,15 @@ const styles = StyleSheet.create({
   keyboard: { flex: 1 },
 
   // ラベル（表示名・メールなどの見出し）
-  label: { color: palette.primaryText, fontWeight: '700', marginBottom: 8 },
+  label: { color: palette.primaryText, fontWeight: FONT_WEIGHT.BOLD, marginBottom: 8 },
   labelContainer: { flexDirection: 'row' },
 
   modalContent: {
     backgroundColor: palette.surface,
-    borderTopLeftRadius: 12,
-    borderTopRightRadius: 12,
+    borderTopLeftRadius: BORDER_RADIUS.MEDIUM,
+    borderTopRightRadius: BORDER_RADIUS.MEDIUM,
   },
-  modalDoneText: { color: palette.accent, fontWeight: '700' },
+  modalDoneText: { color: palette.accent, fontWeight: FONT_WEIGHT.BOLD },
   modalOverlay: {
     backgroundColor: palette.shadow,
     flex: 1,
@@ -463,7 +426,7 @@ const styles = StyleSheet.create({
   pickerBox: {
     backgroundColor: palette.background,
     borderColor: palette.border,
-    borderRadius: 12,
+    borderRadius: BORDER_RADIUS.MEDIUM,
     borderWidth: 1,
     justifyContent: 'center',
     paddingHorizontal: 12,
@@ -477,7 +440,7 @@ const styles = StyleSheet.create({
   // プライマリボタン（保存）
   primaryBtn: {
     backgroundColor: palette.accent,
-    borderRadius: 12,
+    borderRadius: BORDER_RADIUS.MEDIUM,
     marginTop: 8,
     paddingVertical: 12,
   },
@@ -486,7 +449,7 @@ const styles = StyleSheet.create({
   },
   primaryBtnText: {
     color: palette.primaryOnAccent,
-    fontWeight: '700',
+    fontWeight: FONT_WEIGHT.BOLD,
     textAlign: 'center',
   },
 
@@ -502,7 +465,7 @@ const styles = StyleSheet.create({
   radioCircleSelected: { backgroundColor: palette.accent, borderWidth: 3.5 },
   radioGroup: { flexDirection: 'row', gap: 12, marginBottom: 22, marginTop: 2 },
   radioOption: { alignItems: 'center', flexDirection: 'row', marginRight: 12 },
-  radioOptionText: { color: palette.primaryText, fontWeight: '600' },
+  radioOptionText: { color: palette.primaryText, fontWeight: FONT_WEIGHT.SEMIBOLD },
 
   // 画面背景
   screen: { backgroundColor: palette.background, flex: 1 },
@@ -511,7 +474,7 @@ const styles = StyleSheet.create({
   secondaryBtn: {
     backgroundColor: palette.secondarySurface,
     borderColor: palette.border,
-    borderRadius: 12,
+    borderRadius: BORDER_RADIUS.MEDIUM,
     borderWidth: 1,
     marginBottom: 40,
     marginTop: 12,
@@ -520,7 +483,7 @@ const styles = StyleSheet.create({
   },
   secondaryBtnText: {
     color: palette.primaryText,
-    fontWeight: '700',
+    fontWeight: FONT_WEIGHT.BOLD,
     textAlign: 'center',
   },
 
@@ -528,7 +491,7 @@ const styles = StyleSheet.create({
   title: {
     color: palette.primary,
     fontSize: 20,
-    fontWeight: '700',
+    fontWeight: FONT_WEIGHT.BOLD,
     textAlign: 'center',
   },
 });

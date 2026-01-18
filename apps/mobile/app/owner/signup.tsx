@@ -1,9 +1,16 @@
 import {
+  BORDER_RADIUS,
+  FONT_WEIGHT,
   formatDateInput,
   isValidDateYYYYMMDD,
   isValidEmail,
+  LAYOUT,
+  PASSWORD_MIN_LENGTH,
   ROUTES,
   SHADOW_STYLES,
+  TIMING,
+  UI_LABELS,
+  VALIDATION_MESSAGES,
 } from '@team/constants';
 import { palette } from '@team/mobile-ui';
 import { useNavigation, useRouter } from 'expo-router';
@@ -19,8 +26,6 @@ import {
   TextInput,
   View,
 } from 'react-native';
-
-const MOCK_SUBMIT_DELAY_MS = 600;
 
 export default function OwnerSignupScreen() {
   const router = useRouter();
@@ -51,7 +56,7 @@ export default function OwnerSignupScreen() {
   useLayoutEffect(() => {
     navigation.setOptions?.({
       title: 'オーナー新規作成',
-      headerBackTitle: '戻る',
+      headerBackTitle: UI_LABELS.BACK,
     });
   }, [navigation]);
 
@@ -59,30 +64,33 @@ export default function OwnerSignupScreen() {
     const trimmedEmail = email.trim();
 
     if (!storeName || !contactName || !trimmedEmail || !password) {
-      Alert.alert('入力不足', '必須項目（店舗名/担当者名/メール/パスワード）を入力してください');
+      Alert.alert(
+        VALIDATION_MESSAGES.INPUT_MISSING_TITLE,
+        '必須項目（店舗名/担当者名/メール/パスワード）を入力してください',
+      );
       return;
     }
     // 完成形（数字8桁）のみ検証
     const digits = openingDate.replace(/\D/g, '');
     if (!isValidDateYYYYMMDD(digits)) {
-      Alert.alert('入力エラー', '正しい日付で入力してください');
+      Alert.alert(VALIDATION_MESSAGES.INPUT_ERROR_TITLE, '正しい日付で入力してください');
       return;
     }
 
     if (!isValidEmail(trimmedEmail)) {
-      Alert.alert('入力エラー', '正式なメールアドレスを入力してください');
+      Alert.alert(VALIDATION_MESSAGES.INPUT_ERROR_TITLE, '正式なメールアドレスを入力してください');
       return;
     }
 
-    if (password.length < 8) {
-      Alert.alert('入力エラー', 'パスワードは8文字以上で入力してください');
+    if (password.length < PASSWORD_MIN_LENGTH) {
+      Alert.alert(VALIDATION_MESSAGES.INPUT_ERROR_TITLE, 'パスワードは8文字以上で入力してください');
       return;
     }
 
     try {
       setSubmitting(true);
       // NOTE: Backend 未実装。将来的にここで API に POST する想定。
-      await new Promise(r => setTimeout(r, MOCK_SUBMIT_DELAY_MS));
+      await new Promise(r => setTimeout(r, TIMING.MOCK_SUBMIT_DELAY));
       Alert.alert('作成完了', 'オーナー用アカウントの申請を受け付けました');
       router.replace(ROUTES.HOME);
     } catch (e: unknown) {
@@ -198,9 +206,9 @@ const styles = StyleSheet.create({
     ...SHADOW_STYLES.DEFAULT,
     backgroundColor: palette.button,
     borderColor: palette.buttonBorder,
-    borderRadius: 999,
+    borderRadius: BORDER_RADIUS.PILL,
     borderWidth: 1,
-    height: 44,
+    height: LAYOUT.BUTTON_HEIGHT_MD,
     minWidth: 160,
     overflow: 'hidden',
   },
@@ -213,9 +221,9 @@ const styles = StyleSheet.create({
   buttonText: {
     color: palette.surface,
     fontSize: 16,
-    fontWeight: '700',
-    height: 44,
-    lineHeight: 44,
+    fontWeight: FONT_WEIGHT.BOLD,
+    height: LAYOUT.BUTTON_HEIGHT_MD,
+    lineHeight: LAYOUT.BUTTON_HEIGHT_MD,
     textAlign: 'center',
   },
   buttonWrapper: {
@@ -233,7 +241,7 @@ const styles = StyleSheet.create({
   input: {
     backgroundColor: palette.surface,
     borderColor: palette.border,
-    borderRadius: 12,
+    borderRadius: BORDER_RADIUS.MEDIUM,
     borderWidth: 1,
     color: palette.primaryText,
     paddingHorizontal: 14,
@@ -242,7 +250,7 @@ const styles = StyleSheet.create({
   label: {
     color: palette.primaryText,
     fontSize: 14,
-    fontWeight: '500',
+    fontWeight: FONT_WEIGHT.MEDIUM,
     marginTop: 10,
   },
   screen: {
@@ -264,6 +272,6 @@ const styles = StyleSheet.create({
   title: {
     color: palette.primaryText,
     fontSize: 24,
-    fontWeight: '700',
+    fontWeight: FONT_WEIGHT.BOLD,
   },
 });

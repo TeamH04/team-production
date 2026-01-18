@@ -1,5 +1,5 @@
-import { ROUTES } from '@team/constants';
-import { palette } from '@team/mobile-ui';
+import { BORDER_RADIUS, FONT_WEIGHT, ROUTES } from '@team/constants';
+import { GenreChipSelector, palette } from '@team/mobile-ui';
 import { Stack, useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import {
@@ -10,10 +10,8 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  View,
 } from 'react-native';
 
-import { GENRES } from '@/constants/genres';
 import { useUser } from '@/features/user/UserContext';
 
 export default function RegisterProfileScreen() {
@@ -22,10 +20,6 @@ export default function RegisterProfileScreen() {
   const name = user?.name ?? '';
   const email = user?.email ?? '';
   const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
-
-  const toggleGenre = (g: string) => {
-    setSelectedGenres(prev => (prev.includes(g) ? prev.filter(x => x !== g) : [...prev, g]));
-  };
 
   const canSave = useMemo(() => {
     return selectedGenres.length > 0;
@@ -57,21 +51,11 @@ export default function RegisterProfileScreen() {
         <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
           <Text style={styles.title}>ジャンル選択</Text>
           <Text style={styles.subtitle}>自身の選んだ店舗がおすすめに表示されやすくなります</Text>
-          <Text style={styles.label}>好きな店舗のジャンル（複数選択可）</Text>
-          <View style={styles.chipsWrap}>
-            {GENRES.map(g => {
-              const on = selectedGenres.includes(g);
-              return (
-                <Pressable
-                  key={g}
-                  onPress={() => toggleGenre(g)}
-                  style={[styles.chip, on ? styles.chipOn : styles.chipOff]}
-                >
-                  <Text style={on ? styles.chipTextOn : styles.chipTextOff}>{g}</Text>
-                </Pressable>
-              );
-            })}
-          </View>
+          <GenreChipSelector
+            selectedGenres={selectedGenres}
+            onSelectionChange={setSelectedGenres}
+            label='好きな店舗のジャンル（複数選択可）'
+          />
 
           <Pressable
             disabled={!canSave}
@@ -91,39 +75,25 @@ export default function RegisterProfileScreen() {
 }
 
 const styles = StyleSheet.create({
-  // チップ（ジャンル選択）
-  chip: {
-    borderRadius: 999,
-    marginBottom: 8,
-    marginRight: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-  },
-  chipOff: { backgroundColor: palette.secondarySurface, borderColor: palette.border },
-  chipOn: { backgroundColor: palette.accent },
-
-  chipTextOff: { color: palette.primaryText, fontWeight: '700' },
-
-  chipTextOn: { color: palette.primaryOnAccent, fontWeight: '700' },
-  chipsWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-
   content: { padding: 16 },
 
   keyboard: { flex: 1 },
 
-  label: { color: palette.primaryText, fontWeight: '700', marginBottom: 20, marginTop: 4 },
-
   // プライマリボタン（登録）
   primaryBtn: {
     backgroundColor: palette.accent,
-    borderRadius: 12,
+    borderRadius: BORDER_RADIUS.MEDIUM,
     marginTop: 28,
     paddingVertical: 14,
   },
   primaryBtnDisabled: {
     opacity: 0.5,
   },
-  primaryBtnText: { color: palette.primaryOnAccent, fontWeight: '700', textAlign: 'center' },
+  primaryBtnText: {
+    color: palette.primaryOnAccent,
+    fontWeight: FONT_WEIGHT.BOLD,
+    textAlign: 'center',
+  },
 
   screen: { backgroundColor: palette.surface, flex: 1 },
 
@@ -131,13 +101,17 @@ const styles = StyleSheet.create({
   secondaryBtn: {
     backgroundColor: palette.secondarySurface,
     borderColor: palette.border,
-    borderRadius: 12,
+    borderRadius: BORDER_RADIUS.MEDIUM,
     borderWidth: 1,
     marginTop: 12,
     paddingHorizontal: 14,
     paddingVertical: 12,
   },
-  secondaryBtnText: { color: palette.primaryText, fontWeight: '700', textAlign: 'center' },
+  secondaryBtnText: {
+    color: palette.primaryText,
+    fontWeight: FONT_WEIGHT.BOLD,
+    textAlign: 'center',
+  },
 
   subtitle: {
     color: palette.secondaryText,
@@ -147,6 +121,6 @@ const styles = StyleSheet.create({
   title: {
     color: palette.primaryText,
     fontSize: 24,
-    fontWeight: '700',
+    fontWeight: FONT_WEIGHT.BOLD,
   },
 });

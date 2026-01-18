@@ -1,4 +1,4 @@
-import { ERROR_MESSAGES } from '@team/constants';
+import { ERROR_MESSAGES, OAUTH_CONFIG } from '@team/constants';
 import { parseOAuthTokensFromUrl } from '@team/core-utils';
 import { useOAuthState } from '@team/hooks';
 import * as AuthSession from 'expo-auth-session';
@@ -7,16 +7,10 @@ import { useCallback } from 'react';
 import { Alert } from 'react-native';
 
 import { useUser } from '@/features/user/UserContext';
-import { checkIsOwner, ensureUserExistsInDB } from '@/lib/auth';
-import { getSupabase, isSupabaseConfigured } from '@/lib/supabase';
+import { checkIsOwner, ensureUserExistsInDB, getSupabase, isSupabaseConfigured } from '@/lib/auth';
 
 import type { OAuthErrorInfo } from '@team/hooks';
 import type { OAuthProvider, UserProfile } from '@team/types';
-
-const OAUTH_CONFIG = {
-  SCHEME: 'shopmobile',
-  CALLBACK_PATH: 'auth/callback',
-} as const;
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -26,25 +20,10 @@ export interface UseOAuthFlowOptions {
 
 /**
  * エラー情報に基づいてプラットフォーム固有のアラートを表示
+ * title と message は useOAuthState で自動生成される
  */
 function showOAuthErrorAlert(errorInfo: OAuthErrorInfo) {
-  const { type, message, provider } = errorInfo;
-
-  switch (type) {
-    case 'provider_not_configured': {
-      const providerName = provider === 'google' ? 'Google/Apple' : 'Apple';
-      Alert.alert(
-        'プロバイダ未設定',
-        `Supabase で ${providerName} のプロバイダが無効です。Authentication > Providers で有効化し、クライアントID/シークレットとリダイレクトURLを設定してください。`,
-      );
-      break;
-    }
-    case 'apple_not_available':
-      Alert.alert('非対応端末', 'この端末ではAppleによるサインインが利用できません。');
-      break;
-    default:
-      Alert.alert('ログイン失敗', message);
-  }
+  Alert.alert(errorInfo.title, errorInfo.message);
 }
 
 /**

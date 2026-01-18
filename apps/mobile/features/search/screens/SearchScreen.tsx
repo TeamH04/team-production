@@ -1,7 +1,20 @@
-import { BORDER_RADIUS, ERROR_MESSAGES, FONT_WEIGHT, ROUTES, SPACING } from '@team/constants';
+import {
+  BORDER_RADIUS,
+  ERROR_MESSAGES,
+  FONT_WEIGHT,
+  ROUTES,
+  SEARCH_HISTORY_MAX,
+  SEARCH_SORT_OPTIONS,
+  SPACING,
+  VISITED_FILTER_OPTIONS,
+  type SearchSortType,
+  type SortOrder,
+} from '@team/constants';
+import { getIdNum } from '@team/core-utils';
+import { useShopFilter } from '@team/hooks';
 import { ToggleButton } from '@team/mobile-ui';
 import { palette } from '@team/mobile-ui';
-import { sortShops, type Shop } from '@team/shop-core';
+import { formatShopMeta, sortShops } from '@team/shop-core';
 import { useRouter } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
 import {
@@ -16,33 +29,11 @@ import {
 } from 'react-native';
 
 import { ShopCard } from '@/components/ShopCard';
-import { SEARCH_SORT_OPTIONS } from '@/constants/sortOptions';
 import { TAB_BAR_SPACING } from '@/constants/TabBarSpacing';
 import { useStores } from '@/features/stores/StoresContext';
 import { useVisited } from '@/features/visited/VisitedContext';
-import { useShopFilter } from '@/hooks/useShopFilter';
 
-type SortType = 'default' | 'newest' | 'rating' | 'registered';
-type SortOrder = 'asc' | 'desc';
-type VisitedFilter = 'all' | 'visited' | 'not_visited';
-
-const VISITED_FILTER_OPTIONS: { label: string; value: VisitedFilter }[] = [
-  { label: 'すべて', value: 'all' },
-  { label: '訪問済み', value: 'visited' },
-  { label: '未訪問', value: 'not_visited' },
-];
-
-const getIdNum = (id: string) => {
-  if (!id) return 0;
-  const normalized = id.replace(/[０-９]/g, s => {
-    return String.fromCharCode(s.charCodeAt(0) - 0xfee0);
-  });
-  const match = normalized.match(/(\d+)/);
-  if (match) {
-    return parseInt(match[0], 10);
-  }
-  return 0;
-};
+import type { VisitedFilter } from '@team/types';
 
 export default function SearchScreen() {
   const router = useRouter();
@@ -55,8 +46,8 @@ export default function SearchScreen() {
   const { stores: shops, loading, error: loadError } = useStores();
   const [filterVisited, setFilterVisited] = useState<VisitedFilter>('all');
 
-  const [sortBy, setSortBy] = useState<SortType>('default');
-  const [sortOrders, setSortOrders] = useState<Record<SortType, SortOrder>>({
+  const [sortBy, setSortBy] = useState<SearchSortType>('default');
+  const [sortOrders, setSortOrders] = useState<Record<SearchSortType, SortOrder>>({
     default: 'desc',
     newest: 'desc',
     rating: 'desc',
@@ -121,7 +112,7 @@ export default function SearchScreen() {
     setSearchHistory(prev => {
       // 既にある場合は一旦消して、配列の先頭に追加（重複防止）
       const filtered = prev.filter(item => item !== trimmedText);
-      return [trimmedText, ...filtered].slice(0, 10); // 最大10件
+      return [trimmedText, ...filtered].slice(0, SEARCH_HISTORY_MAX); // 最大10件
     });
 
     setCurrentSearchText(trimmedText);
@@ -130,7 +121,7 @@ export default function SearchScreen() {
     }
   };
 
-  const handleSortTypePress = (value: SortType) => {
+  const handleSearchSortTypePress = (value: SearchSortType) => {
     if (sortBy !== value) setSortBy(value);
   };
 
@@ -167,12 +158,6 @@ export default function SearchScreen() {
       router.push(ROUTES.SHOP_DETAIL(shopId));
     },
     [router],
-  );
-
-  const formatSearchMeta = useCallback(
-    (shop: Shop) =>
-      `${shop.category}${shop.budget ? ` • ${shop.budget}` : ''} • 徒歩${shop.distanceMinutes}分`,
-    [],
   );
 
   const getSortOrderLabel = () => {
@@ -352,7 +337,7 @@ export default function SearchScreen() {
                       key={option.value}
                       label={option.label}
                       isActive={sortBy === option.value}
-                      onPress={() => handleSortTypePress(option.value)}
+                      onPress={() => handleSearchSortTypePress(option.value)}
                       style={styles.sortButton}
                       size='small'
                     />
@@ -374,7 +359,7 @@ export default function SearchScreen() {
                     key={item.id}
                     shop={item}
                     onPress={handleShopPress}
-                    formatMeta={formatSearchMeta}
+                    formatMeta={shop => formatShopMeta(shop, 'compact')}
                   />
                 ))}
               </View>
@@ -546,7 +531,7 @@ const styles = StyleSheet.create({
   screenTitle: {
     color: palette.primaryText,
     fontSize: 28,
-    fontWeight: '700',
+    fontWeight: FONT_WEIGHT.BOLD,
   },
   searchBarContainer: {
     marginBottom: SPACING.LG,
@@ -576,14 +561,8 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.LG,
   },
   shadowLight: {
+    boxShadow: '0px 6px 10px rgba(0, 0, 0, 0.05)',
     elevation: 3,
-    shadowColor: palette.shadow,
-    shadowOffset: {
-      height: 6,
-      width: 0,
-    },
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
   },
   sortButton: {},
   sortOptionsContent: {

@@ -5,17 +5,18 @@ import {
   createSafeContext,
   ensureAuthenticated,
 } from '@team/core-utils';
-import { useOptimisticMutation, useSafeState } from '@team/hooks';
+import { uploadToSignedUrl } from '@team/file-utils';
+import { mapApiReview, useOptimisticMutation, useSafeState } from '@team/hooks';
 import React, { useCallback, useMemo, useRef } from 'react';
 
-import { api, type ApiReview, type ReviewSort, type UploadFileInput } from '@/lib/api';
+import { api, type ReviewSort, type UploadFileInput } from '@/lib/api';
 import {
   getAccessToken as getAccessTokenApi,
   getCurrentUser as getCurrentUserApi,
+  getSupabase as getSupabaseApi,
   resolveAuth as resolveAuthApi,
 } from '@/lib/auth';
 import { storage } from '@/lib/storage';
-import { getSupabase as getSupabaseApi } from '@/lib/supabase';
 
 import type { Review, ReviewAsset, ReviewFile } from '@team/types';
 
@@ -96,73 +97,6 @@ type ReviewsContextValue = {
 const [ReviewsContextProvider, useReviews] = createSafeContext<ReviewsContextValue>('Reviews');
 export { useReviews };
 
-function mapApiReview(review: ApiReview): Review {
-  const menus = review.menus ?? [];
-  const menuItemIds = menus.length > 0 ? menus.map(menu => menu.menu_id) : (review.menu_ids ?? []);
-  const menuItemName = menus.length > 0 ? menus.map(menu => menu.name).join(' / ') : undefined;
-
-  return {
-    id: review.review_id,
-    shopId: review.store_id,
-    userId: review.user_id,
-    rating: review.rating,
-    comment: review.content ?? undefined,
-    createdAt: review.created_at,
-    menuItemIds: menuItemIds.length > 0 ? menuItemIds : undefined,
-    menuItemName,
-    likesCount: review.likes_count ?? 0,
-    likedByMe: review.liked_by_me ?? false,
-    files: (review.files ?? []).map(file => ({
-      id: file.file_id,
-      fileName: file.file_name,
-      objectKey: file.object_key,
-      url: file.url ?? undefined,
-      contentType: file.content_type ?? undefined,
-    })),
-  };
-}
-
-async function uploadToSignedUrl(path: string, token: string, asset: ReviewAsset) {
-  const source = await fetch(asset.uri);
-  let bytes: Uint8Array;
-  if (typeof source.arrayBuffer === 'function') {
-    bytes = new Uint8Array(await source.arrayBuffer());
-  } else {
-    const blob = await source.blob();
-    if (typeof (blob as { arrayBuffer?: () => Promise<ArrayBuffer> }).arrayBuffer === 'function') {
-      bytes = new Uint8Array(await blob.arrayBuffer());
-    } else if (typeof FileReader !== 'undefined') {
-      const buffer = await new Promise<ArrayBuffer>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onerror = () => reject(reader.error ?? new Error('file read failed'));
-        reader.onload = () => {
-          const result = reader.result;
-          if (result instanceof ArrayBuffer) {
-            resolve(result);
-          } else {
-            reject(new Error('file read failed'));
-          }
-        };
-        reader.readAsArrayBuffer(blob);
-      });
-      bytes = new Uint8Array(buffer);
-    } else {
-      throw new Error('file read failed');
-    }
-  }
-  const { error } = await dependencyInjector
-    .get()
-    .getSupabase()
-    .storage.from(storage.SUPABASE_STORAGE_BUCKET)
-    .uploadToSignedUrl(path, token, bytes, {
-      contentType: asset.contentType,
-      upsert: true,
-    });
-  if (error) {
-    throw new Error('upload failed');
-  }
-}
-
 export function ReviewsProvider({ children }: { children: React.ReactNode }) {
   const [reviewsByShop, setReviewsByShop] = useSafeState<ReviewsState>({});
   const [userReviews, setUserReviews] = useSafeState<Review[]>([]);
@@ -230,7 +164,15 @@ export function ReviewsProvider({ children }: { children: React.ReactNode }) {
         }
         await Promise.all(
           uploads.map((upload, index) =>
-            uploadToSignedUrl(upload.path, upload.token, assets[index]),
+            uploadToSignedUrl({
+              path: upload.path,
+              token: upload.token,
+              asset: assets[index],
+              bucket: dependencyInjector
+                .get()
+                .getSupabase()
+                .storage.from(storage.SUPABASE_STORAGE_BUCKET),
+            }),
           ),
         );
         fileIDs = uploads.map(upload => upload.file_id);

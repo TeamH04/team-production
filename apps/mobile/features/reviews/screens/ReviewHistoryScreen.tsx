@@ -1,4 +1,11 @@
-import { BORDER_RADIUS, FONT_WEIGHT, formatRating, ROUTES } from '@team/constants';
+import {
+  BORDER_RADIUS,
+  FONT_WEIGHT,
+  formatRating,
+  LAYOUT,
+  ROUTES,
+  SHADOW_STYLES,
+} from '@team/constants';
 import { formatDateJa } from '@team/core-utils';
 import { useAuthErrorHandler } from '@team/hooks';
 import { TabContent } from '@team/mobile-ui';
@@ -237,12 +244,8 @@ const styles = StyleSheet.create({
   btnPressed: { opacity: 0.9 },
   card: { backgroundColor: palette.surface, borderRadius: 20, padding: 16 },
   cardShadow: {
-    elevation: 4,
+    ...SHADOW_STYLES.CARD,
     marginBottom: 16,
-    shadowColor: palette.shadow,
-    shadowOffset: { height: 6, width: 0 },
-    shadowOpacity: 0.06,
-    shadowRadius: 12,
   },
   content: { padding: 16, paddingBottom: TAB_BAR_SPACING },
   emptyBox: {
@@ -261,7 +264,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 6,
   },
-  likeText: { color: palette.mutedText, fontSize: 12, fontWeight: '700' },
+  likeText: { color: palette.mutedText, fontSize: 12, fontWeight: FONT_WEIGHT.BOLD },
   menuText: { color: palette.mutedText, marginTop: 6 },
   reviewHeader: {
     alignItems: 'center',
@@ -269,7 +272,11 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginBottom: 4,
   },
-  reviewImage: { borderRadius: 12, height: 88, width: 88 },
+  reviewImage: {
+    borderRadius: 12,
+    height: LAYOUT.REVIEW_IMAGE_SIZE,
+    width: LAYOUT.REVIEW_IMAGE_SIZE,
+  },
   reviewImages: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -284,7 +291,7 @@ const styles = StyleSheet.create({
   },
   rowCardMeta: { flex: 1, paddingRight: 12 },
   rowCardSub: { color: palette.mutedText, marginTop: 4 },
-  rowCardTitle: { color: palette.primary, fontSize: 16, fontWeight: '700' },
+  rowCardTitle: { color: palette.primary, fontSize: 16, fontWeight: FONT_WEIGHT.BOLD },
   screen: { backgroundColor: palette.background, flex: 1 },
   secondaryBtn: {
     backgroundColor: palette.secondarySurface,
@@ -296,7 +303,7 @@ const styles = StyleSheet.create({
   },
   secondaryBtnText: {
     color: palette.textOnSecondary,
-    fontWeight: '700',
+    fontWeight: FONT_WEIGHT.BOLD,
     textAlign: 'center',
   },
   tabButton: {
@@ -325,7 +332,7 @@ const styles = StyleSheet.create({
   tabTitle: {
     color: palette.primary,
     fontSize: 20,
-    fontWeight: '700',
+    fontWeight: FONT_WEIGHT.BOLD,
     marginBottom: 12,
   },
 });

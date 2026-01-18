@@ -3,31 +3,15 @@ import {
   createDependencyInjector,
   createSafeContext,
   ensureAuthenticated,
+  resolveAuthForOptimisticUpdate,
 } from '@team/core-utils';
-import { type AuthResult, type FavoritesState, useFavoritesState } from '@team/hooks';
+import { type FavoritesState, useFavoritesState } from '@team/hooks';
 import { useEffect, useMemo } from 'react';
 
 import { api } from '@/lib/api';
-import { resolveAuth } from '@/lib/auth';
-import { getSupabase, isSupabaseConfigured } from '@/lib/supabase';
+import { getSupabase, isSupabaseConfigured, resolveAuth } from '@/lib/auth';
 
 import type { ReactNode } from 'react';
-
-/**
- * ensureAuthenticated をラップして AuthResult 型を返すアダプター。
- * - local モード: skipped: true を返す（ローカル状態のみ更新）
- * - unauthenticated モード: エラーをスロー（ensureAuthenticated の動作を維持）
- * - remote モード: skipped: false, token を返す
- */
-async function resolveAuthForOptimisticUpdate(
-  authResolver: () => Promise<AuthState>,
-): Promise<AuthResult<string>> {
-  const result = await ensureAuthenticated(authResolver);
-  if (result.skipped) {
-    return { skipped: true };
-  }
-  return { skipped: false, token: result.token! };
-}
 
 // ---------------------------------------------
 // 型定義

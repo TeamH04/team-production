@@ -1,4 +1,4 @@
-import { ROUTES } from '@team/constants';
+import { FONT_WEIGHT, ROUTES } from '@team/constants';
 import { palette } from '@team/mobile-ui';
 import { type Href, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
@@ -71,7 +71,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 12,
   },
-  actionText: { color: palette.textOnSecondary, fontWeight: '700' },
+  actionText: { color: palette.textOnSecondary, fontWeight: FONT_WEIGHT.BOLD },
   actionsRow: { flexDirection: 'row', gap: 12 },
   card: {
     backgroundColor: palette.surface,
@@ -83,7 +83,7 @@ const styles = StyleSheet.create({
   cardTitle: {
     color: palette.primaryText,
     fontSize: 16,
-    fontWeight: '700',
+    fontWeight: FONT_WEIGHT.BOLD,
     marginBottom: 12,
   },
   center: { alignItems: 'center', flex: 1, justifyContent: 'center' },
@@ -93,7 +93,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 10,
   },
-  linkText: { color: palette.textOnSecondary, fontWeight: '700' },
+  linkText: { color: palette.textOnSecondary, fontWeight: FONT_WEIGHT.BOLD },
   screen: {
     backgroundColor: palette.background,
     flex: 1,
@@ -101,5 +101,5 @@ const styles = StyleSheet.create({
     paddingTop: 24,
   },
   subtitle: { color: palette.secondaryText, marginBottom: 20, marginTop: 8 },
-  title: { color: palette.primaryText, fontSize: 24, fontWeight: '700' },
+  title: { color: palette.primaryText, fontSize: 24, fontWeight: FONT_WEIGHT.BOLD },
 });

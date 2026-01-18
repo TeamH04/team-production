@@ -1,7 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
 import { ERROR_MESSAGES, FONT_WEIGHT } from '@team/constants';
+import { useShopFilter } from '@team/hooks';
 import { palette } from '@team/mobile-ui';
-import { BUDGET_LABEL, type Shop } from '@team/shop-core';
+import { formatShopMeta, type SortType } from '@team/shop-core';
 import { withAlpha } from '@team/theme';
 import { useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
@@ -12,7 +13,6 @@ import { FAVORITES_SORT_OPTIONS } from '@/constants/sortOptions';
 import { TAB_BAR_SPACING } from '@/constants/TabBarSpacing';
 import { useFavorites } from '@/features/favorites/FavoritesContext';
 import { useStores } from '@/features/stores/StoresContext';
-import { useShopFilter, type SortType } from '@/hooks/useShopFilter';
 import { useShopNavigator } from '@/hooks/useShopNavigator';
 
 export default function FavoritesScreen() {
@@ -40,12 +40,6 @@ export default function FavoritesScreen() {
     searchText,
     sortType,
   });
-
-  const formatFavoritesMeta = useCallback(
-    (shop: Shop) =>
-      `${shop.category} • 徒歩${shop.distanceMinutes}分 • 予算 ${BUDGET_LABEL[shop.budget]}`,
-    [],
-  );
 
   /**
    * ソート方法を変更し、モーダルを閉じる
@@ -165,7 +159,7 @@ export default function FavoritesScreen() {
           scrollEnabled={true}
           contentContainerStyle={styles.listContent}
           renderItem={({ item }) => (
-            <ShopCard shop={item} onPress={navigateToShop} formatMeta={formatFavoritesMeta} />
+            <ShopCard shop={item} onPress={navigateToShop} formatMeta={formatShopMeta} />
           )}
         />
       ) : (
@@ -216,7 +210,7 @@ const styles = StyleSheet.create({
   screenTitle: {
     color: palette.primaryText,
     fontSize: 28,
-    fontWeight: '700',
+    fontWeight: FONT_WEIGHT.BOLD,
   },
   searchInput: {
     color: palette.primaryText,
@@ -254,13 +248,10 @@ const styles = StyleSheet.create({
   sortModalContent: {
     backgroundColor: palette.surface,
     borderRadius: 12,
+    boxShadow: '0px 4px 8px rgba(0, 0, 0, 0.15)',
     maxHeight: 200,
     minWidth: 250,
     overflow: 'hidden',
-    shadowColor: palette.shadow,
-    shadowOffset: { height: 4, width: 0 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
     width: 280,
   },
   sortOption: {
@@ -280,10 +271,10 @@ const styles = StyleSheet.create({
   sortOptionText: {
     color: palette.primaryText,
     fontSize: 14,
-    fontWeight: '500',
+    fontWeight: FONT_WEIGHT.MEDIUM,
   },
   sortOptionTextActive: {
-    fontWeight: '700',
+    fontWeight: FONT_WEIGHT.BOLD,
   },
   sortOptionsFlatList: {
     width: 280,

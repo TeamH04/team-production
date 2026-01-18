@@ -1,37 +1,11 @@
-import { BORDER_RADIUS, formatRating, SPACING } from '@team/constants';
-import { palette } from '@team/mobile-ui';
-import { BUDGET_LABEL, type Shop } from '@team/shop-core';
+import { BORDER_RADIUS, FONT_WEIGHT, formatRating, LAYOUT, SPACING } from '@team/constants';
+import { palette, type ShopCardProps, type ShopCardVariant } from '@team/mobile-ui';
+import { BUDGET_LABEL } from '@team/shop-core';
 import { Image } from 'expo-image';
 import { memo } from 'react';
-import {
-  Image as RNImage,
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-  type StyleProp,
-  type ViewStyle,
-} from 'react-native';
+import { Image as RNImage, Pressable, StyleSheet, Text, View } from 'react-native';
 
-/**
- * ShopCard の表示バリエーション
- * - 'large': 縦型レイアウト（画像が上、コンテンツが下）- HomeScreen 用
- * - 'compact': 横型レイアウト（画像が左、コンテンツが右）- Search/Favorites 用
- */
-export type ShopCardVariant = 'large' | 'compact';
-
-export interface ShopCardProps {
-  /** 店舗データ */
-  shop: Shop;
-  /** カード押下時のコールバック */
-  onPress: (shopId: string) => void;
-  /** 表示バリエーション（デフォルト: 'compact'） */
-  variant?: ShopCardVariant;
-  /** カスタムスタイル */
-  style?: StyleProp<ViewStyle>;
-  /** メタ情報のフォーマットをカスタマイズ（デフォルトは標準フォーマット） */
-  formatMeta?: (shop: Shop) => string;
-}
+export type { ShopCardProps, ShopCardVariant };
 
 /**
  * 店舗カードの共通コンポーネント
@@ -115,14 +89,11 @@ const styles = StyleSheet.create({
     borderColor: palette.divider,
     borderRadius: BORDER_RADIUS.LARGE,
     borderWidth: 1,
+    boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.05)',
     elevation: 2,
     flexDirection: 'row',
     marginBottom: SPACING.MD,
     overflow: 'hidden',
-    shadowColor: palette.shadow,
-    shadowOffset: { height: 2, width: 0 },
-    shadowOpacity: 0.05,
-    shadowRadius: SPACING.XS,
   },
   compactDescription: {
     color: palette.secondaryText,
@@ -152,7 +123,7 @@ const styles = StyleSheet.create({
     color: palette.primaryText,
     flex: 1,
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: FONT_WEIGHT.SEMIBOLD,
   },
   compactRatingBadge: {
     backgroundColor: palette.highlight,
@@ -164,7 +135,7 @@ const styles = StyleSheet.create({
   compactRatingText: {
     color: palette.ratingText,
     fontSize: 11,
-    fontWeight: '600',
+    fontWeight: FONT_WEIGHT.SEMIBOLD,
   },
 
   // Large variant styles (Home)
@@ -190,7 +161,7 @@ const styles = StyleSheet.create({
     marginTop: SPACING.MD,
   },
   largeImage: {
-    height: 176,
+    height: LAYOUT.SHOP_CARD_IMAGE_HEIGHT,
     width: '100%',
   },
   largeMetaRow: {
@@ -199,18 +170,15 @@ const styles = StyleSheet.create({
     marginTop: SPACING.MD,
   },
   largeShadow: {
+    boxShadow: '0px 8px 16px rgba(0, 0, 0, 0.08)',
     elevation: 5,
     marginBottom: SPACING.XL,
-    shadowColor: palette.shadow,
-    shadowOffset: { height: SPACING.SM, width: 0 },
-    shadowOpacity: 0.08,
-    shadowRadius: SPACING.LG,
   },
   largeTitle: {
     color: palette.primaryText,
     flex: 1,
     fontSize: 18,
-    fontWeight: '700',
+    fontWeight: FONT_WEIGHT.BOLD,
     marginRight: SPACING.MD,
   },
   metaSeparator: {
@@ -231,6 +199,6 @@ const styles = StyleSheet.create({
   ratingText: {
     color: palette.ratingText,
     fontSize: 13,
-    fontWeight: '600',
+    fontWeight: FONT_WEIGHT.SEMIBOLD,
   },
 });

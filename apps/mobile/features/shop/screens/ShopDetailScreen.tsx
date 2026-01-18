@@ -6,11 +6,15 @@ import {
   FONT_WEIGHT,
   formatRating,
   ICON_SIZE,
+  LAYOUT,
+  RECOMMENDED_MENU_COUNT,
   ROUTES,
+  SHADOW_STYLES,
+  UI_LABELS,
 } from '@team/constants';
 import { formatDateJa } from '@team/core-utils';
 import { useAuthErrorHandler } from '@team/hooks';
-import { palette } from '@team/mobile-ui';
+import { palette, showAuthRequiredAlert } from '@team/mobile-ui';
 import { BUDGET_LABEL, getShopImages, resolveMenuName } from '@team/shop-core';
 import { Image } from 'expo-image';
 import { useFocusEffect, useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
@@ -29,10 +33,12 @@ import {
   View,
 } from 'react-native';
 
+import { Accordion } from '@/components/Accordion';
 import { useFavorites } from '@/features/favorites/FavoritesContext';
 import { useReviews } from '@/features/reviews/ReviewsContext';
 import { useStores } from '@/features/stores/StoresContext';
 import { useVisited } from '@/features/visited/VisitedContext';
+import { ENV } from '@/lib/config';
 import { storage } from '@/lib/storage';
 
 import type { ReviewSort } from '@/lib/api';
@@ -57,15 +63,12 @@ export default function ShopDetailScreen() {
   const { getStoreById, loading: storesLoading } = useStores();
 
   // UI state
-  const [isAccordionOpen, setIsAccordionOpen] = useState(false);
-  const [isMapOpen, setIsMapOpen] = useState(false);
-  const [isReviewsOpen, setIsReviewsOpen] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [reviewSort, setReviewSort] = useState<ReviewSort>('new');
 
   const shop = useMemo(() => (id ? (getStoreById(id) ?? null) : null), [getStoreById, id]);
 
-  const webBaseUrl = process.env.EXPO_PUBLIC_WEB_BASE_URL?.replace(/\/$/, '');
+  const webBaseUrl = ENV.WEB_BASE_URL?.replace(/\/$/, '');
   const reviews = useMemo(() => (shop ? getReviews(shop.id) : []), [shop, getReviews]);
   const isFav = useMemo(() => (shop ? isFavorite(shop.id) : false), [shop, isFavorite]);
   const isVis = useMemo(() => (shop ? isVisited(shop.id) : false), [shop, isVisited]);
@@ -79,20 +82,20 @@ export default function ShopDetailScreen() {
   // メニュー：1つ目の「おすすめ2つ」＋アコーディオンUIを採用
   const recommendedMenu = useMemo(() => {
     if (!shop?.menu) return [];
-    return shop.menu.slice(0, 2);
+    return shop.menu.slice(0, RECOMMENDED_MENU_COUNT);
   }, [shop]);
 
   // Header: 1つ目の黒系を採用（見た目が締まる）
   useLayoutEffect(() => {
     if (!shop) return;
     navigation.setOptions?.({
-      headerBackTitle: '戻る',
+      headerBackTitle: UI_LABELS.BACK,
       headerShadowVisible: false,
       headerShown: true,
       headerStatusBarHeight: 0,
       headerStyle: {
         backgroundColor: palette.accent,
-        height: 50,
+        height: LAYOUT.HEADER_HEIGHT,
       },
       headerTintColor: palette.textOnAccent,
       headerTitleAlign: 'center',
@@ -107,7 +110,7 @@ export default function ShopDetailScreen() {
 
   useFocusEffect(
     useCallback(() => {
-      navigation.setOptions?.({ headerBackTitle: '戻る' });
+      navigation.setOptions?.({ headerBackTitle: UI_LABELS.BACK });
     }, [navigation]),
   );
 
@@ -167,10 +170,7 @@ export default function ShopDetailScreen() {
       } catch (err) {
         const errorMessage = handleError(err, {
           onAuthRequired: () => {
-            Alert.alert(AUTH_ERROR_MESSAGES.LOGIN_REQUIRED_TITLE, AUTH_ERROR_MESSAGES.LIKE, [
-              { text: 'キャンセル', style: 'cancel' },
-              { text: 'ログイン', onPress: () => router.push(ROUTES.LOGIN) },
-            ]);
+            showAuthRequiredAlert(AUTH_ERROR_MESSAGES.LIKE, () => router.push('/login'));
           },
         });
         if (errorMessage) {
@@ -188,10 +188,7 @@ export default function ShopDetailScreen() {
     } catch (err) {
       const errorMessage = handleError(err, {
         onAuthRequired: () => {
-          Alert.alert(AUTH_ERROR_MESSAGES.LOGIN_REQUIRED_TITLE, AUTH_ERROR_MESSAGES.FAVORITE, [
-            { text: 'キャンセル', style: 'cancel' },
-            { text: 'ログイン', onPress: () => router.push(ROUTES.LOGIN) },
-          ]);
+          showAuthRequiredAlert(AUTH_ERROR_MESSAGES.FAVORITE, () => router.push('/login'));
         },
       });
       if (errorMessage) {
@@ -217,7 +214,7 @@ export default function ShopDetailScreen() {
       <View style={[styles.screen, styles.centered]}>
         <Text style={styles.titleLoading}>店舗が見つかりませんでした</Text>
         <Pressable style={styles.secondaryBtn} onPress={() => router.back()}>
-          <Text style={styles.secondaryBtnText}>戻る</Text>
+          <Text style={styles.secondaryBtnText}>{UI_LABELS.BACK}</Text>
         </Pressable>
       </View>
     );
@@ -344,7 +341,7 @@ export default function ShopDetailScreen() {
                 style={styles.tagPill}
                 accessibilityLabel={`タグ ${tag} で検索`}
                 onPress={() => {
-                  navigation.setOptions?.({ headerBackTitle: '戻る' });
+                  navigation.setOptions?.({ headerBackTitle: UI_LABELS.BACK });
                   router.navigate({ pathname: ROUTES.TABS, params: { tag } });
                 }}
               >
@@ -355,206 +352,184 @@ export default function ShopDetailScreen() {
 
           <Text style={styles.descriptionText}>{shop.description}</Text>
 
-          {/* Menu accordion: 1つ目採用 */}
+          {/* Menu accordion */}
           {shop.menu && shop.menu.length > 0 && (
-            <View style={[styles.card, styles.cardShadow, styles.menuSection]}>
-              <Pressable style={styles.accordionHeader} onPress={() => setIsAccordionOpen(v => !v)}>
-                <Text style={styles.sectionTitle}>メニュー</Text>
-                <Ionicons
-                  color={palette.muted}
-                  name={isAccordionOpen ? 'chevron-up' : 'chevron-down'}
-                  size={20}
-                />
-              </Pressable>
-
-              {isAccordionOpen && (
-                <View style={styles.accordionContent}>
-                  <View style={styles.recommendedBox}>
-                    <Text style={styles.recommendedLabel}>おすすめメニュー</Text>
-                    {recommendedMenu.map(item => (
-                      <View key={item.id} style={styles.recommendedItem}>
-                        <Ionicons
-                          color={palette.accent}
-                          name='star'
-                          size={14}
-                          style={styles.menuIcon}
-                        />
-                        <Text style={styles.menuItemText}>{item.name}</Text>
-                      </View>
-                    ))}
+            <Accordion
+              title='メニュー'
+              titleColor={palette.primary}
+              iconColor={palette.muted}
+              containerStyle={[styles.card, styles.cardShadow, styles.menuSection]}
+              headerStyle={styles.accordionHeader}
+              titleStyle={styles.sectionTitle}
+              contentStyle={styles.accordionContent}
+            >
+              <View style={styles.recommendedBox}>
+                <Text style={styles.recommendedLabel}>{UI_LABELS.RECOMMENDED_MENU}</Text>
+                {recommendedMenu.map(item => (
+                  <View key={item.id} style={styles.recommendedItem}>
+                    <Ionicons
+                      color={palette.accent}
+                      name='star'
+                      size={14}
+                      style={styles.menuIcon}
+                    />
+                    <Text style={styles.menuItemText}>{item.name}</Text>
                   </View>
+                ))}
+              </View>
 
-                  <Pressable
-                    onPress={() => {
-                      navigation.setOptions?.({ headerBackTitle: '戻る' });
-                      router.push({
-                        pathname: ROUTES.MENU,
-                        params: { id: shop.id },
-                      });
-                    }}
-                    style={styles.moreBtnOutline}
-                  >
-                    <Ionicons color={palette.primary} name='add-circle-outline' size={18} />
-                    <Text style={styles.moreBtnText}>もっと見る</Text>
-                  </Pressable>
-                </View>
-              )}
-            </View>
+              <Pressable
+                onPress={() => {
+                  navigation.setOptions?.({ headerBackTitle: UI_LABELS.BACK });
+                  router.push({
+                    pathname: ROUTES.MENU,
+                    params: { id: shop.id },
+                  });
+                }}
+                style={styles.moreBtnOutline}
+              >
+                <Ionicons color={palette.primary} name='add-circle-outline' size={18} />
+                <Text style={styles.moreBtnText}>もっと見る</Text>
+              </Pressable>
+            </Accordion>
           )}
 
-          {/* Map: 1つ目のカードUI + 2つ目の存在チェック */}
+          {/* Map accordion */}
           {mapOpenUrl ? (
-            <View style={[styles.card, styles.cardShadow, styles.menuSection]}>
-              <Pressable style={styles.accordionHeader} onPress={() => setIsMapOpen(v => !v)}>
-                <Text style={styles.sectionTitle}>場所</Text>
+            <Accordion
+              title='場所'
+              titleColor={palette.primary}
+              iconColor={palette.muted}
+              containerStyle={[styles.card, styles.cardShadow, styles.menuSection]}
+              headerStyle={styles.accordionHeader}
+              titleStyle={styles.sectionTitle}
+              contentStyle={styles.accordionContent}
+            >
+              <View style={styles.menuAddressBlock}>
+                <Text style={styles.menuAddressLabel}>住所</Text>
+                <Text style={styles.menuAddressText}>
+                  {shop.address?.trim() ? shop.address : '住所情報がありません'}
+                </Text>
+              </View>
+              <Pressable onPress={handleOpenMap} style={styles.moreBtnOutline}>
                 <Ionicons
-                  color={palette.muted}
-                  name={isMapOpen ? 'chevron-up' : 'chevron-down'}
-                  size={20}
+                  color={palette.primary}
+                  name='map-outline'
+                  size={18}
+                  style={styles.mapIcon}
                 />
+                <Text style={styles.moreBtnText}>Googleマップで確認</Text>
               </Pressable>
-
-              {isMapOpen && (
-                <View style={styles.accordionContent}>
-                  <View style={styles.menuAddressBlock}>
-                    <Text style={styles.menuAddressLabel}>住所</Text>
-                    <Text style={styles.menuAddressText}>
-                      {shop.address?.trim() ? shop.address : '住所情報がありません'}
-                    </Text>
-                  </View>
-                  <Pressable onPress={handleOpenMap} style={styles.moreBtnOutline}>
-                    <Ionicons
-                      color={palette.primary}
-                      name='map-outline'
-                      size={18}
-                      style={styles.mapIcon}
-                    />
-                    <Text style={styles.moreBtnText}>Googleマップで確認</Text>
-                  </Pressable>
-                </View>
-              )}
-            </View>
+            </Accordion>
           ) : null}
 
-          {/* Reviews: 2つ目（sort + like + files + loading）を採用 */}
-          <View style={[styles.card, styles.cardShadow, styles.menuSection]}>
-            <Pressable style={styles.accordionHeader} onPress={() => setIsReviewsOpen(v => !v)}>
-              <Text style={styles.sectionTitle}>レビュー</Text>
-              <Ionicons
-                color={palette.muted}
-                name={isReviewsOpen ? 'chevron-up' : 'chevron-down'}
-                size={20}
-              />
+          {/* Reviews accordion */}
+          <Accordion
+            title='レビュー'
+            titleColor={palette.primary}
+            iconColor={palette.muted}
+            containerStyle={[styles.card, styles.cardShadow, styles.menuSection]}
+            headerStyle={styles.accordionHeader}
+            titleStyle={styles.sectionTitle}
+            contentStyle={styles.accordionContent}
+          >
+            <View style={styles.reviewIntro}>
+              <Text style={styles.reviewSub}>みんなの感想や体験談</Text>
+            </View>
+
+            <View style={[styles.sortRow, styles.reviewSortRow]}>
+              <Pressable
+                onPress={() => setReviewSort('new')}
+                style={[styles.sortPill, reviewSort === 'new' && styles.sortPillActive]}
+              >
+                <Text style={[styles.sortText, reviewSort === 'new' && styles.sortTextActive]}>
+                  新しい順
+                </Text>
+              </Pressable>
+              <Pressable
+                onPress={() => setReviewSort('liked')}
+                style={[styles.sortPill, reviewSort === 'liked' && styles.sortPillActive]}
+              >
+                <Text style={[styles.sortText, reviewSort === 'liked' && styles.sortTextActive]}>
+                  高評価順
+                </Text>
+              </Pressable>
+            </View>
+
+            <Pressable
+              onPress={() => {
+                navigation.setOptions?.({ headerBackTitle: UI_LABELS.BACK });
+                router.push(ROUTES.REVIEW(shop.id));
+              }}
+              style={[styles.primaryBtn, styles.reviewPrimaryBtn]}
+            >
+              <Text style={styles.primaryBtnText}>レビューを書く</Text>
             </Pressable>
 
-            {isReviewsOpen && (
-              <View style={styles.accordionContent}>
-                <View style={styles.reviewIntro}>
-                  <Text style={styles.reviewSub}>みんなの感想や体験談</Text>
-                </View>
+            <View style={styles.reviewDivider} />
 
-                <View style={[styles.sortRow, styles.reviewSortRow]}>
-                  <Pressable
-                    onPress={() => setReviewSort('new')}
-                    style={[styles.sortPill, reviewSort === 'new' && styles.sortPillActive]}
-                  >
-                    <Text style={[styles.sortText, reviewSort === 'new' && styles.sortTextActive]}>
-                      新しい順
-                    </Text>
-                  </Pressable>
-                  <Pressable
-                    onPress={() => setReviewSort('liked')}
-                    style={[styles.sortPill, reviewSort === 'liked' && styles.sortPillActive]}
-                  >
-                    <Text
-                      style={[styles.sortText, reviewSort === 'liked' && styles.sortTextActive]}
-                    >
-                      高評価順
-                    </Text>
-                  </Pressable>
-                </View>
-
-                {/* 【修正3】onPress の重複定義を一つに整理 */}
-                <Pressable
-                  onPress={() => {
-                    navigation.setOptions?.({ headerBackTitle: '戻る' });
-                    router.push(ROUTES.REVIEW(shop.id));
-                  }}
-                  style={[styles.primaryBtn, styles.reviewPrimaryBtn]}
-                >
-                  <Text style={styles.primaryBtnText}>レビューを書く</Text>
-                </Pressable>
-
-                <View style={styles.reviewDivider} />
-
-                {isReviewsLoading ? (
-                  <View style={[styles.card, styles.cardShadow]}>
-                    <Text style={styles.muted}>レビューを読み込み中...</Text>
-                  </View>
-                ) : reviews.length === 0 ? (
-                  <View style={[styles.card, styles.cardShadow]}>
-                    <Text style={styles.muted}>
-                      まだレビューがありません。最初のレビューを投稿しましょう！
-                    </Text>
-                  </View>
-                ) : (
-                  reviews.map(review => (
-                    <View key={review.id} style={[styles.card, styles.cardShadow]}>
-                      <View style={styles.reviewHeaderRow}>
-                        <Text style={styles.reviewTitle}>
-                          ★ {review.rating}
-                          {' ・ '}
-                          {review.createdAt ? formatDateJa(review.createdAt) : ''}
-                        </Text>
-
-                        <Pressable
-                          onPress={() => handleToggleLike(review.id)}
-                          style={[styles.likeButton, review.likedByMe && styles.likeButtonActive]}
-                        >
-                          <Text
-                            style={[styles.likeText, review.likedByMe && styles.likeTextActive]}
-                          >
-                            いいね {review.likesCount}
-                          </Text>
-                        </Pressable>
-                      </View>
-
-                      {(() => {
-                        const menuName = getMenuName(review);
-                        if (!menuName) return null;
-                        return <Text style={styles.reviewMenu}>メニュー: {menuName}</Text>;
-                      })()}
-
-                      {review.comment ? (
-                        <Text style={styles.reviewBody}>{review.comment}</Text>
-                      ) : null}
-
-                      {review.files && review.files.length > 0 && (
-                        <ScrollView
-                          horizontal
-                          showsHorizontalScrollIndicator={false}
-                          style={styles.reviewFiles}
-                        >
-                          {review.files.map(file => {
-                            const url = file.url ?? storage.buildStorageUrl(file.objectKey);
-                            if (!url) return null;
-                            return (
-                              <Image
-                                key={file.id}
-                                source={{ uri: url }}
-                                style={styles.reviewImage}
-                                contentFit='cover'
-                              />
-                            );
-                          })}
-                        </ScrollView>
-                      )}
-                    </View>
-                  ))
-                )}
+            {isReviewsLoading ? (
+              <View style={[styles.card, styles.cardShadow]}>
+                <Text style={styles.muted}>レビューを読み込み中...</Text>
               </View>
+            ) : reviews.length === 0 ? (
+              <View style={[styles.card, styles.cardShadow]}>
+                <Text style={styles.muted}>
+                  まだレビューがありません。最初のレビューを投稿しましょう！
+                </Text>
+              </View>
+            ) : (
+              reviews.map(review => (
+                <View key={review.id} style={[styles.card, styles.cardShadow]}>
+                  <View style={styles.reviewHeaderRow}>
+                    <Text style={styles.reviewTitle}>
+                      ★ {review.rating}
+                      {' ・ '}
+                      {review.createdAt ? formatDateJa(review.createdAt) : ''}
+                    </Text>
+
+                    <Pressable
+                      onPress={() => handleToggleLike(review.id)}
+                      style={[styles.likeButton, review.likedByMe && styles.likeButtonActive]}
+                    >
+                      <Text style={[styles.likeText, review.likedByMe && styles.likeTextActive]}>
+                        いいね {review.likesCount}
+                      </Text>
+                    </Pressable>
+                  </View>
+
+                  {(() => {
+                    const menuName = getMenuName(review);
+                    if (!menuName) return null;
+                    return <Text style={styles.reviewMenu}>メニュー: {menuName}</Text>;
+                  })()}
+
+                  {review.comment ? <Text style={styles.reviewBody}>{review.comment}</Text> : null}
+
+                  {review.files && review.files.length > 0 && (
+                    <ScrollView
+                      horizontal
+                      showsHorizontalScrollIndicator={false}
+                      style={styles.reviewFiles}
+                    >
+                      {review.files.map(file => {
+                        const url = file.url ?? storage.buildStorageUrl(file.objectKey);
+                        if (!url) return null;
+                        return (
+                          <Image
+                            key={file.id}
+                            source={{ uri: url }}
+                            style={styles.reviewImage}
+                            contentFit='cover'
+                          />
+                        );
+                      })}
+                    </ScrollView>
+                  )}
+                </View>
+              ))
             )}
-          </View>
+          </Accordion>
         </View>
       </ScrollView>
     </View>
@@ -566,7 +541,7 @@ const styles = StyleSheet.create({
   accordionHeader: {
     alignItems: 'center',
     backgroundColor: palette.white,
-    borderRadius: 12,
+    borderRadius: BORDER_RADIUS.MEDIUM,
     flexDirection: 'row',
     justifyContent: 'space-between',
     paddingHorizontal: 12,
@@ -576,14 +551,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: palette.arrowButtonBg,
     borderRadius: 20,
+    boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.2)',
     elevation: 3,
     height: 40,
     justifyContent: 'center',
     position: 'absolute',
-    shadowColor: palette.shadow,
-    shadowOffset: { height: 2, width: 0 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
     top: '50%',
     transform: [{ translateY: -20 }],
     width: 40,
@@ -593,12 +565,8 @@ const styles = StyleSheet.create({
   btnPressed: { opacity: 0.85 },
   card: { backgroundColor: palette.white, borderRadius: 16, padding: 16 },
   cardShadow: {
-    elevation: 4,
+    ...SHADOW_STYLES.CARD,
     marginBottom: 16,
-    shadowColor: palette.shadow,
-    shadowOffset: { height: 6, width: 0 },
-    shadowOpacity: 0.06,
-    shadowRadius: 12,
   },
   centered: { alignItems: 'center', justifyContent: 'center' },
   container: { padding: 16 },
@@ -624,7 +592,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
-  hero: { height: 220, width: SCREEN_WIDTH },
+  hero: { height: LAYOUT.HERO_IMAGE_HEIGHT, width: SCREEN_WIDTH },
   heroContainer: {
     backgroundColor: palette.heroPlaceholder,
     position: 'relative',
@@ -646,11 +614,11 @@ const styles = StyleSheet.create({
   mapIcon: { marginRight: 8 },
   menuAddressBlock: {
     backgroundColor: palette.grayLight,
-    borderRadius: 12,
+    borderRadius: BORDER_RADIUS.MEDIUM,
     marginBottom: 12,
     padding: 12,
   },
-  menuAddressLabel: { color: palette.secondaryText, fontSize: 12, fontWeight: '700' },
+  menuAddressLabel: { color: palette.secondaryText, fontSize: 12, fontWeight: FONT_WEIGHT.BOLD },
   menuAddressText: {
     color: palette.primaryText,
     fontSize: 14,
@@ -658,20 +626,20 @@ const styles = StyleSheet.create({
     marginTop: 6,
   },
   menuIcon: { marginRight: 10 },
-  menuItemText: { color: palette.primaryText, fontSize: 15, fontWeight: '700' },
+  menuItemText: { color: palette.primaryText, fontSize: 15, fontWeight: FONT_WEIGHT.BOLD },
   menuSection: { marginTop: 8 },
   meta: { color: palette.muted, marginBottom: 12, marginTop: 4 },
   moreBtnOutline: {
     alignItems: 'center',
     borderColor: palette.primary,
-    borderRadius: 12,
+    borderRadius: BORDER_RADIUS.MEDIUM,
     borderWidth: 1,
     flexDirection: 'row',
     justifyContent: 'center',
     marginTop: 12,
     paddingVertical: 14,
   },
-  moreBtnText: { color: palette.primary, fontWeight: '700' },
+  moreBtnText: { color: palette.primary, fontWeight: FONT_WEIGHT.BOLD },
   muted: { color: palette.muted, marginTop: 6 },
   paginationContainer: {
     bottom: 12,
@@ -692,18 +660,18 @@ const styles = StyleSheet.create({
   paginationDotActive: { backgroundColor: palette.primaryOnAccent, opacity: 1 },
   primaryBtn: {
     backgroundColor: palette.accent,
-    borderRadius: 12,
+    borderRadius: BORDER_RADIUS.MEDIUM,
     marginBottom: 16,
     paddingVertical: 12,
   },
   primaryBtnText: {
     color: palette.primaryOnAccent,
-    fontWeight: '700',
+    fontWeight: FONT_WEIGHT.BOLD,
     textAlign: 'center',
   },
   recommendedBox: {
     backgroundColor: palette.grayLight,
-    borderRadius: 12,
+    borderRadius: BORDER_RADIUS.MEDIUM,
     marginBottom: 16,
     padding: 12,
   },
@@ -733,13 +701,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
-  reviewImage: { borderRadius: 12, height: 88, marginRight: 10, width: 88 },
+  reviewImage: {
+    borderRadius: BORDER_RADIUS.MEDIUM,
+    height: LAYOUT.REVIEW_IMAGE_SIZE,
+    marginRight: 10,
+    width: LAYOUT.REVIEW_IMAGE_SIZE,
+  },
   reviewIntro: { marginBottom: 8 },
   reviewMenu: { color: palette.muted, marginTop: 6 },
   reviewPrimaryBtn: { marginBottom: 12, marginTop: 4 },
   reviewSortRow: { marginBottom: 12 },
   reviewSub: { color: palette.secondaryText, fontSize: 13, marginTop: 2 },
-  reviewTitle: { color: palette.primary, fontWeight: '700' },
+  reviewTitle: { color: palette.primary, fontWeight: FONT_WEIGHT.BOLD },
   screen: { backgroundColor: palette.background, flex: 1 },
   secondaryBtn: {
     backgroundColor: palette.secondarySurface,
@@ -750,8 +723,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 10,
   },
-  secondaryBtnText: { color: palette.textOnSecondary, fontWeight: '700' },
-  sectionTitle: { color: palette.primary, fontSize: 18, fontWeight: '700' },
+  secondaryBtnText: { color: palette.textOnSecondary, fontWeight: FONT_WEIGHT.BOLD },
+  sectionTitle: { color: palette.primary, fontSize: 18, fontWeight: FONT_WEIGHT.BOLD },
   shareBtn: { marginLeft: 8, padding: 4 },
   shareBtnDisabled: { opacity: 0.4 },
   sortPill: {
@@ -787,6 +760,6 @@ const styles = StyleSheet.create({
     fontWeight: FONT_WEIGHT.BOLD,
     marginRight: 0,
   },
-  titleLoading: { color: palette.secondaryText, fontSize: 18, fontWeight: '700' },
+  titleLoading: { color: palette.secondaryText, fontSize: 18, fontWeight: FONT_WEIGHT.BOLD },
   visitedBtn: { marginLeft: 8 },
 });
