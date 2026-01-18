@@ -97,4 +97,17 @@ export const palette = {
   menuSelectedBorder: primary,
   menuSelectedText: primary,
   muted: withAlpha(textOnBackground, 0.4),
+
+  // ガラスモーフィズムUI（ログイン画面など）
+  glassBg: 'rgba(255, 255, 255, 0.1)',
+  glassBorder: 'rgba(255, 255, 255, 0.2)',
+  glassPressed: 'rgba(255, 255, 255, 0.15)',
+  glassShadow: 'rgba(0, 0, 0, 0.3)',
+  overlay: 'rgba(0, 0, 0, 0.15)',
+
+  // 開発者モードUI
+  devBoxBg: 'rgba(0, 0, 0, 0.3)',
+  devBoxBorder: 'rgba(255, 255, 255, 0.2)',
+  devButtonBg: 'rgba(255, 255, 255, 0.15)',
+  devButtonPressed: 'rgba(255, 255, 255, 0.25)',
 };
