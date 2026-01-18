@@ -1,3 +1,4 @@
+import { toggleArrayItem, addToArray, removeFromArray } from '@team/core-utils';
 import { useCallback, useMemo } from 'react';
 
 /**
@@ -32,21 +33,21 @@ export type UseFavoriteToggleResult = {
  * Toggle logic for adding/removing an ID from a list
  */
 export function toggleFavoriteId(ids: string[], id: string): string[] {
-  return ids.includes(id) ? ids.filter(existingId => existingId !== id) : [...ids, id];
+  return toggleArrayItem(ids, id);
 }
 
 /**
  * Add an ID to a list if not already present
  */
 export function addFavoriteId(ids: string[], id: string): string[] {
-  return ids.includes(id) ? ids : [...ids, id];
+  return addToArray(ids, id);
 }
 
 /**
  * Remove an ID from a list
  */
 export function removeFavoriteId(ids: string[], id: string): string[] {
-  return ids.filter(existingId => existingId !== id);
+  return removeFromArray(ids, id);
 }
 
 /**
