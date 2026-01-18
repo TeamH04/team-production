@@ -6,6 +6,8 @@
  */
 import { mock } from 'node:test';
 
+import { TEST_DEFAULT_TOKEN } from './fixtures';
+
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { AuthState } from '@team/core-utils';
 
@@ -26,7 +28,7 @@ export type { AuthState };
 export interface ContextTestSetupOptions {
   /** 認証モード */
   authMode: AuthMode;
-  /** リモートモード時のトークン（デフォルト: 'test-token'） */
+  /** リモートモード時のトークン（デフォルト: TEST_DEFAULT_TOKEN） */
   token?: string;
 }
 
@@ -66,7 +68,7 @@ export interface ContextTestSetupResult<TCustomMocks> {
  * 認証状態を返すモック関数を作成
  *
  * @example
- * const resolveAuth = createMockAuth({ mode: 'remote', token: 'test-token' });
+ * const resolveAuth = createMockAuth({ mode: 'remote', token: TEST_DEFAULT_TOKEN });
  */
 export function createMockAuth(state: AuthState) {
   return mock.fn(async () => state);
@@ -131,7 +133,7 @@ export function createMockIsSupabaseConfigured(configured = false) {
 /**
  * アクセストークン取得関数のモックを作成
  */
-export function createMockGetAccessToken(token: string | null = 'test-token') {
+export function createMockGetAccessToken(token: string | null = TEST_DEFAULT_TOKEN) {
   return mock.fn(async () => token);
 }
 
@@ -150,7 +152,7 @@ export function createMockGetCurrentUser<T>(user: T | null) {
  * 認証モードから認証状態を生成
  */
 function createAuthState(options: ContextTestSetupOptions): AuthState {
-  const { authMode, token = 'test-token' } = options;
+  const { authMode, token = TEST_DEFAULT_TOKEN } = options;
 
   switch (authMode) {
     case 'remote':
@@ -211,7 +213,7 @@ export function createContextTestSetup<TCustomMocks>(
   const baseMocks = createBaseMocks(authState);
   const customMocks = createCustomMocks(baseMocks);
 
-  const token = options.authMode === 'remote' ? (options.token ?? 'test-token') : null;
+  const token = options.authMode === 'remote' ? (options.token ?? TEST_DEFAULT_TOKEN) : null;
 
   return {
     baseMocks,

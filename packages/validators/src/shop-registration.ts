@@ -79,28 +79,25 @@ export function validateStep(step: StepData): ValidationResult {
     if (step.isMultiple) {
       const hasValue = step.value.some(v => v.value.trim().length > 0);
       if (!hasValue) {
-        return {
-          isValid: false,
-          errorTitle: VALIDATION_MESSAGES.INPUT_MISSING_TITLE,
-          errorMessage: `${step.title} ${VALIDATION_MESSAGES.REQUIRED_SUFFIX}`,
-        };
+        return createValidationError(
+          VALIDATION_MESSAGES.INPUT_MISSING_TITLE,
+          `${step.title} ${VALIDATION_MESSAGES.REQUIRED_SUFFIX}`,
+        );
       }
     } else if (!step.isBudgetRange && typeof step.value === 'string') {
       if (!step.value.trim()) {
-        return {
-          isValid: false,
-          errorTitle: VALIDATION_MESSAGES.INPUT_MISSING_TITLE,
-          errorMessage: `${step.title} ${VALIDATION_MESSAGES.REQUIRED_SUFFIX}`,
-        };
+        return createValidationError(
+          VALIDATION_MESSAGES.INPUT_MISSING_TITLE,
+          `${step.title} ${VALIDATION_MESSAGES.REQUIRED_SUFFIX}`,
+        );
       }
     } else if (step.key === 'address' && typeof step.value === 'string') {
       // 住所の追加チェックなどがあればここに
       if (!step.value.trim()) {
-        return {
-          isValid: false,
-          errorTitle: VALIDATION_MESSAGES.INPUT_MISSING_TITLE,
-          errorMessage: `住所${VALIDATION_MESSAGES.REQUIRED_SUFFIX}`,
-        };
+        return createValidationError(
+          VALIDATION_MESSAGES.INPUT_MISSING_TITLE,
+          `住所${VALIDATION_MESSAGES.REQUIRED_SUFFIX}`,
+        );
       }
     }
   }

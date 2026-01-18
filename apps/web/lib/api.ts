@@ -1,7 +1,5 @@
 import { createConfiguredApiClient } from '@team/api';
 
-export { AUTH_REQUIRED } from '@team/api';
-
 export type {
   ApiFavorite,
   ApiFile,

@@ -5,6 +5,18 @@
  */
 import type { ApiReview, ApiStore, Shop } from '@team/types';
 
+/** テスト用デフォルトトークン */
+export const TEST_DEFAULT_TOKEN = 'test-token';
+
+/** テスト用ベース日時（ISO形式） */
+export const TEST_BASE_DATE_ISO = '2025-01-01T00:00:00.000Z';
+
+/** テスト用デフォルト住所 */
+export const TEST_DEFAULT_ADDRESS = '東京都渋谷区テスト1-2-3';
+
+/** テスト用デフォルトプレイスID */
+export const TEST_DEFAULT_PLACE_ID = 'place-123';
+
 /** テストデータの基準日 */
 export const TEST_BASE_DATE = '2025-01-01';
 
@@ -24,11 +36,11 @@ export const createMockApiStore = (overrides: Partial<ApiStore> = {}): ApiStore 
   budget: '$$',
   average_rating: 4.5,
   distance_minutes: 10,
-  created_at: '2025-01-01T00:00:00.000Z',
-  updated_at: '2025-01-01T00:00:00.000Z',
-  opened_at: '2025-01-01T00:00:00.000Z',
-  place_id: 'place-123',
-  address: '東京都渋谷区テスト1-2-3',
+  created_at: TEST_BASE_DATE_ISO,
+  updated_at: TEST_BASE_DATE_ISO,
+  opened_at: TEST_BASE_DATE_ISO,
+  place_id: TEST_DEFAULT_PLACE_ID,
+  address: TEST_DEFAULT_ADDRESS,
   latitude: 35.6812,
   longitude: 139.7671,
   is_approved: true,
@@ -47,11 +59,11 @@ export const createMockShop = (overrides: Partial<Shop> = {}): Shop => ({
   distanceMinutes: 5,
   rating: 4.5,
   budget: '$$',
-  createdAt: '2025-01-01T00:00:00.000Z',
-  openedAt: '2025-01-01T00:00:00.000Z',
+  createdAt: TEST_BASE_DATE_ISO,
+  openedAt: TEST_BASE_DATE_ISO,
   description: 'おしゃれなカフェです。Wi-Fi完備。',
-  address: '東京都渋谷区テスト1-2-3',
-  placeId: 'place-123',
+  address: TEST_DEFAULT_ADDRESS,
+  placeId: TEST_DEFAULT_PLACE_ID,
   imageUrl: 'https://example.com/image.jpg',
   tags: ['コーヒー', 'Wi-Fi', '静か'],
   ...overrides,
@@ -72,7 +84,7 @@ export const shopToApiStore = (shop: Shop): ApiStore => ({
   updated_at: shop.createdAt,
   opened_at: shop.openedAt ?? shop.createdAt,
   place_id: shop.placeId,
-  address: shop.address ?? '東京都渋谷区テスト1-2-3',
+  address: shop.address ?? TEST_DEFAULT_ADDRESS,
   latitude: 35.6812,
   longitude: 139.7671,
   is_approved: true,
@@ -93,7 +105,7 @@ export const createMockApiReview = (
   user_id: 'user-1',
   rating: 4,
   content: 'Great place!',
-  created_at: '2025-01-01T00:00:00.000Z',
+  created_at: TEST_BASE_DATE_ISO,
   likes_count: 5,
   liked_by_me: false,
   files: [],

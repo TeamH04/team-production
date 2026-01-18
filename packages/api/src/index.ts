@@ -1,4 +1,4 @@
-import { AUTH_REQUIRED, DEFAULT_API_BASE_URL } from '@team/constants';
+import { DEFAULT_API_BASE_URL } from '@team/constants';
 
 import type {
   ApiFavorite,
@@ -11,9 +11,6 @@ import type {
   SignedUploadFile,
   UploadFileInput,
 } from '@team/types';
-
-// Re-export from @team/constants for backward compatibility
-export { AUTH_REQUIRED };
 
 export type {
   ApiFavorite,

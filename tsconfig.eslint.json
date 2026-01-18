@@ -17,12 +17,15 @@
     "packages/api/**/*",
     "packages/constants/**/*",
     "packages/core-utils/**/*",
+    "packages/crypto-utils/**/*",
     "packages/hooks/**/*",
+    "packages/location-utils/**/*",
     "packages/mobile-ui/**/*",
     "packages/shop-core/**/*",
     "packages/test-utils/**/*",
     "packages/theme/**/*",
-    "packages/types/**/*"
+    "packages/types/**/*",
+    "packages/validators/**/*"
   ],
   "exclude": [
     "node_modules",

@@ -16,6 +16,7 @@
     }
   },
   "scripts": {
+    "test": "node --import tsx --test src/__tests__/*.test.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
