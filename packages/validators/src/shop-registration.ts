@@ -22,18 +22,16 @@ export type StepBase = {
 
 export type SingleValueStep = StepBase & {
   value: string;
-  // onChange, placeholder はUI層で管理するためここでは含めないか、
-  // もしくはGenericsにするが、ここでは単純化のため省くか、UI用の型と分離する。
-  // register-shop.tsx ではこれに onChange 等を含んでいるため、
-  // ここでは純粋なデータ構造としての Step を定義する。
   isMultiple?: false;
   isBudgetRange?: false;
+  isAccess?: false;
 };
 
 export type MultiValueStep = StepBase & {
   value: ItemWithId[];
   isMultiple: true;
   isBudgetRange?: false;
+  isAccess?: false;
 };
 
 export type BudgetRangeStep = StepBase & {
@@ -105,29 +103,28 @@ export function validateStep(step: StepData): ValidationResult {
           `最寄り駅${VALIDATION_MESSAGES.REQUIRED_SUFFIX}`,
         );
       }
-    } else if (!step.isBudgetRange && !step.isAccess && typeof step.value === 'string') {
+    } else if (step.isBudgetRange) {
+      // budget range is usually not required as a whole, but if it were:
+      if (!step.value.min.trim() && !step.value.max.trim()) {
+        return createValidationError(
+          VALIDATION_MESSAGES.INPUT_MISSING_TITLE,
+          `${step.title} ${VALIDATION_MESSAGES.REQUIRED_SUFFIX}`,
+        );
+      }
+    } else {
+      // SingleValueStep
       if (!step.value.trim()) {
         return createValidationError(
           VALIDATION_MESSAGES.INPUT_MISSING_TITLE,
           `${step.title} ${VALIDATION_MESSAGES.REQUIRED_SUFFIX}`,
         );
       }
-    } else if (step.key === 'address' && typeof step.value === 'string') {
-      // 住所の追加チェックなどがあればここに
-      if (!step.value.trim()) {
-        return createValidationError(
-          VALIDATION_MESSAGES.INPUT_MISSING_TITLE,
-          `住所${VALIDATION_MESSAGES.REQUIRED_SUFFIX}`,
-        );
-      }
     }
   }
 
-  if (step.key === 'minutesFromStation') {
-    // 必須でなくても入力があれば検証
-    const value =
-      !step.isMultiple && !step.isBudgetRange && !step.isAccess ? step.value.trim() : '';
-    const result = validatePositiveInteger(value || undefined, '最寄り駅からの分数', 3);
+  // key based extra validations
+  if (step.key === 'minutesFromStation' && !step.isMultiple && !step.isBudgetRange && !step.isAccess) {
+    const result = validatePositiveInteger(step.value.trim() || undefined, '最寄り駅からの分数', 3);
     if (!result.isValid) {
       return result;
     }
@@ -142,12 +139,11 @@ export function validateStep(step: StepData): ValidationResult {
     }
   }
 
-  if (step.key === 'budget' && step.isBudgetRange) {
+  if (step.isBudgetRange) {
     const { min, max } = step.value;
     const minVal = min.trim();
     const maxVal = max.trim();
 
-    // Use large maxDigits (10) for budget values to allow flexible input
     const minResult = validatePositiveInteger(minVal || undefined, '最小値', 10);
     if (!minResult.isValid) {
       return minResult;
