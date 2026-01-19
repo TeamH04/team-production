@@ -11,7 +11,7 @@ export const palette = {
   // 基本のサーフェスとテキスト
   background,
   // プラットフォーム固有の背景
-  backgroundAndroid: '#E8E7E5',
+  backgroundAndroid: background,
   surface: background, // 可読性と一貫性のためにテーマの背景を使用
   primaryText: textOnBackground,
   secondaryText: withAlpha(textOnBackground, 0.7),
