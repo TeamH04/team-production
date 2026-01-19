@@ -1,11 +1,4 @@
-import {
-  BORDER_RADIUS,
-  FONT_WEIGHT,
-  formatRating,
-  LAYOUT,
-  ROUTES,
-  SHADOW_STYLES,
-} from '@team/constants';
+import { BORDER_RADIUS, formatRating, LAYOUT, ROUTES, SHADOW_STYLES } from '@team/constants';
 import { formatDateJa } from '@team/core-utils';
 import { useAuthErrorHandler } from '@team/hooks';
 import { TabContent } from '@team/mobile-ui';

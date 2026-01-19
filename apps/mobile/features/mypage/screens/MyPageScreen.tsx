@@ -2,7 +2,6 @@
 import {
   BORDER_RADIUS,
   ERROR_MESSAGES,
-  FONT_WEIGHT,
   formatRating,
   ICON_SIZE,
   LAYOUT,

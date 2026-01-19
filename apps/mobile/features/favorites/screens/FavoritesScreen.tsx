@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { ERROR_MESSAGES, FAVORITES_SORT_OPTIONS, FONT_WEIGHT, LAYOUT } from '@team/constants';
+import { ERROR_MESSAGES, FAVORITES_SORT_OPTIONS, LAYOUT } from '@team/constants';
 import { useShopFilter } from '@team/hooks';
 import { palette } from '@team/mobile-ui';
 import { formatShopMeta, type SortType } from '@team/shop-core';
