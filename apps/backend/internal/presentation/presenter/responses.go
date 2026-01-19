@@ -54,19 +54,28 @@ type MenuResponse struct {
 	CreatedAt   time.Time `json:"created_at"`
 }
 
+type RatingDetailsResponse struct {
+	Taste       *int `json:"taste,omitempty"`
+	Atmosphere  *int `json:"atmosphere,omitempty"`
+	Service     *int `json:"service,omitempty"`
+	Speed       *int `json:"speed,omitempty"`
+	Cleanliness *int `json:"cleanliness,omitempty"`
+}
+
 type ReviewResponse struct {
-	ReviewID   string         `json:"review_id"`
-	StoreID    string         `json:"store_id"`
-	UserID     string         `json:"user_id"`
-	Rating     int            `json:"rating"`
-	Content    *string        `json:"content,omitempty"`
-	MenuIDs    []string       `json:"menu_ids,omitempty"`
-	Menus      []MenuResponse `json:"menus,omitempty"`
-	FileIDs    []string       `json:"file_ids,omitempty"`
-	Files      []FileResponse `json:"files,omitempty"`
-	LikesCount int            `json:"likes_count"`
-	LikedByMe  bool           `json:"liked_by_me"`
-	CreatedAt  time.Time      `json:"created_at"`
+	ReviewID      string                `json:"review_id"`
+	StoreID       string                `json:"store_id"`
+	UserID        string                `json:"user_id"`
+	Rating        int                   `json:"rating"`
+	RatingDetails *RatingDetailsResponse `json:"rating_details,omitempty"`
+	Content       *string               `json:"content,omitempty"`
+	MenuIDs       []string              `json:"menu_ids,omitempty"`
+	Menus         []MenuResponse        `json:"menus,omitempty"`
+	FileIDs       []string              `json:"file_ids,omitempty"`
+	Files         []FileResponse        `json:"files,omitempty"`
+	LikesCount    int                   `json:"likes_count"`
+	LikedByMe     bool                  `json:"liked_by_me"`
+	CreatedAt     time.Time             `json:"created_at"`
 }
 
 type UserResponse struct {
@@ -219,6 +228,15 @@ func NewReviewResponse(review entity.Review) ReviewResponse {
 		LikesCount: review.LikesCount,
 		LikedByMe:  review.LikedByMe,
 		CreatedAt:  review.CreatedAt,
+	}
+	if review.RatingDetails != nil {
+		resp.RatingDetails = &RatingDetailsResponse{
+			Taste:       review.RatingDetails.Taste,
+			Atmosphere:  review.RatingDetails.Atmosphere,
+			Service:     review.RatingDetails.Service,
+			Speed:       review.RatingDetails.Speed,
+			Cleanliness: review.RatingDetails.Cleanliness,
+		}
 	}
 	if len(review.Menus) > 0 {
 		resp.Menus = NewMenuResponses(review.Menus)

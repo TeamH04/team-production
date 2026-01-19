@@ -76,11 +76,20 @@ export type ReviewFile = {
   contentType?: string | null;
 };
 
+export type RatingDetails = {
+  taste?: number | null;
+  atmosphere?: number | null;
+  service?: number | null;
+  speed?: number | null;
+  cleanliness?: number | null;
+};
+
 export type Review = {
   id: string;
   shopId: string;
   userId: string;
   rating: number;
+  ratingDetails?: RatingDetails | null;
   comment?: string;
   createdAt: string;
   menuItemIds?: string[];
@@ -109,6 +118,7 @@ type ReviewsContextValue = {
     shopId: string,
     input: {
       rating: number;
+      ratingDetails?: RatingDetails;
       comment?: string;
       menuItemIds?: string[];
       menuItemName?: string;
@@ -133,11 +143,23 @@ function mapApiReview(review: ApiReview): Review {
   const menuItemIds = menus.length > 0 ? menus.map(menu => menu.menu_id) : (review.menu_ids ?? []);
   const menuItemName = menus.length > 0 ? menus.map(menu => menu.name).join(' / ') : undefined;
 
+  let ratingDetails: RatingDetails | undefined;
+  if (review.rating_details) {
+    ratingDetails = {
+      taste: review.rating_details.taste ?? undefined,
+      atmosphere: review.rating_details.atmosphere ?? undefined,
+      service: review.rating_details.service ?? undefined,
+      speed: review.rating_details.speed ?? undefined,
+      cleanliness: review.rating_details.cleanliness ?? undefined,
+    };
+  }
+
   return {
     id: review.review_id,
     shopId: review.store_id,
     userId: review.user_id,
     rating: review.rating,
+    ratingDetails,
     comment: review.content ?? undefined,
     createdAt: review.created_at,
     menuItemIds: menuItemIds.length > 0 ? menuItemIds : undefined,
@@ -220,6 +242,7 @@ export function ReviewsProvider({ children }: { children: React.ReactNode }) {
       shopId: string,
       input: {
         rating: number;
+        ratingDetails?: RatingDetails;
         comment?: string;
         menuItemIds?: string[];
         menuItemName?: string;
@@ -255,6 +278,7 @@ export function ReviewsProvider({ children }: { children: React.ReactNode }) {
         shopId,
         {
           rating: input.rating,
+          rating_details: input.ratingDetails ?? null,
           content: input.comment ?? null,
           file_ids: fileIDs,
           menu_ids: input.menuItemIds ?? [],

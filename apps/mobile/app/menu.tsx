@@ -6,6 +6,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useState } from 'react';
 import { Pressable, ScrollView, SectionList, StyleSheet, Text, View } from 'react-native';
 
+import { fonts } from '@/constants/typography';
 import { useStores } from '@/features/stores/StoresContext';
 import { fetchStoreMenus } from '@/lib/api';
 
@@ -351,8 +352,8 @@ const styles = StyleSheet.create({
   },
   categoryBadgeText: {
     color: COLORS.BADGE_TEXT,
+    fontFamily: fonts.medium,
     fontSize: 11,
-    fontWeight: '700',
   },
   emptyContainer: {
     alignItems: 'center',
@@ -362,6 +363,7 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     color: COLORS.TAX_TEXT,
+    fontFamily: fonts.regular,
     fontSize: 14,
     lineHeight: 20,
     marginTop: 12,
@@ -387,6 +389,7 @@ const styles = StyleSheet.create({
   menuDescription: {
     color: COLORS.SUB_TEXT,
     flexShrink: 1,
+    fontFamily: fonts.regular,
     fontSize: 12,
     lineHeight: 17,
     marginTop: 2,
@@ -405,14 +408,14 @@ const styles = StyleSheet.create({
   menuName: {
     color: COLORS.GRAY_DARK,
     flexShrink: 1,
+    fontFamily: fonts.medium,
     fontSize: 15,
-    fontWeight: 'bold',
     marginRight: 6,
   },
   menuPrice: {
     color: COLORS.GRAY_DARK,
+    fontFamily: fonts.medium,
     fontSize: 15,
-    fontWeight: '700',
   },
   metaRow: {
     alignItems: 'center',
@@ -427,19 +430,20 @@ const styles = StyleSheet.create({
   },
   pageHint: {
     color: COLORS.SUB_TEXT,
+    fontFamily: fonts.regular,
     fontSize: 12,
     lineHeight: 18,
   },
   pageSubtitle: {
     color: COLORS.SUB_TEXT,
+    fontFamily: fonts.medium,
     fontSize: 13,
-    fontWeight: '600',
     lineHeight: 20,
   },
   pageTitle: {
     color: COLORS.GRAY_DARK,
+    fontFamily: fonts.medium,
     fontSize: 20,
-    fontWeight: '800',
   },
   pageTitleCard: {
     backgroundColor: COLORS.WHITE,
@@ -462,8 +466,8 @@ const styles = StyleSheet.create({
   },
   recommendText: {
     color: COLORS.BADGE_TEXT,
+    fontFamily: fonts.medium,
     fontSize: 10,
-    fontWeight: 'bold',
   },
   screen: {
     backgroundColor: COLORS.WHITE,
@@ -481,8 +485,8 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     color: COLORS.GRAY_TEXT,
+    fontFamily: fonts.medium,
     fontSize: 13,
-    fontWeight: '800',
     letterSpacing: 1,
   },
   tab: {
@@ -502,8 +506,8 @@ const styles = StyleSheet.create({
   },
   tabText: {
     color: COLORS.WHITE,
+    fontFamily: fonts.medium,
     fontSize: 14,
-    fontWeight: '600',
   },
   tabTextSelected: {
     color: COLORS.HEADER_GREEN,
@@ -519,6 +523,7 @@ const styles = StyleSheet.create({
   },
   taxLabel: {
     color: COLORS.TAX_TEXT,
+    fontFamily: fonts.regular,
     fontSize: 9,
     marginLeft: 2,
   },

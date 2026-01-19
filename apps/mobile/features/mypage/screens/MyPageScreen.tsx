@@ -7,6 +7,7 @@ import { Alert, Image, Pressable, ScrollView, StyleSheet, Text, View } from 'rea
 import { BackButton } from '@/components/BackButton';
 import { palette } from '@/constants/palette';
 import { TAB_BAR_SPACING } from '@/constants/TabBarSpacing';
+import { fonts } from '@/constants/typography';
 import { useReviews } from '@/features/reviews/ReviewsContext';
 import { useUser } from '@/features/user/UserContext';
 import { useAuthMe } from '@/hooks/useAuthMe';
@@ -533,7 +534,7 @@ const styles = StyleSheet.create({
     height: 64,
     width: 64,
   },
-  avatarText: { color: palette.avatarText, fontSize: 22, fontWeight: '800' },
+  avatarText: { color: palette.avatarText, fontFamily: fonts.medium, fontSize: 22 },
   card: { backgroundColor: palette.surface, borderRadius: 20, padding: 12 },
   cardShadow: {
     elevation: 4,
@@ -545,6 +546,7 @@ const styles = StyleSheet.create({
   },
   comment: {
     color: palette.primary,
+    fontFamily: fonts.regular,
     fontSize: 12,
     lineHeight: 18,
     marginTop: 4,
@@ -552,13 +554,14 @@ const styles = StyleSheet.create({
   content: { padding: 16, paddingBottom: TAB_BAR_SPACING },
   date: {
     color: palette.mutedText,
+    fontFamily: fonts.regular,
     fontSize: 11,
   },
   emptyContainer: {
     alignItems: 'center',
     marginTop: 60,
   },
-  emptyText: { color: palette.mutedText },
+  emptyText: { color: palette.mutedText, fontFamily: fonts.regular },
   gridCard: {
     alignItems: 'center',
     backgroundColor: palette.surface,
@@ -575,8 +578,8 @@ const styles = StyleSheet.create({
   },
   gridCardLabel: {
     color: palette.primary,
+    fontFamily: fonts.medium,
     fontSize: 13,
-    fontWeight: '600',
     textAlign: 'center',
   },
   gridContainer: {
@@ -602,8 +605,8 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     color: palette.primary,
+    fontFamily: fonts.medium,
     fontSize: 18,
-    fontWeight: '700',
   },
   logoutBtn: {
     alignSelf: 'flex-start',
@@ -612,9 +615,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 4,
   },
-  logoutText: { color: palette.errorText, fontSize: 14, fontWeight: '600' },
+  logoutText: { color: palette.errorText, fontFamily: fonts.medium, fontSize: 14 },
   menuItem: {
     color: palette.mutedText,
+    fontFamily: fonts.regular,
     fontSize: 11,
     marginTop: 4,
   },
@@ -627,8 +631,8 @@ const styles = StyleSheet.create({
   },
   primaryBtnText: {
     color: palette.primaryOnAccent,
+    fontFamily: fonts.medium,
     fontSize: 16,
-    fontWeight: '700',
     textAlign: 'center',
   },
   profileInfo: {
@@ -654,13 +658,13 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   profileMeta: { flex: 1, marginLeft: 14 },
-  profileName: { color: palette.primary, fontSize: 18, fontWeight: '700' },
+  profileName: { color: palette.primary, fontFamily: fonts.medium, fontSize: 18 },
   profileRow: { alignItems: 'center', flexDirection: 'row' },
-  profileSub: { color: palette.mutedText, marginTop: 4 },
+  profileSub: { color: palette.mutedText, fontFamily: fonts.regular, marginTop: 4 },
   rating: {
     color: palette.primary,
+    fontFamily: fonts.medium,
     fontSize: 12,
-    fontWeight: '600',
   },
   reviewCardContent: {
     flexDirection: 'row',
@@ -712,11 +716,12 @@ const styles = StyleSheet.create({
     padding: 8,
     width: 40,
   },
-  sectionSub: { color: palette.mutedText, fontSize: 12, marginTop: 2 },
+  sectionSub: { color: palette.mutedText, fontFamily: fonts.regular, fontSize: 12, marginTop: 2 },
   sectionTextContainer: { flex: 1 },
-  sectionTitle: { color: palette.primary, fontSize: 16, fontWeight: '700' },
+  sectionTitle: { color: palette.primary, fontFamily: fonts.medium, fontSize: 16 },
   shopCategory: {
     color: palette.mutedText,
+    fontFamily: fonts.regular,
     fontSize: 11,
     marginTop: 2,
   },
@@ -725,8 +730,8 @@ const styles = StyleSheet.create({
   },
   shopName: {
     color: palette.primary,
+    fontFamily: fonts.medium,
     fontSize: 14,
-    fontWeight: '600',
   },
   spacer: {
     width: 50,

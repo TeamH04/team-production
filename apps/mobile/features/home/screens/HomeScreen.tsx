@@ -16,6 +16,7 @@ import Animated, { useAnimatedRef } from 'react-native-reanimated';
 
 import { palette } from '@/constants/palette';
 import { TAB_BAR_SPACING } from '@/constants/TabBarSpacing';
+import { fonts } from '@/constants/typography';
 import { useStores } from '@/features/stores/StoresContext';
 
 import type { Shop } from '@team/shop-core';
@@ -327,6 +328,7 @@ const styles = StyleSheet.create({
 
   cardDescription: {
     color: palette.tertiaryText,
+    fontFamily: fonts.regular,
     fontSize: 14,
     lineHeight: 20,
     marginTop: 12,
@@ -354,8 +356,8 @@ const styles = StyleSheet.create({
   cardTitle: {
     color: palette.primaryText,
     flex: 1,
+    fontFamily: fonts.medium,
     fontSize: 18,
-    fontWeight: '700',
     marginRight: 12,
   },
 
@@ -379,6 +381,7 @@ const styles = StyleSheet.create({
 
   emptySubtitle: {
     color: palette.secondaryText,
+    fontFamily: fonts.regular,
     fontSize: 13,
     marginTop: 8,
     textAlign: 'center',
@@ -386,8 +389,8 @@ const styles = StyleSheet.create({
 
   emptyTitle: {
     color: palette.secondaryText,
+    fontFamily: fonts.medium,
     fontSize: 16,
-    fontWeight: '600',
   },
 
   filterInfo: {
@@ -445,6 +448,7 @@ const styles = StyleSheet.create({
 
   metaText: {
     color: palette.secondaryText,
+    fontFamily: fonts.regular,
     fontSize: 13,
   },
 

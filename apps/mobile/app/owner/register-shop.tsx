@@ -15,6 +15,7 @@ import {
 
 import { HEADER_HEIGHT } from '@/constants/layout';
 import { palette } from '@/constants/palette';
+import { fonts } from '@/constants/typography';
 import {
   toStepData,
   validateStep,
@@ -373,8 +374,8 @@ const styles = StyleSheet.create({
   },
   addMenuText: {
     color: palette.accent,
+    fontFamily: fonts.medium,
     fontSize: 14,
-    fontWeight: '600',
   },
   budgetContainer: {
     gap: 12,
@@ -384,8 +385,8 @@ const styles = StyleSheet.create({
   },
   budgetLabel: {
     color: palette.secondaryText,
+    fontFamily: fonts.medium,
     fontSize: 12,
-    fontWeight: '600',
     marginBottom: 6,
   },
   budgetRow: {
@@ -395,8 +396,8 @@ const styles = StyleSheet.create({
   },
   budgetSeparator: {
     color: palette.primaryText,
+    fontFamily: fonts.medium,
     fontSize: 18,
-    fontWeight: '700',
     marginBottom: 12,
   },
   buttonContainer: {
@@ -421,8 +422,8 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     color: palette.surface,
+    fontFamily: fonts.medium,
     fontSize: 16,
-    fontWeight: '700',
     lineHeight: 48,
     textAlign: 'center',
   },
@@ -433,6 +434,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 1,
     color: palette.primaryText,
+    fontFamily: fonts.regular,
     paddingHorizontal: 14,
     paddingVertical: 12,
   },
@@ -458,8 +460,8 @@ const styles = StyleSheet.create({
   },
   progressText: {
     color: palette.primaryText,
+    fontFamily: fonts.medium,
     fontSize: 14,
-    fontWeight: '700',
   },
   screen: { backgroundColor: palette.background, flex: 1 },
   skipBtn: {
@@ -468,8 +470,8 @@ const styles = StyleSheet.create({
   },
   skipText: {
     color: palette.secondaryText,
+    fontFamily: fonts.medium,
     fontSize: 14,
-    fontWeight: '600',
   },
   stepCard: {
     backgroundColor: palette.surface,
@@ -484,11 +486,12 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     color: palette.secondaryText,
+    fontFamily: fonts.regular,
     marginTop: 4,
   },
   title: {
     color: palette.primaryText,
+    fontFamily: fonts.medium,
     fontSize: 22,
-    fontWeight: '700',
   },
 });
