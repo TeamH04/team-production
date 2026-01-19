@@ -59,6 +59,11 @@ export type ApiRatingDetails = {
   cleanliness?: number | null;
 };
 
+/**
+ * Alias for ApiRatingDetails for frontend use
+ */
+export type RatingDetails = ApiRatingDetails;
+
 export type ApiReview = {
   review_id: string;
   store_id: string;
