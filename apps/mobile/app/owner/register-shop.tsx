@@ -1,4 +1,5 @@
-import { HeaderBackButton } from '@react-navigation/elements';
+import { Ionicons } from '@expo/vector-icons';
+import { HeaderBackButton, type HeaderBackButtonProps } from '@react-navigation/elements';
 import {
   BORDER_RADIUS,
   LAYOUT,
@@ -8,8 +9,8 @@ import {
   UI_LABELS,
   VALIDATION_MESSAGES,
 } from '@team/constants';
-import { palette } from '@team/mobile-ui';
-import { type Href, useNavigation, useRouter } from 'expo-router';
+import { palette, StationSelect } from '@team/mobile-ui';
+import { useNavigation, useRouter, type Href } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Alert,
@@ -27,11 +28,13 @@ import { fonts } from '@/constants/typography';
 import {
   toStepData,
   validateStep,
+  type AccessStep,
   type BudgetRangeStep,
   type ItemWithId,
   type MultiValueStep,
   type SingleValueStep,
 } from '@/features/owner/logic/shop-registration';
+import { api, type ApiStation } from '@/lib/api';
 
 const HEADER_HEIGHT = LAYOUT.HEADER_HEIGHT;
 
@@ -50,7 +53,12 @@ type BudgetRangeStepUI = BudgetRangeStep & {
   placeholder: { min: string; max: string };
 };
 
-type Step = SingleValueStepUI | MultiValueStepUI | BudgetRangeStepUI;
+type AccessStepUI = AccessStep & {
+  onChange: { station: (text: string) => void; minutes: (text: string) => void };
+  placeholder: { station: string; minutes: string };
+};
+
+type Step = SingleValueStepUI | MultiValueStepUI | BudgetRangeStepUI | AccessStepUI;
 
 export default function RegisterShopScreen() {
   const router = useRouter();
@@ -59,6 +67,7 @@ export default function RegisterShopScreen() {
   const [menuItems, setMenuItems] = useState<ItemWithId[]>([
     { id: `menu-${Date.now()}`, value: '' },
   ]);
+  const [stationName, setStationName] = useState('');
   const [minutesFromStation, setMinutesFromStation] = useState('');
   const [tagItems, setTagItems] = useState<ItemWithId[]>([{ id: `tag-${Date.now()}`, value: '' }]);
   const [address, setAddress] = useState('');
@@ -66,6 +75,8 @@ export default function RegisterShopScreen() {
   const [maxBudget, setMaxBudget] = useState('');
   const [loading, setLoading] = useState(false);
   const [stepIndex, setStepIndex] = useState(0);
+  const [isStationModalVisible, setIsStationModalVisible] = useState(false);
+  const [stations, setStations] = useState<ApiStation[]>([]);
 
   const handleBack = useCallback(() => {
     if (stepIndex > 0) {
@@ -80,6 +91,21 @@ export default function RegisterShopScreen() {
   }, [navigation, router, stepIndex]);
 
   useEffect(() => {
+    // 駅データの取得
+    const fetchStations = async () => {
+      try {
+        const data = await api.fetchStations();
+        if (data) {
+          setStations(data);
+        }
+      } catch (e) {
+        console.error('Failed to fetch stations', e);
+      }
+    };
+    fetchStations();
+  }, []);
+
+  useEffect(() => {
     navigation.setOptions?.({
       title: '店舗登録',
       headerBackTitle: UI_LABELS.BACK,
@@ -91,7 +117,7 @@ export default function RegisterShopScreen() {
       headerTitleStyle: {
         color: palette.textOnAccent,
       },
-      headerLeft: (props: Parameters<typeof HeaderBackButton>[0]) => (
+      headerLeft: (props: HeaderBackButtonProps) => (
         <HeaderBackButton {...props} onPress={handleBack} />
       ),
     });
@@ -121,14 +147,15 @@ export default function RegisterShopScreen() {
         isMultiple: true,
       },
       {
-        key: 'minutesFromStation',
-        title: '最寄り駅から徒歩何分？',
-        description: '最寄り駅からの所要時間を半角数字で入力',
-        value: minutesFromStation,
+        key: 'access',
+        title: 'アクセス情報を入力',
+        description: '最寄り駅と徒歩での所要時間を入力してください',
+        value: { station: stationName, minutes: minutesFromStation },
         required: false,
-        onChange: setMinutesFromStation,
-        placeholder: '例）5',
-        keyboardType: 'number-pad' as const,
+        onChange: { station: setStationName, minutes: setMinutesFromStation },
+        placeholder: { station: '例）渋谷駅', minutes: '例）5' },
+        isAccess: true,
+        keyboardType: 'default' as const,
       },
       {
         key: 'tags',
@@ -163,7 +190,16 @@ export default function RegisterShopScreen() {
         isBudgetRange: true,
       },
     ],
-    [address, minBudget, maxBudget, menuItems, minutesFromStation, storeName, tagItems],
+    [
+      address,
+      minBudget,
+      maxBudget,
+      menuItems,
+      minutesFromStation,
+      stationName,
+      storeName,
+      tagItems,
+    ],
   );
 
   const totalSteps = steps.length;
@@ -204,7 +240,7 @@ export default function RegisterShopScreen() {
     try {
       setLoading(true);
       // TODO: Backend エンドポイントに置き換え予定。現在はモック送信。
-      // 実際のペイロード: { storeName, menuItems, minutesFromStation, tags: tagItems, address, minBudget, maxBudget }
+      // 実際のペイロード: { storeName, menuItems, stationName, minutesFromStation, tags: tagItems, address, minBudget, maxBudget }
       await new Promise(resolve => setTimeout(resolve, TIMING.MOCK_SUBMIT_DELAY));
       Alert.alert('送信完了', '店舗登録リクエストを受け付けました');
       router.replace(ROUTES.OWNER as Href);
@@ -327,6 +363,64 @@ export default function RegisterShopScreen() {
                 </View>
               </View>
             </View>
+          ) : currentStep.isAccess ? (
+            <View style={styles.accessContainer}>
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>最寄り駅</Text>
+                <Pressable
+                  onPress={() => setIsStationModalVisible(true)}
+                  style={[styles.inputWithIcon, styles.input]}
+                >
+                  <Ionicons
+                    name='train'
+                    size={20}
+                    color={palette.secondaryText}
+                    style={styles.icon}
+                  />
+                  <Text
+                    style={[
+                      styles.inputFlex,
+                      !(currentStep.value as Record<string, string>).station &&
+                        styles.placeholderText,
+                    ]}
+                  >
+                    {(currentStep.value as Record<string, string>).station ||
+                      (currentStep.placeholder as Record<string, string>).station}
+                  </Text>
+                </Pressable>
+              </View>
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>徒歩（分）</Text>
+                <View style={[styles.inputWithIcon, styles.input]}>
+                  <Ionicons
+                    name='walk'
+                    size={20}
+                    color={palette.secondaryText}
+                    style={styles.icon}
+                  />
+                  <TextInput
+                    value={(currentStep.value as Record<string, string>).minutes}
+                    onChangeText={
+                      (currentStep.onChange as Record<string, (text: string) => void>).minutes
+                    }
+                    style={styles.inputFlex}
+                    placeholder={(currentStep.placeholder as Record<string, string>).minutes}
+                    placeholderTextColor={palette.tertiaryText}
+                    keyboardType='number-pad'
+                  />
+                </View>
+              </View>
+
+              <StationSelect
+                visible={isStationModalVisible}
+                onClose={() => setIsStationModalVisible(false)}
+                onSelect={station => {
+                  (currentStep.onChange as Record<string, (text: string) => void>).station(station);
+                }}
+                selectedStation={(currentStep.value as Record<string, string>).station}
+                stations={stations}
+              />
+            </View>
           ) : (
             <TextInput
               value={currentStep.value as string}
@@ -367,6 +461,9 @@ export default function RegisterShopScreen() {
 }
 
 const styles = StyleSheet.create({
+  accessContainer: {
+    gap: 16,
+  },
   actionArea: {
     gap: 10,
     paddingBottom: 64,
@@ -433,6 +530,9 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   content: { flexGrow: 1, padding: 20 },
+  icon: {
+    marginRight: 8,
+  },
   input: {
     backgroundColor: palette.surface,
     borderColor: palette.border,
@@ -443,8 +543,29 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 12,
   },
+  inputFlex: {
+    color: palette.primaryText,
+    flex: 1,
+    fontFamily: fonts.regular,
+    paddingVertical: 0, // Icon alignment
+  },
+  inputGroup: {
+    gap: 8,
+  },
+  inputLabel: {
+    color: palette.secondaryText,
+    fontFamily: fonts.medium,
+    fontSize: 13,
+  },
+  inputWithIcon: {
+    alignItems: 'center',
+    flexDirection: 'row',
+  },
   menuContainer: {
     gap: 12,
+  },
+  placeholderText: {
+    color: palette.tertiaryText,
   },
   progressBarBg: {
     backgroundColor: palette.border,
