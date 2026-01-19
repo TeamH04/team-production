@@ -5,10 +5,10 @@
 SHELL := /usr/bin/env bash
 
 .DEFAULT_GOAL := help
-.PHONY: help install dev mobile web backend \
+.PHONY: help install dev mobile web backend frontend \
 	db-start db-stop db-migrate db-reset db-destroy \
 	test test-backend test-web test-mobile lint lint-fix typecheck build clean \
-	m w b
+	m w b f
 
 # Colors for output (ANSI escape sequences)
 RED    := \033[0;31m
@@ -134,6 +134,8 @@ clean: ## Clean build artifacts
 
 ## ----- Aliases -----
 
-m: mobile ## Alias: make m -> make mobile
-w: web    ## Alias: make w -> make web
-b: backend ## Alias: make b -> make backend
+m: mobile    ## Alias: make m -> make mobile
+w: web       ## Alias: make w -> make web
+b: backend   ## Alias: make b -> make backend
+f: frontend  ## Alias: make f -> make frontend
+frontend: mobile ## Alias: make frontend -> make mobile
