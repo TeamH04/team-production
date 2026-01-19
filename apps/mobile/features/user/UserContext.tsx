@@ -18,11 +18,16 @@ async function fetchUser(): Promise<UserProfile | null> {
   const apiUser = await api.fetchAuthMe(token);
   if (!apiUser) return null;
 
+  // プロフィール登録済みかどうかは、name と email が存在し、
+  // gender（任意フィールド）が設定されているかで判定
+  // 新規登録ユーザーは name が空または email のみの状態
+  const isProfileRegistered = !!(apiUser.name && apiUser.gender);
+
   return {
     name: apiUser.name,
     email: apiUser.email,
     gender: (apiUser.gender as Gender) ?? undefined,
-    isProfileRegistered: true,
+    isProfileRegistered,
   };
 }
 

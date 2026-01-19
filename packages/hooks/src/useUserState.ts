@@ -51,7 +51,7 @@ export function useUserState(config?: UserStateConfig): UserState {
     };
 
     void restore();
-  }, [config]);
+  }, [config?.fetchUser]);
 
   const setUser = useCallback((profile: UserProfile) => {
     setUserState(profile);
