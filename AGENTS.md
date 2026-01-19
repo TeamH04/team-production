@@ -47,7 +47,7 @@ team-production/
 | `@team/mobile-ui`      | モバイル専用UIコンポーネント                     |
 | `@team/shop-core`      | 店舗コアロジック、型定義                         |
 | `@team/test-utils`     | テストユーティリティ                             |
-| `@team/theme`          | テーマ・色定義                                   |
+| `@team/theme`          | テーマ・色定義（Single Source of Truth）         |
 | `@team/types`          | 共通型定義                                       |
 | `@team/validators`     | バリデーションロジック                           |
 
@@ -172,6 +172,9 @@ pnpm lint:fix                              # Lint + 自動修正
 pnpm format                                # フォーマット
 pnpm format:check                          # フォーマットチェック
 
+# テーマ
+pnpm --filter @team/theme generate:css     # Web用CSS変数を再生成
+
 # DB (Docker)
 docker compose up -d postgres pgadmin      # DB起動
 docker compose down                        # DB停止
@@ -199,7 +202,39 @@ turbo run test --filter=@team/validators
 - **eslint-disable**: 原則禁止。必要なら設定変更と理由を明記
 - **React Hooks**: `exhaustive-deps` に従い依存配列を正しく設定
 - **スタイル**: インラインスタイル・カラーコード直書き禁止
-- **色定義**: `packages/theme/src/colors.ts` が正解
+- **色定義**: `packages/theme/src/colors.ts` が Single Source of Truth
+
+### テーマ・カラーの使用
+
+`@team/theme` がカラー・タイポグラフィの唯一の定義元。プラットフォームにより使用方法が異なる。
+
+| Platform | 使用方法 |
+| -------- | -------- |
+| Mobile   | TypeScript定義を直接インポート |
+| Web      | 自動生成されたCSS変数を使用 |
+
+**Mobile (React Native):**
+
+```typescript
+import { colors, textOn } from '@team/theme';
+
+<View style={{ backgroundColor: colors.primary }}>
+  <Text style={{ color: textOn.primary }}>Hello</Text>
+</View>
+```
+
+**Web (Next.js):**
+
+```tsx
+// CSS変数を使用（globals.css で theme-vars.css をインポート済み）
+<div className="bg-theme-primary text-on-primary">Hello</div>
+```
+
+**カラー変更時のワークフロー:**
+
+1. `packages/theme/src/colors.ts` を編集
+2. Web用CSS変数を再生成: `pnpm --filter @team/theme generate:css`
+3. 変更をコミット（`apps/web/app/theme-vars.css` も含む）
 
 ---
 

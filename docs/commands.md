@@ -73,6 +73,14 @@
 | `pnpm android`               | Android ビルド・実行         |
 | `pnpm ios`                   | iOS ビルド・実行             |
 
+### テーマ・スタイル
+
+| コマンド                               | 説明                                |
+| -------------------------------------- | ----------------------------------- |
+| `pnpm --filter @team/theme generate:css` | Web用CSS変数ファイルを再生成      |
+
+> **Note:** カラーを変更した場合（`packages/theme/src/colors.ts`）、このコマンドで `apps/web/app/theme-vars.css` を再生成してください。
+
 ---
 
 ## Go（backend）コマンド
@@ -110,13 +118,16 @@
 キャッシュを無視して実行:
 
 ```bash
-turbo run build --force
+pnpm turbo run build --force
+pnpm turbo run lint typecheck --force
 ```
+
+> **Note:** ローカルで lint/typecheck が通るのに CI で失敗する場合、Turbo キャッシュが古くなっている可能性があります。`--force` オプションでキャッシュを無効化して再実行してください。
 
 特定パッケージのみ実行:
 
 ```bash
-turbo run build --filter=@team/core-utils
+pnpm turbo run build --filter=@team/core-utils
 ```
 
 ---
@@ -124,5 +135,7 @@ turbo run build --filter=@team/core-utils
 ## CI相当のチェック（ローカル）
 
 ```bash
-pnpm format:check && pnpm lint && pnpm typecheck && pnpm test
+pnpm format:check && pnpm turbo lint typecheck --force && pnpm test
 ```
+
+> **Tip:** `--force` を付けることで Turbo キャッシュを無効化し、CI と同じ条件でチェックできます。
