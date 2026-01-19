@@ -51,7 +51,7 @@ func NewServer(deps *Dependencies) *echo.Echo {
 		LogLatency:  true,
 		HandleError: true,
 		LogValuesFunc: func(c echo.Context, v middleware.RequestLoggerValues) error {
-			// 2xx はログをスキップ、エラー時のみログ出力
+			// 400以上のステータスコード（エラー）のみログ出力
 			if v.Status >= 400 {
 				slog.Warn("REQUEST",
 					"method", v.Method,
