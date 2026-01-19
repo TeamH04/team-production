@@ -63,9 +63,9 @@ db-destroy:
 	$(DOCKER_COMPOSE) -f $(DB_COMPOSE) down -v
 
 tools:
-	$(GO_BIN) install -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@v4.17.0
-	$(GO_BIN) install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.61.0
-	$(GO_BIN) install mvdan.cc/gofumpt@v0.6.0
+	$(GO_BIN) install -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@v4.18.0
+	$(GO_BIN) install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.64.0
+	$(GO_BIN) install mvdan.cc/gofumpt@v0.7.0
 
 lint:
 	@command -v golangci-lint >/dev/null 2>&1 || { echo "golangci-lint not found. Run: make tools"; exit 1; }
