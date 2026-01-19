@@ -50,7 +50,7 @@ export type {
   UseFavoritesStateResult,
 } from './useFavoritesState';
 export { useUserState } from './useUserState';
-export type { UserState } from './useUserState';
+export type { UserState, UserStateConfig } from './useUserState';
 export { useOAuthState } from './useOAuthState';
 export type {
   OAuthErrorType,
