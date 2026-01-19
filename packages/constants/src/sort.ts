@@ -3,6 +3,8 @@
  * Shared across web and mobile applications.
  */
 
+import { UI_LABELS } from './ui-labels';
+
 export type SortOptionValue = 'rating' | 'newest' | 'price-high' | 'price-low';
 
 export interface SortOption {
@@ -11,10 +13,10 @@ export interface SortOption {
 }
 
 export const SORT_OPTIONS: SortOption[] = [
-  { label: 'おすすめ', value: 'rating' },
-  { label: '新着順', value: 'newest' },
-  { label: '高い順', value: 'price-high' },
-  { label: '低い順', value: 'price-low' },
+  { label: UI_LABELS.RECOMMENDED, value: 'rating' },
+  { label: UI_LABELS.SORT_NEWEST, value: 'newest' },
+  { label: UI_LABELS.SORT_PRICE_HIGH, value: 'price-high' },
+  { label: UI_LABELS.SORT_PRICE_LOW, value: 'price-low' },
 ];
 
 export type SortOrder = 'asc' | 'desc';
@@ -49,8 +51,8 @@ export interface SearchSortOption {
 }
 
 export const SEARCH_SORT_OPTIONS: SearchSortOption[] = [
-  { label: 'おすすめ', value: 'default' },
-  { label: '新着順', value: 'newest' },
+  { label: UI_LABELS.RECOMMENDED, value: 'default' },
+  { label: UI_LABELS.SORT_NEWEST, value: 'newest' },
   { label: '評価順', value: 'rating' },
   { label: '登録順', value: 'registered' },
 ];

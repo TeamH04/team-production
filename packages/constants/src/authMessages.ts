@@ -1,9 +1,11 @@
+import { ERROR_MESSAGES } from './messages';
+
 /**
  * 認証エラーに関するメッセージ定数
  */
 export const AUTH_ERROR_MESSAGES = {
   /** ログインが必要なアクションのダイアログタイトル */
-  LOGIN_REQUIRED_TITLE: 'ログインが必要です',
+  LOGIN_REQUIRED_TITLE: ERROR_MESSAGES.AUTH_REQUIRED,
   /** いいね操作時の認証エラーメッセージ */
   LIKE: 'いいねにはログインが必要です。',
   /** レビュー投稿時の認証エラーメッセージ */
