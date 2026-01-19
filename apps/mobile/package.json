@@ -33,7 +33,6 @@
     "@team/crypto-utils": "workspace:*",
     "@team/file-utils": "workspace:*",
     "@team/hooks": "workspace:*",
-    "@team/location-utils": "workspace:*",
     "@team/mobile-ui": "workspace:*",
     "@team/shop-core": "workspace:*",
     "@team/test-utils": "workspace:*",

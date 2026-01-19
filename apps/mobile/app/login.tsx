@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { ERROR_MESSAGES, FONT_WEIGHT, ROUTES } from '@team/constants';
+import { ERROR_MESSAGES, ROUTES } from '@team/constants';
 import { DEV_GUEST_FLAG_KEY, DEV_LOGIN_ENABLED } from '@team/constants';
 import { createNonce } from '@team/crypto-utils';
 import { palette } from '@team/mobile-ui';
@@ -9,7 +9,7 @@ import { BlurView } from 'expo-blur';
 import * as Crypto from 'expo-crypto';
 import { type Href, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { useCallback, useLayoutEffect } from 'react';
+import { useCallback } from 'react';
 import { Alert, Dimensions, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 
@@ -47,7 +47,6 @@ export default function LoginScreen() {
     createRedirectUrl,
     getOAuthUrl,
   } = useOAuthFlow({ onLoginSuccess: handleLoginSuccess });
-
 
   const handleOAuth = useCallback(
     async (provider: OAuthProvider) => {

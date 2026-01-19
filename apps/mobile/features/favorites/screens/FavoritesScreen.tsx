@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { ERROR_MESSAGES, FONT_WEIGHT } from '@team/constants';
+import { ERROR_MESSAGES, FAVORITES_SORT_OPTIONS, FONT_WEIGHT, LAYOUT } from '@team/constants';
 import { useShopFilter } from '@team/hooks';
 import { palette } from '@team/mobile-ui';
 import { formatShopMeta, type SortType } from '@team/shop-core';
@@ -9,8 +9,6 @@ import { useCallback, useState } from 'react';
 import { Alert, FlatList, Modal, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { ShopCard } from '@/components/ShopCard';
-import { FAVORITES_SORT_OPTIONS } from '@/constants/sortOptions';
-import { TAB_BAR_SPACING } from '@/constants/TabBarSpacing';
 import { fonts } from '@/constants/typography';
 import { useFavorites } from '@/features/favorites/FavoritesContext';
 import { useStores } from '@/features/stores/StoresContext';
@@ -201,7 +199,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   listContent: {
-    paddingBottom: TAB_BAR_SPACING,
+    paddingBottom: LAYOUT.TAB_BAR_SPACING,
   },
   modalOverlay: {
     alignItems: 'center',

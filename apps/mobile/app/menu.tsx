@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { BORDER_RADIUS, FONT_WEIGHT, LAYOUT, SPACING, UI_LABELS } from '@team/constants';
+import { BORDER_RADIUS, LAYOUT, SPACING, UI_LABELS } from '@team/constants';
 import { palette } from '@team/mobile-ui';
 import { MENU_TAB_MAP, type ShopMenuItem } from '@team/types';
 import { useLocalSearchParams, useNavigation } from 'expo-router';

@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, test } from 'node:test';
 
-import { GENRES, toggleGenre, type Genre } from '../genres';
+import { GENRES, toggleGenre, type Genre } from '@team/constants';
 
 describe('GENRES', () => {
   test('ジャンル一覧が空ではない', () => {

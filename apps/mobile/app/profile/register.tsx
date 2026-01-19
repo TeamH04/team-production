@@ -1,4 +1,4 @@
-import { BORDER_RADIUS, FONT_WEIGHT, ROUTES } from '@team/constants';
+import { BORDER_RADIUS, ROUTES } from '@team/constants';
 import { GenreChipSelector, palette } from '@team/mobile-ui';
 import { Stack, useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
@@ -10,6 +10,7 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 

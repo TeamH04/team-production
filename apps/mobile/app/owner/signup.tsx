@@ -1,6 +1,5 @@
 import {
   BORDER_RADIUS,
-  FONT_WEIGHT,
   formatDateInput,
   isValidDateYYYYMMDD,
   isValidEmail,

@@ -1,4 +1,4 @@
-import type { Gender } from '@/features/user/UserContext';
+import type { Gender } from '@team/types';
 
 export function formatGenderLabel(value: Gender | string | null | undefined): string {
   if (!value) return '未設定';

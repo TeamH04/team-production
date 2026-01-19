@@ -1,16 +1,8 @@
-import { createConfiguredStorage } from '@team/api';
-import { createStoreMapping } from '@team/shop-core';
+import { createFullStorage } from '@team/shop-core';
 
 import { ENV } from '@/lib/config';
 
-const configuredStorage = createConfiguredStorage({
+export const storage = createFullStorage({
   supabaseUrl: ENV.SUPABASE_URL,
   storageBucket: ENV.SUPABASE_STORAGE_BUCKET,
 });
-
-const storeMapping = createStoreMapping(configuredStorage.buildStorageUrl);
-
-export const storage = {
-  ...configuredStorage,
-  ...storeMapping,
-};

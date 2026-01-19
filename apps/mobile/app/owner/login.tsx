@@ -1,13 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import {
-  BORDER_RADIUS,
-  ERROR_MESSAGES,
-  isValidEmail,
-  LAYOUT,
-  ROUTES,
-  SESSION_NOT_FOUND,
-  UI_LABELS,
-} from '@team/constants';
+import { ERROR_MESSAGES, isValidEmail, ROUTES, SESSION_NOT_FOUND } from '@team/constants';
 import { palette } from '@team/mobile-ui';
 import { BlurView } from 'expo-blur';
 import { type Href, useNavigation, useRouter } from 'expo-router';

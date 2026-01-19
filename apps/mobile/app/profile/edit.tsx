@@ -1,7 +1,6 @@
 import { Picker } from '@react-native-picker/picker';
 import {
   BORDER_RADIUS,
-  FONT_WEIGHT,
   isValidEmail,
   LAYOUT,
   SHADOW_STYLES,
@@ -23,7 +22,6 @@ import {
   View,
 } from 'react-native';
 
-import { TAB_BAR_SPACING } from '@/constants/TabBarSpacing';
 import { fonts } from '@/constants/typography';
 import { useUser } from '@/features/user/UserContext';
 import { useAuthMe } from '@/hooks/useAuthMe';
@@ -448,7 +446,7 @@ const styles = StyleSheet.create({
   content: {
     gap: 4,
     padding: 16,
-    paddingBottom: TAB_BAR_SPACING,
+    paddingBottom: LAYOUT.TAB_BAR_SPACING,
   },
 
   dobRow: { flexDirection: 'row', gap: 12, marginBottom: 4 },

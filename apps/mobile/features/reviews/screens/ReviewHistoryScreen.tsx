@@ -16,7 +16,6 @@ import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { TAB_BAR_SPACING } from '@/constants/TabBarSpacing';
 import { fonts } from '@/constants/typography';
 import { useFavorites } from '@/features/favorites/FavoritesContext';
 import { useReviews } from '@/features/reviews/ReviewsContext';
@@ -248,7 +247,7 @@ const styles = StyleSheet.create({
     ...SHADOW_STYLES.CARD,
     marginBottom: 16,
   },
-  content: { padding: 16, paddingBottom: TAB_BAR_SPACING },
+  content: { padding: 16, paddingBottom: LAYOUT.TAB_BAR_SPACING },
   emptyBox: {
     alignItems: 'center',
     backgroundColor: palette.surface,

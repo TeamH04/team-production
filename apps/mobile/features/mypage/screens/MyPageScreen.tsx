@@ -5,6 +5,7 @@ import {
   FONT_WEIGHT,
   formatRating,
   ICON_SIZE,
+  LAYOUT,
   ROUTES,
   SHADOW_STYLES,
 } from '@team/constants';
@@ -17,7 +18,6 @@ import { Alert, Image, Pressable, ScrollView, StyleSheet, Text, View } from 'rea
 
 import { EmptyState } from '@/components/EmptyState';
 import { HeaderWithBack } from '@/components/HeaderWithBack';
-import { TAB_BAR_SPACING } from '@/constants/TabBarSpacing';
 import { fonts } from '@/constants/typography';
 import { useReviews } from '@/features/reviews/ReviewsContext';
 import { useUser } from '@/features/user/UserContext';
@@ -532,7 +532,7 @@ const styles = StyleSheet.create({
     lineHeight: 18,
     marginTop: 4,
   },
-  content: { padding: 16, paddingBottom: TAB_BAR_SPACING },
+  content: { padding: 16, paddingBottom: LAYOUT.TAB_BAR_SPACING },
   date: {
     color: palette.mutedText,
     fontFamily: fonts.regular,

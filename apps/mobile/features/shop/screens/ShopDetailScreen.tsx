@@ -42,8 +42,8 @@ import { useVisited } from '@/features/visited/VisitedContext';
 import { ENV } from '@/lib/config';
 import { storage } from '@/lib/storage';
 
-import type { RatingDetails } from '@/features/reviews/ReviewsContext';
 import type { ReviewSort } from '@/lib/api';
+import type { RatingDetails } from '@team/types';
 
 const RATING_CATEGORIES = [
   { key: 'taste', label: '味', icon: 'restaurant-outline' as const },

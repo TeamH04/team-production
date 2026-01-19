@@ -2,6 +2,7 @@ import {
   BORDER_RADIUS,
   ERROR_MESSAGES,
   FONT_WEIGHT,
+  LAYOUT,
   MOBILE_PAGE_SIZE,
   ROUTES,
   TIMING,
@@ -24,7 +25,6 @@ import {
 import Animated, { useAnimatedRef } from 'react-native-reanimated';
 
 import { ShopCard } from '@/components/ShopCard';
-import { TAB_BAR_SPACING } from '@/constants/TabBarSpacing';
 import { fonts } from '@/constants/typography';
 import { useStores } from '@/features/stores/StoresContext';
 import { useShopNavigator } from '@/hooks/useShopNavigator';
@@ -204,7 +204,7 @@ const styles = StyleSheet.create({
   },
 
   content: {
-    paddingBottom: TAB_BAR_SPACING,
+    paddingBottom: LAYOUT.TAB_BAR_SPACING,
     paddingHorizontal: 24,
     paddingTop: 24,
   },

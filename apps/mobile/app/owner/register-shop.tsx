@@ -1,7 +1,6 @@
 import { HeaderBackButton } from '@react-navigation/elements';
 import {
   BORDER_RADIUS,
-  FONT_WEIGHT,
   LAYOUT,
   ROUTES,
   SHADOW_STYLES,
@@ -24,7 +23,6 @@ import {
   View,
 } from 'react-native';
 
-import { HEADER_HEIGHT } from '@/constants/layout';
 import { fonts } from '@/constants/typography';
 import {
   toStepData,
@@ -34,6 +32,8 @@ import {
   type MultiValueStep,
   type SingleValueStep,
 } from '@/features/owner/logic/shop-registration';
+
+const HEADER_HEIGHT = LAYOUT.HEADER_HEIGHT;
 
 type SingleValueStepUI = SingleValueStep & {
   onChange: (text: string) => void;

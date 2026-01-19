@@ -2,6 +2,7 @@ import {
   BORDER_RADIUS,
   ERROR_MESSAGES,
   FONT_WEIGHT,
+  LAYOUT,
   ROUTES,
   SEARCH_HISTORY_MAX,
   SEARCH_SORT_OPTIONS,
@@ -29,7 +30,6 @@ import {
 } from 'react-native';
 
 import { ShopCard } from '@/components/ShopCard';
-import { TAB_BAR_SPACING } from '@/constants/TabBarSpacing';
 import { fonts } from '@/constants/typography';
 import { useStores } from '@/features/stores/StoresContext';
 import { useVisited } from '@/features/visited/VisitedContext';
@@ -438,7 +438,7 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     flexGrow: 1,
-    paddingBottom: TAB_BAR_SPACING,
+    paddingBottom: LAYOUT.TAB_BAR_SPACING,
     paddingHorizontal: SPACING.XL,
     paddingTop: SPACING.XXL,
   },

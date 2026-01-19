@@ -116,9 +116,6 @@ importers:
       '@team/hooks':
         specifier: workspace:*
         version: link:../../packages/hooks
-      '@team/location-utils':
-        specifier: workspace:*
-        version: link:../../packages/location-utils
       '@team/mobile-ui':
         specifier: workspace:*
         version: link:../../packages/mobile-ui
@@ -471,6 +468,9 @@ importers:
 
   packages/shop-core:
     dependencies:
+      '@team/api':
+        specifier: workspace:*
+        version: link:../api
       '@team/constants':
         specifier: workspace:*
         version: link:../constants
