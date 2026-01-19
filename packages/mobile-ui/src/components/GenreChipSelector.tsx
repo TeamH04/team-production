@@ -5,7 +5,6 @@
 
 import {
   BORDER_RADIUS,
-  FONT_WEIGHT,
   GENRES,
   toggleGenre as toggleGenreUtil,
 } from '@team/constants';
