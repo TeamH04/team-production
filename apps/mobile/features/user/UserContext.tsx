@@ -15,13 +15,20 @@ async function fetchUser(): Promise<UserProfile | null> {
   const token = await getAccessToken();
   if (!token) return null;
 
-  const apiUser = await api.fetchAuthMe(token);
+  let apiUser;
+  try {
+    apiUser = await api.fetchAuthMe(token);
+  } catch {
+    // 認証エラーやネットワークエラー時は null を返す
+    // エラーは useUserState の catch ブロックでもハンドリングされる
+    return null;
+  }
   if (!apiUser) return null;
 
-  // プロフィール登録済みかどうかは、name と email が存在し、
-  // gender（任意フィールド）が設定されているかで判定
+  // プロフィール登録済みかどうかは、name と email が存在するかで判定
+  // gender は任意フィールドのため判定条件に含めない
   // 新規登録ユーザーは name が空または email のみの状態
-  const isProfileRegistered = !!(apiUser.name && apiUser.gender);
+  const isProfileRegistered = !!(apiUser.name && apiUser.email);
 
   return {
     name: apiUser.name,
