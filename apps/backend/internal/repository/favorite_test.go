@@ -5,260 +5,190 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/uuid"
+	"github.com/stretchr/testify/require"
+
 	"github.com/TeamH04/team-production/apps/backend/internal/apperr"
 	"github.com/TeamH04/team-production/apps/backend/internal/domain/entity"
 	"github.com/TeamH04/team-production/apps/backend/internal/repository"
 	"github.com/TeamH04/team-production/apps/backend/internal/repository/testutil"
+	"github.com/TeamH04/team-production/apps/backend/internal/usecase/output"
 )
 
-func TestFavoriteRepository_Create_Success(t *testing.T) {
+// setupFavoriteTest creates common test dependencies
+func setupFavoriteTest(t *testing.T) (output.FavoriteRepository, output.UserRepository, output.StoreRepository) {
+	t.Helper()
 	db := testutil.SetupTestDB(t)
-	defer testutil.CleanupTestDB(t, db)
 
-	// Create user and store first
+	favRepo := repository.NewFavoriteRepository(db)
 	userRepo := repository.NewUserRepository(db)
 	storeRepo := repository.NewStoreRepository(db)
 
+	t.Cleanup(func() {
+		testutil.CleanupTestDB(t, db)
+	})
+
+	return favRepo, userRepo, storeRepo
+}
+
+// createTestUserAndStore creates common test entities
+func createTestUserAndStore(t *testing.T, userRepo output.UserRepository, storeRepo output.StoreRepository) (*entity.User, *entity.Store) {
+	t.Helper()
+
 	user := &entity.User{
-		UserID:    "user-123",
+		UserID:    "test-user-" + uuid.New().String()[:8],
 		Email:     "test@example.com",
 		Role:      "user",
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
 	}
-	if err := userRepo.Create(context.Background(), user); err != nil {
-		t.Fatalf("failed to create user: %v", err)
-	}
+	require.NoError(t, userRepo.Create(context.Background(), user))
 
 	store := &entity.Store{
-		StoreID:   "store-123",
+		StoreID:   "test-store-" + uuid.New().String()[:8],
 		Name:      "Test Store",
 		Address:   "Test Address",
-		PlaceID:   "place-123",
 		Latitude:  35.6812,
 		Longitude: 139.7671,
+		PlaceID:   "test-place-id-" + uuid.New().String()[:8],
 		Category:  "カフェ・喫茶",
 		Budget:    "$$",
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
 	}
-	if err := storeRepo.Create(context.Background(), store); err != nil {
-		t.Fatalf("failed to create store: %v", err)
-	}
+	require.NoError(t, storeRepo.Create(context.Background(), store))
+
+	return user, store
+}
+
+// newTestUserID generates a unique user ID for testing
+func newTestUserID(t *testing.T) string {
+	t.Helper()
+	return "user-" + uuid.New().String()[:8]
+}
+
+// newTestStoreID generates a unique store ID for testing
+func newTestStoreID(t *testing.T) string {
+	t.Helper()
+	return "store-" + uuid.New().String()[:8]
+}
+
+func TestFavoriteRepository_Create_Success(t *testing.T) {
+	favRepo, userRepo, storeRepo := setupFavoriteTest(t)
+
+	// Create user and store using helper
+	user, store := createTestUserAndStore(t, userRepo, storeRepo)
 
 	// Create favorite
-	favoriteRepo := repository.NewFavoriteRepository(db)
 	favorite := &entity.Favorite{
-		UserID:  "user-123",
-		StoreID: "store-123",
+		UserID:  user.UserID,
+		StoreID: store.StoreID,
 	}
 
-	err := favoriteRepo.Create(context.Background(), favorite)
-
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	err := favRepo.Create(context.Background(), favorite)
+	require.NoError(t, err)
 }
 
 func TestFavoriteRepository_FindByUserID_Success(t *testing.T) {
-	db := testutil.SetupTestDB(t)
-	defer testutil.CleanupTestDB(t, db)
+	favRepo, userRepo, storeRepo := setupFavoriteTest(t)
 
-	// Create user and stores
-	userRepo := repository.NewUserRepository(db)
-	storeRepo := repository.NewStoreRepository(db)
-	favoriteRepo := repository.NewFavoriteRepository(db)
-
+	// Create user
 	user := &entity.User{
-		UserID:    "user-123",
+		UserID:    newTestUserID(t),
 		Email:     "test@example.com",
 		Role:      "user",
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
 	}
-	if err := userRepo.Create(context.Background(), user); err != nil {
-		t.Fatalf("failed to create user: %v", err)
-	}
+	require.NoError(t, userRepo.Create(context.Background(), user))
 
+	// Create two stores with unique IDs
 	store1 := &entity.Store{
-		StoreID:   "store-1",
+		StoreID:   newTestStoreID(t),
 		Name:      "Store 1",
 		Address:   "Address 1",
-		PlaceID:   "place-1",
+		PlaceID:   "place-" + uuid.New().String()[:8],
 		Latitude:  35.6812,
 		Longitude: 139.7671,
 		Category:  "カフェ・喫茶",
 		Budget:    "$$",
 	}
 	store2 := &entity.Store{
-		StoreID:   "store-2",
+		StoreID:   newTestStoreID(t),
 		Name:      "Store 2",
 		Address:   "Address 2",
-		PlaceID:   "place-2",
+		PlaceID:   "place-" + uuid.New().String()[:8],
 		Latitude:  35.6813,
 		Longitude: 139.7672,
 		Category:  "カフェ・喫茶",
 		Budget:    "$$",
 	}
-	if err := storeRepo.Create(context.Background(), store1); err != nil {
-		t.Fatalf("failed to create store1: %v", err)
-	}
-	if err := storeRepo.Create(context.Background(), store2); err != nil {
-		t.Fatalf("failed to create store2: %v", err)
-	}
+	require.NoError(t, storeRepo.Create(context.Background(), store1))
+	require.NoError(t, storeRepo.Create(context.Background(), store2))
 
 	// Create favorites
-	favorite1 := &entity.Favorite{UserID: "user-123", StoreID: "store-1"}
-	favorite2 := &entity.Favorite{UserID: "user-123", StoreID: "store-2"}
-	if err := favoriteRepo.Create(context.Background(), favorite1); err != nil {
-		t.Fatalf("failed to create favorite1: %v", err)
-	}
-	if err := favoriteRepo.Create(context.Background(), favorite2); err != nil {
-		t.Fatalf("failed to create favorite2: %v", err)
-	}
+	favorite1 := &entity.Favorite{UserID: user.UserID, StoreID: store1.StoreID}
+	favorite2 := &entity.Favorite{UserID: user.UserID, StoreID: store2.StoreID}
+	require.NoError(t, favRepo.Create(context.Background(), favorite1))
+	require.NoError(t, favRepo.Create(context.Background(), favorite2))
 
 	// Find by user ID
-	favorites, err := favoriteRepo.FindByUserID(context.Background(), "user-123")
-
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	if len(favorites) != 2 {
-		t.Errorf("expected 2 favorites, got %d", len(favorites))
-	}
+	favorites, err := favRepo.FindByUserID(context.Background(), user.UserID)
+	require.NoError(t, err)
+	require.Len(t, favorites, 2)
 }
 
 func TestFavoriteRepository_FindByUserID_Empty(t *testing.T) {
-	db := testutil.SetupTestDB(t)
-	defer testutil.CleanupTestDB(t, db)
+	favRepo, _, _ := setupFavoriteTest(t)
 
-	favoriteRepo := repository.NewFavoriteRepository(db)
-
-	favorites, err := favoriteRepo.FindByUserID(context.Background(), "nonexistent")
-
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	if len(favorites) != 0 {
-		t.Errorf("expected 0 favorites, got %d", len(favorites))
-	}
+	nonexistentUserID := newTestUserID(t)
+	favorites, err := favRepo.FindByUserID(context.Background(), nonexistentUserID)
+	require.NoError(t, err)
+	require.Empty(t, favorites)
 }
 
 func TestFavoriteRepository_FindByUserAndStore_Success(t *testing.T) {
-	db := testutil.SetupTestDB(t)
-	defer testutil.CleanupTestDB(t, db)
+	favRepo, userRepo, storeRepo := setupFavoriteTest(t)
 
-	// Create user and store
-	userRepo := repository.NewUserRepository(db)
-	storeRepo := repository.NewStoreRepository(db)
-	favoriteRepo := repository.NewFavoriteRepository(db)
-
-	user := &entity.User{
-		UserID:    "user-123",
-		Email:     "test@example.com",
-		Role:      "user",
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
-	}
-	if err := userRepo.Create(context.Background(), user); err != nil {
-		t.Fatalf("failed to create user: %v", err)
-	}
-
-	store := &entity.Store{
-		StoreID:   "store-123",
-		Name:      "Test Store",
-		Address:   "Test Address",
-		PlaceID:   "place-123",
-		Latitude:  35.6812,
-		Longitude: 139.7671,
-		Category:  "カフェ・喫茶",
-		Budget:    "$$",
-	}
-	if err := storeRepo.Create(context.Background(), store); err != nil {
-		t.Fatalf("failed to create store: %v", err)
-	}
+	// Create user and store using helper
+	user, store := createTestUserAndStore(t, userRepo, storeRepo)
 
 	// Create favorite
-	favorite := &entity.Favorite{UserID: "user-123", StoreID: "store-123"}
-	if err := favoriteRepo.Create(context.Background(), favorite); err != nil {
-		t.Fatalf("failed to create favorite: %v", err)
-	}
+	favorite := &entity.Favorite{UserID: user.UserID, StoreID: store.StoreID}
+	require.NoError(t, favRepo.Create(context.Background(), favorite))
 
 	// Find by user and store
-	found, err := favoriteRepo.FindByUserAndStore(context.Background(), "user-123", "store-123")
-
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	if found.UserID != "user-123" {
-		t.Errorf("expected UserID user-123, got %s", found.UserID)
-	}
-	if found.StoreID != "store-123" {
-		t.Errorf("expected StoreID store-123, got %s", found.StoreID)
-	}
+	found, err := favRepo.FindByUserAndStore(context.Background(), user.UserID, store.StoreID)
+	require.NoError(t, err)
+	require.Equal(t, user.UserID, found.UserID)
+	require.Equal(t, store.StoreID, found.StoreID)
 }
 
 func TestFavoriteRepository_FindByUserAndStore_NotFound(t *testing.T) {
-	db := testutil.SetupTestDB(t)
-	defer testutil.CleanupTestDB(t, db)
+	favRepo, _, _ := setupFavoriteTest(t)
 
-	favoriteRepo := repository.NewFavoriteRepository(db)
+	nonexistentUserID := newTestUserID(t)
+	nonexistentStoreID := newTestStoreID(t)
+	_, err := favRepo.FindByUserAndStore(context.Background(), nonexistentUserID, nonexistentStoreID)
 
-	_, err := favoriteRepo.FindByUserAndStore(context.Background(), "user-123", "store-123")
-
-	if !apperr.IsCode(err, apperr.CodeNotFound) {
-		t.Errorf("expected CodeNotFound error, got %v", err)
-	}
+	require.True(t, apperr.IsCode(err, apperr.CodeNotFound), "expected CodeNotFound error, got %v", err)
 }
 
 func TestFavoriteRepository_Delete_Success(t *testing.T) {
-	db := testutil.SetupTestDB(t)
-	defer testutil.CleanupTestDB(t, db)
+	favRepo, userRepo, storeRepo := setupFavoriteTest(t)
 
-	// Create user and store
-	userRepo := repository.NewUserRepository(db)
-	storeRepo := repository.NewStoreRepository(db)
-	favoriteRepo := repository.NewFavoriteRepository(db)
-
-	user := &entity.User{
-		UserID:    "user-123",
-		Email:     "test@example.com",
-		Role:      "user",
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
-	}
-	if err := userRepo.Create(context.Background(), user); err != nil {
-		t.Fatalf("failed to create user: %v", err)
-	}
-
-	store := &entity.Store{
-		StoreID:   "store-123",
-		Name:      "Test Store",
-		Address:   "Test Address",
-		PlaceID:   "place-123",
-		Latitude:  35.6812,
-		Longitude: 139.7671,
-		Category:  "カフェ・喫茶",
-		Budget:    "$$",
-	}
-	if err := storeRepo.Create(context.Background(), store); err != nil {
-		t.Fatalf("failed to create store: %v", err)
-	}
+	// Create user and store using helper
+	user, store := createTestUserAndStore(t, userRepo, storeRepo)
 
 	// Create favorite
-	favorite := &entity.Favorite{UserID: "user-123", StoreID: "store-123"}
-	if err := favoriteRepo.Create(context.Background(), favorite); err != nil {
-		t.Fatalf("failed to create favorite: %v", err)
-	}
+	favorite := &entity.Favorite{UserID: user.UserID, StoreID: store.StoreID}
+	require.NoError(t, favRepo.Create(context.Background(), favorite))
 
 	// Delete favorite
-	err := favoriteRepo.Delete(context.Background(), "user-123", "store-123")
-
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	err := favRepo.Delete(context.Background(), user.UserID, store.StoreID)
+	require.NoError(t, err)
 
 	// Verify deletion
-	_, err = favoriteRepo.FindByUserAndStore(context.Background(), "user-123", "store-123")
-	if !apperr.IsCode(err, apperr.CodeNotFound) {
-		t.Errorf("expected CodeNotFound after deletion, got %v", err)
-	}
+	_, err = favRepo.FindByUserAndStore(context.Background(), user.UserID, store.StoreID)
+	require.True(t, apperr.IsCode(err, apperr.CodeNotFound), "expected CodeNotFound after deletion, got %v", err)
 }

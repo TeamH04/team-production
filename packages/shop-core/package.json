@@ -1,16 +1,28 @@
 {
   "name": "@team/shop-core",
   "version": "0.0.1",
-  "main": "src/index.ts",
-  "types": "src/index.ts",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    }
+  },
   "scripts": {
+    "typecheck": "tsc --noEmit",
     "test": "node --import tsx --test src/__tests__/*.test.ts"
   },
   "dependencies": {
+    "@team/api": "workspace:*",
+    "@team/constants": "workspace:*",
+    "@team/core-utils": "workspace:*",
     "@team/types": "workspace:*"
   },
   "devDependencies": {
     "@team/test-utils": "workspace:*",
-    "tsx": "^4.19.4"
+    "tsx": "^4.21.0"
   }
 }

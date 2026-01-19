@@ -47,6 +47,7 @@ infra/**/.env
 # ---- Package Managers ----
 package-lock.json
 yarn.lock
+.pnpm-store/
 
 # ---- Tooling / Editor ----
 .idea/
@@ -54,6 +55,7 @@ yarn.lock
 !.vscode/settings.json
 !.vscode/extensions.json
 .claude/
+.turbo/
 
 # ---- Tests / Coverage ----
 coverage/
@@ -61,6 +63,7 @@ coverage/
 jest-cache/
 jest-stare/
 *.tsbuildinfo
+.test
 
 # ---- Project specific ----
 app-example

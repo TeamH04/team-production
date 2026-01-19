@@ -1,13 +1,15 @@
 /**
  * React Context テスト用の汎用Harnessファクトリ
  */
+import { setupReactActEnvironment } from '@team/test-utils';
 import { act, useEffect } from 'react';
 import TestRenderer from 'react-test-renderer';
 
 import type { ComponentType, ReactElement, ReactNode } from 'react';
 import type { ReactTestRenderer } from 'react-test-renderer';
 
-import './setup';
+// React act環境を有効化
+setupReactActEnvironment();
 
 type RendererHandle = Pick<ReactTestRenderer, 'unmount'>;
 

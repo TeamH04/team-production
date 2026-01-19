@@ -1,11 +1,15 @@
+import { formatPrice } from '@team/constants';
+
+import { IMAGE_POOL } from './constants';
+
+import type { StorageUrlResolver } from './types';
 import type { ApiStore, Shop, ShopCategory, MoneyBucket } from '@team/types';
 
 const DEFAULT_CATEGORY: ShopCategory = 'カフェ・喫茶';
 const DEFAULT_BUDGET: MoneyBucket = '$$';
 const DEFAULT_DISTANCE_MINUTES = 5;
 const DEFAULT_RATING = 0;
-const DEFAULT_IMAGE_URL =
-  'https://images.unsplash.com/photo-1509042239860-f550ce710b93?auto=format&fit=crop&w=600&q=80';
+const DEFAULT_IMAGE_URL = IMAGE_POOL[0]; // コーヒー
 
 const VALID_CATEGORIES: readonly ShopCategory[] = [
   'レストラン',
@@ -26,8 +30,6 @@ function isValidCategory(value: string): value is ShopCategory {
 function isValidBudget(value: string): value is MoneyBucket {
   return VALID_BUDGETS.includes(value as MoneyBucket);
 }
-
-type StorageUrlResolver = (path: string) => string | undefined;
 
 // デフォルトのURL解決（何もしない、またはhttpで始まればそのまま）
 const defaultUrlResolver: StorageUrlResolver = path => {
@@ -81,13 +83,8 @@ export function mapApiStoreToShop(
   const address = store.address?.trim() ?? '';
 
   // place_id は Google Place ID で、マップ連携に必須
-  // 空の場合は警告を出力し、UI側で !placeId チェックにより機能を無効化
+  // 空の場合、UI側で !placeId チェックにより機能を無効化
   const placeId = store.place_id?.trim() || '';
-  if (!placeId) {
-    console.warn(
-      `[mapApiStoreToShop] Missing or empty place_id for store "${store.name}" (${store.store_id}). Map features will be disabled.`,
-    );
-  }
   // メニュー項目のマッピング
   // category フォールバック: バックエンドのレガシーデータでは category が未設定で
   // description にカテゴリ情報が含まれている場合があるため、description をフォールバックとして使用
@@ -96,7 +93,7 @@ export function mapApiStoreToShop(
       id: item.menu_id,
       name: item.name,
       category: item.category?.trim() ?? item.description?.trim() ?? '',
-      price: item.price != null ? `¥${item.price.toLocaleString()}` : '',
+      price: item.price != null ? formatPrice(item.price) : '',
       description: item.description ?? undefined,
     })) ?? [];
 

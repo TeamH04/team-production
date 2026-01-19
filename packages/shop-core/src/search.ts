@@ -1,3 +1,5 @@
+import { includesIgnoreCase, normalizeString } from '@team/core-utils';
+
 import type { Shop, ShopCategory } from '@team/types';
 
 /**
@@ -10,8 +12,6 @@ export type ShopSearchOptions = {
   category?: ShopCategory | null;
   /** タグフィルター（いずれかに一致） */
   tags?: string[];
-  /** エリアフィルター（いずれかに一致） */
-  areas?: string[];
 };
 
 /**
@@ -23,11 +23,10 @@ export type ShopSearchOptions = {
 export function matchesSearchQuery(shop: Shop, query: string): boolean {
   if (!query) return true;
 
-  const q = query.toLowerCase();
   return (
-    shop.name.toLowerCase().includes(q) ||
-    shop.description.toLowerCase().includes(q) ||
-    shop.tags.some(tag => tag.toLowerCase().includes(q))
+    includesIgnoreCase(shop.name, query) ||
+    includesIgnoreCase(shop.description, query) ||
+    shop.tags.some(tag => includesIgnoreCase(tag, query))
   );
 }
 
@@ -51,21 +50,7 @@ export function matchesCategory(shop: Shop, category: ShopCategory | null | unde
 export function matchesTags(shop: Shop, tags: string[]): boolean {
   if (!tags || tags.length === 0) return true;
 
-  const normalizedTags = tags.map(t => t.toLowerCase());
-  return normalizedTags.some(tag => shop.tags.some(shopTag => shopTag.toLowerCase().includes(tag)));
-}
-
-/**
- * エリアが店舗にマッチするか判定（いずれかに一致）
- * @param shop 判定対象の店舗
- * @param areas エリア配列（空の場合は全てマッチ）
- * @returns マッチする場合 true
- */
-export function matchesAreas(shop: Shop, areas: string[]): boolean {
-  if (!areas || areas.length === 0) return true;
-  if (!shop.area) return false;
-
-  return areas.includes(shop.area);
+  return tags.some(tag => shop.tags.some(shopTag => includesIgnoreCase(shopTag, tag)));
 }
 
 /**
@@ -75,15 +60,14 @@ export function matchesAreas(shop: Shop, areas: string[]): boolean {
  * @returns フィルタリング後の店舗配列
  */
 export function filterShops(shops: Shop[], options: ShopSearchOptions = {}): Shop[] {
-  const { query, category, tags, areas } = options;
-  const normalizedQuery = query?.trim().toLowerCase() ?? '';
+  const { query, category, tags } = options;
+  const normalizedQuery = query ? normalizeString(query) : '';
 
   return shops.filter(shop => {
     const queryMatch = matchesSearchQuery(shop, normalizedQuery);
     const categoryMatch = matchesCategory(shop, category);
     const tagsMatch = matchesTags(shop, tags ?? []);
-    const areasMatch = matchesAreas(shop, areas ?? []);
 
-    return queryMatch && categoryMatch && tagsMatch && areasMatch;
+    return queryMatch && categoryMatch && tagsMatch;
   });
 }

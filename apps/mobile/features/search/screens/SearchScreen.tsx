@@ -1,6 +1,22 @@
-import { filterShops } from '@team/shop-core';
+import {
+  BORDER_RADIUS,
+  ERROR_MESSAGES,
+  LAYOUT,
+  ROUTES,
+  SEARCH_HISTORY_MAX,
+  SEARCH_SORT_OPTIONS,
+  SPACING,
+  VISITED_FILTER_OPTIONS,
+  type SearchSortType,
+  type SortOrder,
+} from '@team/constants';
+import { getIdNum } from '@team/core-utils';
+import { useShopFilter } from '@team/hooks';
+import { ToggleButton } from '@team/mobile-ui';
+import { palette } from '@team/mobile-ui';
+import { formatShopMeta, sortShops } from '@team/shop-core';
 import { useRouter } from 'expo-router';
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import {
   FlatList,
   Image,
@@ -12,47 +28,12 @@ import {
   View,
 } from 'react-native';
 
-import { palette } from '@/constants/palette';
+import { ShopCard } from '@/components/ShopCard';
 import { fonts } from '@/constants/typography';
 import { useStores } from '@/features/stores/StoresContext';
 import { useVisited } from '@/features/visited/VisitedContext';
-import { AREA_OPTIONS } from '@/lib/stationArea';
 
-const TAB_BAR_SPACING = 129;
-const INACTIVE_COLOR = palette.secondarySurface;
-
-const COLOR_WHITE = '#FFFFFF';
-const COLOR_ACTIVE_NAVY = '#1A2533';
-const COLOR_TAG_BG = '#F0F2F5';
-
-type SortType = 'default' | 'newest' | 'rating' | 'registered';
-type SortOrder = 'asc' | 'desc';
-type VisitedFilter = 'all' | 'visited' | 'not_visited';
-
-const SORT_OPTIONS: { label: string; value: SortType }[] = [
-  { label: 'おすすめ', value: 'default' },
-  { label: '新着順', value: 'newest' },
-  { label: '評価順(★)', value: 'rating' },
-  { label: '登録順', value: 'registered' },
-];
-
-const VISITED_FILTER_OPTIONS: { label: string; value: VisitedFilter }[] = [
-  { label: 'すべて', value: 'all' },
-  { label: '訪問済み', value: 'visited' },
-  { label: '未訪問', value: 'not_visited' },
-];
-
-const getIdNum = (id: string) => {
-  if (!id) return 0;
-  const normalized = id.replace(/[０-９]/g, s => {
-    return String.fromCharCode(s.charCodeAt(0) - 0xfee0);
-  });
-  const match = normalized.match(/(\d+)/);
-  if (match) {
-    return parseInt(match[0], 10);
-  }
-  return 0;
-};
+import type { VisitedFilter } from '@team/types';
 
 export default function SearchScreen() {
   const router = useRouter();
@@ -60,21 +41,25 @@ export default function SearchScreen() {
   const [userTypedText, setUserTypedText] = useState('');
   const [currentSearchText, setCurrentSearchText] = useState('');
   const [activeCategories, setActiveCategories] = useState<string[]>([]);
-  const [activeAreas, setActiveAreas] = useState<string[]>([]);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [searchHistory, setSearchHistory] = useState<string[]>([]);
-  const [filtersExpanded, setFiltersExpanded] = useState(true);
-  const [expandedCategoryTags, setExpandedCategoryTags] = useState<string[]>([]);
-  const [sortMenuOpen, setSortMenuOpen] = useState(false);
   const { stores: shops, loading, error: loadError } = useStores();
   const [filterVisited, setFilterVisited] = useState<VisitedFilter>('all');
 
-  const [sortBy, setSortBy] = useState<SortType>('default');
-  const [sortOrders, setSortOrders] = useState<Record<SortType, SortOrder>>({
+  const [sortBy, setSortBy] = useState<SearchSortType>('default');
+  const [sortOrders, setSortOrders] = useState<Record<SearchSortType, SortOrder>>({
     default: 'desc',
     newest: 'desc',
     rating: 'desc',
     registered: 'desc',
+  });
+
+  const { filteredShops: baseFilteredShops } = useShopFilter({
+    shops,
+    searchText: currentSearchText.trim(),
+    categories: activeCategories,
+    tags: selectedTags,
+    sortType: 'default',
   });
 
   const CATEGORY_OPTIONS = useMemo(() => {
@@ -84,8 +69,6 @@ export default function SearchScreen() {
     }
     return Array.from(set).sort();
   }, [shops]);
-
-  const AREA_FILTER_OPTIONS = useMemo(() => AREA_OPTIONS, []);
 
   const TAGS_BY_CATEGORY = useMemo(() => {
     const m = new Map<string, Set<string>>();
@@ -108,16 +91,12 @@ export default function SearchScreen() {
   }, [shops]);
 
   const hasSearchCriteria =
-    currentSearchText.length > 0 ||
-    selectedTags.length > 0 ||
-    activeCategories.length > 0 ||
-    activeAreas.length > 0;
+    currentSearchText.length > 0 || selectedTags.length > 0 || activeCategories.length > 0;
 
   const handleClearAll = () => {
     setUserTypedText('');
     setCurrentSearchText('');
     setActiveCategories([]);
-    setActiveAreas([]);
     setSelectedTags([]);
     setSortBy('default');
     setFilterVisited('all');
@@ -133,7 +112,7 @@ export default function SearchScreen() {
     setSearchHistory(prev => {
       // 既にある場合は一旦消して、配列の先頭に追加（重複防止）
       const filtered = prev.filter(item => item !== trimmedText);
-      return [trimmedText, ...filtered].slice(0, 10); // 最大10件
+      return [trimmedText, ...filtered].slice(0, SEARCH_HISTORY_MAX); // 最大10件
     });
 
     setCurrentSearchText(trimmedText);
@@ -142,13 +121,8 @@ export default function SearchScreen() {
     }
   };
 
-  const handleFilterToggle = () => {
-    setFiltersExpanded(prev => !prev);
-  };
-
-  const handleSortTypePress = (value: SortType) => {
+  const handleSearchSortTypePress = (value: SearchSortType) => {
     if (sortBy !== value) setSortBy(value);
-    setSortMenuOpen(false);
   };
 
   const toggleSortOrder = () => {
@@ -163,8 +137,8 @@ export default function SearchScreen() {
   };
 
   const handleCategoryPress = (category: string) => {
-    const isDeselecting = activeCategories.includes(category);
     setActiveCategories(prev => {
+      const isDeselecting = prev.includes(category);
       if (isDeselecting) {
         const tagsToRemove = TAGS_BY_CATEGORY[category] || [];
         setSelectedTags(currentTags => currentTags.filter(tag => !tagsToRemove.includes(tag)));
@@ -173,31 +147,18 @@ export default function SearchScreen() {
         return [...prev, category];
       }
     });
-    setExpandedCategoryTags(prev =>
-      isDeselecting ? prev.filter(cat => cat !== category) : [...prev, category],
-    );
-  };
-
-  const handleAreaPress = (area: string) => {
-    setActiveAreas(prev => (prev.includes(area) ? prev.filter(a => a !== area) : [...prev, area]));
   };
 
   const handleTagPress = (tag: string) => {
     setSelectedTags(prev => (prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]));
   };
 
-  const handleCategoryTagsToggle = (category: string) => {
-    setExpandedCategoryTags(prev =>
-      prev.includes(category) ? prev.filter(cat => cat !== category) : [...prev, category],
-    );
-  };
-
-  const handleShopPress = (shopId: string) => {
-    router.push({
-      pathname: '/shop/[id]',
-      params: { id: shopId },
-    });
-  };
+  const handleShopPress = useCallback(
+    (shopId: string) => {
+      router.push(ROUTES.SHOP_DETAIL(shopId));
+    },
+    [router],
+  );
 
   const getSortOrderLabel = () => {
     const currentOrder = sortOrders[sortBy];
@@ -212,24 +173,10 @@ export default function SearchScreen() {
     }
   };
 
-  const currentSortLabel = useMemo(() => {
-    return SORT_OPTIONS.find(option => option.value === sortBy)?.label ?? 'おすすめ';
-  }, [sortBy]);
-
   const searchResults = useMemo(() => {
     if (!hasSearchCriteria) return [];
 
-    // 共通フィルタリングロジックを使用
-    let filtered = filterShops(shops, {
-      query: currentSearchText.trim(),
-      tags: selectedTags,
-      areas: activeAreas,
-    });
-
-    // カテゴリフィルター（複数選択対応のためカスタム処理）
-    if (activeCategories.length > 0) {
-      filtered = filtered.filter(shop => activeCategories.includes(shop.category));
-    }
+    let filtered = baseFilteredShops;
 
     // 訪問済みフィルター（モバイル固有）
     if (filterVisited !== 'all') {
@@ -238,39 +185,37 @@ export default function SearchScreen() {
       );
     }
 
-    return filtered.sort((a, b) => {
-      let comparison = 0;
-      const currentOrder = sortOrders[sortBy];
-      switch (sortBy) {
-        case 'newest':
-          comparison = new Date(a.openedAt).getTime() - new Date(b.openedAt).getTime();
-          break;
-        case 'registered':
-          comparison =
-            getIdNum(a.id) !== 0 || getIdNum(b.id) !== 0
-              ? getIdNum(a.id) - getIdNum(b.id)
-              : new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
-          break;
-        case 'rating':
-          comparison = a.rating - b.rating;
-          break;
-        default:
-          return 0;
+    const currentOrder = sortOrders[sortBy];
+
+    switch (sortBy) {
+      case 'newest': {
+        const sorted = sortShops(filtered, 'newest');
+        filtered = currentOrder === 'asc' ? [...sorted].reverse() : sorted;
+        break;
       }
-      return currentOrder === 'asc' ? comparison : -comparison;
-    });
-  }, [
-    activeCategories,
-    activeAreas,
-    currentSearchText,
-    filterVisited,
-    hasSearchCriteria,
-    isVisited,
-    selectedTags,
-    shops,
-    sortBy,
-    sortOrders,
-  ]);
+      case 'rating': {
+        const sortType = currentOrder === 'asc' ? 'rating-low' : 'rating-high';
+        filtered = sortShops(filtered, sortType);
+        break;
+      }
+      case 'registered': {
+        const sorted = [...filtered].sort((a, b) => {
+          const leftId = getIdNum(a.id);
+          const rightId = getIdNum(b.id);
+          if (leftId !== 0 || rightId !== 0) {
+            return leftId - rightId;
+          }
+          return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+        });
+        filtered = currentOrder === 'asc' ? sorted : sorted.reverse();
+        break;
+      }
+      default:
+        break;
+    }
+
+    return filtered;
+  }, [baseFilteredShops, filterVisited, hasSearchCriteria, isVisited, sortBy, sortOrders]);
 
   return (
     <ScrollView
@@ -306,148 +251,46 @@ export default function SearchScreen() {
           </View>
         </View>
 
-        {!loading && !loadError && (
-          <View style={styles.visitedFilterContainer}>
-            <Text style={styles.filterSectionLabel}>訪問状況</Text>
-            <View style={styles.visitedFilterRow}>
-              {VISITED_FILTER_OPTIONS.map(option => {
-                const isActive = filterVisited === option.value;
-                return (
-                  <Pressable
-                    key={option.value}
-                    accessibilityLabel={`訪問済みフィルター: ${option.label}`}
-                    onPress={() => setFilterVisited(option.value)}
-                    style={[
-                      styles.visitedFilterButton,
-                      isActive
-                        ? styles.visitedFilterButtonActive
-                        : styles.visitedFilterButtonInactive,
-                    ]}
-                  >
-                    <Text
-                      style={
-                        isActive
-                          ? styles.visitedFilterButtonTextActive
-                          : styles.visitedFilterButtonTextInactive
-                      }
-                    >
-                      {option.label}
-                    </Text>
-                  </Pressable>
-                );
-              })}
+        {currentSearchText.length === 0 && (
+          <View style={styles.tagGroupsContainer}>
+            <Text style={styles.sectionLabel}>カテゴリから探す（複数選択可）</Text>
+            <View style={styles.categoriesRow}>
+              {CATEGORY_OPTIONS.map(cat => (
+                <ToggleButton
+                  key={cat}
+                  label={cat}
+                  isActive={activeCategories.includes(cat)}
+                  onPress={() => handleCategoryPress(cat)}
+                  style={styles.categoryButton}
+                />
+              ))}
             </View>
+
+            {activeCategories.length > 0 && (
+              <View style={styles.subTagSection}>
+                <View style={styles.divider} />
+
+                {activeCategories.map(cat => (
+                  <View key={`tags-${cat}`} style={styles.tagGroup}>
+                    <Text style={styles.subSectionLabel}>{`${cat}のタグ`}</Text>
+                    <View style={styles.tagsRow}>
+                      {(TAGS_BY_CATEGORY[cat] || []).map(tag => (
+                        <ToggleButton
+                          key={tag}
+                          label={tag}
+                          isActive={selectedTags.includes(tag)}
+                          onPress={() => handleTagPress(tag)}
+                          style={styles.tagButton}
+                          size='small'
+                        />
+                      ))}
+                    </View>
+                  </View>
+                ))}
+              </View>
+            )}
           </View>
         )}
-
-        <View style={styles.tagGroupsContainer}>
-          <Pressable onPress={handleFilterToggle} style={styles.filterHeaderRow}>
-            <Text style={styles.filterHeaderText}>絞り込み条件</Text>
-            <Text style={styles.filterHeaderIcon}>{filtersExpanded ? '−' : '+'}</Text>
-          </Pressable>
-          {filtersExpanded && (
-            <View style={styles.filterBody}>
-              <Text style={styles.sectionLabel}>エリアから探す（複数選択可）</Text>
-              <View style={styles.categoriesRow}>
-                {AREA_FILTER_OPTIONS.map(area => (
-                  <Pressable
-                    key={area}
-                    onPress={() => handleAreaPress(area)}
-                    style={[
-                      styles.categoryButton,
-                      activeAreas.includes(area)
-                        ? styles.categoryButtonActive
-                        : styles.categoryButtonInactive,
-                    ]}
-                  >
-                    <Text
-                      style={
-                        activeAreas.includes(area)
-                          ? styles.categoryButtonTextActive
-                          : styles.categoryButtonTextInactive
-                      }
-                    >
-                      {area}
-                    </Text>
-                  </Pressable>
-                ))}
-              </View>
-              <View style={styles.divider} />
-              <Text style={styles.sectionLabel}>カテゴリから探す（複数選択可）</Text>
-              <View style={styles.categoriesRow}>
-                {CATEGORY_OPTIONS.map(cat => (
-                  <Pressable
-                    key={cat}
-                    onPress={() => handleCategoryPress(cat)}
-                    style={[
-                      styles.categoryButton,
-                      activeCategories.includes(cat)
-                        ? styles.categoryButtonActive
-                        : styles.categoryButtonInactive,
-                    ]}
-                  >
-                    <Text
-                      style={
-                        activeCategories.includes(cat)
-                          ? styles.categoryButtonTextActive
-                          : styles.categoryButtonTextInactive
-                      }
-                    >
-                      {cat}
-                    </Text>
-                  </Pressable>
-                ))}
-              </View>
-
-              {activeCategories.length > 0 && (
-                <View style={styles.subTagSection}>
-                  <View style={styles.divider} />
-
-                  {activeCategories.map(cat => {
-                    const isExpanded = expandedCategoryTags.includes(cat);
-                    return (
-                      <View key={`tags-${cat}`} style={styles.tagGroup}>
-                        <Pressable
-                          onPress={() => handleCategoryTagsToggle(cat)}
-                          style={styles.subSectionHeader}
-                        >
-                          <Text style={styles.subSectionLabel}>{`${cat}のタグ`}</Text>
-                          <Text style={styles.subSectionToggle}>{isExpanded ? '−' : '+'}</Text>
-                        </Pressable>
-                        {isExpanded && (
-                          <View style={styles.tagsRow}>
-                            {(TAGS_BY_CATEGORY[cat] || []).map(tag => (
-                              <Pressable
-                                key={tag}
-                                onPress={() => handleTagPress(tag)}
-                                style={[
-                                  styles.tagButton,
-                                  selectedTags.includes(tag)
-                                    ? styles.tagButtonActive
-                                    : styles.tagButtonInactive,
-                                ]}
-                              >
-                                <Text
-                                  style={
-                                    selectedTags.includes(tag)
-                                      ? styles.tagButtonTextActive
-                                      : styles.tagButtonTextInactive
-                                  }
-                                >
-                                  {tag}
-                                </Text>
-                              </Pressable>
-                            ))}
-                          </View>
-                        )}
-                      </View>
-                    );
-                  })}
-                </View>
-              )}
-            </View>
-          )}
-        </View>
       </View>
 
       {loading && (
@@ -458,7 +301,7 @@ export default function SearchScreen() {
 
       {!loading && loadError && (
         <View style={styles.emptyState}>
-          <Text style={styles.emptyTitle}>店舗情報の取得に失敗しました</Text>
+          <Text style={styles.emptyTitle}>{ERROR_MESSAGES.STORE_FETCH_FAILED}</Text>
           <Text style={styles.emptyHistoryText}>{loadError}</Text>
         </View>
       )}
@@ -467,73 +310,57 @@ export default function SearchScreen() {
         <View style={styles.resultsSection}>
           <Text style={styles.resultsTitle}>{`検索結果：${searchResults.length}件`}</Text>
 
+          <View style={styles.visitedFilterRow}>
+            {VISITED_FILTER_OPTIONS.map(option => (
+              <ToggleButton
+                key={option.value}
+                label={option.label}
+                isActive={filterVisited === option.value}
+                onPress={() => setFilterVisited(option.value)}
+                style={styles.visitedFilterButton}
+                size='small'
+              />
+            ))}
+          </View>
+
           {searchResults.length > 0 ? (
             <View>
-              <View style={styles.resultsFilterContainer}>
-                <Text style={styles.filterSectionLabel}>並び替え</Text>
-                <View style={styles.sortRow}>
-                  <Pressable onPress={() => setSortMenuOpen(prev => !prev)} style={styles.sortMenu}>
-                    <Text style={styles.sortMenuText}>{currentSortLabel}</Text>
-                    <Text style={styles.sortMenuIcon}>{sortMenuOpen ? '−' : '+'}</Text>
-                  </Pressable>
-                  {sortBy !== 'default' && (
-                    <View style={styles.fixedOrderContainer}>
-                      <View style={styles.verticalDivider} />
-                      <Pressable onPress={toggleSortOrder} style={styles.orderButton}>
-                        <Text style={styles.orderButtonText}>{getSortOrderLabel()}</Text>
-                      </Pressable>
-                    </View>
-                  )}
-                </View>
-                {sortMenuOpen && (
-                  <View style={styles.sortMenuList}>
-                    {SORT_OPTIONS.map(option => (
-                      <Pressable
-                        key={option.value}
-                        onPress={() => handleSortTypePress(option.value)}
-                        style={styles.sortMenuItem}
-                      >
-                        <Text
-                          style={
-                            sortBy === option.value
-                              ? styles.sortMenuItemTextActive
-                              : styles.sortMenuItemText
-                          }
-                        >
-                          {option.label}
-                        </Text>
-                      </Pressable>
-                    ))}
+              <View style={styles.sortRow}>
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  style={styles.sortOptionsScroll}
+                  contentContainerStyle={styles.sortOptionsContent}
+                >
+                  {SEARCH_SORT_OPTIONS.map(option => (
+                    <ToggleButton
+                      key={option.value}
+                      label={option.label}
+                      isActive={sortBy === option.value}
+                      onPress={() => handleSearchSortTypePress(option.value)}
+                      style={styles.sortButton}
+                      size='small'
+                    />
+                  ))}
+                </ScrollView>
+                {sortBy !== 'default' && (
+                  <View style={styles.fixedOrderContainer}>
+                    <View style={styles.verticalDivider} />
+                    <Pressable onPress={toggleSortOrder} style={styles.orderButton}>
+                      <Text style={styles.orderButtonText}>{getSortOrderLabel()}</Text>
+                    </Pressable>
                   </View>
                 )}
               </View>
 
               <View style={styles.categorySection}>
                 {searchResults.map(item => (
-                  <Pressable
+                  <ShopCard
                     key={item.id}
-                    onPress={() => handleShopPress(item.id)}
-                    style={styles.shopCard}
-                  >
-                    <Image source={{ uri: item.imageUrl }} style={styles.shopImage} />
-                    <View style={styles.shopInfo}>
-                      <View style={styles.shopHeader}>
-                        <Text style={styles.shopName}>{item.name}</Text>
-                        <View style={styles.ratingBadge}>
-                          <Text style={styles.ratingText}>{`★ ${item.rating.toFixed(1)}`}</Text>
-                        </View>
-                      </View>
-                      <Text style={styles.shopMeta}>
-                        {item.area ? `${item.area} • ` : ''}
-                        {item.category}
-                        {item.budget ? ` • ${item.budget}` : ''}
-                        {` • 徒歩${item.distanceMinutes}分`}
-                      </Text>
-                      <Text style={styles.shopDescription} numberOfLines={2}>
-                        {item.description}
-                      </Text>
-                    </View>
-                  </Pressable>
+                    shop={item}
+                    onPress={handleShopPress}
+                    formatMeta={shop => formatShopMeta(shop, 'compact')}
+                  />
                 ))}
               </View>
             </View>
@@ -585,34 +412,16 @@ const styles = StyleSheet.create({
   categoriesRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
+    gap: SPACING.SM,
   },
   categoryButton: {
-    borderRadius: 999,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-  },
-  categoryButtonActive: {
-    backgroundColor: COLOR_ACTIVE_NAVY,
-  },
-  categoryButtonInactive: {
-    backgroundColor: INACTIVE_COLOR,
-  },
-  categoryButtonTextActive: {
-    color: COLOR_WHITE,
-    fontFamily: fonts.medium,
-    fontSize: 14,
-  },
-  categoryButtonTextInactive: {
-    color: palette.textOnSecondary,
-    fontFamily: fonts.regular,
-    fontSize: 14,
+    borderRadius: BORDER_RADIUS.PILL,
   },
   categorySection: {
     marginBottom: 24,
   },
   clearButton: {
-    padding: 8,
+    padding: SPACING.SM,
   },
   clearButtonHidden: {
     opacity: 0,
@@ -628,15 +437,15 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     flexGrow: 1,
-    paddingBottom: TAB_BAR_SPACING,
-    paddingHorizontal: 20,
-    paddingTop: 24,
+    paddingBottom: LAYOUT.TAB_BAR_SPACING,
+    paddingHorizontal: SPACING.XL,
+    paddingTop: SPACING.XXL,
   },
   divider: {
     backgroundColor: palette.border,
     height: 1,
-    marginBottom: 8,
-    marginTop: 20,
+    marginBottom: SPACING.SM,
+    marginTop: SPACING.XL,
     opacity: 0.5,
   },
   emptyHistoryBox: {
@@ -662,30 +471,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginBottom: 40,
   },
-  filterBody: {
-    marginTop: 16,
-  },
-  filterHeaderIcon: {
-    color: palette.secondaryText,
-    fontFamily: fonts.medium,
-    fontSize: 18,
-  },
-  filterHeaderRow: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  filterHeaderText: {
-    color: palette.primaryText,
-    fontFamily: fonts.medium,
-    fontSize: 15,
-  },
-  filterSectionLabel: {
-    color: palette.secondaryText,
-    fontFamily: fonts.medium,
-    fontSize: 12,
-    marginBottom: 8,
-  },
   fixedOrderContainer: {
     alignItems: 'center',
     backgroundColor: palette.background,
@@ -701,10 +486,10 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingVertical: 16,
+    paddingVertical: SPACING.LG,
   },
   historySection: {
-    marginTop: 16,
+    marginTop: SPACING.LG,
   },
   historyText: {
     color: palette.primaryText,
@@ -718,15 +503,15 @@ const styles = StyleSheet.create({
     color: palette.primaryText,
     fontFamily: fonts.medium,
     fontSize: 20,
-    marginBottom: 16,
+    marginBottom: SPACING.LG,
   },
   orderButton: {
     alignItems: 'center',
     backgroundColor: palette.background,
     borderColor: palette.border,
-    borderRadius: 8,
+    borderRadius: BORDER_RADIUS.MEDIUM,
     borderWidth: 1,
-    paddingHorizontal: 12,
+    paddingHorizontal: SPACING.MD,
     paddingVertical: 6,
   },
   orderButtonText: {
@@ -735,36 +520,17 @@ const styles = StyleSheet.create({
     fontSize: 12,
     textAlign: 'center',
   },
-  ratingBadge: {
-    backgroundColor: palette.highlight,
-    borderRadius: 999,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-  },
-  ratingText: {
-    color: palette.ratingText,
-    fontFamily: fonts.medium,
-    fontSize: 11,
-  },
   removeBtn: {
     color: palette.secondaryText,
     fontSize: 18,
-    padding: 8,
-  },
-  resultsFilterContainer: {
-    backgroundColor: palette.surface,
-    borderColor: palette.border,
-    borderRadius: 12,
-    borderWidth: 1,
-    marginBottom: 16,
-    padding: 16,
+    padding: SPACING.SM,
   },
   resultsSection: {},
   resultsTitle: {
     color: palette.primaryText,
     fontFamily: fonts.medium,
     fontSize: 14,
-    marginBottom: 16,
+    marginBottom: SPACING.LG,
   },
   screenTitle: {
     color: palette.primaryText,
@@ -772,11 +538,11 @@ const styles = StyleSheet.create({
     fontSize: 28,
   },
   searchBarContainer: {
-    marginBottom: 16,
+    marginBottom: SPACING.LG,
   },
   searchBarRow: {
     flexDirection: 'row',
-    marginBottom: 16,
+    marginBottom: SPACING.XL,
   },
   searchInput: {
     color: palette.primaryText,
@@ -790,203 +556,69 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     flex: 1,
     flexDirection: 'row',
-    paddingHorizontal: 20,
+    paddingHorizontal: SPACING.XL,
     paddingVertical: 10,
   },
   sectionLabel: {
     color: palette.secondaryText,
     fontFamily: fonts.medium,
     fontSize: 14,
-    marginBottom: 16,
+    marginBottom: SPACING.LG,
   },
   shadowLight: {
+    boxShadow: '0px 6px 10px rgba(0, 0, 0, 0.05)',
     elevation: 3,
-    shadowColor: palette.shadow,
-    shadowOffset: {
-      height: 6,
-      width: 0,
-    },
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
   },
-  shopCard: {
-    backgroundColor: palette.surface,
-    borderColor: palette.divider,
-    borderRadius: 12,
-    borderWidth: 1,
-    flexDirection: 'row',
-    marginBottom: 12,
-    overflow: 'hidden',
-  },
-  shopDescription: {
-    color: palette.secondaryText,
-    fontFamily: fonts.regular,
-    fontSize: 12,
-    lineHeight: 16,
-  },
-  shopHeader: {
+  sortButton: {},
+  sortOptionsContent: {
     alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 4,
+    gap: SPACING.SM,
+    paddingRight: SPACING.SM,
   },
-  shopImage: {
-    height: 100,
-    width: 100,
-  },
-  shopInfo: {
+  sortOptionsScroll: {
     flex: 1,
-    padding: 12,
-  },
-  shopMeta: {
-    color: palette.secondaryText,
-    fontFamily: fonts.regular,
-    fontSize: 12,
-    marginBottom: 4,
-  },
-  shopName: {
-    color: palette.primaryText,
-    fontFamily: fonts.medium,
-    fontSize: 14,
-  },
-  sortMenu: {
-    alignItems: 'center',
-    backgroundColor: palette.background,
-    borderColor: palette.border,
-    borderRadius: 8,
-    borderWidth: 1,
-    flex: 1,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-  },
-  sortMenuIcon: {
-    color: palette.secondaryText,
-    fontFamily: fonts.medium,
-    fontSize: 16,
-  },
-  sortMenuItem: {
-    backgroundColor: palette.background,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-  },
-  sortMenuItemText: {
-    color: palette.primaryText,
-    fontFamily: fonts.regular,
-    fontSize: 13,
-  },
-  sortMenuItemTextActive: {
-    color: palette.primary,
-    fontFamily: fonts.medium,
-    fontSize: 13,
-  },
-  sortMenuList: {
-    borderColor: palette.border,
-    borderRadius: 8,
-    borderWidth: 1,
-    marginTop: 8,
-    overflow: 'hidden',
-  },
-  sortMenuText: {
-    color: palette.primaryText,
-    fontFamily: fonts.medium,
-    fontSize: 13,
+    marginRight: SPACING.SM,
   },
   sortRow: {
     alignItems: 'center',
     flexDirection: 'row',
-    marginBottom: 16,
-  },
-  subSectionHeader: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 12,
+    marginBottom: SPACING.LG,
   },
   subSectionLabel: {
     color: palette.secondaryText,
     fontFamily: fonts.medium,
     fontSize: 13,
-  },
-  subSectionToggle: {
-    color: palette.secondaryText,
-    fontFamily: fonts.medium,
-    fontSize: 16,
+    marginBottom: SPACING.MD,
   },
   subTagSection: {
     marginTop: 0,
   },
   tagButton: {
-    borderRadius: 999,
-    paddingHorizontal: 14,
-    paddingVertical: 6,
-  },
-  tagButtonActive: {
-    backgroundColor: COLOR_ACTIVE_NAVY,
-  },
-  tagButtonInactive: {
-    backgroundColor: COLOR_TAG_BG,
-  },
-  tagButtonTextActive: {
-    color: COLOR_WHITE,
-    fontFamily: fonts.regular,
-    fontSize: 13,
-  },
-  tagButtonTextInactive: {
-    color: palette.secondaryText,
-    fontFamily: fonts.regular,
-    fontSize: 13,
+    borderRadius: BORDER_RADIUS.PILL,
   },
   tagGroup: {
-    marginTop: 16,
+    marginTop: SPACING.LG,
   },
   tagGroupsContainer: {
     backgroundColor: palette.surface,
-    borderRadius: 12,
-    padding: 16,
+    borderRadius: BORDER_RADIUS.LARGE,
+    padding: SPACING.XL,
   },
   tagsRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
+    gap: SPACING.SM,
   },
   verticalDivider: {
     backgroundColor: palette.border,
     height: 18,
-    marginRight: 8,
+    marginRight: SPACING.SM,
     width: 1,
   },
-  visitedFilterButton: {
-    borderRadius: 8,
-    borderWidth: 1,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-  },
-  visitedFilterButtonActive: {
-    backgroundColor: palette.primary,
-    borderColor: palette.primary,
-  },
-  visitedFilterButtonInactive: {
-    backgroundColor: palette.background,
-    borderColor: palette.border,
-  },
-  visitedFilterButtonTextActive: {
-    color: COLOR_WHITE,
-    fontFamily: fonts.medium,
-    fontSize: 13,
-  },
-  visitedFilterButtonTextInactive: {
-    color: palette.secondaryText,
-    fontFamily: fonts.regular,
-    fontSize: 13,
-  },
-  visitedFilterContainer: {
-    marginBottom: 16,
-  },
+  visitedFilterButton: {},
   visitedFilterRow: {
     flexDirection: 'row',
-    gap: 8,
-    marginBottom: 16,
+    gap: SPACING.SM,
+    marginBottom: SPACING.MD,
   },
 });

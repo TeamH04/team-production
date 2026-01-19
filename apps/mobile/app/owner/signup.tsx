@@ -1,3 +1,17 @@
+import {
+  BORDER_RADIUS,
+  formatDateInput,
+  isValidDateYYYYMMDD,
+  isValidEmail,
+  LAYOUT,
+  PASSWORD_MIN_LENGTH,
+  ROUTES,
+  SHADOW_STYLES,
+  TIMING,
+  UI_LABELS,
+  VALIDATION_MESSAGES,
+} from '@team/constants';
+import { palette } from '@team/mobile-ui';
 import { useNavigation, useRouter } from 'expo-router';
 import { useLayoutEffect, useState } from 'react';
 import {
@@ -12,31 +26,7 @@ import {
   View,
 } from 'react-native';
 
-import { palette } from '@/constants/palette';
 import { fonts } from '@/constants/typography';
-
-const isLikelyEmail = (value: string) => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(value.trim());
-
-const formatDateInput = (value: string): string => {
-  const digits = value.replace(/\D/g, '').slice(0, 8);
-  const y = digits.slice(0, 4);
-  const m = digits.slice(4, 6);
-  const d = digits.slice(6, 8);
-
-  if (digits.length <= 4) return y + (digits.length === 4 ? '-' : '');
-  if (digits.length <= 6) return `${y}-${m}` + (digits.length === 6 ? '-' : '');
-  return `${y}-${m}-${d}`;
-};
-
-const isValidDateYYYYMMDD = (digits8: string): boolean => {
-  if (!/^\d{8}$/.test(digits8)) return false;
-  const y = Number(digits8.slice(0, 4));
-  const m = Number(digits8.slice(4, 6));
-  const d = Number(digits8.slice(6, 8));
-
-  const date = new Date(y, m - 1, d);
-  return date.getFullYear() === y && date.getMonth() === m - 1 && date.getDate() === d;
-};
 
 export default function OwnerSignupScreen() {
   const router = useRouter();
@@ -67,7 +57,7 @@ export default function OwnerSignupScreen() {
   useLayoutEffect(() => {
     navigation.setOptions?.({
       title: 'オーナー新規作成',
-      headerBackTitle: '戻る',
+      headerBackTitle: UI_LABELS.BACK,
     });
   }, [navigation]);
 
@@ -75,32 +65,35 @@ export default function OwnerSignupScreen() {
     const trimmedEmail = email.trim();
 
     if (!storeName || !contactName || !trimmedEmail || !password) {
-      Alert.alert('入力不足', '必須項目（店舗名/担当者名/メール/パスワード）を入力してください');
+      Alert.alert(
+        VALIDATION_MESSAGES.INPUT_MISSING_TITLE,
+        '必須項目（店舗名/担当者名/メール/パスワード）を入力してください',
+      );
       return;
     }
     // 完成形（数字8桁）のみ検証
     const digits = openingDate.replace(/\D/g, '');
     if (!isValidDateYYYYMMDD(digits)) {
-      Alert.alert('入力エラー', '正しい日付で入力してください');
+      Alert.alert(VALIDATION_MESSAGES.INPUT_ERROR_TITLE, '正しい日付で入力してください');
       return;
     }
 
-    if (!isLikelyEmail(trimmedEmail)) {
-      Alert.alert('入力エラー', '正式なメールアドレスを入力してください');
+    if (!isValidEmail(trimmedEmail)) {
+      Alert.alert(VALIDATION_MESSAGES.INPUT_ERROR_TITLE, '正式なメールアドレスを入力してください');
       return;
     }
 
-    if (password.length < 8) {
-      Alert.alert('入力エラー', 'パスワードは8文字以上で入力してください');
+    if (password.length < PASSWORD_MIN_LENGTH) {
+      Alert.alert(VALIDATION_MESSAGES.INPUT_ERROR_TITLE, 'パスワードは8文字以上で入力してください');
       return;
     }
 
     try {
       setSubmitting(true);
       // NOTE: Backend 未実装。将来的にここで API に POST する想定。
-      await new Promise(r => setTimeout(r, 600));
+      await new Promise(r => setTimeout(r, TIMING.MOCK_SUBMIT_DELAY));
       Alert.alert('作成完了', 'オーナー用アカウントの申請を受け付けました');
-      router.replace('/');
+      router.replace(ROUTES.HOME);
     } catch (e: unknown) {
       const message = e instanceof Error ? e.message : '送信に失敗しました';
       Alert.alert('作成失敗', message);
@@ -211,18 +204,14 @@ export default function OwnerSignupScreen() {
 
 const styles = StyleSheet.create({
   buttonContainer: {
+    ...SHADOW_STYLES.DEFAULT,
     backgroundColor: palette.button,
     borderColor: palette.buttonBorder,
-    borderRadius: 999,
+    borderRadius: BORDER_RADIUS.PILL,
     borderWidth: 1,
-    elevation: 4,
-    height: 44,
+    height: LAYOUT.BUTTON_HEIGHT_MD,
     minWidth: 160,
     overflow: 'hidden',
-    shadowColor: palette.shadowColor,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.16,
-    shadowRadius: 10,
   },
   buttonPressable: {
     alignItems: 'center',
@@ -234,8 +223,8 @@ const styles = StyleSheet.create({
     color: palette.surface,
     fontFamily: fonts.medium,
     fontSize: 16,
-    height: 44,
-    lineHeight: 44,
+    height: LAYOUT.BUTTON_HEIGHT_MD,
+    lineHeight: LAYOUT.BUTTON_HEIGHT_MD,
     textAlign: 'center',
   },
   buttonWrapper: {
@@ -254,7 +243,7 @@ const styles = StyleSheet.create({
   input: {
     backgroundColor: palette.surface,
     borderColor: palette.border,
-    borderRadius: 12,
+    borderRadius: BORDER_RADIUS.MEDIUM,
     borderWidth: 1,
     color: palette.primaryText,
     fontFamily: fonts.regular,

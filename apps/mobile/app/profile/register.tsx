@@ -1,3 +1,5 @@
+import { BORDER_RADIUS, ROUTES } from '@team/constants';
+import { GenreChipSelector, palette } from '@team/mobile-ui';
 import { Stack, useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import {
@@ -12,8 +14,6 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { GENRES } from '@/constants/genres';
-import { palette } from '@/constants/palette';
 import { fonts } from '@/constants/typography';
 import { useUser } from '@/features/user/UserContext';
 
@@ -24,10 +24,6 @@ export default function RegisterProfileScreen() {
   const name = user?.name ?? '';
   const email = user?.email ?? '';
   const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
-
-  const toggleGenre = (g: string) => {
-    setSelectedGenres(prev => (prev.includes(g) ? prev.filter(x => x !== g) : [...prev, g]));
-  };
 
   const canSave = useMemo(() => {
     return selectedGenres.length > 0;
@@ -46,7 +42,7 @@ export default function RegisterProfileScreen() {
       isProfileRegistered: true,
       favoriteGenres: selectedGenres,
     });
-    router.replace('/');
+    router.replace(ROUTES.HOME);
   };
 
   return (
@@ -64,21 +60,11 @@ export default function RegisterProfileScreen() {
             <Text style={styles.title}>ジャンル選択</Text>
           </View>
           <Text style={styles.subtitle}>自身の選んだ店舗がおすすめに表示されやすくなります</Text>
-          <Text style={styles.label}>好きな店舗のジャンル（複数選択可）</Text>
-          <View style={styles.chipsWrap}>
-            {GENRES.map(g => {
-              const on = selectedGenres.includes(g);
-              return (
-                <Pressable
-                  key={g}
-                  onPress={() => toggleGenre(g)}
-                  style={[styles.chip, on ? styles.chipOn : styles.chipOff]}
-                >
-                  <Text style={on ? styles.chipTextOn : styles.chipTextOff}>{g}</Text>
-                </Pressable>
-              );
-            })}
-          </View>
+          <GenreChipSelector
+            selectedGenres={selectedGenres}
+            onSelectionChange={setSelectedGenres}
+            label='好きな店舗のジャンル（複数選択可）'
+          />
 
           <Pressable
             disabled={!canSave}
@@ -98,22 +84,6 @@ export default function RegisterProfileScreen() {
 }
 
 const styles = StyleSheet.create({
-  // チップ（ジャンル選択）
-  chip: {
-    borderRadius: 999,
-    marginBottom: 8,
-    marginRight: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-  },
-  chipOff: { backgroundColor: palette.secondarySurface, borderColor: palette.border },
-  chipOn: { backgroundColor: palette.accent },
-
-  chipTextOff: { color: palette.primaryText, fontFamily: fonts.medium },
-
-  chipTextOn: { color: palette.primaryOnAccent, fontFamily: fonts.medium },
-  chipsWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-
   content: { padding: 16 },
 
   headerContainer: {
@@ -123,17 +93,10 @@ const styles = StyleSheet.create({
 
   keyboard: { flex: 1 },
 
-  label: {
-    color: palette.primaryText,
-    fontFamily: fonts.medium,
-    marginBottom: 20,
-    marginTop: 4,
-  },
-
   // プライマリボタン（登録）
   primaryBtn: {
     backgroundColor: palette.accent,
-    borderRadius: 12,
+    borderRadius: BORDER_RADIUS.MEDIUM,
     marginTop: 28,
     paddingVertical: 14,
   },
@@ -152,7 +115,7 @@ const styles = StyleSheet.create({
   secondaryBtn: {
     backgroundColor: palette.secondarySurface,
     borderColor: palette.border,
-    borderRadius: 12,
+    borderRadius: BORDER_RADIUS.MEDIUM,
     borderWidth: 1,
     marginTop: 12,
     paddingHorizontal: 14,
@@ -172,9 +135,8 @@ const styles = StyleSheet.create({
   },
 
   title: {
-    color: palette.primary,
+    color: palette.primaryText,
     fontFamily: fonts.medium,
-    fontSize: 20,
-    textAlign: 'center',
+    fontSize: 24,
   },
 });

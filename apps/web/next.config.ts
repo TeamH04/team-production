@@ -10,6 +10,9 @@ const nextConfig: NextConfig = {
     ],
   },
   transpilePackages: ['@team/shop-core'],
+  turbopack: {
+    root: '../..',
+  },
 };
 
 export default nextConfig;

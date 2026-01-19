@@ -39,7 +39,7 @@ func (h *FavoriteHandler) AddFavorite(c echo.Context) error {
 	}
 
 	var dto addFavoriteDTO
-	if err := bindJSON(c, &dto); err != nil {
+	if err = bindJSON(c, &dto); err != nil {
 		return err
 	}
 
@@ -62,7 +62,7 @@ func (h *FavoriteHandler) RemoveFavorite(c echo.Context) error {
 		return err
 	}
 
-	if err := h.favoriteUseCase.RemoveFavorite(c.Request().Context(), user.UserID, storeID); err != nil {
+	if err = h.favoriteUseCase.RemoveFavorite(c.Request().Context(), user.UserID, storeID); err != nil {
 		return err
 	}
 	return c.NoContent(http.StatusNoContent)

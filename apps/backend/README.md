@@ -1,79 +1,58 @@
 # Backend (Go / Echo)
 
-## 概要
+Go 1.25 / Echo / GORM / PostgreSQL の API サーバー。
 
-- Go 1.24 / Echo / GORM / PostgreSQL の API サーバー。
-- Supabase Auth/Storage 連携と JWT 検証ミドルウェアで RBAC を適用。
-- 主要ルーティング: `/api/auth`、`/api/stores`、`/api/menus`、`/api/reviews`、`/api/users`、`/api/favorites`、`/api/reports`、`/api/admin/*`、`/api/media/*`。
+## クイックスタート
 
-## 前提条件
+```bash
+# リポジトリルートから
+make backend      # DB + バックエンド起動
+make db-migrate   # マイグレーションのみ
+```
 
-- Go 1.24 系。
-- Docker / Docker Compose v2。
-- pnpm（ルート依存の取得に使用）。
+## コマンド
 
-## セットアップ手順
+### リポジトリルートから
 
-1. 依存を取得する。
+| コマンド            | 説明                 |
+| ------------------- | -------------------- |
+| `make backend`      | バックエンド起動     |
+| `make db-migrate`   | マイグレーション実行 |
+| `make db-reset`     | DBリセット           |
+| `make test-backend` | テスト実行           |
 
-   ```bash
-   pnpm install
-   ```
+### apps/backend で実行
 
-2. 環境変数を設定する。
-
-   ```bash
-   cp apps/backend/.env.example apps/backend/.env
-   ```
-
-   - `SUPABASE_URL`
-   - `SUPABASE_PUBLISHABLE_KEY`
-   - `SUPABASE_SECRET_KEY`
-
-3. ローカルで起動する。
-
-   ```bash
-   make db-up      # Postgres のみ
-   make backend    # Postgres + API を Docker Compose で起動
-   ```
-
-4. マイグレーションを適用する。
-
-   ```bash
-   make db-init
-   ```
-
-## 主なコマンド（apps/backend/Makefile）
-
-| コマンド                                       | 用途                                                  |
-| ---------------------------------------------- | ----------------------------------------------------- |
-| `make run-dev`                                 | Postgres を起動し `go run ./cmd/server` を実行。      |
-| `make serve`                                   | 既存の DB で API のみ起動。                           |
-| `make db-up` / `make db-down` / `make destroy` | Docker Compose で DB 起動/停止/ボリューム削除。       |
-| `make db-init`                                 | ローカル Postgres に `migrations/` を適用。           |
-| `make migrate-new name=<name>`                 | 連番付き SQL マイグレーションを作成。                 |
-| `make migrate`                                 | `MIGRATE_DATABASE_URL` に対してマイグレーション適用。 |
-| `make test`                                    | Go テスト実行。                                       |
-| `make check`                                   | 簡易ヘルスチェック。                                  |
+| コマンド     | 説明                   |
+| ------------ | ---------------------- |
+| `make serve` | サーバー起動           |
+| `make tools` | lint/format ツール導入 |
+| `make lint`  | golangci-lint 実行     |
+| `make fmt`   | gofumpt 実行           |
+| `make test`  | テスト実行             |
 
 ## 環境変数
 
-- ポート: `PORT`（デフォルト 8080。占有時は空きポートに自動フォールバック）。
-- DB: `DATABASE_URL`（未設定時は `postgres://postgres:postgres@localhost:5432/app?sslmode=disable`）。
-- CORS: `CORS_ALLOW_ORIGIN`（カンマ区切り。未設定は `*`）。
-- Supabase: `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SECRET_KEY`。
-- Storage: `SUPABASE_STORAGE_BUCKET`（任意。デフォルト `media`）。
+| 変数                       | 説明                      | デフォルト                                                      |
+| -------------------------- | ------------------------- | --------------------------------------------------------------- |
+| `PORT`                     | サーバーポート            | 8080                                                            |
+| `DATABASE_URL`             | DB接続文字列              | postgres://postgres:postgres@localhost:5432/app?sslmode=disable |
+| `SUPABASE_URL`             | Supabase URL              | -                                                               |
+| `SUPABASE_PUBLISHABLE_KEY` | Supabase 公開キー         | -                                                               |
+| `SUPABASE_SECRET_KEY`      | Supabase シークレットキー | -                                                               |
 
-## API 概要
+## API エンドポイント
 
-- 認証: `/api/auth/signup`, `/login`, `/me`, `/role`。
-- 店舗: `/api/stores`, `/api/stores/:id`, `/api/stores/:id/menus`, `/api/stores/:id/reviews`。
-- ユーザー/お気に入り: `/api/users/me`, `/api/users/:id`, `/api/users/:id/favorites`。
-- 通報/管理: `/api/reports`, `/api/admin/*`。
-- メディア: `/api/media/upload`, `/api/media/:id`。
-- 詳細は `docs/API設計書.md` を参照。
+- 認証: `/api/auth/*`
+- 店舗: `/api/stores/*`
+- ユーザー: `/api/users/*`
+- お気に入り: `/api/users/:id/favorites`
+- 通報: `/api/reports`
+- 管理: `/api/admin/*`
+- メディア: `/api/media/*`
 
-## 開発時の補足
+詳細: [docs/specs/api.md](../../docs/specs/api.md)
 
-- スキーマ基点は `migrations/000001_init.up.sql`。GORM モデルとの差分（`is_approved`、`updated_at`、メニュー価格など）は追加マイグレーションで補完する。
-- `GO_BIN` が見つからない場合は `make serve GO_BIN="C:/Program Files/Go/bin/go.exe"` のように指定する。
+## アーキテクチャ
+
+詳細: [docs/specs/backend-architecture.md](../../docs/specs/backend-architecture.md)

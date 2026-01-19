@@ -1,152 +1,118 @@
-# team-production モノレポ
+# team-production
 
-## 概要
+モバイル・Web・バックエンドのモノレポ
 
-- モバイル（Expo）とバックエンド（Go）を一体管理するモノレポ
-- パッケージ管理：pnpm
-- 共通タスク：Makefile 経由で提供
+## 技術スタック
 
----
-
-## 前提条件
-
-- Node.js 20 系
-- Go 1.23 以上（CI では 1.24.0）
-- Docker（Compose v2）
-- Windows の場合：Git Bash（MINGW64）
-
----
-
-## ディレクトリ構成
-
-| パス           | 説明                             |
-| -------------- | -------------------------------- |
-| `apps/mobile`  | Expo + React Native クライアント |
-| `apps/backend` | Go 製 API サーバ                 |
-| `supabase`     | ローカル DB 用 Docker Compose    |
-| `docs/`        | アーキテクチャ・運用ノート       |
-
----
+| レイヤー | 技術                |
+| -------- | ------------------- |
+| Mobile   | Expo + React Native |
+| Web      | Next.js             |
+| Backend  | Go + Echo           |
+| DB       | PostgreSQL          |
+| ビルド   | Turborepo + pnpm    |
 
 ## セットアップ
 
-1. 依存ツールをインストール
-   - Node.js / Go / Docker を事前に用意
+### 前提条件
 
-2. 依存関係をインストール
+- Node.js 24系
+- Go 1.25+
+- Docker
 
-   ```bash
-   corepack enable pnpm
-   pnpm install
-   ```
-
-3. 環境変数を設定
-   - 各アプリの `.env.example` を `.env` にコピー
-   - 必要な値を入力
-
-4. Windows の注意
-   - `make` は Git Bash から実行
-   - PowerShell / cmd は一部非対応
-
----
-
-## 主なコマンド
-
-| コマンド               | 説明                             |
-| ---------------------- | -------------------------------- |
-| `make install`         | 全ワークスペース依存インストール |
-| `make backend`         | DB 起動 + Go サーバ起動          |
-| `make backend-db-up`   | DB 起動                          |
-| `make backend-db-down` | DB 停止                          |
-| `make backend-db-init` | マイグレーション適用             |
-| `make backend-test`    | Go テスト                        |
-| `make frontend`        | Expo Dev Client 起動             |
-| `make dev`             | フロント + バック同時起動        |
-
----
-
-## 画面と機能
-
-### モバイル（apps/mobile）
-
-- 店舗閲覧
-- お気に入り管理
-- レビュー投稿
-- ユーザー管理
-
-### バックエンド（apps/backend）
-
-- 認証・認可 API
-- 店舗・レビュー CRUD
-- ユーザーデータ管理
-
----
-
-## CI/CD
-
-### トリガー
-
-- `main` / `develop` への push
-- `main` / `develop` への pull request
-
-### ローカル実行コマンド
+### 手順
 
 ```bash
-# フロントエンドテスト
-pnpm --filter web test                    # Webアプリのテスト
-pnpm --filter mobile test                 # モバイルアプリのテスト
-pnpm --filter web --filter mobile test    # Web・モバイル同時実行
+# 1. クローン & インストール
+git clone <repo>
+cd team-production
+make install
 
-# Lint
-pnpm run lint
+# 2. 環境変数をコピー
+cp .env.example .env
+cp apps/backend/.env.example apps/backend/.env
+cp apps/mobile/.env.example apps/mobile/.env
 
-# フォーマットチェック
-pnpm run format:check
+# 3. DB起動 & マイグレーション
+make db-migrate
 
-# フォーマット修正
-pnpm run format
+# 4. 開発サーバー起動
+make dev
 
-# モバイル専用フォーマット
-pnpm run format:mobile
-
-# バックエンドテスト
-cd apps/backend
-go test -v -race -cover -coverprofile=coverage.out -count=1 ./...
-
-# 依存関係セキュリティ監査
-pnpm audit --audit-level moderate
-
-# Go セキュリティチェック
-go install github.com/securego/gosec/v2/cmd/gosec@latest
-gosec ./...
+# 5. 動作確認
+curl http://localhost:8080/health
+# → {"status":"ok"}
 ```
 
----
+> Windows: WSL2推奨。詳細は [docs/windows-setup.md](docs/windows-setup.md)
 
-## 環境変数
+## コマンド早見表
 
-### 最低限
+### 日常作業
 
-- `NODE_VERSION=20.x`
-- `GO_VERSION=1.24.0`
+| やりたいこと             | コマンド                   |
+| ------------------------ | -------------------------- |
+| 開発サーバー起動（全部） | `make dev`                 |
+| バックエンドだけ起動     | `make backend` or `make b` |
+| モバイルだけ起動         | `make mobile` or `make m`  |
+| Webだけ起動              | `make web` or `make w`     |
+| テスト実行               | `make test`                |
+| 型チェック               | `make typecheck`           |
+| Lint                     | `make lint`                |
+| フォーマット修正         | `pnpm format`              |
 
-### 注意点
+### DB操作
 
-- `.env` は Git 管理対象外
-- 本番値は GitHub Secrets で管理
+| やりたいこと              | コマンド          |
+| ------------------------- | ----------------- |
+| DB起動 + マイグレーション | `make db-migrate` |
+| DB停止                    | `make db-stop`    |
+| DBリセット（データ削除）  | `make db-reset`   |
+| DB完全削除                | `make db-destroy` |
 
----
+### ビルド
 
-## 開発時の補足
+| やりたいこと       | コマンド                     |
+| ------------------ | ---------------------------- |
+| 全アプリビルド     | `make build`                 |
+| 新規パッケージ作成 | `pnpm create-package <name>` |
 
-- Expo は Dev Client 前提
-- ポート競合時はログを確認して手動停止
-- Docker DB が起動していないと backend は起動不可
+### Goバックエンド専用
 
----
+| やりたいこと       | コマンド                     |
+| ------------------ | ---------------------------- |
+| lint実行           | `make -C apps/backend lint`  |
+| フォーマット       | `make -C apps/backend fmt`   |
+| ツールインストール | `make -C apps/backend tools` |
 
-## ドキュメント参照先
+**全コマンド一覧**: `make help`
 
-- バックエンド: `apps/backend/README.md`
-- モバイル: `apps/mobile/README.md`
-- 開発補足: `docs/`
+## ディレクトリ構成
+
+```
+apps/
+├── backend/     # Go API サーバー (port 8080)
+├── mobile/      # Expo + React Native
+└── web/         # Next.js
+
+packages/        # 共有パッケージ (@team/*)
+docs/            # ドキュメント
+```
+
+## 起動後のポート
+
+| サービス      | ポート | URL                   |
+| ------------- | ------ | --------------------- |
+| Backend API   | 8080   | http://localhost:8080 |
+| PostgreSQL    | 5432   | -                     |
+| pgAdmin       | 5050   | http://localhost:5050 |
+| Expo (Metro)  | 8081   | -                     |
+| Web (Next.js) | 3000   | http://localhost:3000 |
+
+## ドキュメント
+
+- [詳細セットアップ](docs/setup.md) - トラブルシューティング含む
+- [コマンドリファレンス](docs/commands.md) - 全コマンド詳細
+- [共有パッケージ](docs/packages.md) - @team/\* の使い方
+- [API設計](docs/specs/api.md)
+- [DB設計](docs/specs/database.md)

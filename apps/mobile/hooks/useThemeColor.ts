@@ -3,20 +3,15 @@
  * https://docs.expo.dev/guides/color-schemes/
  */
 
+import { createUseThemeColor } from '@team/hooks';
+
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 
-export function useThemeColor(
-  props: { light?: string; dark?: string },
-  colorName: keyof typeof Colors.light & keyof typeof Colors.dark,
-) {
-  const theme = useColorScheme() ?? 'light';
-  const themeKey = theme === 'dark' ? 'dark' : 'light';
-  const colorFromProps = props[themeKey];
-
-  if (colorFromProps) {
-    return colorFromProps;
-  } else {
-    return Colors[themeKey][colorName];
-  }
-}
+/**
+ * テーマに応じた色を取得するhook
+ *
+ * @team/hooks の createUseThemeColor を使用し、
+ * React Native 固有の useColorScheme と組み合わせて実装
+ */
+export const useThemeColor = createUseThemeColor(useColorScheme, Colors);

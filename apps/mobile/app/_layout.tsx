@@ -3,6 +3,8 @@ import '@/global.css';
 import '@/polyfills/crypto';
 
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
+import { ROUTES } from '@team/constants';
+import { palette } from '@team/mobile-ui';
 import { fontFamilies } from '@team/theme';
 import { useFonts } from 'expo-font';
 import { router, Stack, useSegments } from 'expo-router';
@@ -12,7 +14,6 @@ import { StyleSheet, View } from 'react-native';
 import 'react-native-reanimated';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { palette } from '@/constants/palette';
 import { FavoritesProvider } from '@/features/favorites/FavoritesContext';
 import { ReviewsProvider } from '@/features/reviews/ReviewsContext';
 import { StoresProvider } from '@/features/stores/StoresContext';
@@ -44,7 +45,7 @@ function RootStack() {
     const isOnProfileRegister = path === 'profile/register';
 
     if (user && !isProfileComplete && !isOnProfileRegister) {
-      router.replace('/profile/register' as Href);
+      router.replace(ROUTES.PROFILE_REGISTER as Href);
     }
   }, [user, isProfileComplete, segments]);
 

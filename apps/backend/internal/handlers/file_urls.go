@@ -3,13 +3,16 @@ package handlers
 import (
 	"context"
 	"strings"
-	"time"
 
+	"github.com/TeamH04/team-production/apps/backend/internal/config"
 	"github.com/TeamH04/team-production/apps/backend/internal/presentation/presenter"
 	"github.com/TeamH04/team-production/apps/backend/internal/usecase/output"
 )
 
-const signedURLTTL = 15 * time.Minute
+// isStorageAvailable checks if storage provider and bucket are properly configured.
+func isStorageAvailable(storage output.StorageProvider, bucket string) bool {
+	return storage != nil && bucket != ""
+}
 
 func attachSignedURLsToFileResponses(
 	ctx context.Context,
@@ -17,51 +20,21 @@ func attachSignedURLsToFileResponses(
 	bucket string,
 	files []presenter.FileResponse,
 ) {
-	if storage == nil || bucket == "" || len(files) == 0 {
+	if !isStorageAvailable(storage, bucket) || len(files) == 0 {
 		return
 	}
 
-	keys := make([]string, 0, len(files))
-	seen := make(map[string]struct{}, len(files))
-	for _, f := range files {
-		key := strings.TrimSpace(f.ObjectKey)
-		if key == "" {
-			continue
-		}
-		if _, ok := seen[key]; ok {
-			continue
-		}
-		seen[key] = struct{}{}
-		keys = append(keys, key)
-	}
-
+	keys := collectObjectKeys(files)
 	if len(keys) == 0 {
 		return
 	}
 
-	urlByKey := make(map[string]string, len(keys))
-	for _, key := range keys {
-		signed, err := storage.CreateSignedDownload(ctx, bucket, key, signedURLTTL)
-		if err != nil || signed == nil || signed.URL == "" {
-			continue
-		}
-		urlByKey[key] = signed.URL
-	}
-
+	urlByKey := buildSignedURLMap(ctx, storage, bucket, keys)
 	if len(urlByKey) == 0 {
 		return
 	}
 
-	for i := range files {
-		key := files[i].ObjectKey
-		if key == "" {
-			continue
-		}
-		if url, ok := urlByKey[key]; ok {
-			u := url
-			files[i].URL = &u
-		}
-	}
+	applySignedURLsToFiles(files, urlByKey)
 }
 
 func normalizeAndSignImageURLs(
@@ -76,53 +49,21 @@ func normalizeAndSignImageURLs(
 	out := make([]string, len(imageURLs))
 	copy(out, imageURLs)
 
-	if storage == nil || bucket == "" {
+	if !isStorageAvailable(storage, bucket) {
 		return out
 	}
 
-	keys := make([]string, 0, len(out))
-	seen := make(map[string]struct{}, len(out))
-	for _, v := range out {
-		s := strings.TrimSpace(v)
-		if s == "" {
-			continue
-		}
-		if looksLikeURL(s) {
-			continue
-		}
-		if _, ok := seen[s]; ok {
-			continue
-		}
-		seen[s] = struct{}{}
-		keys = append(keys, s)
-	}
-
+	keys := collectUnsignedKeys(out)
 	if len(keys) == 0 {
 		return out
 	}
 
-	urlByKey := make(map[string]string, len(keys))
-	for _, key := range keys {
-		signed, err := storage.CreateSignedDownload(ctx, bucket, key, signedURLTTL)
-		if err != nil || signed == nil || signed.URL == "" {
-			continue
-		}
-		urlByKey[key] = signed.URL
-	}
-
+	urlByKey := buildSignedURLMap(ctx, storage, bucket, keys)
 	if len(urlByKey) == 0 {
 		return out
 	}
 
-	for i := range out {
-		s := strings.TrimSpace(out[i])
-		if s == "" || looksLikeURL(s) {
-			continue
-		}
-		if url, ok := urlByKey[s]; ok {
-			out[i] = url
-		}
-	}
+	applySignedURLsToImages(out, urlByKey)
 
 	return out
 }
@@ -133,7 +74,7 @@ func attachSignedURLsToStoreResponses(
 	bucket string,
 	stores []presenter.StoreResponse,
 ) {
-	if storage == nil || bucket == "" || len(stores) == 0 {
+	if !isStorageAvailable(storage, bucket) || len(stores) == 0 {
 		return
 	}
 
@@ -154,15 +95,106 @@ func attachSignedURLsToReviewResponses(
 	bucket string,
 	reviews []presenter.ReviewResponse,
 ) {
-	if storage == nil || bucket == "" || len(reviews) == 0 {
+	if !isStorageAvailable(storage, bucket) || len(reviews) == 0 {
 		return
 	}
 
+	all := collectReviewFiles(reviews)
+	if len(all) == 0 {
+		return
+	}
+
+	attachSignedURLsToFileResponses(ctx, storage, bucket, all)
+
+	urlByKey := buildFileURLPointerMap(all)
+	if len(urlByKey) == 0 {
+		return
+	}
+
+	applySignedURLsToReviews(reviews, urlByKey)
+}
+
+func collectObjectKeys(files []presenter.FileResponse) []string {
+	keys := make([]string, 0, len(files))
+	seen := make(map[string]struct{}, len(files))
+	for _, f := range files {
+		key := strings.TrimSpace(f.ObjectKey)
+		if key == "" {
+			continue
+		}
+		if _, ok := seen[key]; ok {
+			continue
+		}
+		seen[key] = struct{}{}
+		keys = append(keys, key)
+	}
+	return keys
+}
+
+func collectUnsignedKeys(values []string) []string {
+	keys := make([]string, 0, len(values))
+	seen := make(map[string]struct{}, len(values))
+	for _, v := range values {
+		s := strings.TrimSpace(v)
+		if s == "" || looksLikeURL(s) {
+			continue
+		}
+		if _, ok := seen[s]; ok {
+			continue
+		}
+		seen[s] = struct{}{}
+		keys = append(keys, s)
+	}
+	return keys
+}
+
+func buildSignedURLMap(
+	ctx context.Context,
+	storage output.StorageProvider,
+	bucket string,
+	keys []string,
+) map[string]string {
+	urlByKey := make(map[string]string, len(keys))
+	for _, key := range keys {
+		signed, err := storage.CreateSignedDownload(ctx, bucket, key, config.SignedURLTTL)
+		if err != nil || signed == nil || signed.URL == "" {
+			continue
+		}
+		urlByKey[key] = signed.URL
+	}
+	return urlByKey
+}
+
+func applySignedURLsToFiles(files []presenter.FileResponse, urlByKey map[string]string) {
+	for i := range files {
+		key := files[i].ObjectKey
+		if key == "" {
+			continue
+		}
+		if url, ok := urlByKey[key]; ok {
+			u := url
+			files[i].URL = &u
+		}
+	}
+}
+
+func applySignedURLsToImages(values []string, urlByKey map[string]string) {
+	for i := range values {
+		s := strings.TrimSpace(values[i])
+		if s == "" || looksLikeURL(s) {
+			continue
+		}
+		if url, ok := urlByKey[s]; ok {
+			values[i] = url
+		}
+	}
+}
+
+func collectReviewFiles(reviews []presenter.ReviewResponse) []presenter.FileResponse {
 	total := 0
 	for i := range reviews {
 		total += len(reviews[i].Files)
 	}
-
 	all := make([]presenter.FileResponse, 0, total)
 	for i := range reviews {
 		if len(reviews[i].Files) == 0 {
@@ -170,28 +202,24 @@ func attachSignedURLsToReviewResponses(
 		}
 		all = append(all, reviews[i].Files...)
 	}
+	return all
+}
 
-	if len(all) == 0 {
-		return
-	}
-
-	attachSignedURLsToFileResponses(ctx, storage, bucket, all)
-
-	urlByKey := map[string]*string{}
-	for i := range all {
-		if all[i].ObjectKey == "" || all[i].URL == nil || *all[i].URL == "" {
+func buildFileURLPointerMap(files []presenter.FileResponse) map[string]*string {
+	urlByKey := make(map[string]*string, len(files))
+	for i := range files {
+		if files[i].ObjectKey == "" || files[i].URL == nil || *files[i].URL == "" {
 			continue
 		}
-		if _, ok := urlByKey[all[i].ObjectKey]; ok {
+		if _, ok := urlByKey[files[i].ObjectKey]; ok {
 			continue
 		}
-		urlByKey[all[i].ObjectKey] = all[i].URL
+		urlByKey[files[i].ObjectKey] = files[i].URL
 	}
+	return urlByKey
+}
 
-	if len(urlByKey) == 0 {
-		return
-	}
-
+func applySignedURLsToReviews(reviews []presenter.ReviewResponse, urlByKey map[string]*string) {
 	for i := range reviews {
 		for j := range reviews[i].Files {
 			key := reviews[i].Files[j].ObjectKey

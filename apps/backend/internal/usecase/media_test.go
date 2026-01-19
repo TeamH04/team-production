@@ -8,100 +8,24 @@ import (
 
 	"github.com/TeamH04/team-production/apps/backend/internal/apperr"
 	"github.com/TeamH04/team-production/apps/backend/internal/domain/entity"
+	"github.com/TeamH04/team-production/apps/backend/internal/handlers/testutil"
 	"github.com/TeamH04/team-production/apps/backend/internal/usecase"
 	"github.com/TeamH04/team-production/apps/backend/internal/usecase/input"
 	"github.com/TeamH04/team-production/apps/backend/internal/usecase/output"
 )
 
-// mockStorageProvider implements output.StorageProvider for testing
-type mockStorageProvider struct {
-	createSignedUploadResult *output.SignedUpload
-	createSignedUploadErr    error
-}
-
-func (m *mockStorageProvider) CreateSignedUpload(ctx context.Context, bucket, objectPath, contentType string, expiresIn time.Duration, upsert bool) (*output.SignedUpload, error) {
-	if m.createSignedUploadErr != nil {
-		return nil, m.createSignedUploadErr
-	}
-	return m.createSignedUploadResult, nil
-}
-
-func (m *mockStorageProvider) CreateSignedDownload(ctx context.Context, bucket, objectPath string, expiresIn time.Duration) (*output.SignedDownload, error) {
-	return nil, nil
-}
-
-// mockFileRepository implements output.FileRepository for testing
-type mockFileRepository struct {
-	findByStoreAndIDsResult []entity.File
-	findByStoreAndIDsErr    error
-	createErr               error
-	linkToStoreErr          error
-}
-
-func (m *mockFileRepository) FindByStoreAndIDs(ctx context.Context, storeID string, fileIDs []string) ([]entity.File, error) {
-	if m.findByStoreAndIDsErr != nil {
-		return nil, m.findByStoreAndIDsErr
-	}
-	return m.findByStoreAndIDsResult, nil
-}
-
-func (m *mockFileRepository) Create(ctx context.Context, file *entity.File) error {
-	if m.createErr != nil {
-		return m.createErr
-	}
-	file.FileID = "generated-file-id"
-	return nil
-}
-
-func (m *mockFileRepository) LinkToStore(ctx context.Context, storeID string, fileID string) error {
-	return m.linkToStoreErr
-}
-
-// mockStoreRepoForMedia implements output.StoreRepository for media tests
-type mockStoreRepoForMedia struct {
-	findByIDResult *entity.Store
-	findByIDErr    error
-}
-
-func (m *mockStoreRepoForMedia) FindAll(ctx context.Context) ([]entity.Store, error) {
-	return nil, errors.New("not implemented")
-}
-
-func (m *mockStoreRepoForMedia) FindByID(ctx context.Context, id string) (*entity.Store, error) {
-	if m.findByIDErr != nil {
-		return nil, m.findByIDErr
-	}
-	return m.findByIDResult, nil
-}
-
-func (m *mockStoreRepoForMedia) FindPending(ctx context.Context) ([]entity.Store, error) {
-	return nil, errors.New("not implemented")
-}
-
-func (m *mockStoreRepoForMedia) Create(ctx context.Context, store *entity.Store) error {
-	return errors.New("not implemented")
-}
-
-func (m *mockStoreRepoForMedia) Update(ctx context.Context, store *entity.Store) error {
-	return errors.New("not implemented")
-}
-
-func (m *mockStoreRepoForMedia) Delete(ctx context.Context, id string) error {
-	return errors.New("not implemented")
-}
-
 // --- CreateReviewUploads Tests ---
 
 func TestCreateReviewUploads_Success(t *testing.T) {
-	storage := &mockStorageProvider{
-		createSignedUploadResult: &output.SignedUpload{
+	storage := &testutil.MockStorageProvider{
+		CreateSignedUploadResult: &output.SignedUpload{
 			Path:      "/path/to/file",
 			Token:     "test-token",
 			ExpiresIn: 15 * time.Minute,
 		},
 	}
-	fileRepo := &mockFileRepository{}
-	storeRepo := &mockStoreRepoForMedia{findByIDResult: &entity.Store{StoreID: "store-1"}}
+	fileRepo := &testutil.MockFileRepository{}
+	storeRepo := &testutil.MockStoreRepository{Store: &entity.Store{StoreID: "store-1"}}
 
 	uc := usecase.NewMediaUseCase(storage, fileRepo, storeRepo, "test-bucket")
 
@@ -148,9 +72,9 @@ func TestCreateReviewUploads_InvalidInput(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			storage := &mockStorageProvider{}
-			fileRepo := &mockFileRepository{}
-			storeRepo := &mockStoreRepoForMedia{}
+			storage := &testutil.MockStorageProvider{}
+			fileRepo := &testutil.MockFileRepository{}
+			storeRepo := &testutil.MockStoreRepository{}
 
 			uc := usecase.NewMediaUseCase(storage, fileRepo, storeRepo, "test-bucket")
 
@@ -163,10 +87,10 @@ func TestCreateReviewUploads_InvalidInput(t *testing.T) {
 }
 
 func TestCreateReviewUploads_StoreNotFound(t *testing.T) {
-	storage := &mockStorageProvider{}
-	fileRepo := &mockFileRepository{}
-	storeRepo := &mockStoreRepoForMedia{
-		findByIDErr: apperr.New(apperr.CodeNotFound, entity.ErrNotFound),
+	storage := &testutil.MockStorageProvider{}
+	fileRepo := &testutil.MockFileRepository{}
+	storeRepo := &testutil.MockStoreRepository{
+		FindByIDErr: apperr.New(apperr.CodeNotFound, entity.ErrNotFound),
 	}
 
 	uc := usecase.NewMediaUseCase(storage, fileRepo, storeRepo, "test-bucket")
@@ -189,9 +113,9 @@ func TestCreateReviewUploads_InvalidContentType(t *testing.T) {
 
 	for _, contentType := range invalidTypes {
 		t.Run(contentType, func(t *testing.T) {
-			storage := &mockStorageProvider{}
-			fileRepo := &mockFileRepository{}
-			storeRepo := &mockStoreRepoForMedia{findByIDResult: &entity.Store{StoreID: "store-1"}}
+			storage := &testutil.MockStorageProvider{}
+			fileRepo := &testutil.MockFileRepository{}
+			storeRepo := &testutil.MockStoreRepository{Store: &entity.Store{StoreID: "store-1"}}
 
 			uc := usecase.NewMediaUseCase(storage, fileRepo, storeRepo, "test-bucket")
 
@@ -215,13 +139,13 @@ func TestCreateReviewUploads_ValidContentTypes(t *testing.T) {
 
 	for _, contentType := range validTypes {
 		t.Run(contentType, func(t *testing.T) {
-			storage := &mockStorageProvider{
-				createSignedUploadResult: &output.SignedUpload{
+			storage := &testutil.MockStorageProvider{
+				CreateSignedUploadResult: &output.SignedUpload{
 					Path: "/path/to/file",
 				},
 			}
-			fileRepo := &mockFileRepository{}
-			storeRepo := &mockStoreRepoForMedia{findByIDResult: &entity.Store{StoreID: "store-1"}}
+			fileRepo := &testutil.MockFileRepository{}
+			storeRepo := &testutil.MockStoreRepository{Store: &entity.Store{StoreID: "store-1"}}
 
 			uc := usecase.NewMediaUseCase(storage, fileRepo, storeRepo, "test-bucket")
 
@@ -249,9 +173,9 @@ func TestCreateReviewUploads_InvalidFileName(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			storage := &mockStorageProvider{}
-			fileRepo := &mockFileRepository{}
-			storeRepo := &mockStoreRepoForMedia{findByIDResult: &entity.Store{StoreID: "store-1"}}
+			storage := &testutil.MockStorageProvider{}
+			fileRepo := &testutil.MockFileRepository{}
+			storeRepo := &testutil.MockStoreRepository{Store: &entity.Store{StoreID: "store-1"}}
 
 			uc := usecase.NewMediaUseCase(storage, fileRepo, storeRepo, "test-bucket")
 
@@ -266,9 +190,9 @@ func TestCreateReviewUploads_InvalidFileName(t *testing.T) {
 }
 
 func TestCreateReviewUploads_EmptyContentType(t *testing.T) {
-	storage := &mockStorageProvider{}
-	fileRepo := &mockFileRepository{}
-	storeRepo := &mockStoreRepoForMedia{findByIDResult: &entity.Store{StoreID: "store-1"}}
+	storage := &testutil.MockStorageProvider{}
+	fileRepo := &testutil.MockFileRepository{}
+	storeRepo := &testutil.MockStoreRepository{Store: &entity.Store{StoreID: "store-1"}}
 
 	uc := usecase.NewMediaUseCase(storage, fileRepo, storeRepo, "test-bucket")
 
@@ -282,9 +206,9 @@ func TestCreateReviewUploads_EmptyContentType(t *testing.T) {
 
 func TestCreateReviewUploads_FileRepoCreateError(t *testing.T) {
 	createErr := errors.New("create error")
-	storage := &mockStorageProvider{}
-	fileRepo := &mockFileRepository{createErr: createErr}
-	storeRepo := &mockStoreRepoForMedia{findByIDResult: &entity.Store{StoreID: "store-1"}}
+	storage := &testutil.MockStorageProvider{}
+	fileRepo := &testutil.MockFileRepository{CreateErr: createErr}
+	storeRepo := &testutil.MockStoreRepository{Store: &entity.Store{StoreID: "store-1"}}
 
 	uc := usecase.NewMediaUseCase(storage, fileRepo, storeRepo, "test-bucket")
 
@@ -298,9 +222,9 @@ func TestCreateReviewUploads_FileRepoCreateError(t *testing.T) {
 
 func TestCreateReviewUploads_LinkToStoreError(t *testing.T) {
 	linkErr := errors.New("link error")
-	storage := &mockStorageProvider{}
-	fileRepo := &mockFileRepository{linkToStoreErr: linkErr}
-	storeRepo := &mockStoreRepoForMedia{findByIDResult: &entity.Store{StoreID: "store-1"}}
+	storage := &testutil.MockStorageProvider{}
+	fileRepo := &testutil.MockFileRepository{LinkToStoreErr: linkErr}
+	storeRepo := &testutil.MockStoreRepository{Store: &entity.Store{StoreID: "store-1"}}
 
 	uc := usecase.NewMediaUseCase(storage, fileRepo, storeRepo, "test-bucket")
 
@@ -314,9 +238,9 @@ func TestCreateReviewUploads_LinkToStoreError(t *testing.T) {
 
 func TestCreateReviewUploads_StorageProviderError(t *testing.T) {
 	storageErr := errors.New("storage error")
-	storage := &mockStorageProvider{createSignedUploadErr: storageErr}
-	fileRepo := &mockFileRepository{}
-	storeRepo := &mockStoreRepoForMedia{findByIDResult: &entity.Store{StoreID: "store-1"}}
+	storage := &testutil.MockStorageProvider{CreateSignedUploadErr: storageErr}
+	fileRepo := &testutil.MockFileRepository{}
+	storeRepo := &testutil.MockStoreRepository{Store: &entity.Store{StoreID: "store-1"}}
 
 	uc := usecase.NewMediaUseCase(storage, fileRepo, storeRepo, "test-bucket")
 
@@ -329,13 +253,13 @@ func TestCreateReviewUploads_StorageProviderError(t *testing.T) {
 }
 
 func TestCreateReviewUploads_MultipleFiles(t *testing.T) {
-	storage := &mockStorageProvider{
-		createSignedUploadResult: &output.SignedUpload{
+	storage := &testutil.MockStorageProvider{
+		CreateSignedUploadResult: &output.SignedUpload{
 			Path: "/path/to/file",
 		},
 	}
-	fileRepo := &mockFileRepository{}
-	storeRepo := &mockStoreRepoForMedia{findByIDResult: &entity.Store{StoreID: "store-1"}}
+	fileRepo := &testutil.MockFileRepository{}
+	storeRepo := &testutil.MockStoreRepository{Store: &entity.Store{StoreID: "store-1"}}
 
 	uc := usecase.NewMediaUseCase(storage, fileRepo, storeRepo, "test-bucket")
 
@@ -354,9 +278,9 @@ func TestCreateReviewUploads_MultipleFiles(t *testing.T) {
 
 func TestCreateReviewUploads_StoreRepoError(t *testing.T) {
 	dbErr := errors.New("database error")
-	storage := &mockStorageProvider{}
-	fileRepo := &mockFileRepository{}
-	storeRepo := &mockStoreRepoForMedia{findByIDErr: dbErr}
+	storage := &testutil.MockStorageProvider{}
+	fileRepo := &testutil.MockFileRepository{}
+	storeRepo := &testutil.MockStoreRepository{FindByIDErr: dbErr}
 
 	uc := usecase.NewMediaUseCase(storage, fileRepo, storeRepo, "test-bucket")
 

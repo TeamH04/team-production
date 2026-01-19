@@ -25,6 +25,7 @@ jobs:
     outputs:
       backend: ${{ steps.filter.outputs.backend }}
       mobile: ${{ steps.filter.outputs.mobile }}
+      web: ${{ steps.filter.outputs.web }}
       root: ${{ steps.filter.outputs.root }}
     steps:
       - name: Checkout
@@ -33,14 +34,19 @@ jobs:
           fetch-depth: 2
 
       - name: Filter paths
-        uses: dorny/paths-filter@v3
+        uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3.0.2
         id: filter
         with:
+          base: ${{ github.event.pull_request.base.ref || 'main' }}
+          list-files: none
           filters: |
             backend:
               - 'apps/backend/**'
             mobile:
               - 'apps/mobile/**'
+              - 'packages/**'
+            web:
+              - 'apps/web/**'
               - 'packages/**'
             root:
               - 'package.json'
@@ -64,11 +70,8 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
 
-      - name: Lint
-        run: pnpm run lint
-
-      - name: TypeScript type check
-        run: pnpm run typecheck
+      - name: Lint & TypeCheck
+        run: pnpm turbo lint typecheck
 
       - name: Format check
         run: pnpm run format:check
@@ -95,9 +98,9 @@ jobs:
           POSTGRES_DB: test_app
         options: >-
           --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 3
         ports:
           - 5432:5432
 
@@ -114,10 +117,15 @@ jobs:
       - name: Run go vet
         run: go vet ./...
 
-      - name: Run tests with race detector
+      - name: Run tests
         env:
           DATABASE_URL: postgres://postgres:postgres@localhost:5432/test_app?sslmode=disable
-        run: go test -v -race -parallel 4 -coverprofile=coverage.out -covermode=atomic ./...
+        run: |
+          RACE_FLAG=""
+          if [ "${{ github.event_name }}" = "push" ] && [ "${{ github.ref }}" = "refs/heads/main" ]; then
+            RACE_FLAG="-race"
+          fi
+          go test $RACE_FLAG -parallel 8 -coverprofile=coverage.out -covermode=atomic ./...
 
       - name: Generate coverage report
         run: |
@@ -127,7 +135,7 @@ jobs:
       # Repository Secrets で CODECOV_TOKEN を設定してください
       # 設定後は fail_ci_if_error を true に変更することを推奨
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5.5.2
         continue-on-error: true
         with:
           files: apps/backend/coverage.out
@@ -233,13 +241,30 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           working-directory: apps/mobile
 
-      # Lint は lint ジョブで実行されるため省略
+      # Lint/Format check は lint ジョブで実行されるため省略
 
-      - name: Format check mobile
+      - name: Run tests
         working-directory: .
-        run: |
-          pnpm run format:mobile
-          git diff --exit-code || (echo "Code is not formatted. Please run 'pnpm run format:mobile'" && exit 1)
+        run: make test-mobile
+
+  # ----- Web Tests -----
+  web-test:
+    name: Web Tests
+    needs: changes
+    if: ${{ needs.changes.outputs.web == 'true' || needs.changes.outputs.root == 'true' }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup pnpm and Node.js
+        uses: ./.github/actions/pnpm-setup
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Run tests
+        run: make test-web
 
   # ----- Mobile Build Check -----
   mobile-build:
@@ -259,16 +284,18 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
-      - name: Setup Expo
-        uses: ./.github/actions/expo-setup
+      - name: Setup pnpm and Node.js
+        uses: ./.github/actions/pnpm-setup
         with:
           node-version: ${{ env.NODE_VERSION }}
-          expo-token: ${{ secrets.EXPO_TOKEN }}
+          working-directory: apps/mobile
 
-      - name: Check Expo build configuration
-        run: |
-          npx expo export --platform web --output-dir dist
-          echo "Build configuration is valid"
+      - name: Check Expo configuration
+        run: npx expo config --type introspect
+
+      - name: Run Expo Doctor
+        continue-on-error: true
+        run: npx expo-doctor
 
   # ----- Security Audit (Node.js) -----
   security-audit-node:

@@ -63,12 +63,17 @@ type testMenu struct {
 func (testMenu) TableName() string { return "menus" }
 
 type testReview struct {
-	ReviewID  string    `gorm:"column:review_id;primaryKey"`
-	StoreID   string    `gorm:"column:store_id"`
-	UserID    string    `gorm:"column:user_id"`
-	Rating    int       `gorm:"column:rating"`
-	Content   *string   `gorm:"column:content"`
-	CreatedAt time.Time `gorm:"column:created_at"`
+	ReviewID          string    `gorm:"column:review_id;primaryKey"`
+	StoreID           string    `gorm:"column:store_id"`
+	UserID            string    `gorm:"column:user_id"`
+	Rating            int       `gorm:"column:rating"`
+	RatingTaste       *int      `gorm:"column:rating_taste"`
+	RatingAtmosphere  *int      `gorm:"column:rating_atmosphere"`
+	RatingService     *int      `gorm:"column:rating_service"`
+	RatingSpeed       *int      `gorm:"column:rating_speed"`
+	RatingCleanliness *int      `gorm:"column:rating_cleanliness"`
+	Content           *string   `gorm:"column:content"`
+	CreatedAt         time.Time `gorm:"column:created_at"`
 }
 
 func (testReview) TableName() string { return "reviews" }

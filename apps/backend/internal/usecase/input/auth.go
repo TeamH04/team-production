@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/TeamH04/team-production/apps/backend/internal/domain/entity"
+	"github.com/TeamH04/team-production/apps/backend/internal/usecase/output"
 )
 
 type AuthSignupInput struct {
@@ -17,19 +18,11 @@ type AuthLoginInput struct {
 	Password string
 }
 
-type AuthUser struct {
-	ID    string
-	Email string
-	Role  string
-}
+// AuthUser is an alias to output.AuthUser to avoid type duplication.
+type AuthUser = output.AuthUser
 
-type AuthSession struct {
-	AccessToken  string
-	RefreshToken string
-	TokenType    string
-	ExpiresIn    int
-	User         AuthUser
-}
+// AuthSession is an alias to output.AuthSession to avoid type duplication.
+type AuthSession = output.AuthSession
 
 // AuthUseCase defines inbound port for authentication flows.
 type AuthUseCase interface {

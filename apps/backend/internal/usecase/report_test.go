@@ -7,76 +7,16 @@ import (
 
 	"github.com/TeamH04/team-production/apps/backend/internal/apperr"
 	"github.com/TeamH04/team-production/apps/backend/internal/domain/entity"
+	"github.com/TeamH04/team-production/apps/backend/internal/handlers/testutil"
 	"github.com/TeamH04/team-production/apps/backend/internal/usecase"
 	"github.com/TeamH04/team-production/apps/backend/internal/usecase/input"
 )
 
-// mockReportRepository implements output.ReportRepository for testing
-type mockReportRepository struct {
-	findAllResult     []entity.Report
-	findAllErr        error
-	findByIDResult    *entity.Report
-	findByIDErr       error
-	createErr         error
-	updateStatusErr   error
-}
-
-func (m *mockReportRepository) FindAll(ctx context.Context) ([]entity.Report, error) {
-	if m.findAllErr != nil {
-		return nil, m.findAllErr
-	}
-	return m.findAllResult, nil
-}
-
-func (m *mockReportRepository) FindByID(ctx context.Context, reportID int64) (*entity.Report, error) {
-	if m.findByIDErr != nil {
-		return nil, m.findByIDErr
-	}
-	return m.findByIDResult, nil
-}
-
-func (m *mockReportRepository) Create(ctx context.Context, report *entity.Report) error {
-	return m.createErr
-}
-
-func (m *mockReportRepository) UpdateStatus(ctx context.Context, reportID int64, status string) error {
-	return m.updateStatusErr
-}
-
-// mockUserRepoForReport implements output.UserRepository for report tests
-type mockUserRepoForReport struct {
-	findByIDResult entity.User
-	findByIDErr    error
-}
-
-func (m *mockUserRepoForReport) FindByID(ctx context.Context, userID string) (entity.User, error) {
-	if m.findByIDErr != nil {
-		return entity.User{}, m.findByIDErr
-	}
-	return m.findByIDResult, nil
-}
-
-func (m *mockUserRepoForReport) FindByEmail(ctx context.Context, email string) (*entity.User, error) {
-	return nil, errors.New("not implemented")
-}
-
-func (m *mockUserRepoForReport) Create(ctx context.Context, user *entity.User) error {
-	return errors.New("not implemented")
-}
-
-func (m *mockUserRepoForReport) Update(ctx context.Context, user entity.User) error {
-	return errors.New("not implemented")
-}
-
-func (m *mockUserRepoForReport) UpdateRole(ctx context.Context, userID string, role string) error {
-	return errors.New("not implemented")
-}
-
 // --- CreateReport Tests ---
 
 func TestCreateReport_Success(t *testing.T) {
-	reportRepo := &mockReportRepository{}
-	userRepo := &mockUserRepoForReport{findByIDResult: entity.User{UserID: "user-1"}}
+	reportRepo := &testutil.MockReportRepository{}
+	userRepo := &testutil.MockUserRepository{FindByIDResult: entity.User{UserID: "user-1"}}
 
 	uc := usecase.NewReportUseCase(reportRepo, userRepo)
 
@@ -101,9 +41,9 @@ func TestCreateReport_Success(t *testing.T) {
 }
 
 func TestCreateReport_UserNotFound(t *testing.T) {
-	reportRepo := &mockReportRepository{}
-	userRepo := &mockUserRepoForReport{
-		findByIDErr: apperr.New(apperr.CodeNotFound, entity.ErrNotFound),
+	reportRepo := &testutil.MockReportRepository{}
+	userRepo := &testutil.MockUserRepository{
+		FindByIDErr: apperr.New(apperr.CodeNotFound, entity.ErrNotFound),
 	}
 
 	uc := usecase.NewReportUseCase(reportRepo, userRepo)
@@ -146,8 +86,8 @@ func TestCreateReport_InvalidInput(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			reportRepo := &mockReportRepository{}
-			userRepo := &mockUserRepoForReport{findByIDResult: entity.User{UserID: "user-1"}}
+			reportRepo := &testutil.MockReportRepository{}
+			userRepo := &testutil.MockUserRepository{FindByIDResult: entity.User{UserID: "user-1"}}
 
 			uc := usecase.NewReportUseCase(reportRepo, userRepo)
 
@@ -160,8 +100,8 @@ func TestCreateReport_InvalidInput(t *testing.T) {
 }
 
 func TestCreateReport_InvalidTargetType(t *testing.T) {
-	reportRepo := &mockReportRepository{}
-	userRepo := &mockUserRepoForReport{findByIDResult: entity.User{UserID: "user-1"}}
+	reportRepo := &testutil.MockReportRepository{}
+	userRepo := &testutil.MockUserRepository{FindByIDResult: entity.User{UserID: "user-1"}}
 
 	uc := usecase.NewReportUseCase(reportRepo, userRepo)
 
@@ -181,8 +121,8 @@ func TestCreateReport_ValidTargetTypes(t *testing.T) {
 
 	for _, targetType := range validTypes {
 		t.Run(targetType, func(t *testing.T) {
-			reportRepo := &mockReportRepository{}
-			userRepo := &mockUserRepoForReport{findByIDResult: entity.User{UserID: "user-1"}}
+			reportRepo := &testutil.MockReportRepository{}
+			userRepo := &testutil.MockUserRepository{FindByIDResult: entity.User{UserID: "user-1"}}
 
 			uc := usecase.NewReportUseCase(reportRepo, userRepo)
 
@@ -204,8 +144,8 @@ func TestCreateReport_ValidTargetTypes(t *testing.T) {
 
 func TestCreateReport_CreateError(t *testing.T) {
 	createErr := errors.New("create error")
-	reportRepo := &mockReportRepository{createErr: createErr}
-	userRepo := &mockUserRepoForReport{findByIDResult: entity.User{UserID: "user-1"}}
+	reportRepo := &testutil.MockReportRepository{CreateErr: createErr}
+	userRepo := &testutil.MockUserRepository{FindByIDResult: entity.User{UserID: "user-1"}}
 
 	uc := usecase.NewReportUseCase(reportRepo, userRepo)
 
@@ -227,8 +167,8 @@ func TestGetAllReports_Success(t *testing.T) {
 		{ReportID: 1, UserID: "user-1", TargetType: "review", Status: "pending"},
 		{ReportID: 2, UserID: "user-2", TargetType: "store", Status: "resolved"},
 	}
-	reportRepo := &mockReportRepository{findAllResult: reports}
-	userRepo := &mockUserRepoForReport{}
+	reportRepo := &testutil.MockReportRepository{FindAllResult: reports}
+	userRepo := &testutil.MockUserRepository{}
 
 	uc := usecase.NewReportUseCase(reportRepo, userRepo)
 
@@ -242,8 +182,8 @@ func TestGetAllReports_Success(t *testing.T) {
 }
 
 func TestGetAllReports_EmptyReports(t *testing.T) {
-	reportRepo := &mockReportRepository{findAllResult: []entity.Report{}}
-	userRepo := &mockUserRepoForReport{}
+	reportRepo := &testutil.MockReportRepository{FindAllResult: []entity.Report{}}
+	userRepo := &testutil.MockUserRepository{}
 
 	uc := usecase.NewReportUseCase(reportRepo, userRepo)
 
@@ -258,8 +198,8 @@ func TestGetAllReports_EmptyReports(t *testing.T) {
 
 func TestGetAllReports_RepositoryError(t *testing.T) {
 	dbErr := errors.New("database error")
-	reportRepo := &mockReportRepository{findAllErr: dbErr}
-	userRepo := &mockUserRepoForReport{}
+	reportRepo := &testutil.MockReportRepository{FindAllErr: dbErr}
+	userRepo := &testutil.MockUserRepository{}
 
 	uc := usecase.NewReportUseCase(reportRepo, userRepo)
 
@@ -272,10 +212,10 @@ func TestGetAllReports_RepositoryError(t *testing.T) {
 // --- HandleReport Tests ---
 
 func TestHandleReport_Resolve(t *testing.T) {
-	reportRepo := &mockReportRepository{
-		findByIDResult: &entity.Report{ReportID: 1, Status: "pending"},
+	reportRepo := &testutil.MockReportRepository{
+		FindByIDResult: &entity.Report{ReportID: 1, Status: "pending"},
 	}
-	userRepo := &mockUserRepoForReport{}
+	userRepo := &testutil.MockUserRepository{}
 
 	uc := usecase.NewReportUseCase(reportRepo, userRepo)
 
@@ -286,10 +226,10 @@ func TestHandleReport_Resolve(t *testing.T) {
 }
 
 func TestHandleReport_Reject(t *testing.T) {
-	reportRepo := &mockReportRepository{
-		findByIDResult: &entity.Report{ReportID: 1, Status: "pending"},
+	reportRepo := &testutil.MockReportRepository{
+		FindByIDResult: &entity.Report{ReportID: 1, Status: "pending"},
 	}
-	userRepo := &mockUserRepoForReport{}
+	userRepo := &testutil.MockUserRepository{}
 
 	uc := usecase.NewReportUseCase(reportRepo, userRepo)
 
@@ -300,10 +240,10 @@ func TestHandleReport_Reject(t *testing.T) {
 }
 
 func TestHandleReport_ReportNotFound(t *testing.T) {
-	reportRepo := &mockReportRepository{
-		findByIDErr: apperr.New(apperr.CodeNotFound, entity.ErrNotFound),
+	reportRepo := &testutil.MockReportRepository{
+		FindByIDErr: apperr.New(apperr.CodeNotFound, entity.ErrNotFound),
 	}
-	userRepo := &mockUserRepoForReport{}
+	userRepo := &testutil.MockUserRepository{}
 
 	uc := usecase.NewReportUseCase(reportRepo, userRepo)
 
@@ -314,10 +254,10 @@ func TestHandleReport_ReportNotFound(t *testing.T) {
 }
 
 func TestHandleReport_InvalidAction(t *testing.T) {
-	reportRepo := &mockReportRepository{
-		findByIDResult: &entity.Report{ReportID: 1, Status: "pending"},
+	reportRepo := &testutil.MockReportRepository{
+		FindByIDResult: &entity.Report{ReportID: 1, Status: "pending"},
 	}
-	userRepo := &mockUserRepoForReport{}
+	userRepo := &testutil.MockUserRepository{}
 
 	uc := usecase.NewReportUseCase(reportRepo, userRepo)
 
@@ -329,11 +269,11 @@ func TestHandleReport_InvalidAction(t *testing.T) {
 
 func TestHandleReport_UpdateStatusError(t *testing.T) {
 	updateErr := errors.New("update error")
-	reportRepo := &mockReportRepository{
-		findByIDResult:  &entity.Report{ReportID: 1, Status: "pending"},
-		updateStatusErr: updateErr,
+	reportRepo := &testutil.MockReportRepository{
+		FindByIDResult:  &entity.Report{ReportID: 1, Status: "pending"},
+		UpdateStatusErr: updateErr,
 	}
-	userRepo := &mockUserRepoForReport{}
+	userRepo := &testutil.MockUserRepository{}
 
 	uc := usecase.NewReportUseCase(reportRepo, userRepo)
 
@@ -345,8 +285,8 @@ func TestHandleReport_UpdateStatusError(t *testing.T) {
 
 func TestHandleReport_RepositoryError(t *testing.T) {
 	dbErr := errors.New("database error")
-	reportRepo := &mockReportRepository{findByIDErr: dbErr}
-	userRepo := &mockUserRepoForReport{}
+	reportRepo := &testutil.MockReportRepository{FindByIDErr: dbErr}
+	userRepo := &testutil.MockUserRepository{}
 
 	uc := usecase.NewReportUseCase(reportRepo, userRepo)
 

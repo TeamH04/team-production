@@ -2,6 +2,7 @@ import { colors, textOn, withAlpha } from '@team/theme';
 import { Geist, Geist_Mono, Kiwi_Maru } from 'next/font/google';
 import React from 'react';
 
+import type { webFontName } from '@team/theme';
 import type { Metadata } from 'next';
 
 import './globals.css';
@@ -16,9 +17,15 @@ const geistMono = Geist_Mono({
   subsets: ['latin'],
 });
 
+// フォント名は @team/theme の webFontName と同期: Kiwi_Maru
+// next/font/google は静的解析のため動的インポートができないため、
+// フォント名を変更する場合は @team/theme と同時に更新すること
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const _fontNameCheck: typeof webFontName = 'Kiwi_Maru';
+
 const kiwiMaru = Kiwi_Maru({
   weight: ['300', '400', '500'],
-  variable: '--font-sans',
+  variable: '--font-kiwi-maru',
   subsets: ['latin'],
 });
 

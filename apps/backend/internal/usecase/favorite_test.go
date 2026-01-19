@@ -7,113 +7,22 @@ import (
 
 	"github.com/TeamH04/team-production/apps/backend/internal/apperr"
 	"github.com/TeamH04/team-production/apps/backend/internal/domain/entity"
+	"github.com/TeamH04/team-production/apps/backend/internal/handlers/testutil"
 	"github.com/TeamH04/team-production/apps/backend/internal/usecase"
 )
 
-// mockFavoriteRepository implements output.FavoriteRepository for testing
-type mockFavoriteRepository struct {
-	findByUserIDResult     []entity.Favorite
-	findByUserIDErr        error
-	findByUserAndStoreResult *entity.Favorite
-	findByUserAndStoreErr    error
-	createErr              error
-	deleteErr              error
-}
-
-func (m *mockFavoriteRepository) FindByUserID(ctx context.Context, userID string) ([]entity.Favorite, error) {
-	if m.findByUserIDErr != nil {
-		return nil, m.findByUserIDErr
-	}
-	return m.findByUserIDResult, nil
-}
-
-func (m *mockFavoriteRepository) FindByUserAndStore(ctx context.Context, userID string, storeID string) (*entity.Favorite, error) {
-	if m.findByUserAndStoreErr != nil {
-		return nil, m.findByUserAndStoreErr
-	}
-	return m.findByUserAndStoreResult, nil
-}
-
-func (m *mockFavoriteRepository) Create(ctx context.Context, favorite *entity.Favorite) error {
-	return m.createErr
-}
-
-func (m *mockFavoriteRepository) Delete(ctx context.Context, userID string, storeID string) error {
-	return m.deleteErr
-}
-
-// mockUserRepoForFavorite implements output.UserRepository for favorite tests
-type mockUserRepoForFavorite struct {
-	findByIDResult entity.User
-	findByIDErr    error
-}
-
-func (m *mockUserRepoForFavorite) FindByID(ctx context.Context, userID string) (entity.User, error) {
-	if m.findByIDErr != nil {
-		return entity.User{}, m.findByIDErr
-	}
-	return m.findByIDResult, nil
-}
-
-func (m *mockUserRepoForFavorite) FindByEmail(ctx context.Context, email string) (*entity.User, error) {
-	return nil, errors.New("not implemented")
-}
-
-func (m *mockUserRepoForFavorite) Create(ctx context.Context, user *entity.User) error {
-	return errors.New("not implemented")
-}
-
-func (m *mockUserRepoForFavorite) Update(ctx context.Context, user entity.User) error {
-	return errors.New("not implemented")
-}
-
-func (m *mockUserRepoForFavorite) UpdateRole(ctx context.Context, userID string, role string) error {
-	return errors.New("not implemented")
-}
-
-// mockStoreRepoForFavorite implements output.StoreRepository for favorite tests
-type mockStoreRepoForFavorite struct {
-	findByIDResult *entity.Store
-	findByIDErr    error
-}
-
-func (m *mockStoreRepoForFavorite) FindAll(ctx context.Context) ([]entity.Store, error) {
-	return nil, errors.New("not implemented")
-}
-
-func (m *mockStoreRepoForFavorite) FindByID(ctx context.Context, id string) (*entity.Store, error) {
-	if m.findByIDErr != nil {
-		return nil, m.findByIDErr
-	}
-	return m.findByIDResult, nil
-}
-
-func (m *mockStoreRepoForFavorite) FindPending(ctx context.Context) ([]entity.Store, error) {
-	return nil, errors.New("not implemented")
-}
-
-func (m *mockStoreRepoForFavorite) Create(ctx context.Context, store *entity.Store) error {
-	return errors.New("not implemented")
-}
-
-func (m *mockStoreRepoForFavorite) Update(ctx context.Context, store *entity.Store) error {
-	return errors.New("not implemented")
-}
-
-func (m *mockStoreRepoForFavorite) Delete(ctx context.Context, id string) error {
-	return errors.New("not implemented")
-}
+const testFavoriteStoreID = "store-1"
 
 // --- GetMyFavorites Tests ---
 
 func TestGetMyFavorites_Success(t *testing.T) {
 	favorites := []entity.Favorite{
-		{UserID: "user-1", StoreID: "store-1"},
+		{UserID: "user-1", StoreID: testFavoriteStoreID},
 		{UserID: "user-1", StoreID: "store-2"},
 	}
-	favoriteRepo := &mockFavoriteRepository{findByUserIDResult: favorites}
-	userRepo := &mockUserRepoForFavorite{findByIDResult: entity.User{UserID: "user-1"}}
-	storeRepo := &mockStoreRepoForFavorite{}
+	favoriteRepo := &testutil.MockFavoriteRepository{FindByUserIDResult: favorites}
+	userRepo := &testutil.MockUserRepository{FindByIDResult: entity.User{UserID: "user-1"}}
+	storeRepo := &testutil.MockStoreRepository{}
 
 	uc := usecase.NewFavoriteUseCase(favoriteRepo, userRepo, storeRepo)
 
@@ -127,11 +36,11 @@ func TestGetMyFavorites_Success(t *testing.T) {
 }
 
 func TestGetMyFavorites_UserNotFound(t *testing.T) {
-	favoriteRepo := &mockFavoriteRepository{}
-	userRepo := &mockUserRepoForFavorite{
-		findByIDErr: apperr.New(apperr.CodeNotFound, entity.ErrNotFound),
+	favoriteRepo := &testutil.MockFavoriteRepository{}
+	userRepo := &testutil.MockUserRepository{
+		FindByIDErr: apperr.New(apperr.CodeNotFound, entity.ErrNotFound),
 	}
-	storeRepo := &mockStoreRepoForFavorite{}
+	storeRepo := &testutil.MockStoreRepository{}
 
 	uc := usecase.NewFavoriteUseCase(favoriteRepo, userRepo, storeRepo)
 
@@ -142,9 +51,9 @@ func TestGetMyFavorites_UserNotFound(t *testing.T) {
 }
 
 func TestGetMyFavorites_EmptyFavorites(t *testing.T) {
-	favoriteRepo := &mockFavoriteRepository{findByUserIDResult: []entity.Favorite{}}
-	userRepo := &mockUserRepoForFavorite{findByIDResult: entity.User{UserID: "user-1"}}
-	storeRepo := &mockStoreRepoForFavorite{}
+	favoriteRepo := &testutil.MockFavoriteRepository{FindByUserIDResult: []entity.Favorite{}}
+	userRepo := &testutil.MockUserRepository{FindByIDResult: entity.User{UserID: "user-1"}}
+	storeRepo := &testutil.MockStoreRepository{}
 
 	uc := usecase.NewFavoriteUseCase(favoriteRepo, userRepo, storeRepo)
 
@@ -159,9 +68,9 @@ func TestGetMyFavorites_EmptyFavorites(t *testing.T) {
 
 func TestGetMyFavorites_RepositoryError(t *testing.T) {
 	dbErr := errors.New("database error")
-	favoriteRepo := &mockFavoriteRepository{findByUserIDErr: dbErr}
-	userRepo := &mockUserRepoForFavorite{findByIDResult: entity.User{UserID: "user-1"}}
-	storeRepo := &mockStoreRepoForFavorite{}
+	favoriteRepo := &testutil.MockFavoriteRepository{FindByUserIDErr: dbErr}
+	userRepo := &testutil.MockUserRepository{FindByIDResult: entity.User{UserID: "user-1"}}
+	storeRepo := &testutil.MockStoreRepository{}
 
 	uc := usecase.NewFavoriteUseCase(favoriteRepo, userRepo, storeRepo)
 
@@ -174,23 +83,23 @@ func TestGetMyFavorites_RepositoryError(t *testing.T) {
 // --- AddFavorite Tests ---
 
 func TestAddFavorite_Success(t *testing.T) {
-	favoriteRepo := &mockFavoriteRepository{
-		findByUserAndStoreErr: apperr.New(apperr.CodeNotFound, entity.ErrNotFound),
+	favoriteRepo := &testutil.MockFavoriteRepository{
+		FindByUserAndStoreErr: apperr.New(apperr.CodeNotFound, entity.ErrNotFound),
 	}
-	userRepo := &mockUserRepoForFavorite{findByIDResult: entity.User{UserID: "user-1"}}
-	storeRepo := &mockStoreRepoForFavorite{findByIDResult: &entity.Store{StoreID: "store-1"}}
+	userRepo := &testutil.MockUserRepository{FindByIDResult: entity.User{UserID: "user-1"}}
+	storeRepo := &testutil.MockStoreRepository{Store: &entity.Store{StoreID: testFavoriteStoreID}}
 
 	uc := usecase.NewFavoriteUseCase(favoriteRepo, userRepo, storeRepo)
 
-	result, err := uc.AddFavorite(context.Background(), "user-1", "store-1")
+	result, err := uc.AddFavorite(context.Background(), "user-1", testFavoriteStoreID)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 	if result.UserID != "user-1" {
 		t.Errorf("expected UserID user-1, got %s", result.UserID)
 	}
-	if result.StoreID != "store-1" {
-		t.Errorf("expected StoreID store-1, got %s", result.StoreID)
+	if result.StoreID != testFavoriteStoreID {
+		t.Errorf("expected StoreID %s, got %s", testFavoriteStoreID, result.StoreID)
 	}
 }
 
@@ -200,16 +109,16 @@ func TestAddFavorite_InvalidInput(t *testing.T) {
 		userID  string
 		storeID string
 	}{
-		{"empty userID", "", "store-1"},
+		{"empty userID", "", testFavoriteStoreID},
 		{"empty storeID", "user-1", ""},
 		{"both empty", "", ""},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			favoriteRepo := &mockFavoriteRepository{}
-			userRepo := &mockUserRepoForFavorite{}
-			storeRepo := &mockStoreRepoForFavorite{}
+			favoriteRepo := &testutil.MockFavoriteRepository{}
+			userRepo := &testutil.MockUserRepository{}
+			storeRepo := &testutil.MockStoreRepository{}
 
 			uc := usecase.NewFavoriteUseCase(favoriteRepo, userRepo, storeRepo)
 
@@ -222,25 +131,25 @@ func TestAddFavorite_InvalidInput(t *testing.T) {
 }
 
 func TestAddFavorite_UserNotFound(t *testing.T) {
-	favoriteRepo := &mockFavoriteRepository{}
-	userRepo := &mockUserRepoForFavorite{
-		findByIDErr: apperr.New(apperr.CodeNotFound, entity.ErrNotFound),
+	favoriteRepo := &testutil.MockFavoriteRepository{}
+	userRepo := &testutil.MockUserRepository{
+		FindByIDErr: apperr.New(apperr.CodeNotFound, entity.ErrNotFound),
 	}
-	storeRepo := &mockStoreRepoForFavorite{}
+	storeRepo := &testutil.MockStoreRepository{}
 
 	uc := usecase.NewFavoriteUseCase(favoriteRepo, userRepo, storeRepo)
 
-	_, err := uc.AddFavorite(context.Background(), "nonexistent", "store-1")
+	_, err := uc.AddFavorite(context.Background(), "nonexistent", testFavoriteStoreID)
 	if !errors.Is(err, usecase.ErrUserNotFound) {
 		t.Errorf("expected ErrUserNotFound, got %v", err)
 	}
 }
 
 func TestAddFavorite_StoreNotFound(t *testing.T) {
-	favoriteRepo := &mockFavoriteRepository{}
-	userRepo := &mockUserRepoForFavorite{findByIDResult: entity.User{UserID: "user-1"}}
-	storeRepo := &mockStoreRepoForFavorite{
-		findByIDErr: apperr.New(apperr.CodeNotFound, entity.ErrNotFound),
+	favoriteRepo := &testutil.MockFavoriteRepository{}
+	userRepo := &testutil.MockUserRepository{FindByIDResult: entity.User{UserID: "user-1"}}
+	storeRepo := &testutil.MockStoreRepository{
+		FindByIDErr: apperr.New(apperr.CodeNotFound, entity.ErrNotFound),
 	}
 
 	uc := usecase.NewFavoriteUseCase(favoriteRepo, userRepo, storeRepo)
@@ -252,15 +161,15 @@ func TestAddFavorite_StoreNotFound(t *testing.T) {
 }
 
 func TestAddFavorite_AlreadyExists(t *testing.T) {
-	favoriteRepo := &mockFavoriteRepository{
-		findByUserAndStoreResult: &entity.Favorite{UserID: "user-1", StoreID: "store-1"},
+	favoriteRepo := &testutil.MockFavoriteRepository{
+		FindByUserAndStoreResult: &entity.Favorite{UserID: "user-1", StoreID: testFavoriteStoreID},
 	}
-	userRepo := &mockUserRepoForFavorite{findByIDResult: entity.User{UserID: "user-1"}}
-	storeRepo := &mockStoreRepoForFavorite{findByIDResult: &entity.Store{StoreID: "store-1"}}
+	userRepo := &testutil.MockUserRepository{FindByIDResult: entity.User{UserID: "user-1"}}
+	storeRepo := &testutil.MockStoreRepository{Store: &entity.Store{StoreID: testFavoriteStoreID}}
 
 	uc := usecase.NewFavoriteUseCase(favoriteRepo, userRepo, storeRepo)
 
-	_, err := uc.AddFavorite(context.Background(), "user-1", "store-1")
+	_, err := uc.AddFavorite(context.Background(), "user-1", testFavoriteStoreID)
 	if !errors.Is(err, usecase.ErrAlreadyFavorite) {
 		t.Errorf("expected ErrAlreadyFavorite, got %v", err)
 	}
@@ -268,16 +177,16 @@ func TestAddFavorite_AlreadyExists(t *testing.T) {
 
 func TestAddFavorite_CreateError(t *testing.T) {
 	createErr := errors.New("create error")
-	favoriteRepo := &mockFavoriteRepository{
-		findByUserAndStoreErr: apperr.New(apperr.CodeNotFound, entity.ErrNotFound),
-		createErr:             createErr,
+	favoriteRepo := &testutil.MockFavoriteRepository{
+		FindByUserAndStoreErr: apperr.New(apperr.CodeNotFound, entity.ErrNotFound),
+		CreateErr:             createErr,
 	}
-	userRepo := &mockUserRepoForFavorite{findByIDResult: entity.User{UserID: "user-1"}}
-	storeRepo := &mockStoreRepoForFavorite{findByIDResult: &entity.Store{StoreID: "store-1"}}
+	userRepo := &testutil.MockUserRepository{FindByIDResult: entity.User{UserID: "user-1"}}
+	storeRepo := &testutil.MockStoreRepository{Store: &entity.Store{StoreID: testFavoriteStoreID}}
 
 	uc := usecase.NewFavoriteUseCase(favoriteRepo, userRepo, storeRepo)
 
-	_, err := uc.AddFavorite(context.Background(), "user-1", "store-1")
+	_, err := uc.AddFavorite(context.Background(), "user-1", testFavoriteStoreID)
 	if !errors.Is(err, createErr) {
 		t.Errorf("expected create error, got %v", err)
 	}
@@ -285,15 +194,15 @@ func TestAddFavorite_CreateError(t *testing.T) {
 
 func TestAddFavorite_FindByUserAndStoreError(t *testing.T) {
 	dbErr := errors.New("database error")
-	favoriteRepo := &mockFavoriteRepository{
-		findByUserAndStoreErr: dbErr,
+	favoriteRepo := &testutil.MockFavoriteRepository{
+		FindByUserAndStoreErr: dbErr,
 	}
-	userRepo := &mockUserRepoForFavorite{findByIDResult: entity.User{UserID: "user-1"}}
-	storeRepo := &mockStoreRepoForFavorite{findByIDResult: &entity.Store{StoreID: "store-1"}}
+	userRepo := &testutil.MockUserRepository{FindByIDResult: entity.User{UserID: "user-1"}}
+	storeRepo := &testutil.MockStoreRepository{Store: &entity.Store{StoreID: testFavoriteStoreID}}
 
 	uc := usecase.NewFavoriteUseCase(favoriteRepo, userRepo, storeRepo)
 
-	_, err := uc.AddFavorite(context.Background(), "user-1", "store-1")
+	_, err := uc.AddFavorite(context.Background(), "user-1", testFavoriteStoreID)
 	if !errors.Is(err, dbErr) {
 		t.Errorf("expected database error, got %v", err)
 	}
@@ -307,16 +216,16 @@ func TestRemoveFavorite_InvalidInput(t *testing.T) {
 		userID  string
 		storeID string
 	}{
-		{"empty userID", "", "store-1"},
+		{"empty userID", "", testFavoriteStoreID},
 		{"empty storeID", "user-1", ""},
 		{"both empty", "", ""},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			favoriteRepo := &mockFavoriteRepository{}
-			userRepo := &mockUserRepoForFavorite{}
-			storeRepo := &mockStoreRepoForFavorite{}
+			favoriteRepo := &testutil.MockFavoriteRepository{}
+			userRepo := &testutil.MockUserRepository{}
+			storeRepo := &testutil.MockStoreRepository{}
 
 			uc := usecase.NewFavoriteUseCase(favoriteRepo, userRepo, storeRepo)
 
@@ -329,26 +238,26 @@ func TestRemoveFavorite_InvalidInput(t *testing.T) {
 }
 
 func TestRemoveFavorite_Success(t *testing.T) {
-	favoriteRepo := &mockFavoriteRepository{
-		findByUserAndStoreResult: &entity.Favorite{UserID: "user-1", StoreID: "store-1"},
+	favoriteRepo := &testutil.MockFavoriteRepository{
+		FindByUserAndStoreResult: &entity.Favorite{UserID: "user-1", StoreID: testFavoriteStoreID},
 	}
-	userRepo := &mockUserRepoForFavorite{}
-	storeRepo := &mockStoreRepoForFavorite{}
+	userRepo := &testutil.MockUserRepository{}
+	storeRepo := &testutil.MockStoreRepository{}
 
 	uc := usecase.NewFavoriteUseCase(favoriteRepo, userRepo, storeRepo)
 
-	err := uc.RemoveFavorite(context.Background(), "user-1", "store-1")
+	err := uc.RemoveFavorite(context.Background(), "user-1", testFavoriteStoreID)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 }
 
 func TestRemoveFavorite_NotFound(t *testing.T) {
-	favoriteRepo := &mockFavoriteRepository{
-		findByUserAndStoreErr: apperr.New(apperr.CodeNotFound, entity.ErrNotFound),
+	favoriteRepo := &testutil.MockFavoriteRepository{
+		FindByUserAndStoreErr: apperr.New(apperr.CodeNotFound, entity.ErrNotFound),
 	}
-	userRepo := &mockUserRepoForFavorite{}
-	storeRepo := &mockStoreRepoForFavorite{}
+	userRepo := &testutil.MockUserRepository{}
+	storeRepo := &testutil.MockStoreRepository{}
 
 	uc := usecase.NewFavoriteUseCase(favoriteRepo, userRepo, storeRepo)
 
@@ -360,16 +269,16 @@ func TestRemoveFavorite_NotFound(t *testing.T) {
 
 func TestRemoveFavorite_DeleteError(t *testing.T) {
 	deleteErr := errors.New("delete error")
-	favoriteRepo := &mockFavoriteRepository{
-		findByUserAndStoreResult: &entity.Favorite{UserID: "user-1", StoreID: "store-1"},
-		deleteErr:                deleteErr,
+	favoriteRepo := &testutil.MockFavoriteRepository{
+		FindByUserAndStoreResult: &entity.Favorite{UserID: "user-1", StoreID: testFavoriteStoreID},
+		DeleteErr:                deleteErr,
 	}
-	userRepo := &mockUserRepoForFavorite{}
-	storeRepo := &mockStoreRepoForFavorite{}
+	userRepo := &testutil.MockUserRepository{}
+	storeRepo := &testutil.MockStoreRepository{}
 
 	uc := usecase.NewFavoriteUseCase(favoriteRepo, userRepo, storeRepo)
 
-	err := uc.RemoveFavorite(context.Background(), "user-1", "store-1")
+	err := uc.RemoveFavorite(context.Background(), "user-1", testFavoriteStoreID)
 	if !errors.Is(err, deleteErr) {
 		t.Errorf("expected delete error, got %v", err)
 	}
@@ -377,15 +286,15 @@ func TestRemoveFavorite_DeleteError(t *testing.T) {
 
 func TestRemoveFavorite_RepositoryError(t *testing.T) {
 	dbErr := errors.New("database error")
-	favoriteRepo := &mockFavoriteRepository{
-		findByUserAndStoreErr: dbErr,
+	favoriteRepo := &testutil.MockFavoriteRepository{
+		FindByUserAndStoreErr: dbErr,
 	}
-	userRepo := &mockUserRepoForFavorite{}
-	storeRepo := &mockStoreRepoForFavorite{}
+	userRepo := &testutil.MockUserRepository{}
+	storeRepo := &testutil.MockStoreRepository{}
 
 	uc := usecase.NewFavoriteUseCase(favoriteRepo, userRepo, storeRepo)
 
-	err := uc.RemoveFavorite(context.Background(), "user-1", "store-1")
+	err := uc.RemoveFavorite(context.Background(), "user-1", testFavoriteStoreID)
 	if !errors.Is(err, dbErr) {
 		t.Errorf("expected database error, got %v", err)
 	}

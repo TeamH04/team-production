@@ -20,7 +20,7 @@ func NewMenuHandler(menuUseCase input.MenuUseCase) *MenuHandler {
 }
 
 func (h *MenuHandler) GetMenusByStoreID(c echo.Context) error {
-	storeID, err := parseUUIDParam(c, "id", "invalid store id")
+	storeID, err := parseUUIDParam(c, "id", ErrMsgInvalidStoreID)
 	if err != nil {
 		return err
 	}
@@ -32,12 +32,12 @@ func (h *MenuHandler) GetMenusByStoreID(c echo.Context) error {
 }
 
 func (h *MenuHandler) CreateMenu(c echo.Context) error {
-	storeID, err := parseUUIDParam(c, "id", "invalid store id")
+	storeID, err := parseUUIDParam(c, "id", ErrMsgInvalidStoreID)
 	if err != nil {
 		return err
 	}
 	var dto createMenuDTO
-	if err := bindJSON(c, &dto); err != nil {
+	if err = bindJSON(c, &dto); err != nil {
 		return err
 	}
 	menu, err := h.menuUseCase.CreateMenu(c.Request().Context(), storeID, dto.toInput())

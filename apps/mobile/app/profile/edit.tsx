@@ -1,4 +1,12 @@
 import { Picker } from '@react-native-picker/picker';
+import {
+  BORDER_RADIUS,
+  isValidEmail,
+  LAYOUT,
+  SHADOW_STYLES,
+  VALIDATION_MESSAGES,
+} from '@team/constants';
+import { GenreChipSelector, palette } from '@team/mobile-ui';
 import { useRouter } from 'expo-router';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -14,13 +22,12 @@ import {
   View,
 } from 'react-native';
 
-import { GENRES, toggleGenre as toggleGenreUtil } from '@/constants/genres';
-import { palette } from '@/constants/palette';
-import { TAB_BAR_SPACING } from '@/constants/TabBarSpacing';
 import { fonts } from '@/constants/typography';
-import { type Gender, useUser } from '@/features/user/UserContext';
+import { useUser } from '@/features/user/UserContext';
 import { useAuthMe } from '@/hooks/useAuthMe';
 import { formatGenderLabel, formatProviderLabel } from '@/lib/profile';
+
+import type { Gender } from '@team/types';
 
 const modalOverlayOpacity = 0.3;
 
@@ -74,11 +81,6 @@ export default function EditProfileScreen() {
     return url.trim().length > 0 ? url : null;
   }, [authUser?.icon_url]);
 
-  /** ジャンルの選択状態をトグルする */
-  const toggleGenre = (genre: string) => {
-    setFavoriteGenres(prev => toggleGenreUtil(prev, genre));
-  };
-
   const validateForm = (): boolean => {
     setErrorName('');
     setErrorEmail('');
@@ -86,17 +88,16 @@ export default function EditProfileScreen() {
     setSaveError('');
 
     if (name.trim().length <= 0) {
-      setErrorName('※表示名の入力は必須です');
+      setErrorName(`※表示名の入力${VALIDATION_MESSAGES.REQUIRED_SUFFIX}`);
       return false;
     }
 
     if (email.trim().length <= 0) {
-      setErrorEmail('※メールアドレスの入力は必須です');
+      setErrorEmail(`※メールアドレスの入力${VALIDATION_MESSAGES.REQUIRED_SUFFIX}`);
       return false;
     }
 
-    const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
-    if (!emailOk) {
+    if (!isValidEmail(email.trim())) {
       setErrorEmail('※有効なメールアドレスを入力してください');
       return false;
     }
@@ -367,21 +368,10 @@ export default function EditProfileScreen() {
 
         <View style={styles.cardShadow}>
           <View style={styles.card}>
-            <Text style={styles.label}>好きな店舗のジャンル（複数選択可）</Text>
-            <View style={styles.chipsWrap}>
-              {GENRES.map(g => {
-                const on = favoriteGenres.includes(g);
-                return (
-                  <Pressable
-                    key={g}
-                    onPress={() => toggleGenre(g)}
-                    style={[styles.chip, on ? styles.chipOn : styles.chipOff]}
-                  >
-                    <Text style={on ? styles.chipTextOn : styles.chipTextOff}>{g}</Text>
-                  </Pressable>
-                );
-              })}
-            </View>
+            <GenreChipSelector
+              selectedGenres={favoriteGenres}
+              onSelectionChange={setFavoriteGenres}
+            />
           </View>
         </View>
 
@@ -420,19 +410,17 @@ export default function EditProfileScreen() {
   );
 }
 
-// スタイル定義（見た目の調整）
 const styles = StyleSheet.create({
-  // Avatar
   avatar: {
     alignItems: 'center',
     alignSelf: 'center',
     backgroundColor: palette.secondarySurface,
-    borderRadius: 999,
-    height: 88,
+    borderRadius: BORDER_RADIUS.PILL,
+    height: LAYOUT.REVIEW_IMAGE_SIZE,
     justifyContent: 'center',
     marginBottom: 24,
     marginTop: 16,
-    width: 88,
+    width: LAYOUT.REVIEW_IMAGE_SIZE,
   },
   avatarImage: {
     borderRadius: 999,
@@ -448,42 +436,17 @@ const styles = StyleSheet.create({
     padding: 16,
   },
 
-  // カードシャドウ
   cardShadow: {
-    elevation: 4,
+    ...SHADOW_STYLES.CARD,
     marginBottom: 24,
     marginTop: 16,
-    shadowColor: palette.shadow,
-    shadowOffset: { height: 6, width: 0 },
-    shadowOpacity: 0.06,
-    shadowRadius: 12,
   },
-
-  // チップ（ジャンル選択）
-  chip: {
-    borderRadius: 999,
-    marginBottom: 8,
-    marginRight: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-  },
-  chipOff: {
-    backgroundColor: palette.secondarySurface,
-    borderColor: palette.border,
-    borderWidth: 1,
-  },
-  chipOn: { backgroundColor: palette.accent },
-
-  chipTextOff: { color: palette.primaryText, fontFamily: fonts.medium },
-
-  chipTextOn: { color: palette.primaryOnAccent, fontFamily: fonts.medium },
-  chipsWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
 
   // コンテンツの余白
   content: {
     gap: 4,
     padding: 16,
-    paddingBottom: TAB_BAR_SPACING,
+    paddingBottom: LAYOUT.TAB_BAR_SPACING,
   },
 
   dobRow: { flexDirection: 'row', gap: 12, marginBottom: 4 },
@@ -522,7 +485,7 @@ const styles = StyleSheet.create({
   input: {
     backgroundColor: palette.background,
     borderColor: palette.border,
-    borderRadius: 12,
+    borderRadius: BORDER_RADIUS.MEDIUM,
     borderWidth: 1,
     color: palette.primary,
     fontFamily: fonts.regular,
@@ -540,8 +503,8 @@ const styles = StyleSheet.create({
 
   modalContent: {
     backgroundColor: palette.surface,
-    borderTopLeftRadius: 12,
-    borderTopRightRadius: 12,
+    borderTopLeftRadius: BORDER_RADIUS.MEDIUM,
+    borderTopRightRadius: BORDER_RADIUS.MEDIUM,
   },
   modalDoneText: { color: palette.accent, fontFamily: fonts.medium },
   modalOverlay: {
@@ -559,7 +522,7 @@ const styles = StyleSheet.create({
   pickerBox: {
     backgroundColor: palette.background,
     borderColor: palette.border,
-    borderRadius: 12,
+    borderRadius: BORDER_RADIUS.MEDIUM,
     borderWidth: 1,
     justifyContent: 'center',
     paddingHorizontal: 12,
@@ -573,7 +536,7 @@ const styles = StyleSheet.create({
   // プライマリボタン（保存）
   primaryBtn: {
     backgroundColor: palette.accent,
-    borderRadius: 12,
+    borderRadius: BORDER_RADIUS.MEDIUM,
     marginTop: 8,
     paddingVertical: 12,
   },
@@ -607,7 +570,7 @@ const styles = StyleSheet.create({
   secondaryBtn: {
     backgroundColor: palette.secondarySurface,
     borderColor: palette.border,
-    borderRadius: 12,
+    borderRadius: BORDER_RADIUS.MEDIUM,
     borderWidth: 1,
     marginBottom: 40,
     marginTop: 12,

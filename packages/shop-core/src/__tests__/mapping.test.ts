@@ -162,4 +162,162 @@ describe('mapApiStoresToShops', () => {
     const shops = mapApiStoresToShops([]);
     assert.deepEqual(shops, []);
   });
+
+  test('大量の店舗データ（50件）を変換できる', () => {
+    const apiStores = Array.from({ length: 50 }, (_, i) =>
+      createMockApiStore({ store_id: `store-${i}`, name: `店舗${i}` }),
+    );
+
+    const shops = mapApiStoresToShops(apiStores);
+    assert.equal(shops.length, 50);
+    assert.equal(shops[0].id, 'store-0');
+    assert.equal(shops[49].id, 'store-49');
+  });
+});
+
+describe('カテゴリと予算の検証', () => {
+  test('無効なカテゴリ「不明」の場合デフォルトを使用する', () => {
+    const apiStore = createMockApiStore({ category: '不明' });
+    const shop = mapApiStoreToShop(apiStore);
+    assert.equal(shop.category, 'カフェ・喫茶');
+  });
+
+  test('無効なカテゴリ「Other」の場合デフォルトを使用する', () => {
+    const apiStore = createMockApiStore({ category: 'Other' });
+    const shop = mapApiStoreToShop(apiStore);
+    assert.equal(shop.category, 'カフェ・喫茶');
+  });
+
+  test('予算「$」が正しく処理される', () => {
+    const apiStore = createMockApiStore({ budget: '$' });
+    const shop = mapApiStoreToShop(apiStore);
+    assert.equal(shop.budget, '$');
+  });
+
+  test('予算「$$$」が正しく処理される', () => {
+    const apiStore = createMockApiStore({ budget: '$$$' });
+    const shop = mapApiStoreToShop(apiStore);
+    assert.equal(shop.budget, '$$$');
+  });
+
+  test('無効な予算の場合デフォルトを使用する', () => {
+    const apiStore = createMockApiStore({ budget: '$$$$' });
+    const shop = mapApiStoreToShop(apiStore);
+    assert.equal(shop.budget, '$$');
+  });
+});
+
+describe('メニュー変換の詳細', () => {
+  test('price が 0 の場合「¥0」に変換される', () => {
+    const apiStore = createMockApiStore({
+      menus: [{ menu_id: 'm1', name: '無料サービス', price: 0 }],
+    });
+
+    const shop = mapApiStoreToShop(apiStore);
+    assert.equal(shop.menu![0].price, '¥0');
+  });
+
+  test('price が大きい数字（1000000）の場合正しくフォーマットされる', () => {
+    const apiStore = createMockApiStore({
+      menus: [{ menu_id: 'm1', name: '高級コース', price: 1000000 }],
+    });
+
+    const shop = mapApiStoreToShop(apiStore);
+    assert.equal(shop.menu![0].price, '¥1,000,000');
+  });
+
+  test('複数のメニューが正しく処理される', () => {
+    const apiStore = createMockApiStore({
+      menus: [
+        { menu_id: 'm1', name: 'コーヒー', price: 300, category: 'ドリンク' },
+        { menu_id: 'm2', name: 'サンドイッチ', price: 600, category: 'フード' },
+        { menu_id: 'm3', name: 'ケーキ', price: 450, category: 'デザート' },
+        { menu_id: 'm4', name: 'スペシャルセット', price: 1500, description: 'お得なセット' },
+      ],
+    });
+
+    const shop = mapApiStoreToShop(apiStore);
+    assert.equal(shop.menu!.length, 4);
+    assert.equal(shop.menu![0].id, 'm1');
+    assert.equal(shop.menu![0].name, 'コーヒー');
+    assert.equal(shop.menu![0].price, '¥300');
+    assert.equal(shop.menu![0].category, 'ドリンク');
+    assert.equal(shop.menu![1].id, 'm2');
+    assert.equal(shop.menu![1].price, '¥600');
+    assert.equal(shop.menu![2].id, 'm3');
+    assert.equal(shop.menu![2].price, '¥450');
+    assert.equal(shop.menu![3].id, 'm4');
+    assert.equal(shop.menu![3].price, '¥1,500');
+    assert.equal(shop.menu![3].category, 'お得なセット');
+  });
+});
+
+describe('URL処理の詳細', () => {
+  test('resolver が undefined を返す場合、次の候補に進む', () => {
+    const apiStore = createMockApiStore({
+      thumbnail_file: undefined,
+      image_urls: ['invalid/path.jpg', 'https://example.com/fallback.jpg'],
+    });
+
+    // resolver は非http URLに対してundefinedを返す
+    const resolver = (path: string) => {
+      if (path.startsWith('http')) return path;
+      return undefined;
+    };
+    const shop = mapApiStoreToShop(apiStore, resolver);
+
+    assert.equal(shop.imageUrl, 'https://example.com/fallback.jpg');
+  });
+
+  test('imageUrls 配列が正しく生成される', () => {
+    const apiStore = createMockApiStore({
+      thumbnail_file: undefined,
+      image_urls: [
+        'https://example.com/image1.jpg',
+        'https://example.com/image2.jpg',
+        'https://example.com/image3.jpg',
+      ],
+    });
+
+    const shop = mapApiStoreToShop(apiStore);
+    assert.deepEqual(shop.imageUrls, [
+      'https://example.com/image1.jpg',
+      'https://example.com/image2.jpg',
+      'https://example.com/image3.jpg',
+    ]);
+  });
+});
+
+describe('数値フィールドのゼロ値処理', () => {
+  test('rating が 0 の場合そのまま返す', () => {
+    const apiStore = createMockApiStore({ average_rating: 0 });
+    const shop = mapApiStoreToShop(apiStore);
+    assert.equal(shop.rating, 0);
+  });
+
+  test('distanceMinutes が 0 の場合そのまま返す', () => {
+    const apiStore = createMockApiStore({ distance_minutes: 0 });
+    const shop = mapApiStoreToShop(apiStore);
+    assert.equal(shop.distanceMinutes, 0);
+  });
+});
+
+describe('価格のエッジケース', () => {
+  test('price が負の値の場合もフォーマットされる', () => {
+    const apiStore = createMockApiStore({
+      menus: [{ menu_id: 'm1', name: '割引品', price: -100 }],
+    });
+
+    const shop = mapApiStoreToShop(apiStore);
+    // 実装の挙動を確認（-100 が ¥-100 になるか等）
+    assert.ok(shop.menu![0].price.includes('-'));
+  });
+});
+
+describe('store_id のエッジケース', () => {
+  test('store_id が空文字列の場合', () => {
+    const apiStore = createMockApiStore({ store_id: '' });
+    const shop = mapApiStoreToShop(apiStore);
+    assert.equal(shop.id, '');
+  });
 });

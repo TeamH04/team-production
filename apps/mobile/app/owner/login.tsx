@@ -1,4 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
+import { ERROR_MESSAGES, isValidEmail, ROUTES, SESSION_NOT_FOUND } from '@team/constants';
+import { palette } from '@team/mobile-ui';
 import { BlurView } from 'expo-blur';
 import { type Href, useNavigation, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -17,14 +19,10 @@ import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 
 import KuguriTitle from '@/assets/icons/kaguri.svg';
 import { AnimatedLoginBackground } from '@/components/AnimatedLoginBackground';
-import { palette } from '@/constants/palette';
 import { fonts } from '@/constants/typography';
-import { ensureUserExistsInDB } from '@/lib/auth';
-import { getSupabase, isSupabaseConfigured } from '@/lib/supabase';
+import { ensureUserExistsInDB, getSupabase, isSupabaseConfigured } from '@/lib/auth';
 
 const { height } = Dimensions.get('window');
-
-const isLikelyEmail = (value: string) => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(value.trim());
 
 export default function OwnerLoginScreen() {
   const router = useRouter();
@@ -49,7 +47,7 @@ export default function OwnerLoginScreen() {
       return;
     }
 
-    if (!isLikelyEmail(trimmedEmail)) {
+    if (!isValidEmail(trimmedEmail)) {
       setEmailError(true);
       return;
     }
@@ -58,10 +56,7 @@ export default function OwnerLoginScreen() {
     setLoading(true);
     try {
       if (!isSupabaseConfigured()) {
-        Alert.alert(
-          '未設定',
-          'Supabaseの環境変数が未設定です。EXPO_PUBLIC_SUPABASE_URL と EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY を設定してください。',
-        );
+        Alert.alert('未設定', ERROR_MESSAGES.SUPABASE_NOT_CONFIGURED);
         return;
       }
 
@@ -83,7 +78,7 @@ export default function OwnerLoginScreen() {
       } catch (err) {
         const raw = err instanceof Error ? err.message : 'ログイン処理に失敗しました';
         const message =
-          raw === 'session_not_found'
+          raw === SESSION_NOT_FOUND
             ? 'セッションを取得できませんでした。もう一度ログインしてください。'
             : raw;
         Alert.alert('ログイン失敗', message);
@@ -91,7 +86,7 @@ export default function OwnerLoginScreen() {
       }
 
       Alert.alert('ログイン成功', `${data.user?.email ?? 'メール/パスワード'}でログインしました`);
-      router.replace('/owner' as Href);
+      router.replace(ROUTES.OWNER as Href);
     } finally {
       setLoading(false);
     }
@@ -177,7 +172,7 @@ export default function OwnerLoginScreen() {
             <Text style={styles.signupLeadText}>アカウントをお持ちでない方</Text>
             <View style={styles.signupLineSide} />
           </View>
-          <Pressable onPress={() => router.push('/owner/signup' as Href)}>
+          <Pressable onPress={() => router.push(ROUTES.OWNER_SIGNUP as Href)}>
             <Text style={styles.signupLink}>新規アカウント作成</Text>
           </Pressable>
         </Animated.View>
