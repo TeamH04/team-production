@@ -170,10 +170,10 @@ export { fontFamilies, webFontName, typographyScale } from './typography';
 
 #### Web と Mobile での使い分け
 
-| プラットフォーム | 使用方法 |
-| ---------------- | -------- |
+| プラットフォーム          | 使用方法                       |
+| ------------------------- | ------------------------------ |
 | **Mobile** (React Native) | TypeScript定義を直接インポート |
-| **Web** (Next.js) | 自動生成されたCSS変数を使用 |
+| **Web** (Next.js)         | 自動生成されたCSS変数を使用    |
 
 **Mobile での使用例:**
 
@@ -199,7 +199,7 @@ import { colors, textOn, typographyScale } from '@team/theme';
 
 ```tsx
 // Tailwind クラスも CSS変数にマッピング済み
-<div className="bg-theme-primary text-on-primary">Hello</div>
+<div className='bg-theme-primary text-on-primary'>Hello</div>
 ```
 
 #### CSS変数の自動生成
@@ -215,18 +215,18 @@ pnpm --filter @team/theme generate:css
 
 **生成されるCSS変数:**
 
-| 変数名 | 説明 |
-| ------ | ---- |
-| `--color-primary` | プライマリカラー |
-| `--color-secondary` | セカンダリカラー |
-| `--color-accent` | アクセントカラー |
-| `--color-background` | 背景色 |
-| `--text-on-primary` | プライマリ上のテキスト色 |
-| `--text-on-secondary` | セカンダリ上のテキスト色 |
-| `--color-error-*` | エラー系カラー (light/medium/base/dark) |
-| `--color-success` | 成功カラー |
-| `--color-warning` | 警告カラー |
-| `--color-primary-*` | プライマリの透明度バリアント (10/20/75) |
+| 変数名                | 説明                                    |
+| --------------------- | --------------------------------------- |
+| `--color-primary`     | プライマリカラー                        |
+| `--color-secondary`   | セカンダリカラー                        |
+| `--color-accent`      | アクセントカラー                        |
+| `--color-background`  | 背景色                                  |
+| `--text-on-primary`   | プライマリ上のテキスト色                |
+| `--text-on-secondary` | セカンダリ上のテキスト色                |
+| `--color-error-*`     | エラー系カラー (light/medium/base/dark) |
+| `--color-success`     | 成功カラー                              |
+| `--color-warning`     | 警告カラー                              |
+| `--color-primary-*`   | プライマリの透明度バリアント (10/20/75) |
 
 #### カラー変更時のワークフロー
 

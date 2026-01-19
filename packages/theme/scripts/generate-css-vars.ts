@@ -26,7 +26,7 @@ function withAlpha(hex: string, alpha: number): string {
     normalized.length === 3
       ? normalized
           .split('')
-          .map((c) => c + c)
+          .map(c => c + c)
           .join('')
       : normalized;
   const int = parseInt(full, 16);

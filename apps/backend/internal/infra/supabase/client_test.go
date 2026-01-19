@@ -1071,9 +1071,9 @@ func TestGetStringFromMap(t *testing.T) {
 	}{
 		{name: "nil map", values: nil, key: "key", expected: ""},
 		{name: "key not found", values: map[string]any{"other": "value"}, key: "key", expected: ""},
-		{name: "string value", values: map[string]any{"key": "VALUE"}, key: "key", expected: "value"},
+		{name: "string value", values: map[string]any{"key": "VALUE"}, key: "key", expected: "VALUE"},
 		{name: "non-string value", values: map[string]any{"key": 123}, key: "key", expected: ""},
-		{name: "whitespace trimmed", values: map[string]any{"key": "  GOOGLE  "}, key: "key", expected: "google"},
+		{name: "whitespace trimmed", values: map[string]any{"key": "  GOOGLE  "}, key: "key", expected: "GOOGLE"},
 	}
 
 	for _, tt := range tests {

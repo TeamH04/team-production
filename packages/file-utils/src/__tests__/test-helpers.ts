@@ -26,6 +26,28 @@ function createMockResponse(response: MockFetchResponse) {
 }
 
 /**
+ * fetch モックの共通パターンを抽象化したベースヘルパー
+ *
+ * @param mockImplementation - fetch のモック実装
+ * @param additionalState - 追加の状態（getCalledUri など）
+ * @returns cleanup 関数と追加の状態を含むオブジェクト
+ */
+function createMockFetchBase<T extends object>(
+  mockImplementation: (...args: Parameters<typeof fetch>) => Promise<unknown>,
+  additionalState?: T,
+): { cleanup: () => void } & T {
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = mock.fn(mockImplementation) as unknown as typeof fetch;
+
+  return {
+    cleanup: () => {
+      globalThis.fetch = originalFetch;
+    },
+    ...additionalState,
+  } as { cleanup: () => void } & T;
+}
+
+/**
  * fetch をモックするヘルパー
  *
  * @param response - モックするレスポンスデータ
@@ -45,13 +67,8 @@ function createMockResponse(response: MockFetchResponse) {
  * ```
  */
 export function mockFetch(response: MockFetchResponse): () => void {
-  const originalFetch = globalThis.fetch;
-
-  globalThis.fetch = mock.fn(async () => createMockResponse(response)) as unknown as typeof fetch;
-
-  return () => {
-    globalThis.fetch = originalFetch;
-  };
+  const { cleanup } = createMockFetchBase(async () => createMockResponse(response));
+  return cleanup;
 }
 
 /**
@@ -76,20 +93,15 @@ export function mockFetchWithCapture(response: MockFetchResponse): {
   cleanup: () => void;
   getCalledUri: () => string;
 } {
-  const originalFetch = globalThis.fetch;
   let calledUri = '';
 
-  globalThis.fetch = mock.fn(async (uri: string | URL | Request) => {
-    calledUri = uri.toString();
-    return createMockResponse(response);
-  }) as unknown as typeof fetch;
-
-  return {
-    cleanup: () => {
-      globalThis.fetch = originalFetch;
+  return createMockFetchBase(
+    async (uri: string | URL | Request) => {
+      calledUri = uri.toString();
+      return createMockResponse(response);
     },
-    getCalledUri: () => calledUri,
-  };
+    { getCalledUri: () => calledUri },
+  );
 }
 
 /**
@@ -108,15 +120,10 @@ export function mockFetchWithCapture(response: MockFetchResponse): {
  * ```
  */
 export function mockFetchError(error: Error): () => void {
-  const originalFetch = globalThis.fetch;
-
-  globalThis.fetch = mock.fn(async () => {
+  const { cleanup } = createMockFetchBase(async () => {
     throw error;
-  }) as unknown as typeof fetch;
-
-  return () => {
-    globalThis.fetch = originalFetch;
-  };
+  });
+  return cleanup;
 }
 
 /**
@@ -136,14 +143,9 @@ export function mockFetchError(error: Error): () => void {
  * ```
  */
 export function mockFetchWithoutArrayBuffer(blobData: Uint8Array<ArrayBuffer>): () => void {
-  const originalFetch = globalThis.fetch;
-
-  globalThis.fetch = mock.fn(async () => ({
+  const { cleanup } = createMockFetchBase(async () => ({
     arrayBuffer: undefined,
     blob: async () => new Blob([blobData]),
-  })) as unknown as typeof fetch;
-
-  return () => {
-    globalThis.fetch = originalFetch;
-  };
+  }));
+  return cleanup;
 }

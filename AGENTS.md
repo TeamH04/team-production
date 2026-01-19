@@ -208,10 +208,10 @@ turbo run test --filter=@team/validators
 
 `@team/theme` がカラー・タイポグラフィの唯一の定義元。プラットフォームにより使用方法が異なる。
 
-| Platform | 使用方法 |
-| -------- | -------- |
+| Platform | 使用方法                       |
+| -------- | ------------------------------ |
 | Mobile   | TypeScript定義を直接インポート |
-| Web      | 自動生成されたCSS変数を使用 |
+| Web      | 自動生成されたCSS変数を使用    |
 
 **Mobile (React Native):**
 
@@ -227,7 +227,7 @@ import { colors, textOn } from '@team/theme';
 
 ```tsx
 // CSS変数を使用（globals.css で theme-vars.css をインポート済み）
-<div className="bg-theme-primary text-on-primary">Hello</div>
+<div className='bg-theme-primary text-on-primary'>Hello</div>
 ```
 
 **カラー変更時のワークフロー:**

@@ -10,54 +10,42 @@ import { palette } from './palette';
 import type { TextStyle, ViewStyle } from 'react-native';
 
 /**
+ * Base input style - shared properties for all input variants
+ */
+const baseInputStyle = {
+  backgroundColor: palette.background,
+  borderColor: palette.border,
+  borderRadius: BORDER_RADIUS.MEDIUM,
+  borderWidth: 1,
+  color: palette.primary,
+  paddingHorizontal: 14,
+  paddingVertical: SPACING.MD,
+} as const;
+
+/**
  * Input container styles - apply to the TextInput component
  */
 export const inputStyles = {
   /** Default input style */
-  default: {
-    backgroundColor: palette.background,
-    borderColor: palette.border,
-    borderRadius: BORDER_RADIUS.MEDIUM,
-    borderWidth: 1,
-    color: palette.primary,
-    paddingHorizontal: 14,
-    paddingVertical: SPACING.MD,
-  } as TextStyle,
+  default: baseInputStyle as TextStyle,
 
   /** Input with margin top for form groups */
   withMarginTop: {
-    backgroundColor: palette.background,
-    borderColor: palette.border,
-    borderRadius: BORDER_RADIUS.MEDIUM,
-    borderWidth: 1,
-    color: palette.primary,
+    ...baseInputStyle,
     marginTop: SPACING.SM,
-    paddingHorizontal: 14,
-    paddingVertical: SPACING.MD,
   } as TextStyle,
 
   /** Multiline textarea style */
   multiline: {
-    backgroundColor: palette.background,
-    borderColor: palette.border,
-    borderRadius: BORDER_RADIUS.MEDIUM,
-    borderWidth: 1,
-    color: palette.primary,
+    ...baseInputStyle,
     minHeight: 100,
-    paddingHorizontal: 14,
-    paddingVertical: SPACING.MD,
     textAlignVertical: 'top',
   } as TextStyle,
 
   /** Input with error state */
   error: {
-    backgroundColor: palette.background,
+    ...baseInputStyle,
     borderColor: palette.errorText,
-    borderRadius: BORDER_RADIUS.MEDIUM,
-    borderWidth: 1,
-    color: palette.primary,
-    paddingHorizontal: 14,
-    paddingVertical: SPACING.MD,
   } as TextStyle,
 } as const;
 

@@ -13,6 +13,12 @@ import (
 	"github.com/TeamH04/team-production/apps/backend/internal/usecase/input"
 )
 
+const (
+	testGenderMale   = "male"
+	testGenderFemale = "female"
+	testIconURL      = "https://example.com/icon.png"
+)
+
 // --- FindByID Tests ---
 
 func TestFindByID_Success(t *testing.T) {
@@ -123,8 +129,8 @@ func TestEnsureUser_ExistingUser_ProfileUpdate(t *testing.T) {
 		Email:    "test@example.com",
 		Provider: "google",
 	}
-	userRepo := &mockUserRepository{findByIDResult: existingUser}
-	reviewRepo := &mockReviewRepoForUser{}
+	userRepo := &testutil.MockUserRepository{FindByIDResult: existingUser}
+	reviewRepo := &testutil.MockReviewRepository{}
 
 	uc := usecase.NewUserUseCase(userRepo, reviewRepo)
 
@@ -133,8 +139,8 @@ func TestEnsureUser_ExistingUser_ProfileUpdate(t *testing.T) {
 		Email:    "test@example.com",
 		Provider: "google",
 		Name:     "Google User",
-		IconURL:  "https://example.com/icon.png",
-		Gender:   "female",
+		IconURL:  testIconURL,
+		Gender:   testGenderFemale,
 	})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -142,20 +148,20 @@ func TestEnsureUser_ExistingUser_ProfileUpdate(t *testing.T) {
 	if result.Name != "Google User" {
 		t.Errorf("expected Name to be updated to Google User, got %s", result.Name)
 	}
-	if result.IconURL == nil || *result.IconURL != "https://example.com/icon.png" {
+	if result.IconURL == nil || *result.IconURL != testIconURL {
 		t.Error("expected IconURL to be set from claims")
 	}
-	if result.Gender == nil || *result.Gender != "female" {
+	if result.Gender == nil || *result.Gender != testGenderFemale {
 		t.Error("expected Gender to be set from claims")
 	}
-	if !userRepo.updateCalled {
+	if !userRepo.UpdateCalled {
 		t.Error("expected Update to be called when profile fields are missing")
 	}
 }
 
 func TestEnsureUser_ExistingUser_NoProfileOverride(t *testing.T) {
 	iconFileID := "file-1"
-	existingGender := "male"
+	existingGender := testGenderMale
 	existingUser := entity.User{
 		UserID:     "user-1",
 		Name:       "Existing User",
@@ -164,8 +170,8 @@ func TestEnsureUser_ExistingUser_NoProfileOverride(t *testing.T) {
 		IconFileID: &iconFileID,
 		Gender:     &existingGender,
 	}
-	userRepo := &mockUserRepository{findByIDResult: existingUser}
-	reviewRepo := &mockReviewRepoForUser{}
+	userRepo := &testutil.MockUserRepository{FindByIDResult: existingUser}
+	reviewRepo := &testutil.MockReviewRepository{}
 
 	uc := usecase.NewUserUseCase(userRepo, reviewRepo)
 
@@ -175,7 +181,7 @@ func TestEnsureUser_ExistingUser_NoProfileOverride(t *testing.T) {
 		Provider: "google",
 		Name:     "New Name",
 		IconURL:  "https://example.com/new-icon.png",
-		Gender:   "female",
+		Gender:   testGenderFemale,
 	})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -186,10 +192,10 @@ func TestEnsureUser_ExistingUser_NoProfileOverride(t *testing.T) {
 	if result.IconFileID == nil || *result.IconFileID != "file-1" {
 		t.Error("expected IconFileID to remain unchanged")
 	}
-	if result.Gender == nil || *result.Gender != "male" {
+	if result.Gender == nil || *result.Gender != testGenderMale {
 		t.Error("expected Gender to remain unchanged")
 	}
-	if userRepo.updateCalled {
+	if userRepo.UpdateCalled {
 		t.Error("expected Update not to be called when profile fields already exist")
 	}
 }
@@ -226,10 +232,10 @@ func TestEnsureUser_NewUser_Success(t *testing.T) {
 }
 
 func TestEnsureUser_NewUser_UsesProvidedProfile(t *testing.T) {
-	userRepo := &mockUserRepository{
-		findByIDErr: apperr.New(apperr.CodeNotFound, entity.ErrNotFound),
+	userRepo := &testutil.MockUserRepository{
+		FindByIDErr: apperr.New(apperr.CodeNotFound, entity.ErrNotFound),
 	}
-	reviewRepo := &mockReviewRepoForUser{}
+	reviewRepo := &testutil.MockReviewRepository{}
 
 	uc := usecase.NewUserUseCase(userRepo, reviewRepo)
 
@@ -239,8 +245,8 @@ func TestEnsureUser_NewUser_UsesProvidedProfile(t *testing.T) {
 		Provider: "google",
 		Role:     "user",
 		Name:     "Profile Name",
-		IconURL:  "https://example.com/icon.png",
-		Gender:   "female",
+		IconURL:  testIconURL,
+		Gender:   testGenderFemale,
 	})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -248,13 +254,13 @@ func TestEnsureUser_NewUser_UsesProvidedProfile(t *testing.T) {
 	if result.Name != "Profile Name" {
 		t.Errorf("expected Name to use provided value, got %s", result.Name)
 	}
-	if result.IconURL == nil || *result.IconURL != "https://example.com/icon.png" {
+	if result.IconURL == nil || *result.IconURL != testIconURL {
 		t.Error("expected IconURL to use provided value")
 	}
-	if result.Gender == nil || *result.Gender != "female" {
+	if result.Gender == nil || *result.Gender != testGenderFemale {
 		t.Error("expected Gender to use provided value")
 	}
-	if !userRepo.createCalled {
+	if !userRepo.CreateCalled {
 		t.Error("expected Create to be called for new user")
 	}
 }
@@ -632,7 +638,7 @@ func TestUpdateUser_NotFound(t *testing.T) {
 }
 
 func TestUpdateUser_PartialUpdate(t *testing.T) {
-	iconURL := "https://example.com/icon.png"
+	iconURL := testIconURL
 	existingUser := entity.User{
 		UserID:  "user-1",
 		Name:    "Test User",
@@ -877,9 +883,9 @@ func TestUpdateUser_AllFields(t *testing.T) {
 	uc := usecase.NewUserUseCase(userRepo, reviewRepo)
 
 	newName := "New Name"
-	newIconURL := "https://example.com/icon.png"
+	newIconURL := testIconURL
 	newIconFileID := "file-123"
-	newGender := "male"
+	newGender := testGenderMale
 	newBirthday := time.Date(1990, 1, 1, 0, 0, 0, 0, time.UTC)
 
 	result, err := uc.UpdateUser(context.Background(), "user-1", input.UpdateUserInput{
@@ -969,7 +975,7 @@ func TestUpdateUser_OnlyGender(t *testing.T) {
 
 	uc := usecase.NewUserUseCase(userRepo, reviewRepo)
 
-	newGender := "female"
+	newGender := testGenderFemale
 	result, err := uc.UpdateUser(context.Background(), "user-1", input.UpdateUserInput{
 		Gender: &newGender,
 	})
