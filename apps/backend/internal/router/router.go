@@ -18,6 +18,7 @@ type Dependencies struct {
 	UserUC          input.UserUseCase
 	StoreHandler    *handlers.StoreHandler
 	MenuHandler     *handlers.MenuHandler
+	StationHandler  *handlers.StationHandler
 	ReviewHandler   *handlers.ReviewHandler
 	UserHandler     *handlers.UserHandler
 	FavoriteHandler *handlers.FavoriteHandler
@@ -67,6 +68,9 @@ func setupAPIRoutes(e *echo.Echo, deps *Dependencies) {
 	// 店舗関連エンドポイント
 	setupStoreRoutes(api, deps)
 
+	// 駅関連エンドポイント
+	setupStationRoutes(api, deps)
+
 	// ユーザー関連エンドポイント
 	setupUserRoutes(api, deps)
 
@@ -111,6 +115,11 @@ func setupStoreRoutes(api *echo.Group, deps *Dependencies) {
 	// レビューいいねエンドポイント
 	api.POST(ReviewLikesPath, deps.ReviewHandler.LikeReview, deps.AuthMiddleware.JWTAuth(deps.TokenVerifier))
 	api.DELETE(ReviewLikesPath, deps.ReviewHandler.UnlikeReview, deps.AuthMiddleware.JWTAuth(deps.TokenVerifier))
+}
+
+// setupStationRoutes は駅関連のルーティングを設定します
+func setupStationRoutes(api *echo.Group, deps *Dependencies) {
+	api.GET(StationsPath, deps.StationHandler.ListStations)
 }
 
 // setupUserRoutes はユーザー関連のルーティングを設定します

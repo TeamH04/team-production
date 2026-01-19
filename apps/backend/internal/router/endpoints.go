@@ -17,6 +17,9 @@ const (
 	StoreMenusPath   = "/stores/:id/menus"
 	StoreReviewsPath = "/stores/:id/reviews"
 
+	// Stations
+	StationsPath = "/stations"
+
 	// Reviews
 	ReviewLikesPath = "/reviews/:id/likes"
 
