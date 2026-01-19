@@ -38,28 +38,15 @@ func (uc *userUseCase) EnsureUser(ctx context.Context, input input.EnsureUserInp
 	incomingIconURL := strings.TrimSpace(input.IconURL)
 	incomingGender := strings.TrimSpace(input.Gender)
 
+	params := profileUpdateParams{
+		name:    incomingName,
+		iconURL: incomingIconURL,
+		gender:  incomingGender,
+	}
+
 	user, err := uc.userRepo.FindByID(ctx, input.UserID)
 	if err == nil {
-		updated := false
-		if shouldUpdateProvider(user.Provider, provider) {
-			user.Provider = provider
-			updated = true
-		}
-		if shouldUpdateName(user.Name, incomingName, user.Email) {
-			user.Name = incomingName
-			updated = true
-		}
-		if incomingIconURL != "" && user.IconFileID == nil && isEmptyStringPtr(user.IconURL) {
-			iconURL := incomingIconURL
-			user.IconURL = &iconURL
-			updated = true
-		}
-		if incomingGender != "" && isEmptyStringPtr(user.Gender) {
-			gender := incomingGender
-			user.Gender = &gender
-			updated = true
-		}
-		if updated {
+		if applyProfileUpdates(&user, provider, params) {
 			user.UpdatedAt = time.Now()
 			if err := uc.userRepo.Update(ctx, user); err != nil {
 				return entity.User{}, err
@@ -109,26 +96,7 @@ func (uc *userUseCase) EnsureUser(ctx context.Context, input input.EnsureUserInp
 	if err := uc.userRepo.Create(ctx, newUser); err != nil {
 		existing, fetchErr := uc.userRepo.FindByID(ctx, input.UserID)
 		if fetchErr == nil {
-			updated := false
-			if shouldUpdateProvider(existing.Provider, provider) {
-				existing.Provider = provider
-				updated = true
-			}
-			if shouldUpdateName(existing.Name, incomingName, existing.Email) {
-				existing.Name = incomingName
-				updated = true
-			}
-			if incomingIconURL != "" && existing.IconFileID == nil && isEmptyStringPtr(existing.IconURL) {
-				iconURL := incomingIconURL
-				existing.IconURL = &iconURL
-				updated = true
-			}
-			if incomingGender != "" && isEmptyStringPtr(existing.Gender) {
-				gender := incomingGender
-				existing.Gender = &gender
-				updated = true
-			}
-			if updated {
+			if applyProfileUpdates(&existing, provider, params) {
 				existing.UpdatedAt = time.Now()
 				if err := uc.userRepo.Update(ctx, existing); err != nil {
 					return entity.User{}, err
@@ -251,4 +219,33 @@ func isEmptyStringPtr(value *string) bool {
 		return true
 	}
 	return strings.TrimSpace(*value) == ""
+}
+
+type profileUpdateParams struct {
+	name    string
+	iconURL string
+	gender  string
+}
+
+func applyProfileUpdates(user *entity.User, provider string, params profileUpdateParams) bool {
+	updated := false
+	if shouldUpdateProvider(user.Provider, provider) {
+		user.Provider = provider
+		updated = true
+	}
+	if shouldUpdateName(user.Name, params.name, user.Email) {
+		user.Name = params.name
+		updated = true
+	}
+	if params.iconURL != "" && user.IconFileID == nil && isEmptyStringPtr(user.IconURL) {
+		iconURL := params.iconURL
+		user.IconURL = &iconURL
+		updated = true
+	}
+	if params.gender != "" && isEmptyStringPtr(user.Gender) {
+		gender := params.gender
+		user.Gender = &gender
+		updated = true
+	}
+	return updated
 }
