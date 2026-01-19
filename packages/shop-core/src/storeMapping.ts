@@ -1,8 +1,7 @@
 import { mapApiStoreToShop, mapApiStoresToShops } from './mapping';
 
 import type { ApiStore, Shop } from '@team/types';
-
-type StorageUrlResolver = (objectKey: string) => string | undefined;
+import type { StorageUrlResolver } from './types';
 
 export interface StoreMappingFunctions {
   mapStore: (store: ApiStore) => Shop;

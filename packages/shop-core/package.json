@@ -16,6 +16,7 @@
     "test": "node --import tsx --test src/__tests__/*.test.ts"
   },
   "dependencies": {
+    "@team/api": "workspace:*",
     "@team/constants": "workspace:*",
     "@team/core-utils": "workspace:*",
     "@team/types": "workspace:*"

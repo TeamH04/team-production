@@ -3,7 +3,9 @@ import { describe, test } from 'node:test';
 
 import { createMockShop } from '@team/test-utils';
 
-import { sortShops, type SortType } from '../sorting';
+import { sortShops } from '../sorting';
+
+import type { SortType } from '@team/types';
 
 describe('sortShops', () => {
   describe('default ソート', () => {

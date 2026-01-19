@@ -4,6 +4,8 @@ import { IMAGE_POOL } from './constants';
 
 import type { ApiStore, Shop, ShopCategory, MoneyBucket } from '@team/types';
 
+import type { StorageUrlResolver } from './types';
+
 const DEFAULT_CATEGORY: ShopCategory = 'カフェ・喫茶';
 const DEFAULT_BUDGET: MoneyBucket = '$$';
 const DEFAULT_DISTANCE_MINUTES = 5;
@@ -29,8 +31,6 @@ function isValidCategory(value: string): value is ShopCategory {
 function isValidBudget(value: string): value is MoneyBucket {
   return VALID_BUDGETS.includes(value as MoneyBucket);
 }
-
-type StorageUrlResolver = (path: string) => string | undefined;
 
 // デフォルトのURL解決（何もしない、またはhttpで始まればそのまま）
 const defaultUrlResolver: StorageUrlResolver = path => {

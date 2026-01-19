@@ -1,21 +1,4 @@
-import type { Shop } from '@team/types';
-
-/**
- * Sort type for shop listings
- * - 'rating-high': Sort by rating descending (highest first)
- * - 'rating-low': Sort by rating ascending (lowest first)
- * - 'name-asc': Sort by name ascending (A to Z)
- * - 'name-desc': Sort by name descending (Z to A)
- * - 'newest': Sort by openedAt descending (newest first)
- * - 'default': Keep original order
- */
-export type SortType =
-  | 'rating-high'
-  | 'rating-low'
-  | 'name-asc'
-  | 'name-desc'
-  | 'newest'
-  | 'default';
+import type { Shop, SortType } from '@team/types';
 
 /**
  * Sort shops by the specified sort type
