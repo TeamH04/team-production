@@ -5,13 +5,47 @@ import { SESSION_NOT_FOUND } from '@team/constants';
 
 import { createAuthClient, type AuthClientConfig } from '../authClient';
 
+/**
+ * auth メソッドのオーバーライド型
+ */
+type MockAuthOverrides = {
+  getUser?: () => Promise<{ data: { user: unknown }; error: Error | null }>;
+  getSession?: () => Promise<{ data: { session: unknown }; error: Error | null }>;
+  signOut?: () => Promise<{ error: Error | null }>;
+};
+
+/**
+ * テスト用の AuthClientConfig を生成するファクトリヘルパー
+ *
+ * @param overrides - デフォルト値をオーバーライドするオプション
+ * @returns AuthClientConfig オブジェクト
+ */
+function createMockConfig(
+  overrides: {
+    auth?: MockAuthOverrides;
+    isSupabaseConfigured?: boolean;
+    fetchAuthMe?: (token: string) => Promise<unknown>;
+  } = {},
+): AuthClientConfig {
+  return {
+    getSupabase: () =>
+      ({
+        auth: {
+          getUser: overrides.auth?.getUser ?? (async () => ({ data: { user: null }, error: null })),
+          getSession:
+            overrides.auth?.getSession ?? (async () => ({ data: { session: null }, error: null })),
+          signOut: overrides.auth?.signOut ?? (async () => ({ error: null })),
+        },
+      }) as unknown as ReturnType<AuthClientConfig['getSupabase']>,
+    isSupabaseConfigured: () => overrides.isSupabaseConfigured ?? false,
+    fetchAuthMe: overrides.fetchAuthMe,
+  };
+}
+
 describe('createAuthClient', () => {
   describe('ファクトリ関数', () => {
     test('正しいオブジェクトを返す', () => {
-      const mockConfig: AuthClientConfig = {
-        getSupabase: () => ({}) as unknown as ReturnType<AuthClientConfig['getSupabase']>,
-        isSupabaseConfigured: () => false,
-      };
+      const mockConfig = createMockConfig();
 
       const authClient = createAuthClient(mockConfig);
 
@@ -28,18 +62,15 @@ describe('createAuthClient', () => {
 
   describe('getCurrentUser', () => {
     test('getUser がエラーを返した場合は null を返す', async () => {
-      const mockConfig: AuthClientConfig = {
-        getSupabase: () =>
-          ({
-            auth: {
-              getUser: async () => ({
-                data: { user: null },
-                error: new Error('Auth error'),
-              }),
-            },
-          }) as unknown as ReturnType<AuthClientConfig['getSupabase']>,
-        isSupabaseConfigured: () => true,
-      };
+      const mockConfig = createMockConfig({
+        auth: {
+          getUser: async () => ({
+            data: { user: null },
+            error: new Error('Auth error'),
+          }),
+        },
+        isSupabaseConfigured: true,
+      });
 
       const authClient = createAuthClient(mockConfig);
       const result = await authClient.getCurrentUser();
@@ -48,17 +79,14 @@ describe('createAuthClient', () => {
     });
 
     test('getUser が例外をスローした場合は null を返す', async () => {
-      const mockConfig: AuthClientConfig = {
-        getSupabase: () =>
-          ({
-            auth: {
-              getUser: async () => {
-                throw new Error('Network error');
-              },
-            },
-          }) as unknown as ReturnType<AuthClientConfig['getSupabase']>,
-        isSupabaseConfigured: () => true,
-      };
+      const mockConfig = createMockConfig({
+        auth: {
+          getUser: async () => {
+            throw new Error('Network error');
+          },
+        },
+        isSupabaseConfigured: true,
+      });
 
       const authClient = createAuthClient(mockConfig);
       const result = await authClient.getCurrentUser();
@@ -69,18 +97,15 @@ describe('createAuthClient', () => {
 
   describe('getAccessToken', () => {
     test('getSession がエラーを返した場合は null を返す', async () => {
-      const mockConfig: AuthClientConfig = {
-        getSupabase: () =>
-          ({
-            auth: {
-              getSession: async () => ({
-                data: { session: null },
-                error: new Error('Session error'),
-              }),
-            },
-          }) as unknown as ReturnType<AuthClientConfig['getSupabase']>,
-        isSupabaseConfigured: () => true,
-      };
+      const mockConfig = createMockConfig({
+        auth: {
+          getSession: async () => ({
+            data: { session: null },
+            error: new Error('Session error'),
+          }),
+        },
+        isSupabaseConfigured: true,
+      });
 
       const authClient = createAuthClient(mockConfig);
       const result = await authClient.getAccessToken();
@@ -89,17 +114,14 @@ describe('createAuthClient', () => {
     });
 
     test('getSession が例外をスローした場合は null を返す', async () => {
-      const mockConfig: AuthClientConfig = {
-        getSupabase: () =>
-          ({
-            auth: {
-              getSession: async () => {
-                throw new Error('Network error');
-              },
-            },
-          }) as unknown as ReturnType<AuthClientConfig['getSupabase']>,
-        isSupabaseConfigured: () => true,
-      };
+      const mockConfig = createMockConfig({
+        auth: {
+          getSession: async () => {
+            throw new Error('Network error');
+          },
+        },
+        isSupabaseConfigured: true,
+      });
 
       const authClient = createAuthClient(mockConfig);
       const result = await authClient.getAccessToken();
@@ -110,19 +132,16 @@ describe('createAuthClient', () => {
 
   describe('ensureUserExistsInDB', () => {
     test('トークンがない場合は SESSION_NOT_FOUND エラーをスローする', async () => {
-      const mockConfig: AuthClientConfig = {
-        getSupabase: () =>
-          ({
-            auth: {
-              getSession: async () => ({
-                data: { session: null },
-                error: null,
-              }),
-            },
-          }) as unknown as ReturnType<AuthClientConfig['getSupabase']>,
-        isSupabaseConfigured: () => true,
+      const mockConfig = createMockConfig({
+        auth: {
+          getSession: async () => ({
+            data: { session: null },
+            error: null,
+          }),
+        },
+        isSupabaseConfigured: true,
         fetchAuthMe: async () => ({}),
-      };
+      });
 
       const authClient = createAuthClient(mockConfig);
 
@@ -139,22 +158,19 @@ describe('createAuthClient', () => {
       const signOutMock = mock.fn(async () => ({ error: null }));
       const fetchError = new Error('API error');
 
-      const mockConfig: AuthClientConfig = {
-        getSupabase: () =>
-          ({
-            auth: {
-              getSession: async () => ({
-                data: { session: { access_token: 'test-token' } },
-                error: null,
-              }),
-              signOut: signOutMock,
-            },
-          }) as unknown as ReturnType<AuthClientConfig['getSupabase']>,
-        isSupabaseConfigured: () => true,
+      const mockConfig = createMockConfig({
+        auth: {
+          getSession: async () => ({
+            data: { session: { access_token: 'test-token' } },
+            error: null,
+          }),
+          signOut: signOutMock,
+        },
+        isSupabaseConfigured: true,
         fetchAuthMe: async () => {
           throw fetchError;
         },
-      };
+      });
 
       const authClient = createAuthClient(mockConfig);
 
@@ -172,10 +188,7 @@ describe('createAuthClient', () => {
 
   describe('resolveAuth', () => {
     test('Supabase未設定時は local を返す', async () => {
-      const mockConfig: AuthClientConfig = {
-        getSupabase: () => ({}) as unknown as ReturnType<AuthClientConfig['getSupabase']>,
-        isSupabaseConfigured: () => false,
-      };
+      const mockConfig = createMockConfig();
 
       const authClient = createAuthClient(mockConfig);
       const result = await authClient.resolveAuth();
@@ -184,18 +197,15 @@ describe('createAuthClient', () => {
     });
 
     test('ユーザーがnullの場合は unauthenticated を返す', async () => {
-      const mockConfig: AuthClientConfig = {
-        getSupabase: () =>
-          ({
-            auth: {
-              getUser: async () => ({
-                data: { user: null },
-                error: null,
-              }),
-            },
-          }) as unknown as ReturnType<AuthClientConfig['getSupabase']>,
-        isSupabaseConfigured: () => true,
-      };
+      const mockConfig = createMockConfig({
+        auth: {
+          getUser: async () => ({
+            data: { user: null },
+            error: null,
+          }),
+        },
+        isSupabaseConfigured: true,
+      });
 
       const authClient = createAuthClient(mockConfig);
       const result = await authClient.resolveAuth();
@@ -204,22 +214,19 @@ describe('createAuthClient', () => {
     });
 
     test('ユーザーはいるがトークンがnullの場合は unauthenticated を返す', async () => {
-      const mockConfig: AuthClientConfig = {
-        getSupabase: () =>
-          ({
-            auth: {
-              getUser: async () => ({
-                data: { user: { id: 'user-1' } },
-                error: null,
-              }),
-              getSession: async () => ({
-                data: { session: null },
-                error: null,
-              }),
-            },
-          }) as unknown as ReturnType<AuthClientConfig['getSupabase']>,
-        isSupabaseConfigured: () => true,
-      };
+      const mockConfig = createMockConfig({
+        auth: {
+          getUser: async () => ({
+            data: { user: { id: 'user-1' } },
+            error: null,
+          }),
+          getSession: async () => ({
+            data: { session: null },
+            error: null,
+          }),
+        },
+        isSupabaseConfigured: true,
+      });
 
       const authClient = createAuthClient(mockConfig);
       const result = await authClient.resolveAuth();
@@ -228,22 +235,19 @@ describe('createAuthClient', () => {
     });
 
     test('ユーザーもトークンもある場合は remote を返す', async () => {
-      const mockConfig: AuthClientConfig = {
-        getSupabase: () =>
-          ({
-            auth: {
-              getUser: async () => ({
-                data: { user: { id: 'user-1' } },
-                error: null,
-              }),
-              getSession: async () => ({
-                data: { session: { access_token: 'test-token' } },
-                error: null,
-              }),
-            },
-          }) as unknown as ReturnType<AuthClientConfig['getSupabase']>,
-        isSupabaseConfigured: () => true,
-      };
+      const mockConfig = createMockConfig({
+        auth: {
+          getUser: async () => ({
+            data: { user: { id: 'user-1' } },
+            error: null,
+          }),
+          getSession: async () => ({
+            data: { session: { access_token: 'test-token' } },
+            error: null,
+          }),
+        },
+        isSupabaseConfigured: true,
+      });
 
       const authClient = createAuthClient(mockConfig);
       const result = await authClient.resolveAuth();
@@ -255,8 +259,9 @@ describe('createAuthClient', () => {
   describe('isSupabaseConfigured', () => {
     test('設定された関数の呼び出し回数を検証する', () => {
       const isSupabaseConfiguredMock = mock.fn(() => true);
+      const baseConfig = createMockConfig();
       const mockConfig: AuthClientConfig = {
-        getSupabase: () => ({}) as unknown as ReturnType<AuthClientConfig['getSupabase']>,
+        ...baseConfig,
         isSupabaseConfigured: isSupabaseConfiguredMock,
       };
 
@@ -274,10 +279,7 @@ describe('createAuthClient', () => {
 
   describe('hasOwnerRole', () => {
     test('nullユーザーに対してfalseを返す', () => {
-      const mockConfig: AuthClientConfig = {
-        getSupabase: () => ({}) as unknown as ReturnType<AuthClientConfig['getSupabase']>,
-        isSupabaseConfigured: () => false,
-      };
+      const mockConfig = createMockConfig();
 
       const authClient = createAuthClient(mockConfig);
 

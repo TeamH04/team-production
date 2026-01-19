@@ -9,6 +9,25 @@ import {
 import type { SupabaseClient, User } from '@supabase/supabase-js';
 
 /**
+ * 安全に認証API呼び出しを実行するヘルパー
+ * エラー発生時はnullを返す
+ */
+async function safeAuthCall<R>(
+  fn: () => Promise<{ data: unknown; error: unknown }>,
+  extract: (data: unknown) => R | null,
+): Promise<R | null> {
+  try {
+    const { data, error } = await fn();
+    if (error) {
+      return null;
+    }
+    return extract(data);
+  } catch {
+    return null;
+  }
+}
+
+/**
  * 認証クライアントの設定
  */
 export interface AuthClientConfig {
@@ -97,27 +116,17 @@ export function createAuthClient(config: AuthClientConfig): AuthClient {
   const { getSupabase, isSupabaseConfigured, fetchAuthMe } = config;
 
   async function getCurrentUser(): Promise<User | null> {
-    try {
-      const { data, error } = await getSupabase().auth.getUser();
-      if (error) {
-        return null;
-      }
-      return data.user ?? null;
-    } catch {
-      return null;
-    }
+    return safeAuthCall(
+      () => getSupabase().auth.getUser(),
+      data => (data as { user: User | null }).user ?? null,
+    );
   }
 
   async function getAccessToken(): Promise<string | null> {
-    try {
-      const { data, error } = await getSupabase().auth.getSession();
-      if (error) {
-        return null;
-      }
-      return data.session?.access_token ?? null;
-    } catch {
-      return null;
-    }
+    return safeAuthCall(
+      () => getSupabase().auth.getSession(),
+      data => (data as { session: { access_token: string } | null }).session?.access_token ?? null,
+    );
   }
 
   async function checkIsOwner(): Promise<OwnerCheck<User>> {
