@@ -100,7 +100,20 @@ export function useSearchHistoryStorage({
         if (stored && isMounted) {
           const parsed = JSON.parse(stored) as unknown;
           if (Array.isArray(parsed) && parsed.every(item => typeof item === 'string')) {
-            setSearchHistory(parsed);
+            // ロード中に追加された履歴を保持しつつ、ストレージからの履歴とマージ
+            // 現在のstateを優先（ロード中に追加された新しい履歴が先頭に来る）
+            setSearchHistory(current => {
+              if (current.length === 0) {
+                // ロード中に追加がなければストレージの値をそのまま使用
+                return parsed;
+              }
+              // 現在のstateにある項目を除いた、ストレージからの履歴
+              const storedWithoutCurrent = parsed.filter(
+                (item: string) => !current.includes(item),
+              );
+              // 現在のstate（新しい履歴）を先頭に、ストレージからの履歴を後ろにマージ
+              return [...current, ...storedWithoutCurrent].slice(0, maxItems);
+            });
           }
         }
       } catch (error) {
@@ -120,7 +133,7 @@ export function useSearchHistoryStorage({
     return () => {
       isMounted = false;
     };
-  }, [storage, storageKey, isDev]);
+  }, [storage, storageKey, isDev, maxItems]);
 
   // 履歴が変更されたらストレージに保存
   useEffect(() => {
