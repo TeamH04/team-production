@@ -108,9 +108,7 @@ export function useSearchHistoryStorage({
                 return parsed;
               }
               // 現在のstateにある項目を除いた、ストレージからの履歴
-              const storedWithoutCurrent = parsed.filter(
-                (item: string) => !current.includes(item),
-              );
+              const storedWithoutCurrent = parsed.filter((item: string) => !current.includes(item));
               // 現在のstate（新しい履歴）を先頭に、ストレージからの履歴を後ろにマージ
               return [...current, ...storedWithoutCurrent].slice(0, maxItems);
             });

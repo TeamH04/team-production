@@ -48,7 +48,7 @@ export function extractTagsByCategory(shops: Shop[]): Record<string, string[]> {
       categoryTagsMap.set(category, tagSet);
     }
 
-    for (const tag of shop.tags) {
+    for (const tag of shop.tags ?? []) {
       tagSet.add(tag);
     }
   }
