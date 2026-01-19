@@ -32,3 +32,38 @@ make web    # Web 起動
 ## ポート
 
 http://localhost:3000
+
+---
+
+## テーマ・スタイル
+
+### CSS変数
+
+Web では `@team/theme` から自動生成された CSS変数を使用する。
+
+```
+app/
+├── globals.css       # Tailwind + テーマ変数インポート
+└── theme-vars.css    # 自動生成（編集禁止）
+```
+
+### カラーの使用
+
+```tsx
+// カスタムテーマクラス（推奨）
+<div className="bg-theme-primary text-on-primary">...</div>
+
+// CSS変数を直接使用
+<div style={{ backgroundColor: 'var(--color-primary)' }}>...</div>
+```
+
+### カラー変更時
+
+1. `packages/theme/src/colors.ts` を編集
+2. CSS変数を再生成:
+   ```bash
+   pnpm --filter @team/theme generate:css
+   ```
+3. 変更をコミット
+
+> **Note:** `theme-vars.css` は自動生成ファイルのため、直接編集しないこと。

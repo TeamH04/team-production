@@ -1,7 +1,7 @@
-import { colors, textOn, withAlpha } from '@team/theme';
 import { Geist, Geist_Mono, Kiwi_Maru } from 'next/font/google';
 import React from 'react';
 
+import type { webFontName } from '@team/theme';
 import type { Metadata } from 'next';
 
 import './globals.css';
@@ -16,9 +16,15 @@ const geistMono = Geist_Mono({
   subsets: ['latin'],
 });
 
+// フォント名は @team/theme の webFontName と同期: Kiwi_Maru
+// next/font/google は静的解析のため動的インポートができないため、
+// フォント名を変更する場合は @team/theme と同時に更新すること
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const _fontNameCheck: typeof webFontName = 'Kiwi_Maru';
+
 const kiwiMaru = Kiwi_Maru({
   weight: ['300', '400', '500'],
-  variable: '--font-sans',
+  variable: '--font-kiwi-maru',
   subsets: ['latin'],
 });
 
@@ -32,63 +38,11 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const themeStyle: React.CSSProperties = {
-    // Expose theme colors as CSS variables for Tailwind (@theme inline) and plain CSS usage
-    '--background': colors.background,
-    '--foreground': colors.accent,
-    '--color-primary': colors.primary,
-    '--color-secondary': colors.secondary,
-    '--color-accent': colors.primary, // Use primary as accent for web consistency
-    '--text-on-primary': textOn.primary,
-    '--text-on-secondary': textOn.secondary,
-    '--text-on-accent': textOn.primary,
-  } as React.CSSProperties;
-
-  const colorStyles = `
-    .bg-slate-50 { background-color: ${colors.background} !important; }
-    .bg-slate-50\\/80 { background-color: ${withAlpha(colors.background, 0.8)} !important; }
-    .bg-slate-100, .bg-slate-200 { background-color: ${withAlpha(colors.primary, 0.1)} !important; }
-    .bg-slate-800, .bg-slate-900 { background-color: ${colors.primary} !important; }
-
-    .bg-white { background-color: ${colors.background} !important; }
-    .bg-white\\/90 { background-color: ${withAlpha(colors.background, 0.9)} !important; }
-    .bg-white\\/85 { background-color: ${withAlpha(colors.background, 0.85)} !important; }
-    .bg-white\\/40 { background-color: ${withAlpha(colors.background, 0.4)} !important; }
-    .bg-white\\/15 { background-color: ${withAlpha(colors.background, 0.15)} !important; }
-    .bg-white\\/10 { background-color: ${withAlpha(colors.background, 0.1)} !important; }
-    .bg-white\\/5 { background-color: ${withAlpha(colors.background, 0.05)} !important; }
-
-    .bg-sky-700, .bg-sky-600, .bg-indigo-400\\/20 { background-color: ${colors.primary} !important; }
-    .bg-sky-100, .bg-sky-200 { background-color: ${withAlpha(colors.primary, 0.2)} !important; }
-
-    .bg-amber-50, .bg-amber-100 { background-color: ${withAlpha(colors.primary, 0.25)} !important; }
-    .bg-rose-100, .bg-rose-200 { background-color: ${withAlpha(colors.primary, 0.15)} !important; }
-
-    .from-sky-700 { --tw-gradient-from: ${colors.primary} !important; }
-    .via-sky-600 { --tw-gradient-stops: var(--tw-gradient-from), ${withAlpha(colors.primary, 0.85)}, var(--tw-gradient-to, rgba(0,0,0,0)) !important; }
-    .to-indigo-700 { --tw-gradient-to: ${withAlpha(colors.secondary, 0.9)} !important; }
-    .from-black\\/40 { --tw-gradient-from: ${withAlpha(colors.secondary, 0.4)} !important; }
-    .from-black\\/35 { --tw-gradient-from: ${withAlpha(colors.secondary, 0.35)} !important; }
-    .via-transparent { --tw-gradient-stops: var(--tw-gradient-from), transparent, var(--tw-gradient-to, transparent) !important; }
-    .via-white { --tw-gradient-stops: var(--tw-gradient-from), ${colors.background}, var(--tw-gradient-to, transparent) !important; }
-    .from-slate-100 { --tw-gradient-from: ${withAlpha(colors.primary, 0.1)} !important; }
-    .to-slate-50 { --tw-gradient-to: ${colors.background} !important; }
-
-    .text-slate-900, .text-slate-800, .text-sky-900, .text-sky-800, .text-rose-700, .text-emerald-600 { color: ${colors.primary} !important; }
-    .text-slate-700, .text-slate-600, .text-slate-500, .text-slate-400, .text-sky-700 { color: ${withAlpha(colors.primary, 0.75)} !important; }
-    .text-sky-100, .text-white { color: ${colors.background} !important; }
-    .text-amber-700 { color: ${colors.primary} !important; }
-    .text-primary-on { color: var(--text-on-primary); }
-    .text-secondary-on { color: var(--text-on-secondary); }
-    .text-accent-on { color: var(--text-on-accent); }
-  `;
-
   return (
-    <html lang='en' style={themeStyle}>
+    <html lang='en'>
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${kiwiMaru.variable} antialiased`}
       >
-        <style dangerouslySetInnerHTML={{ __html: colorStyles }} />
         {children}
       </body>
     </html>

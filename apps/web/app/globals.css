@@ -1,12 +1,67 @@
 @import "tailwindcss/index.css";
-
-:root {
-  --background: transparent;
-  --foreground: inherit;
-}
+@import "./theme-vars.css";
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-kiwi-maru), Arial, Helvetica, sans-serif;
 }
+
+/*
+ * ============================================================================
+ * カスタムユーティリティクラス
+ * CSS変数を使ったテーマカラークラス
+ * ============================================================================
+ */
+.bg-theme-primary { background-color: var(--color-primary); }
+.bg-theme-secondary { background-color: var(--color-secondary); }
+.bg-theme-accent { background-color: var(--color-accent); }
+.bg-theme-background { background-color: var(--color-background); }
+
+.text-theme-primary { color: var(--color-primary); }
+.text-theme-secondary { color: var(--color-secondary); }
+.text-on-primary { color: var(--text-on-primary); }
+.text-on-secondary { color: var(--text-on-secondary); }
+
+/*
+ * ============================================================================
+ * Tailwindデフォルトクラスのオーバーライド
+ * ============================================================================
+ *
+ * 既存コンポーネントとの互換性のため、TailwindのデフォルトカラークラスをCSS変数にマッピングしています。
+ * 新規コンポーネントでは .bg-theme-* や .text-theme-* クラスを使用することを推奨します。
+ */
+
+/* Background colors */
+.bg-slate-50 { background-color: var(--color-background) !important; }
+.bg-slate-50\/80 { background-color: var(--color-background-80) !important; }
+.bg-slate-100, .bg-slate-200 { background-color: var(--color-primary-10) !important; }
+.bg-slate-800, .bg-slate-900 { background-color: var(--color-primary) !important; }
+.bg-white { background-color: var(--color-background) !important; }
+.bg-white\/90 { background-color: var(--color-background-90) !important; }
+.bg-white\/85 { background-color: rgba(246, 245, 243, 0.85) !important; }
+.bg-white\/40 { background-color: rgba(246, 245, 243, 0.4) !important; }
+.bg-white\/15 { background-color: rgba(246, 245, 243, 0.15) !important; }
+.bg-white\/10 { background-color: rgba(246, 245, 243, 0.1) !important; }
+.bg-white\/5 { background-color: rgba(246, 245, 243, 0.05) !important; }
+.bg-sky-700, .bg-sky-600, .bg-indigo-400\/20 { background-color: var(--color-primary) !important; }
+.bg-sky-100, .bg-sky-200 { background-color: var(--color-primary-20) !important; }
+.bg-amber-50, .bg-amber-100 { background-color: rgba(38, 64, 83, 0.25) !important; }
+.bg-rose-100, .bg-rose-200 { background-color: rgba(38, 64, 83, 0.15) !important; }
+
+/* Gradient colors */
+.from-sky-700 { --tw-gradient-from: var(--color-primary) !important; }
+.via-sky-600 { --tw-gradient-stops: var(--tw-gradient-from), rgba(38, 64, 83, 0.85), var(--tw-gradient-to, rgba(0,0,0,0)) !important; }
+.to-indigo-700 { --tw-gradient-to: var(--color-secondary-90) !important; }
+.from-black\/40 { --tw-gradient-from: rgba(91, 107, 90, 0.4) !important; }
+.from-black\/35 { --tw-gradient-from: rgba(91, 107, 90, 0.35) !important; }
+.via-transparent { --tw-gradient-stops: var(--tw-gradient-from), transparent, var(--tw-gradient-to, transparent) !important; }
+.via-white { --tw-gradient-stops: var(--tw-gradient-from), var(--color-background), var(--tw-gradient-to, transparent) !important; }
+.from-slate-100 { --tw-gradient-from: var(--color-primary-10) !important; }
+.to-slate-50 { --tw-gradient-to: var(--color-background) !important; }
+
+/* Text colors */
+.text-slate-900, .text-slate-800, .text-sky-900, .text-sky-800, .text-rose-700, .text-emerald-600 { color: var(--color-primary) !important; }
+.text-slate-700, .text-slate-600, .text-slate-500, .text-slate-400, .text-sky-700 { color: var(--color-primary-75) !important; }
+.text-sky-100, .text-white { color: var(--color-background) !important; }
+.text-amber-700 { color: var(--color-primary) !important; }
