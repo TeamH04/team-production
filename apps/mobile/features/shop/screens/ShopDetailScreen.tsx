@@ -594,9 +594,7 @@ export default function ShopDetailScreen() {
                   reviews.map(review => (
                     <View key={review.id} style={[styles.card, styles.cardShadow]}>
                       <View style={styles.reviewHeaderRow}>
-                        <Text style={styles.reviewTitle}>
-                          ★ {review.rating}
-                          {' ・ '}
+                        <Text style={styles.reviewDate}>
                           {review.createdAt
                             ? new Date(review.createdAt).toLocaleDateString('ja-JP')
                             : ''}
@@ -857,7 +855,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
     marginTop: 2,
   },
-  reviewTitle: { color: palette.primary, fontFamily: fonts.medium },
+  reviewDate: { color: palette.secondaryText, fontFamily: fonts.regular, fontSize: 13 },
   screen: { backgroundColor: palette.background, flex: 1 },
   secondaryBtn: {
     backgroundColor: palette.secondarySurface,
