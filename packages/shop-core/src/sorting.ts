@@ -1,4 +1,37 @@
+import type { SearchSortType, SortOrder } from '@team/constants';
 import type { Shop, SortType } from '@team/types';
+
+// =============================================================================
+// ソートラベルユーティリティ
+// =============================================================================
+
+/**
+ * ソート順序のラベルを取得する
+ * @param sortBy ソート種別
+ * @param order ソート順序（昇順/降順）
+ * @returns 日本語のラベル文字列
+ *
+ * @example
+ * ```ts
+ * getSortOrderLabel('newest', 'desc'); // '新しい順'
+ * getSortOrderLabel('rating', 'asc');  // '低い順'
+ * ```
+ */
+export function getSortOrderLabel(sortBy: SearchSortType, order: SortOrder): string {
+  switch (sortBy) {
+    case 'newest':
+    case 'registered':
+      return order === 'desc' ? '新しい順' : '古い順';
+    case 'rating':
+      return order === 'desc' ? '高い順' : '低い順';
+    default:
+      return '';
+  }
+}
+
+// =============================================================================
+// ショップソート
+// =============================================================================
 
 /**
  * Sort shops by the specified sort type
