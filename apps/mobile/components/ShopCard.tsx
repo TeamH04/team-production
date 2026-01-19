@@ -1,14 +1,41 @@
 import { Ionicons } from '@expo/vector-icons';
-import { BORDER_RADIUS, formatRating, LAYOUT, SPACING } from '@team/constants';
-import { palette, type ShopCardProps, type ShopCardVariant } from '@team/mobile-ui';
-import { BUDGET_LABEL } from '@team/shop-core';
+import { BORDER_RADIUS, LAYOUT, SPACING } from '@team/constants';
+import { palette, type ShopCardVariant } from '@team/mobile-ui';
+import { BUDGET_LABEL, type Shop } from '@team/shop-core';
 import { Image } from 'expo-image';
 import { memo } from 'react';
-import { Image as RNImage, Pressable, StyleSheet, Text, View } from 'react-native';
+import {
+  Pressable,
+  Image as RNImage,
+  StyleSheet,
+  Text,
+  View,
+  type StyleProp,
+  type ViewStyle,
+} from 'react-native';
 
 import { fonts } from '@/constants/typography';
 
-export type { ShopCardProps, ShopCardVariant };
+// カードStyle用の汎用型
+type CardStyle = StyleProp<ViewStyle>;
+
+function formatRating(rating: number): string {
+  return rating.toFixed(1);
+}
+
+export type ShopCardProps = {
+  shop: Shop;
+  onPress: (shopId: string) => void;
+  variant?: ShopCardVariant;
+  style?: CardStyle;
+  formatMeta?: (shop: Shop) => string;
+  /** ブースト表示（炎アイコン・ボーダー強調） */
+  isBoosted?: boolean;
+  /** おすすめカテゴリ（例：「味」「接客」など）- large variantで表示 */
+  featuredCategory?: string;
+};
+
+export type { ShopCardVariant };
 
 /**
  * 店舗カードの共通コンポーネント
@@ -22,6 +49,7 @@ function ShopCardComponent({
   style,
   formatMeta,
   isBoosted = false,
+  featuredCategory,
 }: ShopCardProps) {
   const handlePress = () => {
     onPress(shop.id);
@@ -50,9 +78,12 @@ function ShopCardComponent({
               <Text style={styles.largeTitle} numberOfLines={1}>
                 {shop.name}
               </Text>
-              <View style={styles.ratingBadge}>
-                <Text style={styles.ratingText}>{`★ ${formatRating(shop.rating)}`}</Text>
-              </View>
+              {featuredCategory && (
+                <View style={styles.categoryBadge}>
+                  <Text style={styles.categoryBadgeText}>{featuredCategory}</Text>
+                  <Ionicons name='thumbs-up' size={12} color={palette.metaBadgeText} />
+                </View>
+              )}
             </View>
 
             <View style={styles.largeMetaRow}>
@@ -120,6 +151,22 @@ const styles = StyleSheet.create({
     padding: 4,
     right: 8,
     top: 8,
+  },
+  categoryBadge: {
+    alignItems: 'center',
+    backgroundColor: palette.metaBadgeBg,
+    borderColor: palette.metaBadgeBorder,
+    borderRadius: BORDER_RADIUS.PILL,
+    borderWidth: 1,
+    flexDirection: 'row',
+    gap: 4,
+    paddingHorizontal: SPACING.SM,
+    paddingVertical: 4,
+  },
+  categoryBadgeText: {
+    color: palette.metaBadgeText,
+    fontFamily: fonts.medium,
+    fontSize: 12,
   },
   compactContainer: {
     backgroundColor: palette.surface,
@@ -246,17 +293,6 @@ const styles = StyleSheet.create({
   metaText: {
     color: palette.secondaryText,
     fontFamily: fonts.regular,
-    fontSize: 13,
-  },
-  ratingBadge: {
-    backgroundColor: palette.highlight,
-    borderRadius: BORDER_RADIUS.PILL,
-    paddingHorizontal: SPACING.MD,
-    paddingVertical: 6,
-  },
-  ratingText: {
-    color: palette.ratingText,
-    fontFamily: fonts.medium,
     fontSize: 13,
   },
 });
