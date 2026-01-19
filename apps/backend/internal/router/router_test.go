@@ -1,10 +1,13 @@
 package router
 
 import (
+	"bytes"
 	"context"
 	"errors"
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
@@ -625,6 +628,52 @@ func TestMiddlewareApplied(t *testing.T) {
 	// CORS middleware should add Access-Control-Allow-Origin header
 	if rec.Header().Get("Access-Control-Allow-Origin") == "" {
 		t.Log("Note: CORS middleware may not add header for simple requests. This is expected behavior.")
+	}
+}
+
+func TestRequestLoggerLogsOnErrorStatus(t *testing.T) {
+	deps := createTestDependencies()
+	server := NewServer(deps)
+
+	var buf bytes.Buffer
+	logger := slog.New(slog.NewTextHandler(&buf, &slog.HandlerOptions{Level: slog.LevelDebug}))
+	originalLogger := slog.Default()
+	slog.SetDefault(logger)
+	t.Cleanup(func() {
+		slog.SetDefault(originalLogger)
+	})
+
+	server.GET("/test-log-ok", func(c echo.Context) error {
+		return c.NoContent(http.StatusNoContent)
+	})
+	server.GET("/test-log-bad", func(c echo.Context) error {
+		return c.NoContent(http.StatusBadRequest)
+	})
+
+	requestOK := httptest.NewRequest(http.MethodGet, "/test-log-ok", nil)
+	responseOK := httptest.NewRecorder()
+	server.ServeHTTP(responseOK, requestOK)
+
+	if responseOK.Code != http.StatusNoContent {
+		t.Fatalf("expected status %d, got %d", http.StatusNoContent, responseOK.Code)
+	}
+
+	if buf.Len() != 0 {
+		t.Errorf("expected no log output for 2xx status, got %s", buf.String())
+	}
+
+	buf.Reset()
+
+	requestBad := httptest.NewRequest(http.MethodGet, "/test-log-bad", nil)
+	responseBad := httptest.NewRecorder()
+	server.ServeHTTP(responseBad, requestBad)
+
+	if responseBad.Code != http.StatusBadRequest {
+		t.Fatalf("expected status %d, got %d", http.StatusBadRequest, responseBad.Code)
+	}
+
+	if !strings.Contains(buf.String(), "REQUEST") {
+		t.Errorf("expected log output for 4xx status, got %s", buf.String())
 	}
 }
 
