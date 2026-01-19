@@ -4,7 +4,13 @@ import { useOptimisticMutation } from './useOptimisticUpdate';
 import { useSafeState } from './useSafeState';
 
 import type { AuthResult } from './useOptimisticUpdate';
-import type { Review, ReviewAsset, SignedUploadFile, UploadFileInput } from '@team/types';
+import type {
+  Review,
+  ReviewAsset,
+  SignedUploadFile,
+  UploadFileInput,
+  ReviewSort,
+} from '@team/types';
 
 /**
  * レビュー投稿時の入力
@@ -28,15 +34,16 @@ export type CreateReviewInput = {
 
 /**
  * ソート種別
+ * @deprecated Use ReviewSort from @team/types instead
  */
-export type ReviewSortType = 'new' | 'liked';
+export type ReviewSortType = ReviewSort;
 
 /**
  * useReviewsState の API 依存関係
  */
 export type ReviewsApiDependencies<TToken = string> = {
   /** 店舗のレビュー一覧を取得 */
-  fetchStoreReviews: (shopId: string, sort: ReviewSortType, token?: TToken) => Promise<Review[]>;
+  fetchStoreReviews: (shopId: string, sort: ReviewSort, token?: TToken) => Promise<Review[]>;
   /** ユーザーのレビュー一覧を取得 */
   fetchUserReviews: (userId: string, token: TToken) => Promise<Review[]>;
   /** レビューを作成 */
@@ -108,7 +115,7 @@ export type UseReviewsStateResult = {
   /** 店舗のレビュー一覧を取得 */
   getReviews: (shopId: string) => Review[];
   /** 店舗のレビューをロード */
-  loadReviews: (shopId: string, sort: ReviewSortType) => Promise<void>;
+  loadReviews: (shopId: string, sort: ReviewSort) => Promise<void>;
   /** レビューを追加 */
   addReview: (shopId: string, input: ReviewInput, assets: ReviewAsset[]) => Promise<void>;
   /** レビューを削除（ローカル状態のみ） */
@@ -208,7 +215,7 @@ export function useReviewsState<TToken = string>(
   const getReviews = useCallback((shopId: string) => reviewsByShop[shopId] ?? [], [reviewsByShop]);
 
   const loadReviews = useCallback(
-    async (shopId: string, sort: ReviewSortType) => {
+    async (shopId: string, sort: ReviewSort) => {
       setLoadingByShop(prev => ({ ...prev, [shopId]: true }));
       try {
         const token = await auth.getAccessToken();

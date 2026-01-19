@@ -77,37 +77,26 @@ export function useFavoriteToggle<T = string[]>({
 
   const isFavorite = useCallback((id: string) => favoriteIds.includes(id), [favoriteIds]);
 
-  const toggleFavorite = useCallback(
-    (id: string) => {
+  // Factory function to create favorite action callbacks
+  const createFavoriteAction = useCallback(
+    (operationFn: (ids: string[], id: string) => string[]) => (id: string) => {
       setFavorites(prev => {
         const currentIds = getFavoriteIds(prev);
-        const newIds = toggleFavoriteId(currentIds, id);
+        const newIds = operationFn(currentIds, id);
         return createNewState(prev, newIds);
       });
     },
     [setFavorites, getFavoriteIds, createNewState],
   );
 
-  const addFavorite = useCallback(
-    (id: string) => {
-      setFavorites(prev => {
-        const currentIds = getFavoriteIds(prev);
-        const newIds = addFavoriteId(currentIds, id);
-        return createNewState(prev, newIds);
-      });
-    },
-    [setFavorites, getFavoriteIds, createNewState],
+  const toggleFavorite = useMemo(
+    () => createFavoriteAction(toggleFavoriteId),
+    [createFavoriteAction],
   );
-
-  const removeFavorite = useCallback(
-    (id: string) => {
-      setFavorites(prev => {
-        const currentIds = getFavoriteIds(prev);
-        const newIds = removeFavoriteId(currentIds, id);
-        return createNewState(prev, newIds);
-      });
-    },
-    [setFavorites, getFavoriteIds, createNewState],
+  const addFavorite = useMemo(() => createFavoriteAction(addFavoriteId), [createFavoriteAction]);
+  const removeFavorite = useMemo(
+    () => createFavoriteAction(removeFavoriteId),
+    [createFavoriteAction],
   );
 
   return {
