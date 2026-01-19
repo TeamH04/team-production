@@ -133,4 +133,11 @@ export const palette = {
   devBoxBorder: 'rgba(255, 255, 255, 0.2)',
   devButtonBg: 'rgba(255, 255, 255, 0.15)',
   devButtonPressed: 'rgba(255, 255, 255, 0.25)',
+
+  // ログイン背景メッシュカラー（AnimatedLoginBackground用）
+  meshBase: '#4A5749',
+  meshAccent1: '#5B6B5A',
+  meshAccent2: '#7A8C79',
+  meshAccent3: '#3D473C',
+  meshHighlight: 'rgba(255, 255, 255, 0.08)',
 };
