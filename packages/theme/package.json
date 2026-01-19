@@ -12,6 +12,10 @@
     }
   },
   "scripts": {
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "generate:css": "tsx scripts/generate-css-vars.ts"
+  },
+  "devDependencies": {
+    "tsx": "^4.7.0"
   }
 }
