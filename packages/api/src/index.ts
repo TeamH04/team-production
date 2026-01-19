@@ -6,6 +6,7 @@ import type {
   ApiMenu,
   ApiRatingDetails,
   ApiReview,
+  ApiStation,
   ApiStore,
   ApiUser,
   ReviewSort,
@@ -19,11 +20,12 @@ export type {
   ApiMenu,
   ApiRatingDetails,
   ApiReview,
+  ApiStation,
   ApiStore,
   ApiUser,
   ReviewSort,
   SignedUploadFile,
-  UploadFileInput,
+  UploadFileInput
 };
 
 type UploadResponse = {
@@ -167,6 +169,10 @@ export function createApiClient(options: ApiClientOptions) {
     return fetchWithAuth<ApiStore>('/stores');
   }
 
+  async function fetchStations() {
+    return request<ApiStation[]>('/stations');
+  }
+
   async function fetchStoreById(storeId: string) {
     return request<ApiStore>(`/stores/${encodePathSegment(storeId)}`, {
       headers: buildHeaders(),
@@ -258,6 +264,7 @@ export function createApiClient(options: ApiClientOptions) {
   return {
     fetchStoreReviews,
     fetchStores,
+    fetchStations,
     fetchStoreById,
     fetchStoreMenus,
     fetchUserReviews,
@@ -354,6 +361,7 @@ export type PlatformApiConfig = {
 export const API_FUNCTION_NAMES = [
   'fetchStoreReviews',
   'fetchStores',
+  'fetchStations',
   'fetchStoreById',
   'fetchStoreMenus',
   'fetchUserReviews',

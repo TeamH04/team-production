@@ -133,6 +133,15 @@ export type SignedUploadFile = {
   content_type: string;
 };
 
+export type ApiStation = {
+  id: number;
+  name: string;
+  kana: string;
+  kind: string;
+  lat?: number | null;
+  lng?: number | null;
+};
+
 // =============================================================================
 // Frontend Types
 // =============================================================================

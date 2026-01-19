@@ -8,11 +8,12 @@ export type {
   ApiMenu,
   ApiRatingDetails,
   ApiReview,
+  ApiStation,
   ApiStore,
   ApiUser,
   ReviewSort,
   SignedUploadFile,
-  UploadFileInput,
+  UploadFileInput
 } from '@team/api';
 
 export const api = createConfiguredApiClient({
