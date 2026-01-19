@@ -61,7 +61,7 @@ export function useUserState(config?: UserStateConfig): UserState {
     setUserState(null);
   }, []);
 
-  const isProfileComplete = useMemo(() => !!user && !!user.isProfileRegistered, [user]);
+  const isProfileComplete = useMemo(() => !!user && user.isProfileRegistered, [user]);
 
   return useMemo(
     () => ({ user, isProfileComplete, isRestoring, setUser, clearUser }),
