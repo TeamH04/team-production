@@ -22,6 +22,9 @@ var (
 	// ErrInvalidRating は評価が不正な場合のエラー
 	ErrInvalidRating = apperr.New(apperr.CodeInvalidInput, errors.New("rating must be between 1 and 5"))
 
+	// ErrInvalidRatingDetails は詳細評価が不正な場合のエラー
+	ErrInvalidRatingDetails = apperr.New(apperr.CodeInvalidInput, errors.New("rating details must be between 1 and 5"))
+
 	// ErrInvalidRole はロールが不正な場合のエラー
 	ErrInvalidRole = apperr.New(apperr.CodeInvalidInput, errors.New("invalid role"))
 

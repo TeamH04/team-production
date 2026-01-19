@@ -221,6 +221,172 @@ func TestCreate_ValidRatings(t *testing.T) {
 	}
 }
 
+func TestCreate_InvalidRatingDetails(t *testing.T) {
+	intPtr := func(v int) *int { return &v }
+
+	tests := []struct {
+		name          string
+		ratingDetails *input.RatingDetails
+	}{
+		{
+			name: "taste too low",
+			ratingDetails: &input.RatingDetails{
+				Taste: intPtr(0),
+			},
+		},
+		{
+			name: "taste negative",
+			ratingDetails: &input.RatingDetails{
+				Taste: intPtr(-1),
+			},
+		},
+		{
+			name: "taste too high",
+			ratingDetails: &input.RatingDetails{
+				Taste: intPtr(6),
+			},
+		},
+		{
+			name: "atmosphere too low",
+			ratingDetails: &input.RatingDetails{
+				Atmosphere: intPtr(0),
+			},
+		},
+		{
+			name: "atmosphere too high",
+			ratingDetails: &input.RatingDetails{
+				Atmosphere: intPtr(100),
+			},
+		},
+		{
+			name: "service too low",
+			ratingDetails: &input.RatingDetails{
+				Service: intPtr(0),
+			},
+		},
+		{
+			name: "speed too high",
+			ratingDetails: &input.RatingDetails{
+				Speed: intPtr(10),
+			},
+		},
+		{
+			name: "cleanliness too low",
+			ratingDetails: &input.RatingDetails{
+				Cleanliness: intPtr(-5),
+			},
+		},
+		{
+			name: "multiple invalid values",
+			ratingDetails: &input.RatingDetails{
+				Taste:      intPtr(0),
+				Atmosphere: intPtr(10),
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			reviewRepo := &testutil.MockReviewRepository{}
+			storeRepo := &testutil.MockStoreRepository{Store: &entity.Store{StoreID: "store-1"}}
+			menuRepo := &testutil.MockMenuRepository{}
+			fileRepo := &testutil.MockFileRepository{}
+			txn := &testutil.MockTransaction{}
+
+			uc := usecase.NewReviewUseCase(reviewRepo, storeRepo, menuRepo, fileRepo, txn)
+
+			err := uc.Create(context.Background(), "store-1", "user-1", input.CreateReview{
+				Rating:        5,
+				RatingDetails: tt.ratingDetails,
+			})
+			if !errors.Is(err, usecase.ErrInvalidRatingDetails) {
+				t.Errorf("expected ErrInvalidRatingDetails, got %v", err)
+			}
+		})
+	}
+}
+
+func TestCreate_ValidRatingDetails(t *testing.T) {
+	intPtr := func(v int) *int { return &v }
+
+	tests := []struct {
+		name          string
+		ratingDetails *input.RatingDetails
+	}{
+		{
+			name:          "nil rating details",
+			ratingDetails: nil,
+		},
+		{
+			name:          "empty rating details",
+			ratingDetails: &input.RatingDetails{},
+		},
+		{
+			name: "all values at minimum",
+			ratingDetails: &input.RatingDetails{
+				Taste:       intPtr(1),
+				Atmosphere:  intPtr(1),
+				Service:     intPtr(1),
+				Speed:       intPtr(1),
+				Cleanliness: intPtr(1),
+			},
+		},
+		{
+			name: "all values at maximum",
+			ratingDetails: &input.RatingDetails{
+				Taste:       intPtr(5),
+				Atmosphere:  intPtr(5),
+				Service:     intPtr(5),
+				Speed:       intPtr(5),
+				Cleanliness: intPtr(5),
+			},
+		},
+		{
+			name: "mixed values within range",
+			ratingDetails: &input.RatingDetails{
+				Taste:       intPtr(1),
+				Atmosphere:  intPtr(3),
+				Service:     intPtr(5),
+				Speed:       intPtr(2),
+				Cleanliness: intPtr(4),
+			},
+		},
+		{
+			name: "partial values (only taste)",
+			ratingDetails: &input.RatingDetails{
+				Taste: intPtr(3),
+			},
+		},
+		{
+			name: "partial values (taste and atmosphere)",
+			ratingDetails: &input.RatingDetails{
+				Taste:      intPtr(4),
+				Atmosphere: intPtr(5),
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			reviewRepo := &testutil.MockReviewRepository{}
+			storeRepo := &testutil.MockStoreRepository{Store: &entity.Store{StoreID: "store-1"}}
+			menuRepo := &testutil.MockMenuRepository{}
+			fileRepo := &testutil.MockFileRepository{}
+			txn := &testutil.MockTransaction{}
+
+			uc := usecase.NewReviewUseCase(reviewRepo, storeRepo, menuRepo, fileRepo, txn)
+
+			err := uc.Create(context.Background(), "store-1", "user-1", input.CreateReview{
+				Rating:        5,
+				RatingDetails: tt.ratingDetails,
+			})
+			if err != nil {
+				t.Errorf("expected no error, got %v", err)
+			}
+		})
+	}
+}
+
 func TestCreate_InvalidMenuIDs(t *testing.T) {
 	reviewRepo := &testutil.MockReviewRepository{}
 	storeRepo := &testutil.MockStoreRepository{Store: &entity.Store{StoreID: "store-1"}}

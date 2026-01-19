@@ -55,6 +55,10 @@ func (uc *reviewUseCase) Create(ctx context.Context, storeID string, userID stri
 		return ErrInvalidRating
 	}
 
+	if err := validateRatingDetails(input.RatingDetails); err != nil {
+		return err
+	}
+
 	menuIDs := dedupeStrings(input.MenuIDs)
 	if len(menuIDs) > 0 {
 		menus, err := uc.menuRepo.FindByStoreAndIDs(ctx, storeID, menuIDs)
@@ -151,4 +155,19 @@ func dedupeStrings(values []string) []string {
 		result = append(result, value)
 	}
 	return result
+}
+
+// validateRatingDetails は詳細評価の各フィールドが1-5の範囲内かを検証します
+func validateRatingDetails(rd *input.RatingDetails) error {
+	if rd == nil {
+		return nil
+	}
+
+	fields := []*int{rd.Taste, rd.Atmosphere, rd.Service, rd.Speed, rd.Cleanliness}
+	for _, f := range fields {
+		if f != nil && (*f < 1 || *f > 5) {
+			return ErrInvalidRatingDetails
+		}
+	}
+	return nil
 }
