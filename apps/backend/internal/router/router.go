@@ -53,13 +53,20 @@ func NewServer(deps *Dependencies) *echo.Echo {
 		LogValuesFunc: func(c echo.Context, v middleware.RequestLoggerValues) error {
 			// 400以上のステータスコード（エラー）のみログ出力
 			if v.Status >= 400 {
-				slog.Warn("REQUEST",
+				attrs := []any{
 					"method", v.Method,
 					"uri", v.URI,
 					"status", v.Status,
 					"latency", v.Latency,
-					"error", v.Error,
-				)
+				}
+				if v.Error != nil {
+					attrs = append(attrs, "error", v.Error)
+				}
+				if v.Status >= 500 {
+					slog.Error("REQUEST", attrs...)
+				} else {
+					slog.Warn("REQUEST", attrs...)
+				}
 			}
 			return nil
 		},

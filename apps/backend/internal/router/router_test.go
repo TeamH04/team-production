@@ -675,6 +675,31 @@ func TestRequestLoggerLogsOnErrorStatus(t *testing.T) {
 	if !strings.Contains(buf.String(), "REQUEST") {
 		t.Errorf("expected log output for 4xx status, got %s", buf.String())
 	}
+	if !strings.Contains(buf.String(), "level=WARN") {
+		t.Errorf("expected WARN level for 4xx status, got %s", buf.String())
+	}
+
+	buf.Reset()
+
+	// 500系エラーのテスト
+	server.GET("/test-log-server-error", func(c echo.Context) error {
+		return c.NoContent(http.StatusInternalServerError)
+	})
+
+	requestServerError := httptest.NewRequest(http.MethodGet, "/test-log-server-error", nil)
+	responseServerError := httptest.NewRecorder()
+	server.ServeHTTP(responseServerError, requestServerError)
+
+	if responseServerError.Code != http.StatusInternalServerError {
+		t.Fatalf("expected status %d, got %d", http.StatusInternalServerError, responseServerError.Code)
+	}
+
+	if !strings.Contains(buf.String(), "REQUEST") {
+		t.Errorf("expected log output for 5xx status, got %s", buf.String())
+	}
+	if !strings.Contains(buf.String(), "level=ERROR") {
+		t.Errorf("expected ERROR level for 5xx status, got %s", buf.String())
+	}
 }
 
 // TestHTTPMethodsForStoreEndpoint tests that store endpoint accepts correct HTTP methods
