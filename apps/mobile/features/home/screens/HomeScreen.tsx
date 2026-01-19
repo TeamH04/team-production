@@ -24,13 +24,16 @@ const PAGE_SIZE = 10;
 // ブースト対象の店舗数
 const BOOST_COUNT = 3;
 
+// おすすめカテゴリ（インデックスに応じて循環表示）
+const FEATURED_CATEGORIES = ['味', '接客', '雰囲気', '提供速度', '清潔感'];
+
 const KEY_EXTRACTOR = (item: Shop) => item.id;
 
 type ShopResultsListProps = {
   emptyState: ReactElement;
   filteredShops: Shop[];
   renderListHeader: ReactElement;
-  renderShop: ({ item }: { item: Shop }) => ReactElement;
+  renderShop: ({ item, index }: { item: Shop; index: number }) => ReactElement;
 };
 
 function ShopResultsList({
@@ -154,12 +157,13 @@ export default function HomeScreen() {
   }, [filteredShops]);
 
   const renderShop = useCallback(
-    ({ item }: { item: Shop }) => (
+    ({ item, index }: { item: Shop; index: number }) => (
       <ShopCard
         shop={item}
         onPress={navigateToShop}
         variant='large'
         isBoosted={boostedShopIds.has(item.id)}
+        featuredCategory={FEATURED_CATEGORIES[index % FEATURED_CATEGORIES.length]}
       />
     ),
     [boostedShopIds, navigateToShop],

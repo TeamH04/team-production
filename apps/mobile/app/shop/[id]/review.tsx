@@ -10,7 +10,7 @@ import { useReviews } from '@/features/reviews/ReviewsContext';
 import { useStores } from '@/features/stores/StoresContext';
 import { api } from '@/lib/api';
 
-import type { ComponentProps} from 'react';
+import type { ComponentProps } from 'react';
 
 type RatingOption = { value: number; label: string; icon: ComponentProps<typeof Ionicons>['name'] };
 type ReviewStep = {
@@ -83,11 +83,11 @@ export default function ReviewModalScreen() {
   );
   const ratingOptions = useMemo<RatingOption[]>(
     () => [
-      { value: 3, label: '満足', icon: 'happy-outline' },
-      { value: 2, label: '普通', icon: 'remove-outline' },
-      { value: 1, label: '不満', icon: 'sad-outline' },
+      { value: 5, label: '満足', icon: 'happy-outline' },
+      { value: 4, label: '普通', icon: 'remove-outline' },
+      { value: 2, label: '不満', icon: 'sad-outline' },
     ],
-    []
+    [],
   );
   const [categoryRatings, setCategoryRatings] = useState<Record<string, number>>(() =>
     Object.fromEntries(ratingCategories.map(category => [category.key, 0]))
@@ -100,8 +100,8 @@ export default function ReviewModalScreen() {
   const [stepIndex, setStepIndex] = useState(0);
 
   const getRatingColor = (value: number) => {
-    if (value === 3) return palette.errorText;
-    if (value === 2) return palette.accent;
+    if (value === 5) return palette.errorText;
+    if (value === 4) return palette.accent;
     return '#264053';
   };
 
@@ -177,10 +177,19 @@ export default function ReviewModalScreen() {
     setSubmitting(true);
     try {
       const selectedMenus = menu.filter(item => selectedMenuIds.includes(item.id));
+      // カテゴリ評価をratingDetails形式に変換
+      const ratingDetails = {
+        taste: categoryRatings.taste ?? null,
+        atmosphere: categoryRatings.atmosphere ?? null,
+        service: categoryRatings.service ?? null,
+        speed: categoryRatings.speed ?? null,
+        cleanliness: categoryRatings.cleanliness ?? null,
+      }
       await addReview(
         shop.id,
         {
           rating: averagedRating,
+          ratingDetails,
           comment: combinedComment,
           menuItemIds: selectedMenuIds,
           menuItemName:
