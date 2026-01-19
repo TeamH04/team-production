@@ -2,9 +2,8 @@ import { formatPrice } from '@team/constants';
 
 import { IMAGE_POOL } from './constants';
 
-import type { ApiStore, Shop, ShopCategory, MoneyBucket } from '@team/types';
-
 import type { StorageUrlResolver } from './types';
+import type { ApiStore, Shop, ShopCategory, MoneyBucket } from '@team/types';
 
 const DEFAULT_CATEGORY: ShopCategory = 'カフェ・喫茶';
 const DEFAULT_BUDGET: MoneyBucket = '$$';
