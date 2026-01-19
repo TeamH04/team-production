@@ -278,7 +278,7 @@ export type ConfiguredApiClientOptions = {
 };
 
 export function createConfiguredApiClient(options: ConfiguredApiClientOptions) {
-  const finalBaseUrl = normalizeBaseUrl(options.baseUrl ?? DEFAULT_API_BASE_URL);
+  const finalBaseUrl = normalizeBaseUrl(options.baseUrl || DEFAULT_API_BASE_URL);
   return createApiClient({
     baseUrl: finalBaseUrl,
     defaultFetchOptions: options.defaultFetchOptions,
