@@ -4,6 +4,7 @@ import type {
   ApiFavorite,
   ApiFile,
   ApiMenu,
+  ApiRatingDetails,
   ApiReview,
   ApiStore,
   ApiUser,
@@ -16,6 +17,7 @@ export type {
   ApiFavorite,
   ApiFile,
   ApiMenu,
+  ApiRatingDetails,
   ApiReview,
   ApiStore,
   ApiUser,
@@ -207,7 +209,13 @@ export function createApiClient(options: ApiClientOptions) {
 
   async function createReview(
     storeId: string,
-    input: { rating: number; content?: string | null; file_ids?: string[]; menu_ids?: string[] },
+    input: {
+      rating: number;
+      rating_details?: ApiRatingDetails | null;
+      content?: string | null;
+      file_ids?: string[];
+      menu_ids?: string[];
+    },
     accessToken: string,
   ) {
     return request<ApiReview>(`/stores/${encodePathSegment(storeId)}/reviews`, {
@@ -215,6 +223,7 @@ export function createApiClient(options: ApiClientOptions) {
       headers: buildHeaders(accessToken, undefined, true),
       body: JSON.stringify({
         rating: input.rating,
+        rating_details: input.rating_details ?? null,
         content: input.content ?? null,
         file_ids: input.file_ids ?? [],
         menu_ids: input.menu_ids ?? [],
