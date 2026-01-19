@@ -152,6 +152,13 @@ func (m *mockAdminUseCase) RejectStore(ctx context.Context, storeID string) erro
 	return nil
 }
 
+// mockStationUseCase implements input.StationUseCase for testing
+type mockStationUseCase struct{}
+
+func (m *mockStationUseCase) ListStations(ctx context.Context) ([]entity.Station, error) {
+	return nil, nil
+}
+
 // mockMediaUseCase implements input.MediaUseCase for testing
 type mockMediaUseCase struct{}
 
@@ -193,6 +200,7 @@ func createTestDependencies() *Dependencies {
 	reportUC := &mockReportUseCase{}
 	authUC := &mockAuthUseCase{}
 	adminUC := &mockAdminUseCase{}
+	stationUC := &mockStationUseCase{}
 	mediaUC := &mockMediaUseCase{}
 	tokenVerifier := &mockTokenVerifier{}
 	storage := &mockStorageProvider{}
@@ -208,6 +216,7 @@ func createTestDependencies() *Dependencies {
 		ReportHandler:   handlers.NewReportHandler(reportUC),
 		AuthHandler:     handlers.NewAuthHandler(authUC, userUC),
 		AdminHandler:    handlers.NewAdminHandler(adminUC, reportUC, userUC),
+		StationHandler:  handlers.NewStationHandler(stationUC),
 		MediaHandler:    handlers.NewMediaHandler(mediaUC),
 		TokenVerifier:   tokenVerifier,
 	}
@@ -276,6 +285,9 @@ func TestRoutes(t *testing.T) {
 		{http.MethodGet, "/api" + StoreMenusPath},
 		{http.MethodPost, "/api" + StoreMenusPath},
 
+		// Station routes
+		{http.MethodGet, "/api" + StationsPath},
+
 		// Review routes
 		{http.MethodGet, "/api" + StoreReviewsPath},
 		{http.MethodPost, "/api" + StoreReviewsPath},
@@ -333,6 +345,7 @@ func TestRouteCount(t *testing.T) {
 	// Auth: 4
 	// Store: 5
 	// Menu: 2
+	// Station: 1
 	// Review: 4
 	// User: 3
 	// Favorite: 3
@@ -340,8 +353,8 @@ func TestRouteCount(t *testing.T) {
 	// Media: 1
 	// Admin: 6
 	// Echo internal routes for admin group (echo_route_not_found): 2
-	// Total: 32
-	expectedCount := 32
+	// Total: 33
+	expectedCount := 33
 
 	if len(routes) != expectedCount {
 		t.Errorf("expected %d routes, got %d", expectedCount, len(routes))
