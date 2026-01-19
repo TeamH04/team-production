@@ -59,9 +59,13 @@ function ShopCardComponent({
     formatMeta?.(shop) ??
     `${shop.category} • 徒歩${shop.distanceMinutes}分 • 予算 ${BUDGET_LABEL[shop.budget]}`;
 
+  // NOTE: @team/mobile-ui の ViewStyle と apps/mobile の ViewStyle の型定義が
+  // 異なるパッケージインスタンスを参照しているため、明示的にキャストする
+  const containerStyle = style as StyleProp<ViewStyle>;
+
   if (variant === 'large') {
     return (
-      <View style={[styles.largeShadow, isBoosted && styles.largeShadowBoosted, style]}>
+      <View style={[styles.largeShadow, isBoosted && styles.largeShadowBoosted, containerStyle]}>
         <Pressable
           onPress={handlePress}
           style={[styles.largeContainer, isBoosted && styles.largeContainerBoosted]}
@@ -105,7 +109,7 @@ function ShopCardComponent({
 
   // compact variant
   return (
-    <View style={[styles.compactShadow, style]}>
+    <View style={[styles.compactShadow, containerStyle]}>
       <Pressable
         onPress={handlePress}
         style={[styles.compactContainer, isBoosted && styles.compactContainerBoosted]}
@@ -150,8 +154,7 @@ const styles = StyleSheet.create({
   boostBadgeCompact: {
     padding: 4,
     right: 8,
-    top: 8,
-  },
+    top: 8,  },
   categoryBadge: {
     alignItems: 'center',
     backgroundColor: palette.metaBadgeBg,
