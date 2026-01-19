@@ -5,15 +5,22 @@ import { DEV_GUEST_FLAG_KEY, DEV_LOGIN_ENABLED } from '@team/constants';
 import { createNonce } from '@team/crypto-utils';
 import { palette } from '@team/mobile-ui';
 import * as AppleAuthentication from 'expo-apple-authentication';
+import { BlurView } from 'expo-blur';
 import * as Crypto from 'expo-crypto';
 import { type Href, useRouter } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
 import { useCallback, useLayoutEffect } from 'react';
-import { Alert, Platform, Pressable, StatusBar, StyleSheet, Text, View } from 'react-native';
+import { Alert, Dimensions, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 
 import KuguriTitle from '@/assets/icons/kaguri.svg';
+import { AnimatedLoginBackground } from '@/components/AnimatedLoginBackground';
+import { fonts } from '@/constants/typography';
 import { useOAuthFlow } from '@/hooks/useOAuthFlow';
 
 import type { OAuthProvider } from '@team/types';
+
+const { height } = Dimensions.get('window');
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -41,9 +48,6 @@ export default function LoginScreen() {
     getOAuthUrl,
   } = useOAuthFlow({ onLoginSuccess: handleLoginSuccess });
 
-  useLayoutEffect(() => {
-    StatusBar.setBarStyle('dark-content');
-  }, []);
 
   const handleOAuth = useCallback(
     async (provider: OAuthProvider) => {
@@ -57,7 +61,7 @@ export default function LoginScreen() {
 
         if (success) {
           await completeAuth({
-            name: 'Google User', // ← 仮。後で Supabase から取得
+            name: 'Google User',
             email: 'google@example.com',
             isProfileRegistered: false,
           });
@@ -110,8 +114,6 @@ export default function LoginScreen() {
         throw new Error('Appleの認証トークンを取得できませんでした。');
       }
 
-      // TODO: Supabase 側で Apple の Services ID / Team ID / Key ID / 秘密鍵 を設定する必要があり
-      // Apple ログイン成功後
       const fullName =
         credential.fullName &&
         [credential.fullName.familyName, credential.fullName.givenName]
@@ -120,9 +122,7 @@ export default function LoginScreen() {
           .trim();
 
       await completeAuth({
-        // Apple から取得できた氏名があればそれを優先し、なければ仮の名称を使用
         name: fullName && fullName.length > 0 ? fullName : 'Appleユーザー',
-        // email は初回ログイン時のみ返る場合があるため、未提供時は仮のメールアドレスを使用
         email: credential.email ?? 'apple@example.com',
         isProfileRegistered: false,
       });
@@ -157,42 +157,50 @@ export default function LoginScreen() {
 
   return (
     <View style={styles.screen}>
-      <View style={styles.logoContainer}>
+      <StatusBar style='light' />
+      <AnimatedLoginBackground />
+
+      <Animated.View entering={FadeInUp.duration(1000).springify()} style={styles.logoContainer}>
         <KuguriTitle
           width='70%'
-          height='100%'
+          height={100}
           preserveAspectRatio='xMidYMid meet'
           accessibilityLabel='Kuguriロゴ'
           fill={palette.white}
         />
-      </View>
-      <View style={styles.actions}>
-        <View style={styles.buttonFrame}>
+        <Animated.Text entering={FadeInUp.delay(300).duration(800)} style={styles.tagline}>
+          最高のおもてなしを、ここから。
+        </Animated.Text>
+      </Animated.View>
+
+      <Animated.View
+        entering={FadeInDown.delay(600).duration(800).springify()}
+        style={styles.actions}
+      >
+        <BlurView intensity={20} tint='dark' style={styles.buttonBlurWrapper}>
           <Pressable
             disabled={loading !== null}
             onPress={() => handleOAuth('google')}
             style={({ pressed }) => [
               styles.button,
-              styles.buttonOutline,
               pressed && styles.buttonPressed,
               loading === 'google' && styles.buttonLoading,
             ]}
           >
             <View style={styles.buttonContent}>
-              <Ionicons name='logo-google' size={28} color={palette.grayDark} />
-              <Text style={styles.buttonOutlineText}>
-                {loading === 'google' ? 'Google で処理中…' : 'Google でログイン'}
+              <Ionicons name='logo-google' size={24} color={palette.white} />
+              <Text style={styles.buttonText}>
+                {loading === 'google' ? '処理中…' : 'Google ではじめる'}
               </Text>
             </View>
           </Pressable>
-        </View>
-        <View style={styles.buttonFrame}>
+        </BlurView>
+        <BlurView intensity={20} tint='dark' style={styles.buttonBlurWrapper}>
           <Pressable
             disabled={loading !== null}
             onPress={handleAppleNative}
             style={({ pressed }) => [
               styles.button,
-              styles.buttonOutline,
               pressed && styles.buttonPressed,
               loading === 'apple' && styles.buttonLoading,
             ]}
@@ -200,19 +208,19 @@ export default function LoginScreen() {
             <View style={styles.buttonContent}>
               <Ionicons
                 name='logo-apple'
-                size={28}
-                color={palette.grayDark}
+                size={24}
+                color={palette.white}
                 style={styles.appleIconAdjust}
               />
-              <Text style={styles.buttonOutlineText}>
-                {loading === 'apple' ? 'Apple で処理中…' : 'Apple でログイン'}
+              <Text style={styles.buttonText}>
+                {loading === 'apple' ? '処理中…' : 'Apple ではじめる'}
               </Text>
             </View>
           </Pressable>
-        </View>
-      </View>
+        </BlurView>
+      </Animated.View>
 
-      <View style={styles.ownerBox}>
+      <Animated.View entering={FadeInDown.delay(800).duration(800)} style={styles.ownerBox}>
         <View style={styles.ownerLead}>
           <View style={styles.ownerLineSide} />
           <Text style={styles.ownerLeadText}>オーナーの方はこちら</Text>
@@ -221,12 +229,12 @@ export default function LoginScreen() {
         <Pressable onPress={() => router.push(ROUTES.OWNER_LOGIN as Href)}>
           <Text style={styles.ownerLink}>オーナー用アカウントでログイン</Text>
         </Pressable>
-      </View>
+      </Animated.View>
 
       {DEV_LOGIN_ENABLED && (
-        <View style={styles.devBox}>
+        <Animated.View entering={FadeInDown.delay(1000).duration(800)} style={styles.devBox}>
           <View style={styles.devHeader}>
-            <Ionicons name='construct' size={16} color={palette.action} />
+            <Ionicons name='construct' size={16} color={palette.white} />
             <Text style={styles.devLead}>開発者モード</Text>
           </View>
           <Pressable
@@ -239,10 +247,10 @@ export default function LoginScreen() {
             ]}
           >
             <Text style={styles.devButtonText}>
-              {loading === 'guest' ? 'ゲストで入場中…' : 'ゲストとして入る（開発用）'}
+              {loading === 'guest' ? 'ゲストで入場中…' : 'ゲストとして入る'}
             </Text>
           </Pressable>
-        </View>
+        </Animated.View>
       )}
     </View>
   );
@@ -251,75 +259,75 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   actions: {
     alignSelf: 'stretch',
-    gap: 40,
-    marginTop: 40,
+    gap: 16,
+    marginTop: 60,
     width: '100%',
   },
   appleIconAdjust: {
     position: 'relative',
-    top: -3,
+    top: -2,
   },
   button: {
-    borderRadius: 14,
-    height: 52,
+    borderRadius: 36,
+    height: 72,
     justifyContent: 'center',
     width: '100%',
+  },
+  buttonBlurWrapper: {
+    backgroundColor: palette.glassBg,
+    borderColor: palette.glassBorder,
+    borderRadius: 36,
+    borderWidth: 1,
+    height: 48,
+    overflow: 'hidden',
   },
   buttonContent: {
     alignItems: 'center',
     flexDirection: 'row',
-    gap: 10,
+    gap: 12,
+    height: '100%',
     justifyContent: 'center',
     paddingHorizontal: 12,
-  },
-  buttonFrame: {
-    alignSelf: 'stretch',
-    backgroundColor: palette.grayLight,
-    borderRadius: 16,
-    paddingHorizontal: 6,
-    paddingVertical: 6,
   },
   buttonLoading: {
     opacity: 0.75,
   },
-  buttonOutline: {
-    backgroundColor: palette.transparent,
-    borderColor: palette.transparent,
-    borderRadius: 14,
-    borderWidth: 0,
-    overflow: 'hidden',
-  },
-  buttonOutlineText: {
-    color: palette.grayDark,
-    fontSize: 20,
-    fontWeight: FONT_WEIGHT.BOLD,
-    textAlign: 'center',
-  },
   buttonPressed: {
-    opacity: 0.9,
+    backgroundColor: palette.glassPressed,
+  },
+  buttonText: {
+    color: palette.white,
+    fontFamily: fonts.medium,
+    fontSize: 17,
+    textAlign: 'center',
+    textShadowColor: palette.glassShadow,
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
   },
   devBox: {
-    borderColor: palette.border,
+    backgroundColor: palette.devBoxBg,
+    borderColor: palette.devBoxBorder,
     borderRadius: 12,
     borderWidth: 1,
-    marginTop: 20,
+    marginTop: 30,
     padding: 14,
   },
   devButton: {
-    backgroundColor: palette.outline,
+    backgroundColor: palette.devButtonBg,
     borderRadius: 10,
-    marginTop: 12,
-    paddingVertical: 12,
+    marginTop: 10,
+    paddingVertical: 10,
   },
   devButtonLoading: {
     opacity: 0.75,
   },
   devButtonPressed: {
-    opacity: 0.9,
+    backgroundColor: palette.devButtonPressed,
   },
   devButtonText: {
-    color: palette.black,
-    fontWeight: FONT_WEIGHT.BOLD,
+    color: palette.white,
+    fontFamily: fonts.medium,
+    fontSize: 14,
     textAlign: 'center',
   },
   devHeader: {
@@ -328,52 +336,57 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   devLead: {
-    color: palette.black,
+    color: palette.white,
+    fontFamily: fonts.medium,
     fontSize: 14,
-    fontWeight: FONT_WEIGHT.BOLD,
     marginLeft: 6,
   },
   logoContainer: {
     alignItems: 'center',
-    height: 103,
     justifyContent: 'center',
-    left: 0,
-    position: 'absolute',
-    right: 0,
-    top: '25%',
+    marginBottom: 20,
+    marginTop: height * 0.25,
   },
   ownerBox: {
     alignItems: 'center',
-    marginTop: 90,
-    paddingTop: 20,
+    marginTop: 40,
+    paddingTop: 10,
   },
   ownerLead: {
     alignItems: 'center',
     flexDirection: 'row',
     gap: 12,
+    marginBottom: 16,
+    opacity: 0.8,
   },
   ownerLeadText: {
     color: palette.white,
-    fontSize: 16,
+    fontFamily: fonts.regular,
+    fontSize: 14,
   },
   ownerLineSide: {
-    backgroundColor: palette.grayMid,
+    backgroundColor: palette.grayLight,
     flex: 1,
     height: 1,
+    opacity: 0.5,
   },
   ownerLink: {
     color: palette.white,
-    fontSize: 18,
-    fontWeight: FONT_WEIGHT.BOLD,
-    marginTop: 20,
+    fontFamily: fonts.medium,
+    fontSize: 16,
+    textDecorationLine: 'underline',
   },
   screen: {
-    alignItems: 'stretch',
-    backgroundColor: palette.accent,
     flex: 1,
-    justifyContent: 'flex-end',
-    paddingBottom: 180,
+    paddingBottom: 40,
     paddingHorizontal: 24,
-    paddingTop: 0,
+  },
+  tagline: {
+    color: palette.white,
+    fontFamily: fonts.regular,
+    fontSize: 16,
+    letterSpacing: 1.2,
+    marginTop: 16,
+    opacity: 0.9,
   },
 });

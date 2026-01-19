@@ -11,11 +11,14 @@ import {
   StyleSheet,
   Text,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { fonts } from '@/constants/typography';
 import { useUser } from '@/features/user/UserContext';
 
 export default function RegisterProfileScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { user, setUser } = useUser();
   const name = user?.name ?? '';
   const email = user?.email ?? '';
@@ -48,8 +51,13 @@ export default function RegisterProfileScreen() {
         behavior={Platform.select({ ios: 'padding', default: undefined })}
         style={styles.keyboard}
       >
-        <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
-          <Text style={styles.title}>ジャンル選択</Text>
+        <ScrollView
+          style={styles.screen}
+          contentContainerStyle={[styles.content, { paddingTop: insets.top + 16 }]}
+        >
+          <View style={styles.headerContainer}>
+            <Text style={styles.title}>ジャンル選択</Text>
+          </View>
           <Text style={styles.subtitle}>自身の選んだ店舗がおすすめに表示されやすくなります</Text>
           <GenreChipSelector
             selectedGenres={selectedGenres}
@@ -77,6 +85,11 @@ export default function RegisterProfileScreen() {
 const styles = StyleSheet.create({
   content: { padding: 16 },
 
+  headerContainer: {
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+
   keyboard: { flex: 1 },
 
   // プライマリボタン（登録）
@@ -91,7 +104,7 @@ const styles = StyleSheet.create({
   },
   primaryBtnText: {
     color: palette.primaryOnAccent,
-    fontWeight: FONT_WEIGHT.BOLD,
+    fontFamily: fonts.medium,
     textAlign: 'center',
   },
 
@@ -109,18 +122,20 @@ const styles = StyleSheet.create({
   },
   secondaryBtnText: {
     color: palette.primaryText,
-    fontWeight: FONT_WEIGHT.BOLD,
+    fontFamily: fonts.medium,
     textAlign: 'center',
   },
 
   subtitle: {
     color: palette.secondaryText,
+    fontFamily: fonts.regular,
     marginBottom: 16,
     marginTop: 8,
   },
+
   title: {
     color: palette.primaryText,
+    fontFamily: fonts.medium,
     fontSize: 24,
-    fontWeight: FONT_WEIGHT.BOLD,
   },
 });

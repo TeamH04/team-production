@@ -67,6 +67,9 @@ func (m *AuthMiddleware) findOrEnsureUser(ctx context.Context, claims *security.
 		Email:    claims.Email,
 		Role:     claims.Role,
 		Provider: claims.Provider,
+		Name:     claims.Name,
+		IconURL:  claims.IconURL,
+		Gender:   claims.Gender,
 	})
 }
 

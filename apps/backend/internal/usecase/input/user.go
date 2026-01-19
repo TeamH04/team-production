@@ -21,6 +21,9 @@ type EnsureUserInput struct {
 	Email    string
 	Role     string
 	Provider string
+	Name     string
+	IconURL  string
+	Gender   string
 }
 
 type UpdateUserInput struct {

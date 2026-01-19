@@ -18,9 +18,12 @@ import { Alert, Image, Pressable, ScrollView, StyleSheet, Text, View } from 'rea
 import { EmptyState } from '@/components/EmptyState';
 import { HeaderWithBack } from '@/components/HeaderWithBack';
 import { TAB_BAR_SPACING } from '@/constants/TabBarSpacing';
+import { fonts } from '@/constants/typography';
 import { useReviews } from '@/features/reviews/ReviewsContext';
 import { useUser } from '@/features/user/UserContext';
+import { useAuthMe } from '@/hooks/useAuthMe';
 import { getSupabase } from '@/lib/auth';
+import { formatGenderLabel, formatProviderLabel } from '@/lib/profile';
 
 /**
  * マイページ画面コンポーネント
@@ -59,6 +62,11 @@ export default function MyPageScreen({
 
   // 現在表示している画面を管理（Union 型で一元管理）
   const [currentScreen, setCurrentScreen] = useState<ScreenType>('main');
+  // authUser: DB側の最新プロフィール（Supabase連携含む）を取得して表示に反映する
+  // authUserLoading: 上記の取得状態をUIに反映する（読み込み中表示など）
+  const { data: authUser, loading: authUserLoading } = useAuthMe({
+    enabled: currentScreen === 'main',
+  });
 
   // プロフィール編集用の状態管理
 
@@ -138,6 +146,24 @@ export default function MyPageScreen({
     }
     router.push(ROUTES.PROFILE_EDIT);
   }, [router, user]);
+
+  const displayName = authUser?.name ?? user?.name ?? '未設定';
+  const displayEmail = authUser?.email ?? user?.email ?? '未設定';
+  const displayGender = authUser?.gender ?? user?.gender ?? null;
+  const displayProvider = authUser?.provider ?? '未設定';
+  const displayIconUrl = authUser?.icon_url ?? null;
+  const displayInitials = useMemo(() => {
+    if (!displayName || displayName === '未設定') return '';
+    return displayName.slice(0, 2).toUpperCase();
+  }, [displayName]);
+
+  const formattedGender = useMemo(() => {
+    return formatGenderLabel(displayGender);
+  }, [displayGender]);
+
+  const formattedProvider = useMemo(() => {
+    return formatProviderLabel(displayProvider);
+  }, [displayProvider]);
 
   // 画面の描画（switch 文で管理）
   switch (currentScreen) {
@@ -320,18 +346,35 @@ export default function MyPageScreen({
             <View style={styles.card}>
               <View style={styles.profileRow}>
                 <View style={styles.avatar}>
-                  <Text style={styles.avatarText}>
-                    {user?.name ? user.name.slice(0, 2).toUpperCase() : ''}
-                  </Text>
+                  {displayIconUrl ? (
+                    <Image source={{ uri: displayIconUrl }} style={styles.avatarImage} />
+                  ) : (
+                    <Text style={styles.avatarText}>{displayInitials}</Text>
+                  )}
                 </View>
 
                 <View style={styles.profileMeta}>
-                  <Text style={styles.profileName}>{user?.name ?? '未設定'}</Text>
-                  <Text style={styles.profileSub}>{user?.email ?? '未設定'}</Text>
+                  <Text style={styles.profileName}>{displayName}</Text>
+                  <Text style={styles.profileSub}>{displayEmail}</Text>
                 </View>
                 <Pressable onPress={handleLogout} style={styles.logoutBtn} hitSlop={8}>
                   <Text style={styles.logoutText}>ログアウト</Text>
                 </Pressable>
+              </View>
+
+              <View style={styles.profileInfo}>
+                <View style={styles.profileInfoRow}>
+                  <Text style={styles.profileInfoLabel}>プロバイダー</Text>
+                  <Text style={styles.profileInfoValue}>
+                    {authUserLoading ? '読み込み中' : formattedProvider}
+                  </Text>
+                </View>
+                <View style={styles.profileInfoRow}>
+                  <Text style={styles.profileInfoLabel}>性別</Text>
+                  <Text style={styles.profileInfoValue}>
+                    {authUserLoading ? '読み込み中' : formattedGender}
+                  </Text>
+                </View>
               </View>
 
               <Pressable onPress={handleGoToProfileEdit} style={styles.primaryBtn}>
@@ -471,7 +514,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     width: 64,
   },
-  avatarText: { color: palette.avatarText, fontSize: 22, fontWeight: FONT_WEIGHT.BOLD },
+  avatarImage: {
+    borderRadius: 999,
+    height: 64,
+    width: 64,
+  },
+  avatarText: { color: palette.avatarText, fontFamily: fonts.medium, fontSize: 22 },
   card: { backgroundColor: palette.surface, borderRadius: 20, padding: 12 },
   cardShadow: {
     ...SHADOW_STYLES.CARD,
@@ -479,6 +527,7 @@ const styles = StyleSheet.create({
   },
   comment: {
     color: palette.primary,
+    fontFamily: fonts.regular,
     fontSize: 12,
     lineHeight: 18,
     marginTop: 4,
@@ -486,6 +535,7 @@ const styles = StyleSheet.create({
   content: { padding: 16, paddingBottom: TAB_BAR_SPACING },
   date: {
     color: palette.mutedText,
+    fontFamily: fonts.regular,
     fontSize: 11,
   },
   gridCard: {
@@ -501,8 +551,8 @@ const styles = StyleSheet.create({
   },
   gridCardLabel: {
     color: palette.primary,
+    fontFamily: fonts.medium,
     fontSize: 13,
-    fontWeight: FONT_WEIGHT.SEMIBOLD,
     textAlign: 'center',
   },
   gridContainer: {
@@ -527,9 +577,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 4,
   },
-  logoutText: { color: palette.errorText, fontSize: 14, fontWeight: FONT_WEIGHT.SEMIBOLD },
+  logoutText: { color: palette.errorText, fontFamily: fonts.medium, fontSize: 14 },
   menuItem: {
     color: palette.mutedText,
+    fontFamily: fonts.regular,
     fontSize: 11,
     marginTop: 4,
   },
@@ -542,18 +593,40 @@ const styles = StyleSheet.create({
   },
   primaryBtnText: {
     color: palette.primaryOnAccent,
+    fontFamily: fonts.medium,
     fontSize: 16,
-    fontWeight: FONT_WEIGHT.BOLD,
     textAlign: 'center',
   },
+  profileInfo: {
+    borderTopColor: palette.divider,
+    borderTopWidth: 1,
+    marginTop: 12,
+    paddingTop: 12,
+  },
+  profileInfoLabel: {
+    color: palette.mutedText,
+    fontFamily: fonts.regular,
+    fontSize: 12,
+  },
+  profileInfoRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 6,
+  },
+  profileInfoValue: {
+    color: palette.primary,
+    fontFamily: fonts.medium,
+    fontSize: 13,
+  },
   profileMeta: { flex: 1, marginLeft: 14 },
-  profileName: { color: palette.primary, fontSize: 18, fontWeight: FONT_WEIGHT.BOLD },
+  profileName: { color: palette.primary, fontFamily: fonts.medium, fontSize: 18 },
   profileRow: { alignItems: 'center', flexDirection: 'row' },
-  profileSub: { color: palette.mutedText, marginTop: 4 },
+  profileSub: { color: palette.mutedText, fontFamily: fonts.regular, marginTop: 4 },
   rating: {
     color: palette.primary,
+    fontFamily: fonts.medium,
     fontSize: 12,
-    fontWeight: FONT_WEIGHT.SEMIBOLD,
   },
   reviewCardContent: {
     flexDirection: 'row',
@@ -602,11 +675,12 @@ const styles = StyleSheet.create({
     padding: 8,
     width: 40,
   },
-  sectionSub: { color: palette.mutedText, fontSize: 12, marginTop: 2 },
+  sectionSub: { color: palette.mutedText, fontFamily: fonts.regular, fontSize: 12, marginTop: 2 },
   sectionTextContainer: { flex: 1 },
-  sectionTitle: { color: palette.primary, fontSize: 16, fontWeight: FONT_WEIGHT.BOLD },
+  sectionTitle: { color: palette.primary, fontFamily: fonts.medium, fontSize: 16 },
   shopCategory: {
     color: palette.mutedText,
+    fontFamily: fonts.regular,
     fontSize: 11,
     marginTop: 2,
   },
@@ -615,7 +689,7 @@ const styles = StyleSheet.create({
   },
   shopName: {
     color: palette.primary,
+    fontFamily: fonts.medium,
     fontSize: 14,
-    fontWeight: FONT_WEIGHT.SEMIBOLD,
   },
 });

@@ -25,6 +25,7 @@ import {
 } from 'react-native';
 
 import { HEADER_HEIGHT } from '@/constants/layout';
+import { fonts } from '@/constants/typography';
 import {
   toStepData,
   validateStep,
@@ -382,8 +383,8 @@ const styles = StyleSheet.create({
   },
   addMenuText: {
     color: palette.accent,
+    fontFamily: fonts.medium,
     fontSize: 14,
-    fontWeight: FONT_WEIGHT.SEMIBOLD,
   },
   budgetContainer: {
     gap: 12,
@@ -393,8 +394,8 @@ const styles = StyleSheet.create({
   },
   budgetLabel: {
     color: palette.secondaryText,
+    fontFamily: fonts.medium,
     fontSize: 12,
-    fontWeight: FONT_WEIGHT.SEMIBOLD,
     marginBottom: 6,
   },
   budgetRow: {
@@ -404,8 +405,8 @@ const styles = StyleSheet.create({
   },
   budgetSeparator: {
     color: palette.primaryText,
+    fontFamily: fonts.medium,
     fontSize: 18,
-    fontWeight: FONT_WEIGHT.BOLD,
     marginBottom: 12,
   },
   buttonContainer: {
@@ -426,8 +427,8 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     color: palette.surface,
+    fontFamily: fonts.medium,
     fontSize: 16,
-    fontWeight: FONT_WEIGHT.BOLD,
     lineHeight: LAYOUT.BUTTON_HEIGHT_LG,
     textAlign: 'center',
   },
@@ -438,6 +439,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 1,
     color: palette.primaryText,
+    fontFamily: fonts.regular,
     paddingHorizontal: 14,
     paddingVertical: 12,
   },
@@ -463,8 +465,8 @@ const styles = StyleSheet.create({
   },
   progressText: {
     color: palette.primaryText,
+    fontFamily: fonts.medium,
     fontSize: 14,
-    fontWeight: FONT_WEIGHT.BOLD,
   },
   screen: { backgroundColor: palette.background, flex: 1 },
   skipBtn: {
@@ -473,8 +475,8 @@ const styles = StyleSheet.create({
   },
   skipText: {
     color: palette.secondaryText,
+    fontFamily: fonts.medium,
     fontSize: 14,
-    fontWeight: FONT_WEIGHT.SEMIBOLD,
   },
   stepCard: {
     backgroundColor: palette.surface,
@@ -486,11 +488,12 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     color: palette.secondaryText,
+    fontFamily: fonts.regular,
     marginTop: 4,
   },
   title: {
     color: palette.primaryText,
+    fontFamily: fonts.medium,
     fontSize: 22,
-    fontWeight: FONT_WEIGHT.BOLD,
   },
 });

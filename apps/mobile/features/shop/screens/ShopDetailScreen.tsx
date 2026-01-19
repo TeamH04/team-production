@@ -34,6 +34,7 @@ import {
 } from 'react-native';
 
 import { Accordion } from '@/components/Accordion';
+import { fonts } from '@/constants/typography';
 import { useFavorites } from '@/features/favorites/FavoritesContext';
 import { useReviews } from '@/features/reviews/ReviewsContext';
 import { useStores } from '@/features/stores/StoresContext';
@@ -41,7 +42,88 @@ import { useVisited } from '@/features/visited/VisitedContext';
 import { ENV } from '@/lib/config';
 import { storage } from '@/lib/storage';
 
+import type { RatingDetails } from '@/features/reviews/ReviewsContext';
 import type { ReviewSort } from '@/lib/api';
+
+const RATING_CATEGORIES = [
+  { key: 'taste', label: '味', icon: 'restaurant-outline' as const },
+  { key: 'atmosphere', label: '雰囲気', icon: 'cafe-outline' as const },
+  { key: 'service', label: '接客', icon: 'people-outline' as const },
+  { key: 'speed', label: '提供速度', icon: 'time-outline' as const },
+  { key: 'cleanliness', label: '清潔感', icon: 'sparkles-outline' as const },
+] as const;
+
+const getRatingEmoji = (value: number) => {
+  if (value === 3) return { icon: 'happy' as const, color: palette.errorText, label: '満足' };
+  if (value === 2) return { icon: 'remove' as const, color: palette.accent, label: '普通' };
+  return { icon: 'sad' as const, color: palette.primary, label: '不満' };
+};
+
+type RatingDetailsDisplayProps = {
+  ratingDetails: RatingDetails;
+};
+
+function RatingDetailsDisplay({ ratingDetails }: RatingDetailsDisplayProps) {
+  const hasAnyRating = RATING_CATEGORIES.some(cat => {
+    const value = ratingDetails[cat.key as keyof RatingDetails];
+    return value !== null && value !== undefined && value > 0;
+  });
+
+  if (!hasAnyRating) return null;
+
+  return (
+    <View style={ratingStyles.container}>
+      <View style={ratingStyles.grid}>
+        {RATING_CATEGORIES.map(cat => {
+          const value = ratingDetails[cat.key as keyof RatingDetails];
+          if (value === null || value === undefined || value === 0) return null;
+          const emoji = getRatingEmoji(value);
+          return (
+            <View key={cat.key} style={ratingStyles.item}>
+              <View style={[ratingStyles.iconBadge, { backgroundColor: emoji.color + '15' }]}>
+                <Ionicons name={emoji.icon} size={16} color={emoji.color} />
+              </View>
+              <Text style={ratingStyles.label}>{cat.label}</Text>
+            </View>
+          );
+        })}
+      </View>
+    </View>
+  );
+}
+
+const ratingStyles = StyleSheet.create({
+  container: {
+    marginBottom: 4,
+    marginTop: 8,
+  },
+  grid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+  },
+  iconBadge: {
+    alignItems: 'center',
+    borderRadius: 11,
+    height: 22,
+    justifyContent: 'center',
+    width: 22,
+  },
+  item: {
+    alignItems: 'center',
+    backgroundColor: palette.grayLight,
+    borderRadius: 16,
+    flexDirection: 'row',
+    gap: 5,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+  },
+  label: {
+    color: palette.primaryText,
+    fontFamily: fonts.medium,
+    fontSize: 12,
+  },
+});
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
@@ -576,6 +658,7 @@ const styles = StyleSheet.create({
   },
   descriptionText: {
     color: palette.primary,
+    fontFamily: fonts.regular,
     fontSize: 16,
     lineHeight: 22,
     marginBottom: 16,
@@ -609,7 +692,7 @@ const styles = StyleSheet.create({
     backgroundColor: palette.highlight,
     borderColor: palette.accent,
   },
-  likeText: { color: palette.muted, fontSize: 12, fontWeight: FONT_WEIGHT.SEMIBOLD },
+  likeText: { color: palette.muted, fontFamily: fonts.medium, fontSize: 12 },
   likeTextActive: { color: palette.accent },
   mapIcon: { marginRight: 8 },
   menuAddressBlock: {
@@ -618,17 +701,17 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     padding: 12,
   },
-  menuAddressLabel: { color: palette.secondaryText, fontSize: 12, fontWeight: FONT_WEIGHT.BOLD },
+  menuAddressLabel: { color: palette.secondaryText, fontFamily: fonts.medium, fontSize: 12 },
   menuAddressText: {
     color: palette.primaryText,
+    fontFamily: fonts.medium,
     fontSize: 14,
-    fontWeight: FONT_WEIGHT.SEMIBOLD,
     marginTop: 6,
   },
   menuIcon: { marginRight: 10 },
-  menuItemText: { color: palette.primaryText, fontSize: 15, fontWeight: FONT_WEIGHT.BOLD },
+  menuItemText: { color: palette.primaryText, fontFamily: fonts.medium, fontSize: 15 },
   menuSection: { marginTop: 8 },
-  meta: { color: palette.muted, marginBottom: 12, marginTop: 4 },
+  meta: { color: palette.muted, fontFamily: fonts.regular, marginBottom: 12, marginTop: 4 },
   moreBtnOutline: {
     alignItems: 'center',
     borderColor: palette.primary,
@@ -639,8 +722,8 @@ const styles = StyleSheet.create({
     marginTop: 12,
     paddingVertical: 14,
   },
-  moreBtnText: { color: palette.primary, fontWeight: FONT_WEIGHT.BOLD },
-  muted: { color: palette.muted, marginTop: 6 },
+  moreBtnText: { color: palette.primary, fontFamily: fonts.medium, fontSize: 15 },
+  muted: { color: palette.muted, fontFamily: fonts.regular, marginTop: 6 },
   paginationContainer: {
     bottom: 12,
     flexDirection: 'row',
@@ -666,7 +749,7 @@ const styles = StyleSheet.create({
   },
   primaryBtnText: {
     color: palette.primaryOnAccent,
-    fontWeight: FONT_WEIGHT.BOLD,
+    fontFamily: fonts.medium,
     textAlign: 'center',
   },
   recommendedBox: {
@@ -684,11 +767,11 @@ const styles = StyleSheet.create({
   },
   recommendedLabel: {
     color: palette.primaryText,
+    fontFamily: fonts.medium,
     fontSize: 13,
-    fontWeight: FONT_WEIGHT.BOLD,
     marginBottom: 8,
   },
-  reviewBody: { color: palette.primaryText, marginTop: 8 },
+  reviewBody: { color: palette.primaryText, fontFamily: fonts.regular, marginTop: 8 },
   reviewDivider: {
     borderBottomColor: palette.divider,
     borderBottomWidth: 1,
@@ -708,11 +791,16 @@ const styles = StyleSheet.create({
     width: LAYOUT.REVIEW_IMAGE_SIZE,
   },
   reviewIntro: { marginBottom: 8 },
-  reviewMenu: { color: palette.muted, marginTop: 6 },
+  reviewMenu: { color: palette.muted, fontFamily: fonts.regular, marginTop: 6 },
   reviewPrimaryBtn: { marginBottom: 12, marginTop: 4 },
   reviewSortRow: { marginBottom: 12 },
-  reviewSub: { color: palette.secondaryText, fontSize: 13, marginTop: 2 },
-  reviewTitle: { color: palette.primary, fontWeight: FONT_WEIGHT.BOLD },
+  reviewSub: {
+    color: palette.secondaryText,
+    fontFamily: fonts.regular,
+    fontSize: 13,
+    marginTop: 2,
+  },
+  reviewTitle: { color: palette.primary, fontFamily: fonts.medium },
   screen: { backgroundColor: palette.background, flex: 1 },
   secondaryBtn: {
     backgroundColor: palette.secondarySurface,
@@ -723,8 +811,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 10,
   },
-  secondaryBtnText: { color: palette.textOnSecondary, fontWeight: FONT_WEIGHT.BOLD },
-  sectionTitle: { color: palette.primary, fontSize: 18, fontWeight: FONT_WEIGHT.BOLD },
+  secondaryBtnText: { color: palette.textOnSecondary, fontFamily: fonts.medium },
+  sectionTitle: { color: palette.primary, fontFamily: fonts.medium, fontSize: 18 },
   shareBtn: { marginLeft: 8, padding: 4 },
   shareBtnDisabled: { opacity: 0.4 },
   sortPill: {
@@ -741,7 +829,7 @@ const styles = StyleSheet.create({
     borderColor: palette.accent,
   },
   sortRow: { flexDirection: 'row', marginBottom: 8 },
-  sortText: { color: palette.muted, fontSize: 12, fontWeight: FONT_WEIGHT.SEMIBOLD },
+  sortText: { color: palette.muted, fontFamily: fonts.medium, fontSize: 12 },
   sortTextActive: { color: palette.primaryOnAccent },
   tagPill: {
     backgroundColor: palette.tagSurface,
@@ -752,14 +840,14 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
   },
   tagRow: { flexDirection: 'row', flexWrap: 'wrap', marginBottom: 16 },
-  tagText: { color: palette.tagText, fontSize: 12, fontWeight: FONT_WEIGHT.SEMIBOLD },
+  tagText: { color: palette.tagText, fontFamily: fonts.medium, fontSize: 12 },
   title: {
     color: palette.primary,
     flex: 1,
+    fontFamily: fonts.medium,
     fontSize: 22,
-    fontWeight: FONT_WEIGHT.BOLD,
     marginRight: 0,
   },
-  titleLoading: { color: palette.secondaryText, fontSize: 18, fontWeight: FONT_WEIGHT.BOLD },
+  titleLoading: { color: palette.secondaryText, fontFamily: fonts.medium, fontSize: 18 },
   visitedBtn: { marginLeft: 8 },
 });

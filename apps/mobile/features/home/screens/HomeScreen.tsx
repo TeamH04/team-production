@@ -25,6 +25,7 @@ import Animated, { useAnimatedRef } from 'react-native-reanimated';
 
 import { ShopCard } from '@/components/ShopCard';
 import { TAB_BAR_SPACING } from '@/constants/TabBarSpacing';
+import { fonts } from '@/constants/typography';
 import { useStores } from '@/features/stores/StoresContext';
 import { useShopNavigator } from '@/hooks/useShopNavigator';
 
@@ -216,6 +217,7 @@ const styles = StyleSheet.create({
 
   emptySubtitle: {
     color: palette.secondaryText,
+    fontFamily: fonts.regular,
     fontSize: 13,
     marginTop: 8,
     textAlign: 'center',
@@ -223,8 +225,8 @@ const styles = StyleSheet.create({
 
   emptyTitle: {
     color: palette.secondaryText,
+    fontFamily: fonts.medium,
     fontSize: 16,
-    fontWeight: FONT_WEIGHT.SEMIBOLD,
   },
 
   filterInfo: {

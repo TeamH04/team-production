@@ -30,6 +30,7 @@ import {
 
 import { ShopCard } from '@/components/ShopCard';
 import { TAB_BAR_SPACING } from '@/constants/TabBarSpacing';
+import { fonts } from '@/constants/typography';
 import { useStores } from '@/features/stores/StoresContext';
 import { useVisited } from '@/features/visited/VisitedContext';
 
@@ -428,6 +429,7 @@ const styles = StyleSheet.create({
   },
   clearButtonText: {
     color: palette.secondaryText,
+    fontFamily: fonts.regular,
     fontSize: 20,
   },
   container: {
@@ -453,6 +455,7 @@ const styles = StyleSheet.create({
   },
   emptyHistoryText: {
     color: palette.secondaryText,
+    fontFamily: fonts.regular,
     fontSize: 16,
   },
   emptyImage: {
@@ -465,8 +468,8 @@ const styles = StyleSheet.create({
   },
   emptyTitle: {
     color: palette.secondaryText,
+    fontFamily: fonts.medium,
     fontSize: 16,
-    fontWeight: FONT_WEIGHT.SEMIBOLD,
     marginBottom: 40,
   },
   fixedOrderContainer: {
@@ -491,6 +494,7 @@ const styles = StyleSheet.create({
   },
   historyText: {
     color: palette.primaryText,
+    fontFamily: fonts.regular,
     fontSize: 16,
   },
   historyTextContainer: {
@@ -498,8 +502,8 @@ const styles = StyleSheet.create({
   },
   historyTitle: {
     color: palette.primaryText,
+    fontFamily: fonts.medium,
     fontSize: 20,
-    fontWeight: FONT_WEIGHT.SEMIBOLD,
     marginBottom: SPACING.LG,
   },
   orderButton: {
@@ -513,6 +517,7 @@ const styles = StyleSheet.create({
   },
   orderButtonText: {
     color: palette.secondaryText,
+    fontFamily: fonts.regular,
     fontSize: 12,
     textAlign: 'center',
   },
@@ -524,14 +529,14 @@ const styles = StyleSheet.create({
   resultsSection: {},
   resultsTitle: {
     color: palette.primaryText,
+    fontFamily: fonts.medium,
     fontSize: 14,
-    fontWeight: FONT_WEIGHT.SEMIBOLD,
     marginBottom: SPACING.LG,
   },
   screenTitle: {
     color: palette.primaryText,
+    fontFamily: fonts.medium,
     fontSize: 28,
-    fontWeight: FONT_WEIGHT.BOLD,
   },
   searchBarContainer: {
     marginBottom: SPACING.LG,
@@ -543,6 +548,7 @@ const styles = StyleSheet.create({
   searchInput: {
     color: palette.primaryText,
     flex: 1,
+    fontFamily: fonts.regular,
     fontSize: 16,
   },
   searchWrapper: {
@@ -556,8 +562,8 @@ const styles = StyleSheet.create({
   },
   sectionLabel: {
     color: palette.secondaryText,
+    fontFamily: fonts.medium,
     fontSize: 14,
-    fontWeight: FONT_WEIGHT.SEMIBOLD,
     marginBottom: SPACING.LG,
   },
   shadowLight: {
@@ -581,8 +587,8 @@ const styles = StyleSheet.create({
   },
   subSectionLabel: {
     color: palette.secondaryText,
+    fontFamily: fonts.medium,
     fontSize: 13,
-    fontWeight: FONT_WEIGHT.SEMIBOLD,
     marginBottom: SPACING.MD,
   },
   subTagSection: {

@@ -18,7 +18,7 @@ import {
 } from '@/lib/auth';
 import { storage } from '@/lib/storage';
 
-import type { Review, ReviewAsset, ReviewFile } from '@team/types';
+import type { RatingDetails, Review, ReviewAsset, ReviewFile } from '@team/types';
 
 // テスト可能なSupabaseストレージの最小限のインターフェース
 type UploadToSignedUrlResult = { error: Error | null };
@@ -79,6 +79,7 @@ type ReviewsContextValue = {
     shopId: string,
     input: {
       rating: number;
+      ratingDetails?: RatingDetails;
       comment?: string;
       menuItemIds?: string[];
       menuItemName?: string;
@@ -137,6 +138,7 @@ export function ReviewsProvider({ children }: { children: React.ReactNode }) {
       shopId: string,
       input: {
         rating: number;
+        ratingDetails?: RatingDetails;
         comment?: string;
         menuItemIds?: string[];
         menuItemName?: string;
@@ -182,6 +184,7 @@ export function ReviewsProvider({ children }: { children: React.ReactNode }) {
         shopId,
         {
           rating: input.rating,
+          rating_details: input.ratingDetails ?? null,
           content: input.comment ?? null,
           file_ids: fileIDs,
           menu_ids: input.menuItemIds ?? [],

@@ -9,6 +9,66 @@ import (
 	"github.com/TeamH04/team-production/apps/backend/internal/security"
 )
 
+func TestTokenClaims_Fields(t *testing.T) {
+	claims := security.TokenClaims{
+		UserID:   "user-123",
+		Role:     "admin",
+		Email:    "test@example.com",
+		Provider: "google",
+		Name:     "Test User",
+		IconURL:  "https://example.com/avatar.png",
+		Gender:   "female",
+	}
+
+	if claims.UserID != "user-123" {
+		t.Errorf("expected UserID 'user-123', got '%s'", claims.UserID)
+	}
+	if claims.Role != "admin" {
+		t.Errorf("expected Role 'admin', got '%s'", claims.Role)
+	}
+	if claims.Email != "test@example.com" {
+		t.Errorf("expected Email 'test@example.com', got '%s'", claims.Email)
+	}
+	if claims.Provider != "google" {
+		t.Errorf("expected Provider 'google', got '%s'", claims.Provider)
+	}
+	if claims.Name != "Test User" {
+		t.Errorf("expected Name 'Test User', got '%s'", claims.Name)
+	}
+	if claims.IconURL != "https://example.com/avatar.png" {
+		t.Errorf("expected IconURL 'https://example.com/avatar.png', got '%s'", claims.IconURL)
+	}
+	if claims.Gender != "female" {
+		t.Errorf("expected Gender 'female', got '%s'", claims.Gender)
+	}
+}
+
+func TestTokenClaims_EmptyFields(t *testing.T) {
+	claims := security.TokenClaims{}
+
+	if claims.UserID != "" {
+		t.Errorf("expected empty UserID, got '%s'", claims.UserID)
+	}
+	if claims.Role != "" {
+		t.Errorf("expected empty Role, got '%s'", claims.Role)
+	}
+	if claims.Email != "" {
+		t.Errorf("expected empty Email, got '%s'", claims.Email)
+	}
+	if claims.Provider != "" {
+		t.Errorf("expected empty Provider, got '%s'", claims.Provider)
+	}
+	if claims.Name != "" {
+		t.Errorf("expected empty Name, got '%s'", claims.Name)
+	}
+	if claims.IconURL != "" {
+		t.Errorf("expected empty IconURL, got '%s'", claims.IconURL)
+	}
+	if claims.Gender != "" {
+		t.Errorf("expected empty Gender, got '%s'", claims.Gender)
+	}
+}
+
 func TestTokenVerifier_Interface(t *testing.T) {
 	// Test that MockTokenVerifier implements TokenVerifier interface
 	var _ security.TokenVerifier = &testutil.MockTokenVerifier{}

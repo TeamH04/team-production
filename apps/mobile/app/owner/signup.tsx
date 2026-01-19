@@ -27,6 +27,8 @@ import {
   View,
 } from 'react-native';
 
+import { fonts } from '@/constants/typography';
+
 export default function OwnerSignupScreen() {
   const router = useRouter();
   const navigation = useNavigation();
@@ -220,8 +222,8 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     color: palette.surface,
+    fontFamily: fonts.medium,
     fontSize: 16,
-    fontWeight: FONT_WEIGHT.BOLD,
     height: LAYOUT.BUTTON_HEIGHT_MD,
     lineHeight: LAYOUT.BUTTON_HEIGHT_MD,
     textAlign: 'center',
@@ -232,6 +234,7 @@ const styles = StyleSheet.create({
   },
   errorText: {
     color: palette.dangerBorder,
+    fontFamily: fonts.regular,
     fontSize: 12,
     marginTop: 4,
   },
@@ -244,13 +247,14 @@ const styles = StyleSheet.create({
     borderRadius: BORDER_RADIUS.MEDIUM,
     borderWidth: 1,
     color: palette.primaryText,
+    fontFamily: fonts.regular,
     paddingHorizontal: 14,
     paddingVertical: 12,
   },
   label: {
     color: palette.primaryText,
+    fontFamily: fonts.medium,
     fontSize: 14,
-    fontWeight: FONT_WEIGHT.MEDIUM,
     marginTop: 10,
   },
   screen: {
@@ -266,12 +270,13 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     color: palette.secondaryText,
+    fontFamily: fonts.regular,
     marginBottom: 16,
     marginTop: 8,
   },
   title: {
     color: palette.primaryText,
+    fontFamily: fonts.medium,
     fontSize: 24,
-    fontWeight: FONT_WEIGHT.BOLD,
   },
 });

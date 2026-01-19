@@ -2,20 +2,35 @@ import { Ionicons } from '@expo/vector-icons';
 import {
   BORDER_RADIUS,
   ERROR_MESSAGES,
-  FONT_WEIGHT,
   isValidEmail,
   LAYOUT,
   ROUTES,
   SESSION_NOT_FOUND,
-  SHADOW_STYLES,
   UI_LABELS,
 } from '@team/constants';
 import { palette } from '@team/mobile-ui';
+import { BlurView } from 'expo-blur';
 import { type Href, useNavigation, useRouter } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
 import { useLayoutEffect, useState } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import {
+  Alert,
+  Dimensions,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
+import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 
+import KuguriTitle from '@/assets/icons/kaguri.svg';
+import { AnimatedLoginBackground } from '@/components/AnimatedLoginBackground';
+import { fonts } from '@/constants/typography';
 import { ensureUserExistsInDB, getSupabase, isSupabaseConfigured } from '@/lib/auth';
+
+const { height } = Dimensions.get('window');
 
 export default function OwnerLoginScreen() {
   const router = useRouter();
@@ -27,8 +42,7 @@ export default function OwnerLoginScreen() {
 
   useLayoutEffect(() => {
     navigation.setOptions?.({
-      title: 'オーナーログイン',
-      headerBackTitle: UI_LABELS.LOGIN,
+      headerShown: false,
     });
   }, [navigation]);
 
@@ -88,181 +102,228 @@ export default function OwnerLoginScreen() {
 
   return (
     <View style={styles.screen}>
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        <View style={styles.cardShadow}>
-          <View style={styles.card}>
-            <View style={styles.titleContainer}>
-              <Text style={styles.title}>オーナーログイン</Text>
-              <Ionicons
-                name='person-circle'
-                size={20}
-                color={palette.primaryText}
-                style={styles.icon}
-              />
-            </View>
+      <StatusBar style='light' />
+      <AnimatedLoginBackground />
 
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>メールアドレス</Text>
-              <TextInput
-                value={email}
-                onChangeText={text => {
-                  setEmail(text);
-                  setEmailError(false);
-                }}
-                autoCapitalize='none'
-                autoCorrect={false}
-                keyboardType='email-address'
-                placeholder='owner@example.com'
-                placeholderTextColor={palette.tertiaryText}
-                style={styles.input}
-              />
-              {emailError && <Text style={styles.errorText}>※ 正しく入力してください</Text>}
-            </View>
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps='handled'
+      >
+        <Animated.View entering={FadeInUp.duration(1000).springify()} style={styles.logoContainer}>
+          <KuguriTitle
+            width='60%'
+            height={80}
+            preserveAspectRatio='xMidYMid meet'
+            accessibilityLabel='Kuguriロゴ'
+            fill={palette.white}
+          />
+          <Animated.Text entering={FadeInUp.delay(300).duration(800)} style={styles.tagline}>
+            オーナー専用ログイン
+          </Animated.Text>
+        </Animated.View>
 
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>パスワード</Text>
-              <TextInput
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry
-                placeholder='••••••••'
-                placeholderTextColor={palette.tertiaryText}
-                style={styles.input}
-              />
-            </View>
-
-            <View style={styles.loginButtonWrapper}>
-              <View style={styles.loginButtonContainer}>
-                <Pressable
-                  onPress={handleLogin}
-                  disabled={loading}
-                  style={({ pressed }) => [
-                    styles.loginButtonPressable,
-                    (pressed || loading) && styles.loginButtonPressed,
-                  ]}
-                >
-                  <Text style={styles.loginButtonText}>
-                    {loading ? 'ログイン中…' : UI_LABELS.LOGIN}
-                  </Text>
-                </Pressable>
+        <Animated.View
+          entering={FadeInDown.delay(400).duration(800).springify()}
+          style={styles.formContainer}
+        >
+          <BlurView intensity={20} tint='dark' style={styles.formBlurWrapper}>
+            <View style={styles.formContent}>
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>メールアドレス</Text>
+                <TextInput
+                  value={email}
+                  onChangeText={text => {
+                    setEmail(text);
+                    setEmailError(false);
+                  }}
+                  autoCapitalize='none'
+                  autoCorrect={false}
+                  keyboardType='email-address'
+                  placeholder='owner@example.com'
+                  placeholderTextColor={palette.placeholderText}
+                  style={styles.input}
+                />
+                {emailError && <Text style={styles.errorText}>※ 正しく入力してください</Text>}
               </View>
+
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>パスワード</Text>
+                <TextInput
+                  value={password}
+                  onChangeText={setPassword}
+                  secureTextEntry
+                  placeholder='••••••••'
+                  placeholderTextColor={palette.placeholderText}
+                  style={styles.input}
+                />
+              </View>
+
+              <Pressable
+                onPress={handleLogin}
+                disabled={loading}
+                style={({ pressed }) => [
+                  styles.loginButton,
+                  pressed && styles.loginButtonPressed,
+                  loading && styles.loginButtonLoading,
+                ]}
+              >
+                <Text style={styles.loginButtonText}>{loading ? 'ログイン中…' : 'ログイン'}</Text>
+              </Pressable>
             </View>
+          </BlurView>
+        </Animated.View>
 
-            <View style={styles.dividerLine} />
-
-            <Pressable
-              onPress={() => router.push(ROUTES.OWNER_SIGNUP as Href)}
-              style={({ pressed }) => [styles.secondaryBtn, pressed && styles.secondaryBtnPressed]}
-            >
-              <Text style={styles.secondaryBtnText}>アカウントを新規作成</Text>
-            </Pressable>
+        <Animated.View entering={FadeInDown.delay(600).duration(800)} style={styles.signupBox}>
+          <View style={styles.signupLead}>
+            <View style={styles.signupLineSide} />
+            <Text style={styles.signupLeadText}>アカウントをお持ちでない方</Text>
+            <View style={styles.signupLineSide} />
           </View>
-        </View>
+          <Pressable onPress={() => router.push(ROUTES.OWNER_SIGNUP as Href)}>
+            <Text style={styles.signupLink}>新規アカウント作成</Text>
+          </Pressable>
+        </Animated.View>
+
+        <Animated.View entering={FadeInDown.delay(800).duration(800)} style={styles.backBox}>
+          <Pressable onPress={() => router.back()} style={styles.backButton}>
+            <Ionicons name='arrow-back' size={18} color={palette.white} />
+            <Text style={styles.backText}>戻る</Text>
+          </Pressable>
+        </Animated.View>
       </ScrollView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  card: {
-    alignSelf: 'stretch',
-    backgroundColor: palette.surface,
-    borderRadius: 16,
-    padding: 24,
-  },
-  cardShadow: {
-    alignSelf: 'center',
-    boxShadow: '0px 8px 16px rgba(0, 0, 0, 0.08)',
-    elevation: 5,
-    marginHorizontal: 24,
-    marginVertical: 28,
-    maxWidth: 480,
-    width: '100%',
-  },
-  dividerLine: {
-    alignSelf: 'stretch',
-    backgroundColor: palette.border,
-    height: 1,
-    marginVertical: 16,
-  },
-  errorText: { color: palette.dangerBorder, fontSize: 14, marginTop: 4 },
-  icon: { marginLeft: 8 },
-  input: {
-    backgroundColor: palette.surface,
-    borderColor: palette.border,
-    borderRadius: BORDER_RADIUS.MEDIUM,
-    borderWidth: 1,
-    color: palette.primaryText,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-  },
-  inputGroup: { marginBottom: 14 },
-  label: { color: palette.secondaryText, fontSize: 12, marginBottom: 6 },
-  loginButtonContainer: {
-    ...SHADOW_STYLES.DEFAULT,
-    backgroundColor: palette.button,
-    borderColor: palette.buttonBorder,
-    borderRadius: BORDER_RADIUS.PILL,
-    borderWidth: 1,
-    height: LAYOUT.BUTTON_HEIGHT_MD,
-    minWidth: 160,
-    overflow: 'hidden',
-  },
-  loginButtonPressable: {
+  backBox: {
     alignItems: 'center',
-    flex: 1,
-    justifyContent: 'center',
-    paddingHorizontal: 24,
+    marginTop: 20,
   },
-  loginButtonPressed: {
-    opacity: 0.7,
-  },
-  loginButtonText: {
-    color: palette.surface,
-    fontSize: 16,
-    fontWeight: FONT_WEIGHT.BOLD,
-    height: LAYOUT.BUTTON_HEIGHT_MD,
-    lineHeight: LAYOUT.BUTTON_HEIGHT_MD,
-    textAlign: 'center',
-  },
-  loginButtonWrapper: {
-    alignItems: 'center',
-    marginTop: 24,
-  },
-  screen: {
-    alignItems: 'center',
-    backgroundColor: palette.background,
-    flex: 1,
-    justifyContent: 'center',
-    paddingHorizontal: 24,
-  },
-  scrollContent: {
-    alignItems: 'center',
-    flexGrow: 1,
-    paddingHorizontal: 24,
-    paddingVertical: 24,
-  },
-  secondaryBtn: {
-    backgroundColor: palette.surface,
-    borderColor: palette.border,
-    borderRadius: BORDER_RADIUS.MEDIUM,
-    borderWidth: 1,
-    marginTop: 16,
-    paddingVertical: 12,
-  },
-  secondaryBtnPressed: {
-    opacity: 0.9,
-  },
-  secondaryBtnText: {
-    color: palette.link,
-    fontWeight: FONT_WEIGHT.BOLD,
-    textAlign: 'center',
-  },
-  title: { color: palette.primaryText, fontSize: 20, fontWeight: FONT_WEIGHT.BOLD },
-  titleContainer: {
+  backButton: {
     alignItems: 'center',
     flexDirection: 'row',
+    gap: 6,
+    opacity: 0.8,
+  },
+  backText: {
+    color: palette.white,
+    fontFamily: fonts.regular,
+    fontSize: 14,
+  },
+  errorText: {
+    color: palette.formErrorText,
+    fontFamily: fonts.regular,
+    fontSize: 12,
+    marginTop: 4,
+  },
+  formBlurWrapper: {
+    backgroundColor: palette.glassBg,
+    borderColor: palette.glassBorder,
+    borderRadius: 20,
+    borderWidth: 1,
+    overflow: 'hidden',
+  },
+  formContainer: {
+    alignSelf: 'stretch',
+    marginTop: 40,
+    width: '100%',
+  },
+  formContent: {
+    padding: 24,
+  },
+  input: {
+    backgroundColor: palette.inputBg,
+    borderColor: palette.inputBorder,
+    borderRadius: 12,
+    borderWidth: 1,
+    color: palette.white,
+    fontFamily: fonts.regular,
+    fontSize: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+  },
+  inputGroup: {
+    marginBottom: 16,
+  },
+  label: {
+    color: palette.labelText,
+    fontFamily: fonts.medium,
+    fontSize: 13,
+    marginBottom: 8,
+  },
+  loginButton: {
+    alignItems: 'center',
+    backgroundColor: palette.loginButtonBg,
+    borderColor: palette.loginButtonBorder,
+    borderRadius: 30,
+    borderWidth: 1,
+    height: 52,
     justifyContent: 'center',
-    marginBottom: 24,
+    marginTop: 8,
+  },
+  loginButtonLoading: {
+    opacity: 0.75,
+  },
+  loginButtonPressed: {
+    backgroundColor: palette.loginButtonPressedBg,
+  },
+  loginButtonText: {
+    color: palette.white,
+    fontFamily: fonts.medium,
+    fontSize: 17,
+    textShadowColor: palette.glassShadow,
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
+  },
+  logoContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: height * 0.12,
+  },
+  screen: {
+    flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
+    paddingBottom: 40,
+    paddingHorizontal: 24,
+  },
+  signupBox: {
+    alignItems: 'center',
+    marginTop: 32,
+  },
+  signupLead: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 16,
+    opacity: 0.8,
+  },
+  signupLeadText: {
+    color: palette.white,
+    fontFamily: fonts.regular,
+    fontSize: 14,
+  },
+  signupLineSide: {
+    backgroundColor: palette.grayLight,
+    flex: 1,
+    height: 1,
+    opacity: 0.5,
+  },
+  signupLink: {
+    color: palette.white,
+    fontFamily: fonts.medium,
+    fontSize: 16,
+    textDecorationLine: 'underline',
+  },
+  tagline: {
+    color: palette.white,
+    fontFamily: fonts.regular,
+    fontSize: 16,
+    letterSpacing: 1.2,
+    marginTop: 16,
+    opacity: 0.9,
   },
 });

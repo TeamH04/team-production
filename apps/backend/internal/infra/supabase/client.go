@@ -425,12 +425,18 @@ func (c *Client) Verify(ctx context.Context, token string) (*security.TokenClaim
 	if provider == "" {
 		provider = "oauth"
 	}
+	name := extractName(claims)
+	iconURL := extractIconURL(claims)
+	gender := extractGender(claims)
 
 	return &security.TokenClaims{
 		UserID:   userID,
 		Role:     userRole,
 		Email:    claims.Email,
 		Provider: provider,
+		Name:     name,
+		IconURL:  iconURL,
+		Gender:   gender,
 	}, nil
 }
 
@@ -438,16 +444,50 @@ func extractProvider(claims *supabaseClaims) string {
 	if claims == nil {
 		return ""
 	}
-	if provider := getStringFromMap(claims.AppMetadata, "provider"); provider != "" {
+	if provider := strings.ToLower(getStringFromMap(claims.AppMetadata, "provider")); provider != "" {
 		return provider
 	}
-	if provider := getStringFromMap(claims.UserMetadata, "provider"); provider != "" {
+	if provider := strings.ToLower(getStringFromMap(claims.UserMetadata, "provider")); provider != "" {
 		return provider
 	}
 	if providers := getStringSliceFromMap(claims.AppMetadata, "providers"); len(providers) > 0 {
 		return providers[0]
 	}
 	return ""
+}
+
+func extractName(claims *supabaseClaims) string {
+	if claims == nil {
+		return ""
+	}
+	return getStringFromMaps(
+		[]map[string]any{claims.UserMetadata, claims.AppMetadata},
+		"name",
+		"full_name",
+		"preferred_username",
+		"given_name",
+	)
+}
+
+func extractIconURL(claims *supabaseClaims) string {
+	if claims == nil {
+		return ""
+	}
+	return getStringFromMaps(
+		[]map[string]any{claims.UserMetadata, claims.AppMetadata},
+		"avatar_url",
+		"picture",
+	)
+}
+
+func extractGender(claims *supabaseClaims) string {
+	if claims == nil {
+		return ""
+	}
+	return getStringFromMaps(
+		[]map[string]any{claims.UserMetadata, claims.AppMetadata},
+		"gender",
+	)
 }
 
 func getStringFromMap(values map[string]any, key string) string {
@@ -459,7 +499,21 @@ func getStringFromMap(values map[string]any, key string) string {
 		return ""
 	}
 	if s, ok := raw.(string); ok {
-		return strings.ToLower(strings.TrimSpace(s))
+		return strings.TrimSpace(s)
+	}
+	return ""
+}
+
+func getStringFromMaps(maps []map[string]any, keys ...string) string {
+	if len(maps) == 0 || len(keys) == 0 {
+		return ""
+	}
+	for _, key := range keys {
+		for _, values := range maps {
+			if s := getStringFromMap(values, key); s != "" {
+				return s
+			}
+		}
 	}
 	return ""
 }
