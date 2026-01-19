@@ -9,6 +9,7 @@ import {
   GENRES,
   toggleGenre as toggleGenreUtil,
 } from '@team/constants';
+import { fontFamilies } from '@team/theme';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { palette } from '../palette';
@@ -79,11 +80,11 @@ const styles = StyleSheet.create({
   },
   chipTextOff: {
     color: palette.primaryText,
-    fontWeight: FONT_WEIGHT.BOLD,
+    fontFamily: fontFamilies.medium,
   },
   chipTextOn: {
     color: palette.primaryOnAccent,
-    fontWeight: FONT_WEIGHT.BOLD,
+    fontFamily: fontFamilies.medium,
   },
   chipsWrap: {
     flexDirection: 'row',
@@ -92,7 +93,7 @@ const styles = StyleSheet.create({
   },
   label: {
     color: palette.primaryText,
-    fontWeight: FONT_WEIGHT.BOLD,
+    fontFamily: fontFamilies.medium,
     marginBottom: 8,
   },
 });

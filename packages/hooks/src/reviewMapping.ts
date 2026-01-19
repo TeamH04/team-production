@@ -35,6 +35,7 @@ export function mapApiReview(review: ApiReview): Review {
     shopId: review.store_id,
     userId: review.user_id,
     rating: review.rating,
+    ratingDetails: review.rating_details ?? undefined,
     comment: review.content ?? undefined,
     createdAt: review.created_at,
     menuItemIds: menuItemIds && menuItemIds.length > 0 ? menuItemIds : undefined,

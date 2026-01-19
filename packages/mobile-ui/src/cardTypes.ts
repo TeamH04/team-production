@@ -21,6 +21,8 @@ export interface ShopCardProps {
   variant?: ShopCardVariant;
   style?: CardStyle;
   formatMeta?: (shop: Shop) => string;
+  /** ブースト表示（炎アイコン・ボーダー強調） */
+  isBoosted?: boolean;
 }
 
 /**

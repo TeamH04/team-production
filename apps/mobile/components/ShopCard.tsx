@@ -1,9 +1,12 @@
-import { BORDER_RADIUS, FONT_WEIGHT, formatRating, LAYOUT, SPACING } from '@team/constants';
+import { Ionicons } from '@expo/vector-icons';
+import { BORDER_RADIUS, formatRating, LAYOUT, SPACING } from '@team/constants';
 import { palette, type ShopCardProps, type ShopCardVariant } from '@team/mobile-ui';
 import { BUDGET_LABEL } from '@team/shop-core';
 import { Image } from 'expo-image';
 import { memo } from 'react';
 import { Image as RNImage, Pressable, StyleSheet, Text, View } from 'react-native';
+
+import { fonts } from '@/constants/typography';
 
 export type { ShopCardProps, ShopCardVariant };
 
@@ -18,6 +21,7 @@ function ShopCardComponent({
   variant = 'compact',
   style,
   formatMeta,
+  isBoosted = false,
 }: ShopCardProps) {
   const handlePress = () => {
     onPress(shop.id);
@@ -29,8 +33,16 @@ function ShopCardComponent({
 
   if (variant === 'large') {
     return (
-      <View style={[styles.largeShadow, style]}>
-        <Pressable onPress={handlePress} style={styles.largeContainer}>
+      <View style={[styles.largeShadow, isBoosted && styles.largeShadowBoosted, style]}>
+        <Pressable
+          onPress={handlePress}
+          style={[styles.largeContainer, isBoosted && styles.largeContainerBoosted]}
+        >
+          {isBoosted && (
+            <View style={styles.boostBadge}>
+              <Ionicons name='flame' size={16} color={palette.boostRed} />
+            </View>
+          )}
           <Image contentFit='cover' source={{ uri: shop.imageUrl }} style={styles.largeImage} />
 
           <View style={styles.largeBody}>
@@ -62,41 +74,68 @@ function ShopCardComponent({
 
   // compact variant
   return (
-    <Pressable onPress={handlePress} style={[styles.compactCard, style]}>
-      <RNImage source={{ uri: shop.imageUrl }} style={styles.compactImage} />
-      <View style={styles.compactInfo}>
-        <View style={styles.compactHeader}>
-          <Text style={styles.compactName}>{shop.name}</Text>
-          <View style={styles.compactRatingBadge}>
-            <Text style={styles.compactRatingText}>{`★ ${formatRating(shop.rating)}`}</Text>
+    <View style={[styles.compactShadow, style]}>
+      <Pressable
+        onPress={handlePress}
+        style={[styles.compactContainer, isBoosted && styles.compactContainerBoosted]}
+      >
+        {isBoosted && (
+          <View style={[styles.boostBadge, styles.boostBadgeCompact]}>
+            <Ionicons name='flame' size={12} color={palette.boostRed} />
           </View>
+        )}
+        <RNImage source={{ uri: shop.imageUrl }} style={styles.compactImage} />
+        <View style={styles.compactInfo}>
+          <View style={styles.compactHeader}>
+            <Text style={styles.compactName}>{shop.name}</Text>
+            <View style={styles.compactRatingBadge}>
+              <Text style={styles.compactRatingText}>{`★ ${formatRating(shop.rating)}`}</Text>
+            </View>
+          </View>
+          <Text style={styles.compactMeta}>{metaText}</Text>
+          <Text style={styles.compactDescription} numberOfLines={2}>
+            {shop.description}
+          </Text>
         </View>
-        <Text style={styles.compactMeta}>{metaText}</Text>
-        <Text style={styles.compactDescription} numberOfLines={2}>
-          {shop.description}
-        </Text>
-      </View>
-    </Pressable>
+      </Pressable>
+    </View>
   );
 }
 
 export const ShopCard = memo(ShopCardComponent);
 
 const styles = StyleSheet.create({
-  // Compact variant styles (Search/Favorites)
-  compactCard: {
+  boostBadge: {
+    alignItems: 'center',
+    backgroundColor: palette.boostBadgeBg,
+    borderRadius: 999,
+    justifyContent: 'center',
+    padding: 8,
+    position: 'absolute',
+    right: 12,
+    top: 12,
+    zIndex: 1,
+  },
+  boostBadgeCompact: {
+    padding: 4,
+    right: 8,
+    top: 8,
+  },
+  compactContainer: {
     backgroundColor: palette.surface,
     borderColor: palette.divider,
     borderRadius: BORDER_RADIUS.LARGE,
     borderWidth: 1,
-    boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.05)',
-    elevation: 2,
     flexDirection: 'row',
-    marginBottom: SPACING.MD,
     overflow: 'hidden',
+  },
+  compactContainerBoosted: {
+    borderColor: palette.boostBorder,
+    borderWidth: 2,
   },
   compactDescription: {
     color: palette.secondaryText,
+    fontFamily: fonts.regular,
     fontSize: 12,
     lineHeight: 16,
   },
@@ -116,14 +155,15 @@ const styles = StyleSheet.create({
   },
   compactMeta: {
     color: palette.secondaryText,
+    fontFamily: fonts.regular,
     fontSize: 12,
     marginBottom: SPACING.XS,
   },
   compactName: {
     color: palette.primaryText,
     flex: 1,
+    fontFamily: fonts.medium,
     fontSize: 14,
-    fontWeight: FONT_WEIGHT.SEMIBOLD,
   },
   compactRatingBadge: {
     backgroundColor: palette.highlight,
@@ -134,11 +174,16 @@ const styles = StyleSheet.create({
   },
   compactRatingText: {
     color: palette.ratingText,
+    fontFamily: fonts.medium,
     fontSize: 11,
-    fontWeight: FONT_WEIGHT.SEMIBOLD,
   },
-
-  // Large variant styles (Home)
+  compactShadow: {
+    backgroundColor: palette.surface,
+    borderRadius: BORDER_RADIUS.LARGE,
+    boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.05)',
+    elevation: 2,
+    marginBottom: SPACING.MD,
+  },
   header: {
     alignItems: 'center',
     flexDirection: 'row',
@@ -153,9 +198,15 @@ const styles = StyleSheet.create({
     borderRadius: 28,
     borderWidth: 1,
     overflow: 'hidden',
+    position: 'relative',
+  },
+  largeContainerBoosted: {
+    borderColor: palette.boostBorder,
+    borderWidth: 2,
   },
   largeDescription: {
     color: palette.tertiaryText,
+    fontFamily: fonts.regular,
     fontSize: 14,
     lineHeight: 20,
     marginTop: SPACING.MD,
@@ -170,24 +221,31 @@ const styles = StyleSheet.create({
     marginTop: SPACING.MD,
   },
   largeShadow: {
+    backgroundColor: palette.surface,
+    borderRadius: 28,
     boxShadow: '0px 8px 16px rgba(0, 0, 0, 0.08)',
     elevation: 5,
     marginBottom: SPACING.XL,
   },
+  largeShadowBoosted: {
+    // shadowColor: palette.boostRed, // Optional: add colored shadow for boost
+  },
   largeTitle: {
     color: palette.primaryText,
     flex: 1,
+    fontFamily: fonts.medium,
     fontSize: 18,
-    fontWeight: FONT_WEIGHT.BOLD,
     marginRight: SPACING.MD,
   },
   metaSeparator: {
     color: palette.divider,
+    fontFamily: fonts.regular,
     fontSize: 13,
     marginHorizontal: 6,
   },
   metaText: {
     color: palette.secondaryText,
+    fontFamily: fonts.regular,
     fontSize: 13,
   },
   ratingBadge: {
@@ -198,7 +256,7 @@ const styles = StyleSheet.create({
   },
   ratingText: {
     color: palette.ratingText,
+    fontFamily: fonts.medium,
     fontSize: 13,
-    fontWeight: FONT_WEIGHT.SEMIBOLD,
   },
 });

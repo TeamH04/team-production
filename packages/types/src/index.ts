@@ -217,6 +217,7 @@ export type Review = {
   shopId: string;
   userId: string;
   rating: number;
+  ratingDetails?: RatingDetails;
   comment?: string;
   createdAt: string;
   menuItemIds?: string[];

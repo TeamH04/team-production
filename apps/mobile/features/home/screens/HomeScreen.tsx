@@ -1,14 +1,4 @@
-import {
-  BORDER_RADIUS,
-  ERROR_MESSAGES,
-  FONT_WEIGHT,
-  LAYOUT,
-  MOBILE_PAGE_SIZE,
-  ROUTES,
-  TIMING,
-} from '@team/constants';
-import { usePagination } from '@team/hooks';
-import { useShopFilter } from '@team/hooks';
+import { BORDER_RADIUS, ERROR_MESSAGES, LAYOUT, ROUTES, TIMING } from '@team/constants';
 import { palette } from '@team/mobile-ui';
 import { type Shop } from '@team/shop-core';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -29,6 +19,11 @@ import { fonts } from '@/constants/typography';
 import { useStores } from '@/features/stores/StoresContext';
 import { useShopNavigator } from '@/hooks/useShopNavigator';
 
+// ページネーション設定
+const PAGE_SIZE = 10;
+// ブースト対象の店舗数
+const BOOST_COUNT = 3;
+
 const KEY_EXTRACTOR = (item: Shop) => item.id;
 
 type ShopResultsListProps = {
@@ -44,16 +39,10 @@ function ShopResultsList({
   renderListHeader,
   renderShop,
 }: ShopResultsListProps) {
+  const [visibleCount, setVisibleCount] = useState(() => Math.min(PAGE_SIZE, filteredShops.length));
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const loadMoreTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const listRef = useAnimatedRef<FlatList<Shop>>();
-
-  const {
-    visibleItems: visibleShops,
-    hasMore: hasMoreResults,
-    loadMore,
-    reset: resetPagination,
-  } = usePagination(filteredShops, { pageSize: MOBILE_PAGE_SIZE });
 
   useEffect(() => {
     if (loadMoreTimeout.current) {
@@ -63,11 +52,11 @@ function ShopResultsList({
 
     const resetId = setTimeout(() => {
       setIsLoadingMore(false);
-      resetPagination();
+      setVisibleCount(Math.min(PAGE_SIZE, filteredShops.length));
     }, 0);
 
     return () => clearTimeout(resetId);
-  }, [filteredShops, resetPagination]);
+  }, [filteredShops]);
 
   useEffect(() => {
     return () => {
@@ -78,17 +67,23 @@ function ShopResultsList({
     };
   }, []);
 
+  const visibleShops = useMemo(() => {
+    return filteredShops.slice(0, visibleCount);
+  }, [filteredShops, visibleCount]);
+
+  const hasMoreResults = visibleCount < filteredShops.length;
+
   const handleLoadMore = useCallback(() => {
     if (isLoadingMore || !hasMoreResults) return;
 
     setIsLoadingMore(true);
 
     loadMoreTimeout.current = setTimeout(() => {
-      loadMore();
+      setVisibleCount(prev => Math.min(prev + PAGE_SIZE, filteredShops.length));
       setIsLoadingMore(false);
       loadMoreTimeout.current = null;
     }, TIMING.LOAD_MORE_DELAY);
-  }, [hasMoreResults, isLoadingMore, loadMore]);
+  }, [filteredShops.length, hasMoreResults, isLoadingMore]);
 
   return (
     <Animated.FlatList
@@ -126,17 +121,48 @@ export default function HomeScreen() {
 
   const listKey = `${activeTag ?? 'all'}-${activeCategory ?? 'all'}`;
 
-  const { filteredShops } = useShopFilter({
-    shops: stores,
-    searchText: '',
-    categories: activeCategory ? [activeCategory] : [],
-    tags: activeTag ? [activeTag] : [],
-    sortType: 'default',
-  });
+  // 手動フィルタリング
+  const filteredShops = useMemo(() => {
+    if (!activeTag && !activeCategory) {
+      return stores;
+    }
+
+    return stores.filter(shop => {
+      const matchesTag = activeTag ? shop.tags?.includes(activeTag) : true;
+      const matchesCategory = activeCategory ? shop.category === activeCategory : true;
+
+      return matchesTag && matchesCategory;
+    });
+  }, [activeCategory, activeTag, stores]);
+
+  // ブースト対象のショップIDを計算（スコアリングで上位N件を選出）
+  // 注意：以前あった「交互に表示するロジック」は削除済みですが、
+  // ブースト表示自体（炎アイコンなど）は維持するためにID特定のみ行います。
+  const boostedShopIds = useMemo(() => {
+    const scored = filteredShops.map(shop => {
+      // 簡易的なスコアリング（IDの文字コード和）
+      const score = shop.id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+      return { id: shop.id, score };
+    });
+
+    return new Set(
+      scored
+        .sort((a, b) => b.score - a.score)
+        .slice(0, BOOST_COUNT)
+        .map(entry => entry.id),
+    );
+  }, [filteredShops]);
 
   const renderShop = useCallback(
-    ({ item }: { item: Shop }) => <ShopCard shop={item} onPress={navigateToShop} variant='large' />,
-    [navigateToShop],
+    ({ item }: { item: Shop }) => (
+      <ShopCard
+        shop={item}
+        onPress={navigateToShop}
+        variant='large'
+        isBoosted={boostedShopIds.has(item.id)}
+      />
+    ),
+    [boostedShopIds, navigateToShop],
   );
 
   const renderListHeader = useMemo(() => {
@@ -188,7 +214,7 @@ export default function HomeScreen() {
       <ShopResultsList
         key={listKey}
         emptyState={renderEmptyState}
-        filteredShops={filteredShops}
+        filteredShops={filteredShops} // ここで通常のリストを渡す（交互ロジック適用済みリストではない）
         renderListHeader={renderListHeader}
         renderShop={renderShop}
       />
@@ -199,8 +225,8 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   clearFilterText: {
     color: palette.accent,
+    fontFamily: fonts.medium,
     fontSize: 14,
-    fontWeight: FONT_WEIGHT.BOLD,
   },
 
   content: {
@@ -240,8 +266,8 @@ const styles = StyleSheet.create({
 
   filterText: {
     color: palette.primaryText,
+    fontFamily: fonts.medium,
     fontSize: 14,
-    fontWeight: FONT_WEIGHT.SEMIBOLD,
   },
 
   footerLoader: {

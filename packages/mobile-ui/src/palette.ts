@@ -140,4 +140,12 @@ export const palette = {
   meshAccent2: '#7A8C79',
   meshAccent3: '#3D473C',
   meshHighlight: 'rgba(255, 255, 255, 0.08)',
+
+  // ブースト機能UI
+  boostRed: '#ce332d',
+  boostBorder: '#C94A45',
+  boostBadgeBg: 'rgba(255, 255, 255, 0.45)',
+  metaBadgeBg: '#FFF4D6',
+  metaBadgeBorder: '#F4B740',
+  metaBadgeText: '#B45309',
 };
