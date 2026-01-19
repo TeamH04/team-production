@@ -1,3 +1,4 @@
+import { AUTH_REQUIRED } from '@team/constants';
 import {
   type AuthState,
   createDependencyInjector,
@@ -69,11 +70,19 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
     loadFavorites,
   } = useFavoritesState({
     resolveAuth: async () => {
-      const result = await ensureAuthenticated(dependencyInjector.get().resolveAuth);
-      if (result.skipped) {
-        return { skipped: true };
+      try {
+        const result = await ensureAuthenticated(dependencyInjector.get().resolveAuth);
+        if (result.skipped) {
+          return { skipped: true };
+        }
+        return { skipped: false, token: result.token! };
+      } catch (error) {
+        // Handle AUTH_REQUIRED error by clearing favorites (return skipped)
+        if (error instanceof Error && error.message === AUTH_REQUIRED) {
+          return { skipped: true };
+        }
+        throw error;
       }
-      return { skipped: false, token: result.token! };
     },
     resolveAuthForMutation: () =>
       resolveAuthForOptimisticUpdate(dependencyInjector.get().resolveAuth),
