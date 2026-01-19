@@ -16,6 +16,6 @@
     "generate:css": "tsx scripts/generate-css-vars.ts"
   },
   "devDependencies": {
-    "tsx": "^4.7.0"
+    "tsx": "^4.21.0"
   }
 }
