@@ -64,6 +64,9 @@ func (m *AuthMiddleware) JWTAuth(verifier security.TokenVerifier) echo.Middlewar
 						Email:    claims.Email,
 						Role:     claims.Role,
 						Provider: claims.Provider,
+						Name:     claims.Name,
+						IconURL:  claims.IconURL,
+						Gender:   claims.Gender,
 					})
 				}
 				if err != nil {

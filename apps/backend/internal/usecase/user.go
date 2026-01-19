@@ -34,11 +34,19 @@ func (uc *userUseCase) EnsureUser(ctx context.Context, input input.EnsureUserInp
 	}
 
 	provider := normalizeProvider(input.Provider)
+	incomingName := strings.TrimSpace(input.Name)
+	incomingIconURL := strings.TrimSpace(input.IconURL)
+	incomingGender := strings.TrimSpace(input.Gender)
+
+	params := profileUpdateParams{
+		name:    incomingName,
+		iconURL: incomingIconURL,
+		gender:  incomingGender,
+	}
 
 	user, err := uc.userRepo.FindByID(ctx, input.UserID)
 	if err == nil {
-		if shouldUpdateProvider(user.Provider, provider) {
-			user.Provider = provider
+		if applyProfileUpdates(&user, provider, params) {
 			user.UpdatedAt = time.Now()
 			if err := uc.userRepo.Update(ctx, user); err != nil {
 				return entity.User{}, err
@@ -60,13 +68,26 @@ func (uc *userUseCase) EnsureUser(ctx context.Context, input input.EnsureUserInp
 		role = "user"
 	}
 
-	name := deriveNameFromEmail(email)
+	name := incomingName
+	if name == "" {
+		name = deriveNameFromEmail(email)
+	}
+	var iconURL *string
+	if incomingIconURL != "" {
+		iconURL = &incomingIconURL
+	}
+	var gender *string
+	if incomingGender != "" {
+		gender = &incomingGender
+	}
 	now := time.Now()
 	newUser := &entity.User{
 		UserID:    input.UserID,
 		Name:      name,
 		Email:     email,
+		IconURL:   iconURL,
 		Provider:  provider,
+		Gender:    gender,
 		Role:      role,
 		CreatedAt: now,
 		UpdatedAt: now,
@@ -75,8 +96,7 @@ func (uc *userUseCase) EnsureUser(ctx context.Context, input input.EnsureUserInp
 	if err := uc.userRepo.Create(ctx, newUser); err != nil {
 		existing, fetchErr := uc.userRepo.FindByID(ctx, input.UserID)
 		if fetchErr == nil {
-			if shouldUpdateProvider(existing.Provider, provider) {
-				existing.Provider = provider
+			if applyProfileUpdates(&existing, provider, params) {
 				existing.UpdatedAt = time.Now()
 				if err := uc.userRepo.Update(ctx, existing); err != nil {
 					return entity.User{}, err
@@ -179,4 +199,53 @@ func shouldUpdateProvider(current string, incoming string) bool {
 	}
 	currentTrimmed := strings.ToLower(strings.TrimSpace(current))
 	return currentTrimmed == "" || currentTrimmed == "oauth"
+}
+
+func shouldUpdateName(current string, incoming string, email string) bool {
+	incomingTrimmed := strings.TrimSpace(incoming)
+	if incomingTrimmed == "" {
+		return false
+	}
+	currentTrimmed := strings.TrimSpace(current)
+	if currentTrimmed == "" {
+		return true
+	}
+	derived := deriveNameFromEmail(strings.ToLower(strings.TrimSpace(email)))
+	return strings.EqualFold(currentTrimmed, derived)
+}
+
+func isEmptyStringPtr(value *string) bool {
+	if value == nil {
+		return true
+	}
+	return strings.TrimSpace(*value) == ""
+}
+
+type profileUpdateParams struct {
+	name    string
+	iconURL string
+	gender  string
+}
+
+func applyProfileUpdates(user *entity.User, provider string, params profileUpdateParams) bool {
+	updated := false
+	if shouldUpdateProvider(user.Provider, provider) {
+		user.Provider = provider
+		updated = true
+	}
+	if shouldUpdateName(user.Name, params.name, user.Email) {
+		user.Name = params.name
+		updated = true
+	}
+	if params.iconURL != "" && user.IconFileID == nil && isEmptyStringPtr(user.IconURL) {
+		iconURL := params.iconURL
+		user.IconURL = &iconURL
+		updated = true
+	}
+	if params.gender != "" && isEmptyStringPtr(user.Gender) {
+		gender := params.gender
+		user.Gender = &gender
+		updated = true
+	}
+	return updated
 }

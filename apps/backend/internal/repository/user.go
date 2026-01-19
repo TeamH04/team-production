@@ -38,11 +38,17 @@ func (r *userRepository) FindByEmail(ctx context.Context, email string) (*entity
 
 func (r *userRepository) Create(ctx context.Context, user *entity.User) error {
 	record := model.User{
-		UserID:    user.UserID,
-		Email:     user.Email,
-		Role:      user.Role,
-		CreatedAt: user.CreatedAt,
-		UpdatedAt: user.UpdatedAt,
+		UserID:     user.UserID,
+		Name:       user.Name,
+		Email:      user.Email,
+		IconURL:    user.IconURL,
+		IconFileID: user.IconFileID,
+		Provider:   user.Provider,
+		Gender:     user.Gender,
+		Birthday:   user.Birthday,
+		Role:       user.Role,
+		CreatedAt:  user.CreatedAt,
+		UpdatedAt:  user.UpdatedAt,
 	}
 	if err := r.db.WithContext(ctx).Create(&record).Error; err != nil {
 		return mapDBError(err)
@@ -52,11 +58,17 @@ func (r *userRepository) Create(ctx context.Context, user *entity.User) error {
 
 func (r *userRepository) Update(ctx context.Context, user entity.User) error {
 	record := model.User{
-		UserID:    user.UserID,
-		Email:     user.Email,
-		Role:      user.Role,
-		CreatedAt: user.CreatedAt,
-		UpdatedAt: user.UpdatedAt,
+		UserID:     user.UserID,
+		Name:       user.Name,
+		Email:      user.Email,
+		IconURL:    user.IconURL,
+		IconFileID: user.IconFileID,
+		Provider:   user.Provider,
+		Gender:     user.Gender,
+		Birthday:   user.Birthday,
+		Role:       user.Role,
+		CreatedAt:  user.CreatedAt,
+		UpdatedAt:  user.UpdatedAt,
 	}
 	return mapDBError(r.db.WithContext(ctx).Model(&model.User{UserID: user.UserID}).Updates(record).Error)
 }

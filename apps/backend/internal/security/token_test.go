@@ -13,6 +13,9 @@ func TestTokenClaims_Fields(t *testing.T) {
 		Role:     "admin",
 		Email:    "test@example.com",
 		Provider: "google",
+		Name:     "Test User",
+		IconURL:  "https://example.com/avatar.png",
+		Gender:   "female",
 	}
 
 	if claims.UserID != "user-123" {
@@ -26,6 +29,15 @@ func TestTokenClaims_Fields(t *testing.T) {
 	}
 	if claims.Provider != "google" {
 		t.Errorf("expected Provider 'google', got '%s'", claims.Provider)
+	}
+	if claims.Name != "Test User" {
+		t.Errorf("expected Name 'Test User', got '%s'", claims.Name)
+	}
+	if claims.IconURL != "https://example.com/avatar.png" {
+		t.Errorf("expected IconURL 'https://example.com/avatar.png', got '%s'", claims.IconURL)
+	}
+	if claims.Gender != "female" {
+		t.Errorf("expected Gender 'female', got '%s'", claims.Gender)
 	}
 }
 
@@ -43,6 +55,15 @@ func TestTokenClaims_EmptyFields(t *testing.T) {
 	}
 	if claims.Provider != "" {
 		t.Errorf("expected empty Provider, got '%s'", claims.Provider)
+	}
+	if claims.Name != "" {
+		t.Errorf("expected empty Name, got '%s'", claims.Name)
+	}
+	if claims.IconURL != "" {
+		t.Errorf("expected empty IconURL, got '%s'", claims.IconURL)
+	}
+	if claims.Gender != "" {
+		t.Errorf("expected empty Gender, got '%s'", claims.Gender)
 	}
 }
 

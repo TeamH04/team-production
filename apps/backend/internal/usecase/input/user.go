@@ -17,10 +17,13 @@ type UserUseCase interface {
 }
 
 type EnsureUserInput struct {
-	UserID string
-	Email  string
-	Role   string
+	UserID   string
+	Email    string
+	Role     string
 	Provider string
+	Name     string
+	IconURL  string
+	Gender   string
 }
 
 type UpdateUserInput struct {
