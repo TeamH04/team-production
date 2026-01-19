@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"context"
+	"math"
 	"time"
 
 	"github.com/TeamH04/team-production/apps/backend/internal/domain/entity"
@@ -38,14 +39,13 @@ func (uc *storeUseCase) GetStoreByID(ctx context.Context, id string) (*entity.St
 }
 
 func (uc *storeUseCase) CreateStore(ctx context.Context, in input.CreateStoreInput) (*entity.Store, error) {
-	// バリデーション
-	if in.Name == "" || in.Address == "" {
-		return nil, ErrInvalidInput
+	if err := validateNotEmpty(in.Name, in.Address, in.PlaceID); err != nil {
+		return nil, err
 	}
-	if in.PlaceID == "" {
-		return nil, ErrInvalidInput
+	if !isValidLatitude(in.Latitude) {
+		return nil, ErrInvalidCoordinates
 	}
-	if in.Latitude == 0.0 || in.Longitude == 0.0 {
+	if !isValidLongitude(in.Longitude) {
 		return nil, ErrInvalidCoordinates
 	}
 	if in.ThumbnailFileID == nil {
@@ -74,19 +74,74 @@ func (uc *storeUseCase) CreateStore(ctx context.Context, in input.CreateStoreInp
 }
 
 func (uc *storeUseCase) UpdateStore(ctx context.Context, id string, in input.UpdateStoreInput) (*entity.Store, error) {
-	// 既存のストアを取得
 	store, err := mustFindStore(ctx, uc.storeRepo, id)
 	if err != nil {
 		return nil, err
 	}
 
-	// 更新フィールドの適用
+	if err := applyStoreUpdates(store, in); err != nil {
+		return nil, err
+	}
+
+	if err := uc.storeRepo.Update(ctx, store); err != nil {
+		return nil, err
+	}
+
+	return uc.storeRepo.FindByID(ctx, id)
+}
+
+func applyStoreUpdates(store *entity.Store, in input.UpdateStoreInput) error {
+	if err := validateStoreUpdateInput(in); err != nil {
+		return err
+	}
+
+	applyBasicFields(store, in)
+	applyOptionalFields(store, in)
+	store.UpdatedAt = time.Now()
+
+	return nil
+}
+
+func validateStoreUpdateInput(in input.UpdateStoreInput) error {
+	if in.Latitude != nil && !isValidLatitude(*in.Latitude) {
+		return ErrInvalidCoordinates
+	}
+	if in.Longitude != nil && !isValidLongitude(*in.Longitude) {
+		return ErrInvalidCoordinates
+	}
+	if in.PlaceID != nil && *in.PlaceID == "" {
+		return ErrInvalidInput
+	}
+	return nil
+}
+
+func isValidLatitude(lat float64) bool {
+	return lat >= -90.0 && lat <= 90.0 && !math.IsNaN(lat) && !math.IsInf(lat, 0)
+}
+
+func isValidLongitude(lng float64) bool {
+	return lng >= -180.0 && lng <= 180.0 && !math.IsNaN(lng) && !math.IsInf(lng, 0)
+}
+
+func applyBasicFields(store *entity.Store, in input.UpdateStoreInput) {
 	if in.Name != nil {
 		store.Name = *in.Name
 	}
 	if in.Address != nil {
 		store.Address = *in.Address
 	}
+	if in.PlaceID != nil {
+		store.PlaceID = *in.PlaceID
+	}
+	if in.Latitude != nil {
+		store.Latitude = *in.Latitude
+	}
+	if in.Longitude != nil {
+		store.Longitude = *in.Longitude
+	}
+}
+
+func applyOptionalFields(store *entity.Store, in input.UpdateStoreInput) {
 	if in.ThumbnailFileID != nil {
 		store.ThumbnailFileID = in.ThumbnailFileID
 	}
@@ -99,33 +154,12 @@ func (uc *storeUseCase) UpdateStore(ctx context.Context, id string, in input.Upd
 	if in.OpeningHours != nil {
 		store.OpeningHours = in.OpeningHours
 	}
-	if in.Latitude != nil {
-		store.Latitude = *in.Latitude
-	}
-	if in.Longitude != nil {
-		store.Longitude = *in.Longitude
-	}
 	if in.GoogleMapURL != nil {
 		store.GoogleMapURL = in.GoogleMapURL
 	}
-	if in.PlaceID != nil {
-		if *in.PlaceID == "" {
-			return nil, ErrInvalidInput
-		}
-		store.PlaceID = *in.PlaceID
-	}
-	store.UpdatedAt = time.Now()
-
-	if err := uc.storeRepo.Update(ctx, store); err != nil {
-		return nil, err
-	}
-
-	// 更新後のストアを取得
-	return uc.storeRepo.FindByID(ctx, id)
 }
 
 func (uc *storeUseCase) DeleteStore(ctx context.Context, id string) error {
-	// 存在確認
 	if err := ensureStoreExists(ctx, uc.storeRepo, id); err != nil {
 		return err
 	}

@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/TeamH04/team-production/apps/backend/internal/apperr"
+	"github.com/TeamH04/team-production/apps/backend/internal/domain/constants"
 	"github.com/TeamH04/team-production/apps/backend/internal/domain/entity"
 	"github.com/TeamH04/team-production/apps/backend/internal/usecase/input"
 	"github.com/TeamH04/team-production/apps/backend/internal/usecase/output"
@@ -13,7 +14,7 @@ import (
 
 type AuthProvider = output.AuthProvider
 
-// AuthUseCase は認証フローを司るユースケースです。
+// AuthUseCase は認証に関するビジネスロジックを提供します。
 type AuthUseCase interface {
 	Signup(ctx context.Context, input input.AuthSignupInput) (*entity.User, error)
 	Login(ctx context.Context, input input.AuthLoginInput) (*input.AuthSession, error)
@@ -24,7 +25,7 @@ type authUseCase struct {
 	userRepo     output.UserRepository
 }
 
-// NewAuthUseCase は AuthUseCase 実装を返します。
+// NewAuthUseCase は AuthUseCase の実装を生成します。
 func NewAuthUseCase(authProvider AuthProvider, userRepo output.UserRepository) AuthUseCase {
 	return &authUseCase{
 		authProvider: authProvider,
@@ -59,7 +60,7 @@ func (uc *authUseCase) Signup(ctx context.Context, input input.AuthSignupInput) 
 		UserID:    authUser.ID,
 		Name:      input.Name,
 		Email:     strings.ToLower(authUser.Email),
-		Provider:  "email",
+		Provider:  constants.ProviderEmail,
 		Role:      authUser.Role,
 		CreatedAt: now,
 		UpdatedAt: now,
@@ -83,14 +84,14 @@ func (uc *authUseCase) Login(ctx context.Context, input input.AuthLoginInput) (*
 	if err != nil {
 		return nil, err
 	}
-	return newAuthSession(session), nil
+	return session, nil
 }
 
 func validateSignupInput(input input.AuthSignupInput) error {
 	if input.Email == "" || input.Password == "" || input.Name == "" {
 		return ErrInvalidInput
 	}
-	if len(input.Password) < 6 {
+	if len(input.Password) < constants.MinPasswordLength {
 		return ErrInvalidInput
 	}
 	return nil
@@ -101,21 +102,4 @@ func validateLoginInput(input input.AuthLoginInput) error {
 		return ErrInvalidInput
 	}
 	return nil
-}
-
-func newAuthSession(session *output.AuthSession) *input.AuthSession {
-	if session == nil {
-		return nil
-	}
-	return &input.AuthSession{
-		AccessToken:  session.AccessToken,
-		RefreshToken: session.RefreshToken,
-		TokenType:    session.TokenType,
-		ExpiresIn:    session.ExpiresIn,
-		User: input.AuthUser{
-			ID:    session.User.ID,
-			Email: session.User.Email,
-			Role:  session.User.Role,
-		},
-	}
 }

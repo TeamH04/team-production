@@ -1,124 +1,149 @@
 import assert from 'node:assert/strict';
-import { afterEach, test } from 'node:test';
-
-import React from 'react';
+import { afterEach, beforeEach, describe, test } from 'node:test';
 
 import { act, createContextHarness, type ContextHarness } from '@/test-utils';
 
-import { type UserProfile, UserProvider, useUser } from '../UserContext';
+import { UserProvider, useUser } from '../UserContext';
 
-let harness: ContextHarness<ReturnType<typeof useUser>> | undefined;
+import type { UserProfile } from '@team/types';
 
-afterEach(() => {
-  if (harness) {
-    harness.unmount();
+const createMockUserProfile = (overrides: Partial<UserProfile> = {}): UserProfile => ({
+  name: 'テストユーザー',
+  email: 'test@example.com',
+  isProfileRegistered: true,
+  ...overrides,
+});
+
+describe('UserContext', () => {
+  let harness: ContextHarness<ReturnType<typeof useUser>> | undefined;
+
+  beforeEach(() => {
+    harness = createContextHarness(useUser, UserProvider);
+  });
+
+  afterEach(() => {
+    harness?.unmount();
     harness = undefined;
-  }
-});
-
-test('useUser throws outside UserProvider', () => {
-  assert.throws(() => {
-    createContextHarness(useUser, ({ children }) => <>{children}</>);
-  }, /useUser must be used within UserProvider/);
-});
-
-test('initial user is null', () => {
-  harness = createContextHarness(useUser, UserProvider);
-  assert.equal(harness.getValue().user, null);
-});
-
-test('initial isProfileComplete is false', () => {
-  harness = createContextHarness(useUser, UserProvider);
-  assert.equal(harness.getValue().isProfileComplete, false);
-});
-
-test('setUser updates user state', async () => {
-  harness = createContextHarness(useUser, UserProvider);
-  const profile: UserProfile = {
-    name: 'テストユーザー',
-    email: 'test@example.com',
-    isProfileRegistered: true,
-  };
-
-  await act(async () => {
-    harness!.getValue().setUser(profile);
   });
 
-  assert.deepEqual(harness.getValue().user, profile);
-});
+  test('useUser throws outside UserProvider', () => {
+    harness?.unmount();
+    harness = undefined;
 
-test('clearUser resets user to null', async () => {
-  harness = createContextHarness(useUser, UserProvider);
-  const profile: UserProfile = {
-    name: 'テストユーザー',
-    email: 'test@example.com',
-    isProfileRegistered: true,
-  };
-
-  await act(async () => {
-    harness!.getValue().setUser(profile);
+    assert.throws(() => {
+      createContextHarness(useUser, ({ children }) => <>{children}</>);
+    }, /useUser must be used within UserProvider/);
   });
 
-  await act(async () => {
-    harness!.getValue().clearUser();
+  describe('初期状態', () => {
+    test('userがnull', () => {
+      assert.equal(harness!.getValue().user, null);
+    });
+
+    test('isProfileCompleteがfalse', () => {
+      assert.equal(harness!.getValue().isProfileComplete, false);
+    });
   });
 
-  assert.equal(harness.getValue().user, null);
-});
+  describe('setUser', () => {
+    test('ユーザー状態を更新する', async () => {
+      const profile = createMockUserProfile();
 
-test('isProfileComplete is true when user exists and isProfileRegistered is true', async () => {
-  harness = createContextHarness(useUser, UserProvider);
-  const profile: UserProfile = {
-    name: 'テストユーザー',
-    email: 'test@example.com',
-    isProfileRegistered: true,
-  };
+      await act(async () => {
+        harness!.getValue().setUser(profile);
+      });
 
-  await act(async () => {
-    harness!.getValue().setUser(profile);
+      assert.deepEqual(harness!.getValue().user, profile);
+    });
+
+    test('オプションフィールドを含む完全なプロファイルを設定する', async () => {
+      const profile = createMockUserProfile({
+        gender: 'male',
+        birthYear: '1990',
+        birthMonth: '5',
+        favoriteGenres: ['カフェ・喫茶', 'ラーメン'],
+      });
+
+      await act(async () => {
+        harness!.getValue().setUser(profile);
+      });
+
+      assert.deepEqual(harness!.getValue().user, profile);
+    });
+
+    test('isProfileRegistered=falseのプロファイルを設定する', async () => {
+      const profile = createMockUserProfile({ isProfileRegistered: false });
+
+      await act(async () => {
+        harness!.getValue().setUser(profile);
+      });
+
+      assert.equal(harness!.getValue().user?.isProfileRegistered, false);
+    });
   });
 
-  assert.equal(harness.getValue().isProfileComplete, true);
-});
+  describe('clearUser', () => {
+    test('ユーザーをnullにリセットする', async () => {
+      const profile = createMockUserProfile();
 
-test('isProfileComplete is false when isProfileRegistered is false', async () => {
-  harness = createContextHarness(useUser, UserProvider);
-  const profile: UserProfile = {
-    name: 'テストユーザー',
-    email: 'test@example.com',
-    isProfileRegistered: false,
-  };
+      await act(async () => {
+        harness!.getValue().setUser(profile);
+      });
 
-  await act(async () => {
-    harness!.getValue().setUser(profile);
+      await act(async () => {
+        harness!.getValue().clearUser();
+      });
+
+      assert.equal(harness!.getValue().user, null);
+    });
+
+    test('既にnullの場合も正常に動作する', async () => {
+      await act(async () => {
+        harness!.getValue().clearUser();
+      });
+
+      assert.equal(harness!.getValue().user, null);
+    });
   });
 
-  assert.equal(harness.getValue().isProfileComplete, false);
-});
+  describe('isProfileComplete', () => {
+    test('ユーザーが存在しisProfileRegistered=trueの場合true', async () => {
+      const profile = createMockUserProfile({ isProfileRegistered: true });
 
-test('isProfileComplete is false when user is null', () => {
-  harness = createContextHarness(useUser, UserProvider);
-  assert.equal(harness.getValue().isProfileComplete, false);
-});
+      await act(async () => {
+        harness!.getValue().setUser(profile);
+      });
 
-test('setUser with full profile including optional fields', async () => {
-  harness = createContextHarness(useUser, UserProvider);
-  const profile: UserProfile = {
-    name: 'テストユーザー',
-    email: 'test@example.com',
-    gender: 'male',
-    birthYear: '1990',
-    birthMonth: '5',
-    isProfileRegistered: true,
-    favoriteGenres: ['カフェ・喫茶', 'ラーメン'],
-  };
+      assert.equal(harness!.getValue().isProfileComplete, true);
+    });
 
-  await act(async () => {
-    harness!.getValue().setUser(profile);
+    test('isProfileRegistered=falseの場合false', async () => {
+      const profile = createMockUserProfile({ isProfileRegistered: false });
+
+      await act(async () => {
+        harness!.getValue().setUser(profile);
+      });
+
+      assert.equal(harness!.getValue().isProfileComplete, false);
+    });
+
+    test('ユーザーがnullの場合false', () => {
+      assert.equal(harness!.getValue().isProfileComplete, false);
+    });
+
+    test('isProfileRegisteredがundefinedの場合falsy', async () => {
+      const profile = {
+        name: 'テストユーザー',
+        email: 'test@example.com',
+      } as UserProfile;
+
+      await act(async () => {
+        harness!.getValue().setUser(profile);
+      });
+
+      // 実装は !!user && user.isProfileRegistered を返すため、
+      // isProfileRegistered が undefined の場合は undefined が返る
+      assert.ok(!harness!.getValue().isProfileComplete);
+    });
   });
-
-  assert.deepEqual(harness.getValue().user, profile);
-  assert.equal(harness.getValue().user?.gender, 'male');
-  assert.equal(harness.getValue().user?.birthYear, '1990');
-  assert.deepEqual(harness.getValue().user?.favoriteGenres, ['カフェ・喫茶', 'ラーメン']);
 });

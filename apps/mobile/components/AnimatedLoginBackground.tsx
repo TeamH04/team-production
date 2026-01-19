@@ -1,3 +1,4 @@
+import { palette } from '@team/mobile-ui';
 import { useEffect } from 'react';
 import { Dimensions, StyleSheet, View } from 'react-native';
 import Animated, {
@@ -12,18 +13,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import Svg, { Circle, Defs, RadialGradient, Stop } from 'react-native-svg';
 
-import { palette } from '@/constants/palette';
-
 const { width, height } = Dimensions.get('window');
-
-// 背景のアニメーション用の定数
-export const MESH_COLORS = {
-  base: '#4A5749',
-  accent1: '#5B6B5A',
-  accent2: '#7A8C79',
-  accent3: '#3D473C',
-  highlight: '#ffffff15',
-} as const;
 
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 
@@ -130,21 +120,21 @@ export function AnimatedLoginBackground() {
         initialX={-width * 0.2}
         initialY={-height * 0.1}
         size={width * 1.2}
-        color={MESH_COLORS.accent1}
+        color={palette.meshAccent1}
         duration={10000}
       />
       <AnimatedMeshBlob
         initialX={width * 0.5}
         initialY={height * 0.3}
         size={width * 1.5}
-        color={MESH_COLORS.accent2}
+        color={palette.meshAccent2}
         duration={15000}
       />
       <AnimatedMeshBlob
         initialX={width * 0.1}
         initialY={height * 0.7}
         size={width * 1.3}
-        color={MESH_COLORS.accent3}
+        color={palette.meshAccent3}
         duration={12000}
       />
 
@@ -169,7 +159,7 @@ export function AnimatedLoginBackground() {
 
 const styles = StyleSheet.create({
   backgroundContainer: {
-    backgroundColor: MESH_COLORS.base,
+    backgroundColor: palette.meshBase,
     overflow: 'hidden',
   },
   blob: {

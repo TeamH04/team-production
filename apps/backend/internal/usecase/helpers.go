@@ -5,14 +5,15 @@ import (
 
 	"github.com/TeamH04/team-production/apps/backend/internal/apperr"
 	"github.com/TeamH04/team-production/apps/backend/internal/domain/entity"
+	"github.com/TeamH04/team-production/apps/backend/internal/domain/role"
 	"github.com/TeamH04/team-production/apps/backend/internal/usecase/output"
 )
 
 // validRoles defines the allowed user roles.
 var validRoles = map[string]bool{
-	"user":  true,
-	"owner": true,
-	"admin": true,
+	role.User:  true,
+	role.Owner: true,
+	role.Admin: true,
 }
 
 // IsValidRole checks if the given role is valid.
@@ -90,4 +91,15 @@ func mustFindReport(ctx context.Context, repo output.ReportRepository, reportID 
 func ensureReportExists(ctx context.Context, repo output.ReportRepository, reportID int64) error {
 	_, err := mustFindReport(ctx, repo, reportID)
 	return err
+}
+
+// validateNotEmpty checks if any of the provided strings are empty.
+// Returns ErrInvalidInput if any string is empty.
+func validateNotEmpty(fields ...string) error {
+	for _, field := range fields {
+		if field == "" {
+			return ErrInvalidInput
+		}
+	}
+	return nil
 }

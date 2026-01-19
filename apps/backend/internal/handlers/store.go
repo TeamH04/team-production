@@ -6,6 +6,7 @@ import (
 
 	"github.com/labstack/echo/v4"
 
+	"github.com/TeamH04/team-production/apps/backend/internal/domain/entity"
 	"github.com/TeamH04/team-production/apps/backend/internal/presentation/presenter"
 	"github.com/TeamH04/team-production/apps/backend/internal/usecase/input"
 	"github.com/TeamH04/team-production/apps/backend/internal/usecase/output"
@@ -23,6 +24,14 @@ func NewStoreHandler(storeUseCase input.StoreUseCase, storage output.StorageProv
 		storage:      storage,
 		bucket:       bucket,
 	}
+}
+
+// respondWithStore は単一のStoreエンティティをJSONレスポンスとして返す
+func (h *StoreHandler) respondWithStore(c echo.Context, store *entity.Store, status int) error {
+	resp := presenter.NewStoreResponse(*store)
+	responses := []presenter.StoreResponse{resp}
+	attachSignedURLsToStoreResponses(c.Request().Context(), h.storage, h.bucket, responses)
+	return c.JSON(status, responses[0])
 }
 
 func (h *StoreHandler) GetStores(c echo.Context) error {
@@ -44,11 +53,7 @@ func (h *StoreHandler) GetStoreByID(c echo.Context) error {
 	if err != nil {
 		return err
 	}
-	resp := presenter.NewStoreResponse(*store)
-	responses := []presenter.StoreResponse{resp}
-	attachSignedURLsToStoreResponses(c.Request().Context(), h.storage, h.bucket, responses)
-	resp = responses[0]
-	return c.JSON(http.StatusOK, resp)
+	return h.respondWithStore(c, store, http.StatusOK)
 }
 
 func (h *StoreHandler) CreateStore(c echo.Context) error {
@@ -60,39 +65,31 @@ func (h *StoreHandler) CreateStore(c echo.Context) error {
 	if err != nil {
 		return err
 	}
-	resp := presenter.NewStoreResponse(*store)
-	responses := []presenter.StoreResponse{resp}
-	attachSignedURLsToStoreResponses(c.Request().Context(), h.storage, h.bucket, responses)
-	resp = responses[0]
-	return c.JSON(http.StatusCreated, resp)
+	return h.respondWithStore(c, store, http.StatusCreated)
 }
 
 func (h *StoreHandler) UpdateStore(c echo.Context) error {
-	id, err := parseUUIDParam(c, "id", "invalid store id")
+	id, err := parseUUIDParam(c, "id", ErrMsgInvalidStoreID)
 	if err != nil {
 		return err
 	}
 	var dto updateStoreDTO
-	if err := bindJSON(c, &dto); err != nil {
+	if err = bindJSON(c, &dto); err != nil {
 		return err
 	}
 	store, err := h.storeUseCase.UpdateStore(c.Request().Context(), id, dto.toInput())
 	if err != nil {
 		return err
 	}
-	resp := presenter.NewStoreResponse(*store)
-	responses := []presenter.StoreResponse{resp}
-	attachSignedURLsToStoreResponses(c.Request().Context(), h.storage, h.bucket, responses)
-	resp = responses[0]
-	return c.JSON(http.StatusOK, resp)
+	return h.respondWithStore(c, store, http.StatusOK)
 }
 
 func (h *StoreHandler) DeleteStore(c echo.Context) error {
-	id, err := parseUUIDParam(c, "id", "invalid store id")
+	id, err := parseUUIDParam(c, "id", ErrMsgInvalidStoreID)
 	if err != nil {
 		return err
 	}
-	if err := h.storeUseCase.DeleteStore(c.Request().Context(), id); err != nil {
+	if err = h.storeUseCase.DeleteStore(c.Request().Context(), id); err != nil {
 		return err
 	}
 	return c.NoContent(http.StatusNoContent)

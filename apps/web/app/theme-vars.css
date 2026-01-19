@@ -1,0 +1,88 @@
+/**
+ * ============================================================================
+ * AUTO-GENERATED FILE - DO NOT EDIT DIRECTLY
+ * ============================================================================
+ *
+ * このファイルは @team/theme/scripts/generate-css-vars.ts によって自動生成されています。
+ * 手動で編集しないでください。
+ *
+ * カラー値を変更する場合は @team/theme/src/colors.ts を編集し、
+ * 以下のコマンドで再生成してください:
+ *
+ *   pnpm --filter @team/theme generate:css
+ *
+ * ============================================================================
+ * WEB専用
+ * ============================================================================
+ *
+ * このCSSファイルはWeb (Next.js) 専用です。
+ * React Native (Mobile) では CSS変数が使用できないため、
+ * @team/theme のTypeScript定義を直接インポートして使用してください。
+ *
+ * Mobile での使用例:
+ *   import { colors, textOn } from '@team/theme';
+ *   <View style={{ backgroundColor: colors.primary }} />
+ *
+ * ============================================================================
+ * Generated at: 2026-01-18T23:55:19.376Z
+ * ============================================================================
+ */
+
+:root {
+  /* ========================================
+   * Core Colors
+   * @team/theme/src/colors.ts > colors
+   * ======================================== */
+  --color-primary: #264053;
+  --color-secondary: #5B6B5A;
+  --color-accent: #595857;
+  --color-background: #F6F5F3;
+
+  /* ========================================
+   * Text Colors (on surfaces)
+   * @team/theme/src/colors.ts > textOn
+   * ======================================== */
+  --text-on-primary: #FFFFFF;
+  --text-on-secondary: #FFFFFF;
+  --text-on-accent: #FFFFFF;
+  --text-on-background: #264053;
+
+  /* ========================================
+   * Semantic Colors - Error
+   * @team/theme/src/colors.ts > semanticColors.error
+   * ======================================== */
+  --color-error-light: #FEE2E2;
+  --color-error-medium: #FECACA;
+  --color-error-base: #EF4444;
+  --color-error-dark: #DC2626;
+
+  /* ========================================
+   * Semantic Colors - Success & Warning
+   * @team/theme/src/colors.ts > semanticColors
+   * ======================================== */
+  --color-success: #10B981;
+  --color-warning: #F59E0B;
+
+  /* ========================================
+   * Provider Colors
+   * @team/theme/src/colors.ts > semanticColors.providers
+   * ======================================== */
+  --color-provider-google: #DB4437;
+  --color-provider-apple: #000000;
+
+  /* ========================================
+   * Alpha Variants (commonly used)
+   * ======================================== */
+  --color-primary-10: rgba(38, 64, 83, 0.1);
+  --color-primary-20: rgba(38, 64, 83, 0.2);
+  --color-primary-75: rgba(38, 64, 83, 0.75);
+  --color-secondary-90: rgba(91, 107, 90, 0.9);
+  --color-background-80: rgba(246, 245, 243, 0.8);
+  --color-background-90: rgba(246, 245, 243, 0.9);
+
+  /* ========================================
+   * Legacy Variables (backwards compatibility)
+   * ======================================== */
+  --background: var(--color-background);
+  --foreground: var(--text-on-background);
+}

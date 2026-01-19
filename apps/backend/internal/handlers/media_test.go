@@ -1,6 +1,7 @@
 package handlers_test
 
 import (
+	"encoding/json"
 	"net/http"
 	"testing"
 
@@ -36,6 +37,19 @@ func TestMediaHandler_CreateReviewUploads_Success(t *testing.T) {
 	err := h.CreateReviewUploads(tc.Context)
 
 	testutil.AssertSuccess(t, err, tc.Recorder, http.StatusOK)
+
+	// Verify response body contains expected upload results
+	var response map[string]interface{}
+	if err := json.Unmarshal(tc.Recorder.Body.Bytes(), &response); err != nil {
+		t.Fatalf("failed to parse response body: %v", err)
+	}
+	files, ok := response["files"].([]interface{})
+	if !ok {
+		t.Fatal("expected files array in response")
+	}
+	if len(files) != 1 {
+		t.Errorf("expected 1 upload result, got %d", len(files))
+	}
 }
 
 func TestMediaHandler_CreateReviewUploads_Unauthorized(t *testing.T) {

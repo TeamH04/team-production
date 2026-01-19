@@ -129,7 +129,7 @@ jobs:
           config-file: .github/codeql/codeql-config-javascript.yml
 
       - name: Build TypeScript
-        run: pnpm run typecheck
+        run: make typecheck
         continue-on-error: true
 
       - name: Perform CodeQL Analysis

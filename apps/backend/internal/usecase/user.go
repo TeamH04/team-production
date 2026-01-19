@@ -6,7 +6,9 @@ import (
 	"time"
 
 	"github.com/TeamH04/team-production/apps/backend/internal/apperr"
+	"github.com/TeamH04/team-production/apps/backend/internal/domain/constants"
 	"github.com/TeamH04/team-production/apps/backend/internal/domain/entity"
+	"github.com/TeamH04/team-production/apps/backend/internal/domain/role"
 	"github.com/TeamH04/team-production/apps/backend/internal/usecase/input"
 	"github.com/TeamH04/team-production/apps/backend/internal/usecase/output"
 )
@@ -48,8 +50,8 @@ func (uc *userUseCase) EnsureUser(ctx context.Context, input input.EnsureUserInp
 	if err == nil {
 		if applyProfileUpdates(&user, provider, params) {
 			user.UpdatedAt = time.Now()
-			if err := uc.userRepo.Update(ctx, user); err != nil {
-				return entity.User{}, err
+			if updateErr := uc.userRepo.Update(ctx, user); updateErr != nil {
+				return entity.User{}, updateErr
 			}
 		}
 		return user, nil
@@ -63,9 +65,9 @@ func (uc *userUseCase) EnsureUser(ctx context.Context, input input.EnsureUserInp
 		return entity.User{}, ErrInvalidInput
 	}
 
-	role := strings.ToLower(strings.TrimSpace(input.Role))
-	if !IsValidRole(role) {
-		role = "user"
+	userRole := strings.ToLower(strings.TrimSpace(input.Role))
+	if !IsValidRole(userRole) {
+		userRole = role.User
 	}
 
 	name := incomingName
@@ -88,7 +90,7 @@ func (uc *userUseCase) EnsureUser(ctx context.Context, input input.EnsureUserInp
 		IconURL:   iconURL,
 		Provider:  provider,
 		Gender:    gender,
-		Role:      role,
+		Role:      userRole,
 		CreatedAt: now,
 		UpdatedAt: now,
 	}
@@ -98,8 +100,8 @@ func (uc *userUseCase) EnsureUser(ctx context.Context, input input.EnsureUserInp
 		if fetchErr == nil {
 			if applyProfileUpdates(&existing, provider, params) {
 				existing.UpdatedAt = time.Now()
-				if err := uc.userRepo.Update(ctx, existing); err != nil {
-					return entity.User{}, err
+				if updateErr := uc.userRepo.Update(ctx, existing); updateErr != nil {
+					return entity.User{}, updateErr
 				}
 			}
 			return existing, nil
@@ -116,7 +118,6 @@ func (uc *userUseCase) UpdateUser(ctx context.Context, userID string, input inpu
 		return entity.User{}, err
 	}
 
-	// 更新フィールドの適用
 	if input.Name != nil {
 		user.Name = *input.Name
 	}
@@ -142,12 +143,10 @@ func (uc *userUseCase) UpdateUser(ctx context.Context, userID string, input inpu
 }
 
 func (uc *userUseCase) UpdateUserRole(ctx context.Context, userID string, role string) error {
-	// ロールのバリデーション
 	if !IsValidRole(role) {
 		return ErrInvalidRole
 	}
 
-	// ユーザーの存在確認
 	if err := ensureUserExists(ctx, uc.userRepo, userID); err != nil {
 		return err
 	}
@@ -156,7 +155,6 @@ func (uc *userUseCase) UpdateUserRole(ctx context.Context, userID string, role s
 }
 
 func (uc *userUseCase) GetUserReviews(ctx context.Context, userID string) ([]entity.Review, error) {
-	// ユーザーの存在確認
 	if err := ensureUserExists(ctx, uc.userRepo, userID); err != nil {
 		return nil, err
 	}
@@ -167,14 +165,14 @@ func (uc *userUseCase) GetUserReviews(ctx context.Context, userID string) ([]ent
 func deriveNameFromEmail(email string) string {
 	local := strings.TrimSpace(email)
 	if local == "" {
-		return "user"
+		return constants.DefaultUserName
 	}
 	if at := strings.Index(local, "@"); at >= 0 {
 		local = local[:at]
 	}
 	local = strings.TrimSpace(local)
 	if local == "" {
-		return "user"
+		return constants.DefaultUserName
 	}
 	return local
 }
@@ -182,23 +180,23 @@ func deriveNameFromEmail(email string) string {
 func normalizeProvider(provider string) string {
 	trimmed := strings.ToLower(strings.TrimSpace(provider))
 	validProviders := map[string]bool{
-		"google": true,
-		"apple":  true,
-		"email":  true,
-		"oauth":  true,
+		constants.ProviderGoogle: true,
+		constants.ProviderApple:  true,
+		constants.ProviderEmail:  true,
+		constants.ProviderOAuth:  true,
 	}
 	if !validProviders[trimmed] {
-		return "oauth"
+		return constants.ProviderOAuth
 	}
 	return trimmed
 }
 
 func shouldUpdateProvider(current string, incoming string) bool {
-	if incoming == "" || incoming == "oauth" {
+	if incoming == "" || incoming == constants.ProviderOAuth {
 		return false
 	}
 	currentTrimmed := strings.ToLower(strings.TrimSpace(current))
-	return currentTrimmed == "" || currentTrimmed == "oauth"
+	return currentTrimmed == "" || currentTrimmed == constants.ProviderOAuth
 }
 
 func shouldUpdateName(current string, incoming string, email string) bool {

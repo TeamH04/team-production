@@ -1,11 +1,13 @@
 package middleware
 
 import (
+	"context"
 	"errors"
 	"strings"
 
 	"github.com/labstack/echo/v4"
 
+	"github.com/TeamH04/team-production/apps/backend/internal/domain/entity"
 	"github.com/TeamH04/team-production/apps/backend/internal/presentation"
 	"github.com/TeamH04/team-production/apps/backend/internal/presentation/requestcontext"
 	"github.com/TeamH04/team-production/apps/backend/internal/security"
@@ -21,57 +23,96 @@ func NewAuthMiddleware(userUC input.UserUseCase) *AuthMiddleware {
 	return &AuthMiddleware{userUC}
 }
 
+func (m *AuthMiddleware) validateJWTAuthDeps(c echo.Context, verifier security.TokenVerifier) error {
+	if m == nil {
+		c.Logger().Error("auth middleware: m is nil")
+		return presentation.NewInternalServerError("auth middleware: m is nil")
+	}
+	if m.userUC == nil {
+		c.Logger().Error("auth middleware: userUC is nil")
+		return presentation.NewInternalServerError("auth middleware: userUC is nil")
+	}
+	if verifier == nil {
+		c.Logger().Error("auth middleware: verifier is nil")
+		return presentation.NewInternalServerError("auth middleware: verifier is nil")
+	}
+	return nil
+}
+
+func bearerTokenFromAuthHeader(value string) (string, error) {
+	if strings.TrimSpace(value) == "" {
+		return "", presentation.NewUnauthorized("missing authorization header")
+	}
+	// Require "Bearer " prefix for auth middleware
+	if !strings.HasPrefix(value, security.BearerPrefix) {
+		return "", presentation.NewUnauthorized("invalid authorization format")
+	}
+	token, err := security.ExtractBearerToken(value)
+	if err != nil || token == "" {
+		return "", presentation.NewUnauthorized("invalid authorization format")
+	}
+	return token, nil
+}
+
+func (m *AuthMiddleware) findOrEnsureUser(ctx context.Context, claims *security.TokenClaims) (entity.User, error) {
+	user, err := m.userUC.FindByID(ctx, claims.UserID)
+	if err == nil {
+		return user, nil
+	}
+	if !errors.Is(err, usecase.ErrUserNotFound) {
+		return entity.User{}, err
+	}
+	return m.userUC.EnsureUser(ctx, input.EnsureUserInput{
+		UserID:   claims.UserID,
+		Email:    claims.Email,
+		Role:     claims.Role,
+		Provider: claims.Provider,
+		Name:     claims.Name,
+		IconURL:  claims.IconURL,
+		Gender:   claims.Gender,
+	})
+}
+
+func (m *AuthMiddleware) attachUserIfPossible(c echo.Context, verifier security.TokenVerifier) {
+	if m == nil || m.userUC == nil || verifier == nil {
+		return
+	}
+	token, err := bearerTokenFromAuthHeader(c.Request().Header.Get("Authorization"))
+	if err != nil {
+		return
+	}
+	claims, err := verifier.Verify(c.Request().Context(), token)
+	if err != nil {
+		return
+	}
+	user, err := m.userUC.FindByID(c.Request().Context(), claims.UserID)
+	if err != nil {
+		return
+	}
+	requestcontext.SetToContext(c, user, claims.Role)
+}
+
 // JWTAuth はJWT認証を行うミドルウェア
 func (m *AuthMiddleware) JWTAuth(verifier security.TokenVerifier) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
-			if m == nil {
-				c.Logger().Error("auth middleware: m is nil")
-				return presentation.NewInternalServerError("auth middleware: m is nil")
-			}
-			if m.userUC == nil {
-				c.Logger().Error("auth middleware: userUC is nil")
-				return presentation.NewInternalServerError("auth middleware: userUC is nil")
-			}
-			if verifier == nil {
-				c.Logger().Error("auth middleware: verifier is nil")
-				return presentation.NewInternalServerError("auth middleware: verifier is nil")
-			}
-			// Authorizationヘッダーを取得
-			auth := c.Request().Header.Get("Authorization")
-			if auth == "" {
-				return presentation.NewUnauthorized("missing authorization header")
+			if err := m.validateJWTAuthDeps(c, verifier); err != nil {
+				return err
 			}
 
-			// Bearerトークンを抽出
-			parts := strings.Split(auth, " ")
-			if len(parts) != 2 || parts[0] != "Bearer" {
-				return presentation.NewUnauthorized("invalid authorization format")
+			token, err := bearerTokenFromAuthHeader(c.Request().Header.Get("Authorization"))
+			if err != nil {
+				return err
 			}
-
-			token := parts[1]
 
 			claims, err := verifier.Verify(c.Request().Context(), token)
 			if err != nil {
 				return presentation.NewUnauthorized(err.Error())
 			}
 
-			user, err := m.userUC.FindByID(c.Request().Context(), claims.UserID)
+			user, err := m.findOrEnsureUser(c.Request().Context(), claims)
 			if err != nil {
-				if errors.Is(err, usecase.ErrUserNotFound) {
-					user, err = m.userUC.EnsureUser(c.Request().Context(), input.EnsureUserInput{
-						UserID:   claims.UserID,
-						Email:    claims.Email,
-						Role:     claims.Role,
-						Provider: claims.Provider,
-						Name:     claims.Name,
-						IconURL:  claims.IconURL,
-						Gender:   claims.Gender,
-					})
-				}
-				if err != nil {
-					return err
-				}
+				return err
 			}
 
 			requestcontext.SetToContext(c, user, claims.Role)
@@ -114,21 +155,7 @@ func (m *AuthMiddleware) RequireRole(roles ...string) echo.MiddlewareFunc {
 func (m *AuthMiddleware) OptionalAuth(verifier security.TokenVerifier) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
-			auth := c.Request().Header.Get("Authorization")
-			if auth != "" {
-				parts := strings.Split(auth, " ")
-				if len(parts) == 2 && parts[0] == "Bearer" {
-					token := parts[1]
-					if verifier != nil {
-						if claims, err := verifier.Verify(c.Request().Context(), token); err == nil {
-							user, err := m.userUC.FindByID(c.Request().Context(), claims.UserID)
-							if err == nil {
-								requestcontext.SetToContext(c, user, claims.Role)
-							}
-						}
-					}
-				}
-			}
+			m.attachUserIfPossible(c, verifier)
 			return next(c)
 		}
 	}

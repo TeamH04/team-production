@@ -1,169 +1,89 @@
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { ERROR_MESSAGES, ROUTES } from '@team/constants';
+import { DEV_GUEST_FLAG_KEY, DEV_LOGIN_ENABLED } from '@team/constants';
+import { createNonce } from '@team/crypto-utils';
+import { palette } from '@team/mobile-ui';
 import * as AppleAuthentication from 'expo-apple-authentication';
-import * as AuthSession from 'expo-auth-session';
 import { BlurView } from 'expo-blur';
 import * as Crypto from 'expo-crypto';
 import { type Href, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import * as WebBrowser from 'expo-web-browser';
-import { useCallback, useState } from 'react';
+import { useCallback } from 'react';
 import { Alert, Dimensions, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 
 import KuguriTitle from '@/assets/icons/kaguri.svg';
 import { AnimatedLoginBackground } from '@/components/AnimatedLoginBackground';
-import { palette } from '@/constants/palette';
 import { fonts } from '@/constants/typography';
-import { useUser } from '@/features/user/UserContext';
-import { checkIsOwner, ensureUserExistsInDB } from '@/lib/auth';
-import { DEV_GUEST_FLAG_KEY, DEV_LOGIN_ENABLED } from '@/lib/devMode';
-import { getSupabase, isSupabaseConfigured } from '@/lib/supabase';
+import { useOAuthFlow } from '@/hooks/useOAuthFlow';
 
-WebBrowser.maybeCompleteAuthSession();
+import type { OAuthProvider } from '@team/types';
 
 const { height } = Dimensions.get('window');
 
-function parseParamsFromUrl(url: string) {
-  try {
-    const u = new URL(url);
-    const hash = u.hash.startsWith('#') ? u.hash.substring(1) : u.hash;
-    const searchParams = new URLSearchParams(u.search);
-    const hashParams = new URLSearchParams(hash);
-
-    const access_token =
-      searchParams.get('access_token') || hashParams.get('access_token') || undefined;
-    const refresh_token =
-      searchParams.get('refresh_token') || hashParams.get('refresh_token') || undefined;
-    const code = searchParams.get('code') || hashParams.get('code') || undefined;
-    return { access_token, refresh_token, code };
-  } catch {
-    return {} as {
-      access_token?: string;
-      refresh_token?: string;
-      code?: string;
-    };
-  }
-}
-
-function createNonce(length = 32) {
-  const charset = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
-  const randomValues =
-    typeof globalThis.crypto?.getRandomValues === 'function'
-      ? globalThis.crypto.getRandomValues(new Uint8Array(length))
-      : Crypto.getRandomBytes(length);
-  return Array.from(randomValues, v => charset[v % charset.length])
-    .slice(0, length)
-    .join('');
-}
-
 export default function LoginScreen() {
   const router = useRouter();
-  const { setUser } = useUser();
-  const [loading, setLoading] = useState<null | 'google' | 'apple' | 'guest'>(null);
 
-  const finishLogin = useCallback(async () => {
-    try {
-      await ensureUserExistsInDB();
-    } catch (err) {
-      const raw = err instanceof Error ? err.message : 'ログイン処理に失敗しました';
-      const message =
-        raw === 'session_not_found'
-          ? 'セッションを取得できませんでした。もう一度ログインしてください。'
-          : raw;
-      Alert.alert('ログイン失敗', message);
-      return;
-    }
+  const handleLoginSuccess = useCallback(
+    (isOwner: boolean) => {
+      // オーナーの場合は直接オーナー画面へ遷移（プロフィール登録をスキップ）
+      if (isOwner) {
+        router.replace(ROUTES.OWNER as Href);
+      }
+      // 一般ユーザーの場合は _layout.tsx の useEffect でプロフィール登録画面へリダイレクトされる
+    },
+    [router],
+  );
 
-    const { isOwner } = await checkIsOwner();
-    Alert.alert(
-      'ログイン完了',
-      isOwner ? 'オーナーとしてログインしました。' : '正常にログインしました。',
-    );
-    if (isOwner) {
-      router.replace('/owner' as Href);
-    }
-  }, [router]);
+  const {
+    loading,
+    setLoading,
+    completeAuth,
+    executeOAuthSession,
+    handleOAuthError,
+    isUserCancellation,
+    checkSupabaseConfigured,
+    createRedirectUrl,
+    getOAuthUrl,
+  } = useOAuthFlow({ onLoginSuccess: handleLoginSuccess });
 
   const handleOAuth = useCallback(
-    async (provider: 'google' | 'apple') => {
-      if (!isSupabaseConfigured()) {
-        Alert.alert(
-          '未設定',
-          'Supabaseの環境変数が未設定です。EXPO_PUBLIC_SUPABASE_URL と EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY を設定してください。',
-        );
-        return;
-      }
+    async (provider: OAuthProvider) => {
+      if (!checkSupabaseConfigured()) return;
 
       setLoading(provider);
       try {
-        const redirectUrl = AuthSession.makeRedirectUri({
-          scheme: 'shopmobile',
-          path: 'auth/callback',
-        });
-        const { data, error } = await getSupabase().auth.signInWithOAuth({
-          provider,
-          options: {
-            redirectTo: redirectUrl,
-            skipBrowserRedirect: true,
-          },
-        });
-        if (error) throw error;
-        if (!data?.url) throw new Error('OAuth URL not returned');
+        const redirectUrl = createRedirectUrl();
+        const authUrl = await getOAuthUrl(provider, redirectUrl);
+        const { success } = await executeOAuthSession(authUrl, redirectUrl);
 
-        const result = await WebBrowser.openAuthSessionAsync(data.url, redirectUrl);
-        if (result.type === 'success' && result.url) {
-          void WebBrowser.dismissBrowser();
-          const { access_token, refresh_token, code } = parseParamsFromUrl(result.url);
-          if (access_token && refresh_token) {
-            const { error: setErr } = await getSupabase().auth.setSession({
-              access_token,
-              refresh_token,
-            });
-            if (setErr) throw setErr;
-          } else if (code) {
-            const { error: exErr } = await getSupabase().auth.exchangeCodeForSession(code);
-            if (exErr) throw exErr;
-          } else {
-            throw new Error('No tokens found in redirect URL');
-          }
-          setUser({
+        if (success) {
+          await completeAuth({
             name: 'Google User',
             email: 'google@example.com',
             isProfileRegistered: false,
           });
-
-          await finishLogin();
-        } else if (result.type === 'dismiss') {
-          // user cancelled
-        } else {
-          throw new Error('Authentication failed');
         }
       } catch (e: unknown) {
-        const msg = e instanceof Error ? e.message : String(e ?? 'Unknown error');
-        if (/Unsupported provider|invalid_provider/i.test(msg)) {
-          Alert.alert(
-            'プロバイダ未設定',
-            'Supabase で Google/Apple のプロバイダが無効です。Authentication > Providers で有効化し、クライアントID/シークレットとリダイレクトURL (https://auth.expo.dev/… のプロキシURL) を設定してください。',
-          );
-        } else {
-          Alert.alert('ログイン失敗', msg);
-        }
+        handleOAuthError(e, provider);
       } finally {
         setLoading(null);
       }
     },
-    [finishLogin, setUser],
+    [
+      checkSupabaseConfigured,
+      setLoading,
+      createRedirectUrl,
+      getOAuthUrl,
+      executeOAuthSession,
+      completeAuth,
+      handleOAuthError,
+    ],
   );
 
   const handleAppleNative = useCallback(async () => {
-    if (!isSupabaseConfigured()) {
-      Alert.alert(
-        '未設定',
-        'Supabaseの環境変数が未設定です。EXPO_PUBLIC_SUPABASE_URL と EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY を設定してください。',
-      );
-      return;
-    }
+    if (!checkSupabaseConfigured()) return;
 
     if (Platform.OS !== 'ios') {
       return handleOAuth('apple');
@@ -200,53 +120,39 @@ export default function LoginScreen() {
           .join(' ')
           .trim();
 
-      setUser({
+      await completeAuth({
         name: fullName && fullName.length > 0 ? fullName : 'Appleユーザー',
         email: credential.email ?? 'apple@example.com',
         isProfileRegistered: false,
       });
-
-      await finishLogin();
     } catch (e: unknown) {
-      if (
-        typeof e === 'object' &&
-        e !== null &&
-        'code' in e &&
-        ((e as { code?: string }).code === 'ERR_REQUEST_CANCELED' ||
-          (e as { code?: string }).code === 'ERR_CANCELED')
-      ) {
-        return;
-      }
-
-      const msg = e instanceof Error ? e.message : String(e ?? 'Unknown error');
-      if (/Unsupported provider|invalid_provider/i.test(msg)) {
-        Alert.alert(
-          'プロバイダ未設定',
-          'Supabase で Apple のプロバイダが無効です。Authentication > Providers で有効化し、クライアントID/シークレットとリダイレクトURLを設定してください。',
-        );
-      } else if (/Sign in with Apple is not available/i.test(msg)) {
-        Alert.alert('非対応端末', 'この端末ではAppleによるサインインが利用できません。');
-      } else {
-        Alert.alert('ログイン失敗', msg);
-      }
+      if (isUserCancellation(e)) return;
+      handleOAuthError(e, 'apple');
     } finally {
       setLoading(null);
     }
-  }, [finishLogin, handleOAuth, setUser]);
+  }, [
+    checkSupabaseConfigured,
+    handleOAuth,
+    setLoading,
+    completeAuth,
+    isUserCancellation,
+    handleOAuthError,
+  ]);
 
   const handleDevGuestLogin = useCallback(async () => {
     if (!DEV_LOGIN_ENABLED || loading) return;
     setLoading('guest');
     try {
       await AsyncStorage.setItem(DEV_GUEST_FLAG_KEY, 'true');
-      router.replace('/(tabs)' as Href);
+      router.replace(ROUTES.TABS as Href);
     } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : String(e ?? 'Unknown error');
+      const msg = e instanceof Error ? e.message : String(e ?? ERROR_MESSAGES.UNKNOWN);
       Alert.alert('ゲストログイン失敗', msg);
     } finally {
       setLoading(null);
     }
-  }, [loading, router]);
+  }, [loading, router, setLoading]);
 
   return (
     <View style={styles.screen}>
@@ -319,7 +225,7 @@ export default function LoginScreen() {
           <Text style={styles.ownerLeadText}>オーナーの方はこちら</Text>
           <View style={styles.ownerLineSide} />
         </View>
-        <Pressable onPress={() => router.push('/owner/login' as Href)}>
+        <Pressable onPress={() => router.push(ROUTES.OWNER_LOGIN as Href)}>
           <Text style={styles.ownerLink}>オーナー用アカウントでログイン</Text>
         </Pressable>
       </Animated.View>

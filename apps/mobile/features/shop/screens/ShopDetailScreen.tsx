@@ -1,5 +1,20 @@
 ﻿import { Ionicons } from '@expo/vector-icons';
-import { BUDGET_LABEL } from '@team/shop-core';
+import {
+  AUTH_ERROR_MESSAGES,
+  BORDER_RADIUS,
+  buildGoogleMapsUrl,
+  formatRating,
+  ICON_SIZE,
+  LAYOUT,
+  RECOMMENDED_MENU_COUNT,
+  ROUTES,
+  SHADOW_STYLES,
+  UI_LABELS,
+} from '@team/constants';
+import { formatDateJa } from '@team/core-utils';
+import { useAuthErrorHandler } from '@team/hooks';
+import { palette, showAuthRequiredAlert } from '@team/mobile-ui';
+import { BUDGET_LABEL, getShopImages, resolveMenuName } from '@team/shop-core';
 import { Image } from 'expo-image';
 import { useFocusEffect, useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -17,96 +32,16 @@ import {
   View,
 } from 'react-native';
 
-import { palette } from '@/constants/palette';
+import { Accordion } from '@/components/Accordion';
 import { fonts } from '@/constants/typography';
 import { useFavorites } from '@/features/favorites/FavoritesContext';
 import { useReviews } from '@/features/reviews/ReviewsContext';
 import { useStores } from '@/features/stores/StoresContext';
 import { useVisited } from '@/features/visited/VisitedContext';
-import { getPublicStorageUrl } from '@/lib/storage';
+import { ENV } from '@/lib/config';
+import { storage } from '@/lib/storage';
 
-import type { RatingDetails } from '@/features/reviews/ReviewsContext';
 import type { ReviewSort } from '@/lib/api';
-
-const RATING_CATEGORIES = [
-  { key: 'taste', label: '味', icon: 'restaurant-outline' as const },
-  { key: 'atmosphere', label: '雰囲気', icon: 'cafe-outline' as const },
-  { key: 'service', label: '接客', icon: 'people-outline' as const },
-  { key: 'speed', label: '提供速度', icon: 'time-outline' as const },
-  { key: 'cleanliness', label: '清潔感', icon: 'sparkles-outline' as const },
-] as const;
-
-const getRatingEmoji = (value: number) => {
-  if (value === 3) return { icon: 'happy' as const, color: palette.errorText, label: '満足' };
-  if (value === 2) return { icon: 'remove' as const, color: palette.accent, label: '普通' };
-  return { icon: 'sad' as const, color: palette.primary, label: '不満' };
-};
-
-type RatingDetailsDisplayProps = {
-  ratingDetails: RatingDetails;
-};
-
-function RatingDetailsDisplay({ ratingDetails }: RatingDetailsDisplayProps) {
-  const hasAnyRating = RATING_CATEGORIES.some(cat => {
-    const value = ratingDetails[cat.key as keyof RatingDetails];
-    return value !== null && value !== undefined && value > 0;
-  });
-
-  if (!hasAnyRating) return null;
-
-  return (
-    <View style={ratingStyles.container}>
-      <View style={ratingStyles.grid}>
-        {RATING_CATEGORIES.map(cat => {
-          const value = ratingDetails[cat.key as keyof RatingDetails];
-          if (value === null || value === undefined || value === 0) return null;
-          const emoji = getRatingEmoji(value);
-          return (
-            <View key={cat.key} style={ratingStyles.item}>
-              <View style={[ratingStyles.iconBadge, { backgroundColor: emoji.color + '15' }]}>
-                <Ionicons name={emoji.icon} size={16} color={emoji.color} />
-              </View>
-              <Text style={ratingStyles.label}>{cat.label}</Text>
-            </View>
-          );
-        })}
-      </View>
-    </View>
-  );
-}
-
-const ratingStyles = StyleSheet.create({
-  container: {
-    marginBottom: 4,
-    marginTop: 8,
-  },
-  grid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 6,
-  },
-  iconBadge: {
-    alignItems: 'center',
-    borderRadius: 11,
-    height: 22,
-    justifyContent: 'center',
-    width: 22,
-  },
-  item: {
-    alignItems: 'center',
-    backgroundColor: palette.grayLight,
-    borderRadius: 16,
-    flexDirection: 'row',
-    gap: 5,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-  },
-  label: {
-    color: palette.primaryText,
-    fontFamily: fonts.medium,
-    fontSize: 12,
-  },
-});
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
@@ -119,6 +54,7 @@ export default function ShopDetailScreen() {
 
   const { isFavorite, toggleFavorite } = useFavorites();
   const { isVisited, toggleVisited } = useVisited();
+  const { handleError } = useAuthErrorHandler();
 
   // reviews: 2つ目の設計を採用（ロード・ソート・いいね・ローディング）
   const { getReviews, loadReviews, toggleLike, loadingByShop } = useReviews();
@@ -127,20 +63,17 @@ export default function ShopDetailScreen() {
   const { getStoreById, loading: storesLoading } = useStores();
 
   // UI state
-  const [isAccordionOpen, setIsAccordionOpen] = useState(false);
-  const [isMapOpen, setIsMapOpen] = useState(false);
-  const [isReviewsOpen, setIsReviewsOpen] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [reviewSort, setReviewSort] = useState<ReviewSort>('new');
 
   const shop = useMemo(() => (id ? (getStoreById(id) ?? null) : null), [getStoreById, id]);
 
-  const webBaseUrl = process.env.EXPO_PUBLIC_WEB_BASE_URL?.replace(/\/$/, '');
+  const webBaseUrl = ENV.WEB_BASE_URL?.replace(/\/$/, '');
   const reviews = useMemo(() => (shop ? getReviews(shop.id) : []), [shop, getReviews]);
   const isFav = useMemo(() => (shop ? isFavorite(shop.id) : false), [shop, isFavorite]);
   const isVis = useMemo(() => (shop ? isVisited(shop.id) : false), [shop, isVisited]);
 
-  const imageUrls = shop?.imageUrls;
+  const imageUrls = useMemo(() => (shop ? getShopImages(shop) : []), [shop]);
   const flatListRef = useRef<FlatList<string>>(null);
 
   // 【修正1】isReviewsLoading の定義を追加
@@ -149,20 +82,20 @@ export default function ShopDetailScreen() {
   // メニュー：1つ目の「おすすめ2つ」＋アコーディオンUIを採用
   const recommendedMenu = useMemo(() => {
     if (!shop?.menu) return [];
-    return shop.menu.slice(0, 2);
+    return shop.menu.slice(0, RECOMMENDED_MENU_COUNT);
   }, [shop]);
 
   // Header: 1つ目の黒系を採用（見た目が締まる）
   useLayoutEffect(() => {
     if (!shop) return;
     navigation.setOptions?.({
-      headerBackTitle: '戻る',
+      headerBackTitle: UI_LABELS.BACK,
       headerShadowVisible: false,
       headerShown: true,
       headerStatusBarHeight: 0,
       headerStyle: {
         backgroundColor: palette.accent,
-        height: 50,
+        height: LAYOUT.HEADER_HEIGHT,
       },
       headerTintColor: palette.textOnAccent,
       headerTitleAlign: 'center',
@@ -177,7 +110,7 @@ export default function ShopDetailScreen() {
 
   useFocusEffect(
     useCallback(() => {
-      navigation.setOptions?.({ headerBackTitle: '戻る' });
+      navigation.setOptions?.({ headerBackTitle: UI_LABELS.BACK });
     }, [navigation]),
   );
 
@@ -191,8 +124,7 @@ export default function ShopDetailScreen() {
 
   const mapOpenUrl = useMemo(() => {
     if (!shop?.placeId) return null;
-    // 【修正2】テンプレートリテラルのミス `${shop.placeId}` に修正
-    return `http://googleusercontent.com/maps.google.com/?query_place_id=${shop.placeId}`;
+    return buildGoogleMapsUrl(shop.placeId, shop.name);
   }, [shop]);
 
   const scrollToImage = useCallback((index: number) => {
@@ -225,17 +157,8 @@ export default function ShopDetailScreen() {
     Linking.openURL(mapOpenUrl).catch(() => Alert.alert('マップを開けませんでした'));
   }, [mapOpenUrl]);
 
-  const resolveMenuName = useCallback(
-    (review: { menuItemIds?: string[]; menuItemName?: string }) => {
-      if (review.menuItemName) return review.menuItemName;
-      if (!review.menuItemIds || review.menuItemIds.length === 0 || !shop?.menu) return undefined;
-
-      const names = shop.menu
-        .filter(item => review.menuItemIds?.includes(item.id))
-        .map(item => item.name);
-
-      return names.length > 0 ? names.join(' / ') : undefined;
-    },
+  const getMenuName = useCallback(
+    (review: { menuItemIds?: string[]; menuItemName?: string }) => resolveMenuName(shop, review),
     [shop],
   );
 
@@ -245,18 +168,17 @@ export default function ShopDetailScreen() {
       try {
         await toggleLike(shop.id, reviewId);
       } catch (err) {
-        const message = err instanceof Error ? err.message : 'Unknown error';
-        if (message === 'auth_required') {
-          Alert.alert('ログインが必要です', 'いいねにはログインが必要です。', [
-            { text: 'キャンセル', style: 'cancel' },
-            { text: 'ログイン', onPress: () => router.push('/login') },
-          ]);
-          return;
+        const errorMessage = handleError(err, {
+          onAuthRequired: () => {
+            showAuthRequiredAlert(AUTH_ERROR_MESSAGES.LIKE, () => router.push('/login'));
+          },
+        });
+        if (errorMessage) {
+          Alert.alert('いいねに失敗しました', errorMessage);
         }
-        Alert.alert('いいねに失敗しました', message);
       }
     },
-    [router, shop, toggleLike],
+    [handleError, router, shop, toggleLike],
   );
 
   const handleToggleFavorite = useCallback(async () => {
@@ -264,21 +186,20 @@ export default function ShopDetailScreen() {
     try {
       await toggleFavorite(shop.id);
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Unknown error';
-      if (message === 'auth_required') {
-        Alert.alert('ログインが必要です', 'お気に入りにはログインが必要です。', [
-          { text: 'キャンセル', style: 'cancel' },
-          { text: 'ログイン', onPress: () => router.push('/login') },
-        ]);
-        return;
+      const errorMessage = handleError(err, {
+        onAuthRequired: () => {
+          showAuthRequiredAlert(AUTH_ERROR_MESSAGES.FAVORITE, () => router.push('/login'));
+        },
+      });
+      if (errorMessage) {
+        const isCurrentlyFavorite = isFavorite ? isFavorite(shop.id) : false;
+        const title = isCurrentlyFavorite
+          ? 'お気に入りの削除に失敗しました'
+          : 'お気に入りの追加に失敗しました';
+        Alert.alert(title, errorMessage);
       }
-      const isCurrentlyFavorite = isFavorite ? isFavorite(shop.id) : false;
-      const title = isCurrentlyFavorite
-        ? 'お気に入りの削除に失敗しました'
-        : 'お気に入りの追加に失敗しました';
-      Alert.alert(title, message);
     }
-  }, [router, shop, toggleFavorite, isFavorite]);
+  }, [handleError, isFavorite, router, shop, toggleFavorite]);
 
   if (storesLoading) {
     return (
@@ -293,7 +214,7 @@ export default function ShopDetailScreen() {
       <View style={[styles.screen, styles.centered]}>
         <Text style={styles.titleLoading}>店舗が見つかりませんでした</Text>
         <Pressable style={styles.secondaryBtn} onPress={() => router.back()}>
-          <Text style={styles.secondaryBtnText}>戻る</Text>
+          <Text style={styles.secondaryBtnText}>{UI_LABELS.BACK}</Text>
         </Pressable>
       </View>
     );
@@ -303,70 +224,64 @@ export default function ShopDetailScreen() {
     <View style={styles.screen}>
       <StatusBar style='light' translucent />
       <ScrollView contentContainerStyle={styles.content}>
-        {/* Hero: 2つ目の画像カルーセルを採用 */}
-        {imageUrls && imageUrls.length > 0 ? (
-          <View style={styles.heroContainer}>
-            <FlatList
-              ref={flatListRef}
-              data={imageUrls}
-              renderItem={({ item, index }) => (
-                <Image
-                  source={{ uri: item }}
-                  style={styles.hero}
-                  contentFit='cover'
-                  accessibilityLabel={`${shop.name} image ${index + 1} of ${imageUrls.length}`}
-                />
-              )}
-              keyExtractor={(_, index) => index.toString()}
-              horizontal
-              pagingEnabled
-              showsHorizontalScrollIndicator={false}
-              onMomentumScrollEnd={event => {
-                const x = event.nativeEvent.contentOffset.x;
-                setCurrentImageIndex(Math.round(x / SCREEN_WIDTH));
-              }}
-            />
-
-            {imageUrls.length > 1 && (
-              <>
-                {currentImageIndex > 0 && (
-                  <Pressable
-                    style={[styles.arrowButton, styles.arrowButtonLeft]}
-                    onPress={() => scrollToImage(currentImageIndex - 1)}
-                    accessibilityLabel='前の画像'
-                  >
-                    <Ionicons name='chevron-back' size={22} color={palette.primaryText} />
-                  </Pressable>
-                )}
-                {currentImageIndex < imageUrls.length - 1 && (
-                  <Pressable
-                    style={[styles.arrowButton, styles.arrowButtonRight]}
-                    onPress={() => scrollToImage(currentImageIndex + 1)}
-                    accessibilityLabel='次の画像'
-                  >
-                    <Ionicons name='chevron-forward' size={22} color={palette.primaryText} />
-                  </Pressable>
-                )}
-
-                <View style={styles.paginationContainer}>
-                  {imageUrls.map((uri, idx) => (
-                    <View
-                      key={uri}
-                      style={[
-                        styles.paginationDot,
-                        idx === currentImageIndex && styles.paginationDotActive,
-                      ]}
-                    />
-                  ))}
-                </View>
-              </>
+        {/* Hero: 画像カルーセル（getShopImages で常に最低1枚を保証） */}
+        <View style={styles.heroContainer}>
+          <FlatList
+            ref={flatListRef}
+            data={imageUrls}
+            renderItem={({ item, index }) => (
+              <Image
+                source={{ uri: item }}
+                style={styles.hero}
+                contentFit='cover'
+                accessibilityLabel={`${shop.name} image ${index + 1} of ${imageUrls.length}`}
+              />
             )}
-          </View>
-        ) : (
-          <View style={styles.heroContainer}>
-            <Image source={{ uri: shop.imageUrl }} style={styles.hero} contentFit='cover' />
-          </View>
-        )}
+            keyExtractor={(_, index) => index.toString()}
+            horizontal
+            pagingEnabled
+            showsHorizontalScrollIndicator={false}
+            onMomentumScrollEnd={event => {
+              const x = event.nativeEvent.contentOffset.x;
+              setCurrentImageIndex(Math.round(x / SCREEN_WIDTH));
+            }}
+          />
+
+          {imageUrls.length > 1 && (
+            <>
+              {currentImageIndex > 0 && (
+                <Pressable
+                  style={[styles.arrowButton, styles.arrowButtonLeft]}
+                  onPress={() => scrollToImage(currentImageIndex - 1)}
+                  accessibilityLabel='前の画像'
+                >
+                  <Ionicons name='chevron-back' size={22} color={palette.primaryText} />
+                </Pressable>
+              )}
+              {currentImageIndex < imageUrls.length - 1 && (
+                <Pressable
+                  style={[styles.arrowButton, styles.arrowButtonRight]}
+                  onPress={() => scrollToImage(currentImageIndex + 1)}
+                  accessibilityLabel='次の画像'
+                >
+                  <Ionicons name='chevron-forward' size={22} color={palette.primaryText} />
+                </Pressable>
+              )}
+
+              <View style={styles.paginationContainer}>
+                {imageUrls.map((uri, idx) => (
+                  <View
+                    key={uri}
+                    style={[
+                      styles.paginationDot,
+                      idx === currentImageIndex && styles.paginationDotActive,
+                    ]}
+                  />
+                ))}
+              </View>
+            </>
+          )}
+        </View>
 
         <View style={styles.container}>
           {/* Title + actions: 両方の良いとこ（押した時のopacity/disabled等は2つ目寄り） */}
@@ -395,7 +310,7 @@ export default function ShopDetailScreen() {
               >
                 <Ionicons
                   name={isVis ? 'checkmark-circle' : 'checkmark-circle-outline'}
-                  size={24}
+                  size={ICON_SIZE.LG}
                   color={isVis ? palette.visitedActive : palette.muted}
                 />
               </Pressable>
@@ -407,7 +322,7 @@ export default function ShopDetailScreen() {
               >
                 <Ionicons
                   name={isFav ? 'heart' : 'heart-outline'}
-                  size={24}
+                  size={ICON_SIZE.LG}
                   color={isFav ? palette.favoriteActive : palette.muted}
                 />
               </Pressable>
@@ -415,7 +330,7 @@ export default function ShopDetailScreen() {
           </View>
 
           <Text style={styles.meta}>
-            {`${shop.category} │ 予算 ${BUDGET_LABEL[shop.budget]} │ ★ ${shop.rating.toFixed(1)}`}
+            {`${shop.category} │ 予算 ${BUDGET_LABEL[shop.budget]} │ ★ ${formatRating(shop.rating)}`}
           </Text>
 
           {/* tags: 1つ目の素朴表示 + 2つ目の「タグで検索」導線を採用 */}
@@ -426,8 +341,8 @@ export default function ShopDetailScreen() {
                 style={styles.tagPill}
                 accessibilityLabel={`タグ ${tag} で検索`}
                 onPress={() => {
-                  navigation.setOptions?.({ headerBackTitle: '戻る' });
-                  router.navigate({ pathname: '/(tabs)', params: { tag } });
+                  navigation.setOptions?.({ headerBackTitle: UI_LABELS.BACK });
+                  router.navigate({ pathname: ROUTES.TABS, params: { tag } });
                 }}
               >
                 <Text style={styles.tagText}>{tag}</Text>
@@ -437,215 +352,184 @@ export default function ShopDetailScreen() {
 
           <Text style={styles.descriptionText}>{shop.description}</Text>
 
-          {/* Menu accordion: 1つ目採用 */}
+          {/* Menu accordion */}
           {shop.menu && shop.menu.length > 0 && (
-            <View style={[styles.card, styles.cardShadow, styles.menuSection]}>
-              <Pressable style={styles.accordionHeader} onPress={() => setIsAccordionOpen(v => !v)}>
-                <Text style={styles.sectionTitle}>メニュー</Text>
-                <Ionicons
-                  color={palette.muted}
-                  name={isAccordionOpen ? 'chevron-up' : 'chevron-down'}
-                  size={20}
-                />
-              </Pressable>
-
-              {isAccordionOpen && (
-                <View style={styles.accordionContent}>
-                  <View style={styles.recommendedBox}>
-                    <Text style={styles.recommendedLabel}>おすすめメニュー</Text>
-                    {recommendedMenu.map(item => (
-                      <View key={item.id} style={styles.recommendedItem}>
-                        <Ionicons
-                          color={palette.accent}
-                          name='star'
-                          size={14}
-                          style={styles.menuIcon}
-                        />
-                        <Text style={styles.menuItemText}>{item.name}</Text>
-                      </View>
-                    ))}
+            <Accordion
+              title='メニュー'
+              titleColor={palette.primary}
+              iconColor={palette.muted}
+              containerStyle={[styles.card, styles.cardShadow, styles.menuSection]}
+              headerStyle={styles.accordionHeader}
+              titleStyle={styles.sectionTitle}
+              contentStyle={styles.accordionContent}
+            >
+              <View style={styles.recommendedBox}>
+                <Text style={styles.recommendedLabel}>{UI_LABELS.RECOMMENDED_MENU}</Text>
+                {recommendedMenu.map(item => (
+                  <View key={item.id} style={styles.recommendedItem}>
+                    <Ionicons
+                      color={palette.accent}
+                      name='star'
+                      size={14}
+                      style={styles.menuIcon}
+                    />
+                    <Text style={styles.menuItemText}>{item.name}</Text>
                   </View>
+                ))}
+              </View>
 
-                  <Pressable
-                    onPress={() => {
-                      navigation.setOptions?.({ headerBackTitle: '戻る' });
-                      router.push({
-                        pathname: '/menu',
-                        params: { id: shop.id },
-                      });
-                    }}
-                    style={styles.moreBtnOutline}
-                  >
-                    <Ionicons color={palette.primary} name='add-circle-outline' size={18} />
-                    <Text style={styles.moreBtnText}>もっと見る</Text>
-                  </Pressable>
-                </View>
-              )}
-            </View>
+              <Pressable
+                onPress={() => {
+                  navigation.setOptions?.({ headerBackTitle: UI_LABELS.BACK });
+                  router.push({
+                    pathname: ROUTES.MENU,
+                    params: { id: shop.id },
+                  });
+                }}
+                style={styles.moreBtnOutline}
+              >
+                <Ionicons color={palette.primary} name='add-circle-outline' size={18} />
+                <Text style={styles.moreBtnText}>もっと見る</Text>
+              </Pressable>
+            </Accordion>
           )}
 
-          {/* Map: 1つ目のカードUI + 2つ目の存在チェック */}
+          {/* Map accordion */}
           {mapOpenUrl ? (
-            <View style={[styles.card, styles.cardShadow, styles.menuSection]}>
-              <Pressable style={styles.accordionHeader} onPress={() => setIsMapOpen(v => !v)}>
-                <Text style={styles.sectionTitle}>場所</Text>
+            <Accordion
+              title='場所'
+              titleColor={palette.primary}
+              iconColor={palette.muted}
+              containerStyle={[styles.card, styles.cardShadow, styles.menuSection]}
+              headerStyle={styles.accordionHeader}
+              titleStyle={styles.sectionTitle}
+              contentStyle={styles.accordionContent}
+            >
+              <View style={styles.menuAddressBlock}>
+                <Text style={styles.menuAddressLabel}>住所</Text>
+                <Text style={styles.menuAddressText}>
+                  {shop.address?.trim() ? shop.address : '住所情報がありません'}
+                </Text>
+              </View>
+              <Pressable onPress={handleOpenMap} style={styles.moreBtnOutline}>
                 <Ionicons
-                  color={palette.muted}
-                  name={isMapOpen ? 'chevron-up' : 'chevron-down'}
-                  size={20}
+                  color={palette.primary}
+                  name='map-outline'
+                  size={18}
+                  style={styles.mapIcon}
                 />
+                <Text style={styles.moreBtnText}>Googleマップで確認</Text>
               </Pressable>
-
-              {isMapOpen && (
-                <View style={styles.accordionContent}>
-                  <View style={styles.menuAddressBlock}>
-                    <Text style={styles.menuAddressLabel}>住所</Text>
-                    <Text style={styles.menuAddressText}>
-                      {shop.address?.trim() ? shop.address : '住所情報がありません'}
-                    </Text>
-                  </View>
-                  <Pressable onPress={handleOpenMap} style={styles.moreBtnOutline}>
-                    <Ionicons
-                      color={palette.primary}
-                      name='map-outline'
-                      size={18}
-                      style={styles.mapIcon}
-                    />
-                    <Text style={styles.moreBtnText}>Googleマップで確認</Text>
-                  </Pressable>
-                </View>
-              )}
-            </View>
+            </Accordion>
           ) : null}
 
-          {/* Reviews: 2つ目（sort + like + files + loading）を採用 */}
-          <View style={[styles.card, styles.cardShadow, styles.menuSection]}>
-            <Pressable style={styles.accordionHeader} onPress={() => setIsReviewsOpen(v => !v)}>
-              <Text style={styles.sectionTitle}>レビュー</Text>
-              <Ionicons
-                color={palette.muted}
-                name={isReviewsOpen ? 'chevron-up' : 'chevron-down'}
-                size={20}
-              />
+          {/* Reviews accordion */}
+          <Accordion
+            title='レビュー'
+            titleColor={palette.primary}
+            iconColor={palette.muted}
+            containerStyle={[styles.card, styles.cardShadow, styles.menuSection]}
+            headerStyle={styles.accordionHeader}
+            titleStyle={styles.sectionTitle}
+            contentStyle={styles.accordionContent}
+          >
+            <View style={styles.reviewIntro}>
+              <Text style={styles.reviewSub}>みんなの感想や体験談</Text>
+            </View>
+
+            <View style={[styles.sortRow, styles.reviewSortRow]}>
+              <Pressable
+                onPress={() => setReviewSort('new')}
+                style={[styles.sortPill, reviewSort === 'new' && styles.sortPillActive]}
+              >
+                <Text style={[styles.sortText, reviewSort === 'new' && styles.sortTextActive]}>
+                  新しい順
+                </Text>
+              </Pressable>
+              <Pressable
+                onPress={() => setReviewSort('liked')}
+                style={[styles.sortPill, reviewSort === 'liked' && styles.sortPillActive]}
+              >
+                <Text style={[styles.sortText, reviewSort === 'liked' && styles.sortTextActive]}>
+                  高評価順
+                </Text>
+              </Pressable>
+            </View>
+
+            <Pressable
+              onPress={() => {
+                navigation.setOptions?.({ headerBackTitle: UI_LABELS.BACK });
+                router.push(ROUTES.REVIEW(shop.id));
+              }}
+              style={[styles.primaryBtn, styles.reviewPrimaryBtn]}
+            >
+              <Text style={styles.primaryBtnText}>レビューを書く</Text>
             </Pressable>
 
-            {isReviewsOpen && (
-              <View style={styles.accordionContent}>
-                <View style={styles.reviewIntro}>
-                  <Text style={styles.reviewSub}>みんなの感想や体験談</Text>
-                </View>
+            <View style={styles.reviewDivider} />
 
-                <View style={[styles.sortRow, styles.reviewSortRow]}>
-                  <Pressable
-                    onPress={() => setReviewSort('new')}
-                    style={[styles.sortPill, reviewSort === 'new' && styles.sortPillActive]}
-                  >
-                    <Text style={[styles.sortText, reviewSort === 'new' && styles.sortTextActive]}>
-                      新しい順
-                    </Text>
-                  </Pressable>
-                  <Pressable
-                    onPress={() => setReviewSort('liked')}
-                    style={[styles.sortPill, reviewSort === 'liked' && styles.sortPillActive]}
-                  >
-                    <Text
-                      style={[styles.sortText, reviewSort === 'liked' && styles.sortTextActive]}
-                    >
-                      高評価順
-                    </Text>
-                  </Pressable>
-                </View>
-
-                {/* 【修正3】onPress の重複定義を一つに整理 */}
-                <Pressable
-                  onPress={() => {
-                    navigation.setOptions?.({ headerBackTitle: '戻る' });
-                    router.push({
-                      pathname: '/shop/[id]/review',
-                      params: { id: shop.id },
-                    });
-                  }}
-                  style={[styles.primaryBtn, styles.reviewPrimaryBtn]}
-                >
-                  <Text style={styles.primaryBtnText}>レビューを書く</Text>
-                </Pressable>
-
-                <View style={styles.reviewDivider} />
-
-                {isReviewsLoading ? (
-                  <View style={[styles.card, styles.cardShadow]}>
-                    <Text style={styles.muted}>レビューを読み込み中...</Text>
-                  </View>
-                ) : reviews.length === 0 ? (
-                  <View style={[styles.card, styles.cardShadow]}>
-                    <Text style={styles.muted}>
-                      まだレビューがありません。最初のレビューを投稿しましょう！
-                    </Text>
-                  </View>
-                ) : (
-                  reviews.map(review => (
-                    <View key={review.id} style={[styles.card, styles.cardShadow]}>
-                      <View style={styles.reviewHeaderRow}>
-                        <Text style={styles.reviewTitle}>
-                          ★ {review.rating}
-                          {' ・ '}
-                          {review.createdAt
-                            ? new Date(review.createdAt).toLocaleDateString('ja-JP')
-                            : ''}
-                        </Text>
-
-                        <Pressable
-                          onPress={() => handleToggleLike(review.id)}
-                          style={[styles.likeButton, review.likedByMe && styles.likeButtonActive]}
-                        >
-                          <Text
-                            style={[styles.likeText, review.likedByMe && styles.likeTextActive]}
-                          >
-                            いいね {review.likesCount}
-                          </Text>
-                        </Pressable>
-                      </View>
-
-                      {review.ratingDetails && (
-                        <RatingDetailsDisplay ratingDetails={review.ratingDetails} />
-                      )}
-
-                      {(() => {
-                        const menuName = resolveMenuName(review);
-                        if (!menuName) return null;
-                        return <Text style={styles.reviewMenu}>メニュー: {menuName}</Text>;
-                      })()}
-
-                      {review.comment ? (
-                        <Text style={styles.reviewBody}>{review.comment}</Text>
-                      ) : null}
-
-                      {review.files && review.files.length > 0 && (
-                        <ScrollView
-                          horizontal
-                          showsHorizontalScrollIndicator={false}
-                          style={styles.reviewFiles}
-                        >
-                          {review.files.map(file => {
-                            const url = file.url ?? getPublicStorageUrl(file.objectKey);
-                            if (!url) return null;
-                            return (
-                              <Image
-                                key={file.id}
-                                source={{ uri: url }}
-                                style={styles.reviewImage}
-                                contentFit='cover'
-                              />
-                            );
-                          })}
-                        </ScrollView>
-                      )}
-                    </View>
-                  ))
-                )}
+            {isReviewsLoading ? (
+              <View style={[styles.card, styles.cardShadow]}>
+                <Text style={styles.muted}>レビューを読み込み中...</Text>
               </View>
+            ) : reviews.length === 0 ? (
+              <View style={[styles.card, styles.cardShadow]}>
+                <Text style={styles.muted}>
+                  まだレビューがありません。最初のレビューを投稿しましょう！
+                </Text>
+              </View>
+            ) : (
+              reviews.map(review => (
+                <View key={review.id} style={[styles.card, styles.cardShadow]}>
+                  <View style={styles.reviewHeaderRow}>
+                    <Text style={styles.reviewTitle}>
+                      ★ {review.rating}
+                      {' ・ '}
+                      {review.createdAt ? formatDateJa(review.createdAt) : ''}
+                    </Text>
+
+                    <Pressable
+                      onPress={() => handleToggleLike(review.id)}
+                      style={[styles.likeButton, review.likedByMe && styles.likeButtonActive]}
+                    >
+                      <Text style={[styles.likeText, review.likedByMe && styles.likeTextActive]}>
+                        いいね {review.likesCount}
+                      </Text>
+                    </Pressable>
+                  </View>
+
+                  {(() => {
+                    const menuName = getMenuName(review);
+                    if (!menuName) return null;
+                    return <Text style={styles.reviewMenu}>メニュー: {menuName}</Text>;
+                  })()}
+
+                  {review.comment ? <Text style={styles.reviewBody}>{review.comment}</Text> : null}
+
+                  {review.files && review.files.length > 0 && (
+                    <ScrollView
+                      horizontal
+                      showsHorizontalScrollIndicator={false}
+                      style={styles.reviewFiles}
+                    >
+                      {review.files.map(file => {
+                        const url = file.url ?? storage.buildStorageUrl(file.objectKey);
+                        if (!url) return null;
+                        return (
+                          <Image
+                            key={file.id}
+                            source={{ uri: url }}
+                            style={styles.reviewImage}
+                            contentFit='cover'
+                          />
+                        );
+                      })}
+                    </ScrollView>
+                  )}
+                </View>
+              ))
             )}
-          </View>
+          </Accordion>
         </View>
       </ScrollView>
     </View>
@@ -657,7 +541,7 @@ const styles = StyleSheet.create({
   accordionHeader: {
     alignItems: 'center',
     backgroundColor: palette.white,
-    borderRadius: 12,
+    borderRadius: BORDER_RADIUS.MEDIUM,
     flexDirection: 'row',
     justifyContent: 'space-between',
     paddingHorizontal: 12,
@@ -667,14 +551,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: palette.arrowButtonBg,
     borderRadius: 20,
+    boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.2)',
     elevation: 3,
     height: 40,
     justifyContent: 'center',
     position: 'absolute',
-    shadowColor: palette.shadow,
-    shadowOffset: { height: 2, width: 0 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
     top: '50%',
     transform: [{ translateY: -20 }],
     width: 40,
@@ -684,12 +565,8 @@ const styles = StyleSheet.create({
   btnPressed: { opacity: 0.85 },
   card: { backgroundColor: palette.white, borderRadius: 16, padding: 16 },
   cardShadow: {
-    elevation: 4,
+    ...SHADOW_STYLES.CARD,
     marginBottom: 16,
-    shadowColor: palette.shadow,
-    shadowOffset: { height: 6, width: 0 },
-    shadowOpacity: 0.06,
-    shadowRadius: 12,
   },
   centered: { alignItems: 'center', justifyContent: 'center' },
   container: { padding: 16 },
@@ -716,7 +593,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
-  hero: { height: 220, width: SCREEN_WIDTH },
+  hero: { height: LAYOUT.HERO_IMAGE_HEIGHT, width: SCREEN_WIDTH },
   heroContainer: {
     backgroundColor: palette.heroPlaceholder,
     position: 'relative',
@@ -724,7 +601,7 @@ const styles = StyleSheet.create({
   likeButton: {
     backgroundColor: palette.highlight,
     borderColor: palette.accent,
-    borderRadius: 999,
+    borderRadius: BORDER_RADIUS.PILL,
     borderWidth: 1,
     paddingHorizontal: 12,
     paddingVertical: 6,
@@ -738,7 +615,7 @@ const styles = StyleSheet.create({
   mapIcon: { marginRight: 8 },
   menuAddressBlock: {
     backgroundColor: palette.grayLight,
-    borderRadius: 12,
+    borderRadius: BORDER_RADIUS.MEDIUM,
     marginBottom: 12,
     padding: 12,
   },
@@ -756,7 +633,7 @@ const styles = StyleSheet.create({
   moreBtnOutline: {
     alignItems: 'center',
     borderColor: palette.primary,
-    borderRadius: 12,
+    borderRadius: BORDER_RADIUS.MEDIUM,
     borderWidth: 1,
     flexDirection: 'row',
     justifyContent: 'center',
@@ -784,7 +661,7 @@ const styles = StyleSheet.create({
   paginationDotActive: { backgroundColor: palette.primaryOnAccent, opacity: 1 },
   primaryBtn: {
     backgroundColor: palette.accent,
-    borderRadius: 12,
+    borderRadius: BORDER_RADIUS.MEDIUM,
     marginBottom: 16,
     paddingVertical: 12,
   },
@@ -795,7 +672,7 @@ const styles = StyleSheet.create({
   },
   recommendedBox: {
     backgroundColor: palette.grayLight,
-    borderRadius: 12,
+    borderRadius: BORDER_RADIUS.MEDIUM,
     marginBottom: 16,
     padding: 12,
   },
@@ -825,7 +702,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
-  reviewImage: { borderRadius: 12, height: 88, marginRight: 10, width: 88 },
+  reviewImage: {
+    borderRadius: BORDER_RADIUS.MEDIUM,
+    height: LAYOUT.REVIEW_IMAGE_SIZE,
+    marginRight: 10,
+    width: LAYOUT.REVIEW_IMAGE_SIZE,
+  },
   reviewIntro: { marginBottom: 8 },
   reviewMenu: { color: palette.muted, fontFamily: fonts.regular, marginTop: 6 },
   reviewPrimaryBtn: { marginBottom: 12, marginTop: 4 },
@@ -854,7 +736,7 @@ const styles = StyleSheet.create({
   sortPill: {
     backgroundColor: palette.secondarySurface,
     borderColor: palette.border,
-    borderRadius: 999,
+    borderRadius: BORDER_RADIUS.PILL,
     borderWidth: 1,
     marginRight: 8,
     paddingHorizontal: 12,
@@ -869,7 +751,7 @@ const styles = StyleSheet.create({
   sortTextActive: { color: palette.primaryOnAccent },
   tagPill: {
     backgroundColor: palette.tagSurface,
-    borderRadius: 999,
+    borderRadius: BORDER_RADIUS.PILL,
     marginRight: 8,
     marginTop: 8,
     paddingHorizontal: 12,

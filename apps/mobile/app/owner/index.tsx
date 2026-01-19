@@ -1,8 +1,9 @@
+import { FONT_WEIGHT, ROUTES } from '@team/constants';
+import { palette } from '@team/mobile-ui';
 import { type Href, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { palette } from '@/constants/palette';
 import { checkIsOwner } from '@/lib/auth';
 
 export default function OwnerHomeScreen() {
@@ -33,7 +34,7 @@ export default function OwnerHomeScreen() {
   if (!authorized) {
     return (
       <View style={styles.center}>
-        <Pressable style={styles.linkBtn} onPress={() => router.replace('/login' as Href)}>
+        <Pressable style={styles.linkBtn} onPress={() => router.replace(ROUTES.LOGIN as Href)}>
           <Text style={styles.linkText}>ログインへ</Text>
         </Pressable>
       </View>
@@ -48,7 +49,7 @@ export default function OwnerHomeScreen() {
       <View style={styles.card}>
         <Text style={styles.cardTitle}>クイックアクション</Text>
         <View style={styles.actionsRow}>
-          <Pressable style={styles.actionBtn} onPress={() => router.push('/')}>
+          <Pressable style={styles.actionBtn} onPress={() => router.push(ROUTES.HOME)}>
             <Text style={styles.actionText}>ユーザーホームへ</Text>
           </Pressable>
           <Pressable
@@ -70,7 +71,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 12,
   },
-  actionText: { color: palette.textOnSecondary, fontWeight: '700' },
+  actionText: { color: palette.textOnSecondary, fontWeight: FONT_WEIGHT.BOLD },
   actionsRow: { flexDirection: 'row', gap: 12 },
   card: {
     backgroundColor: palette.surface,
@@ -82,7 +83,7 @@ const styles = StyleSheet.create({
   cardTitle: {
     color: palette.primaryText,
     fontSize: 16,
-    fontWeight: '700',
+    fontWeight: FONT_WEIGHT.BOLD,
     marginBottom: 12,
   },
   center: { alignItems: 'center', flex: 1, justifyContent: 'center' },
@@ -92,7 +93,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 10,
   },
-  linkText: { color: palette.textOnSecondary, fontWeight: '700' },
+  linkText: { color: palette.textOnSecondary, fontWeight: FONT_WEIGHT.BOLD },
   screen: {
     backgroundColor: palette.background,
     flex: 1,
@@ -100,5 +101,5 @@ const styles = StyleSheet.create({
     paddingTop: 24,
   },
   subtitle: { color: palette.secondaryText, marginBottom: 20, marginTop: 8 },
-  title: { color: palette.primaryText, fontSize: 24, fontWeight: '700' },
+  title: { color: palette.primaryText, fontSize: 24, fontWeight: FONT_WEIGHT.BOLD },
 });

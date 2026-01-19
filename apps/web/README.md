@@ -1,53 +1,69 @@
-# Web フロントエンド (Next.js)
+# Web (Next.js)
 
-## 概要
+Next.js 15 (App Router) の店舗探索アプリ。
 
-- Next.js 15 (App Router) の店舗探索アプリ。
-- データは `@team/shop-core` のダミー店舗を参照。
+## クイックスタート
 
-## 前提条件
+```bash
+# リポジトリルートから
+make web    # Web 起動
+```
 
-- Node.js 24 以上 / pnpm 10 以上。
+## コマンド
 
-## セットアップ手順
+| コマンド                    | 説明             |
+| --------------------------- | ---------------- |
+| `make web`                  | 開発サーバー起動 |
+| `make test-web`             | テスト実行       |
+| `pnpm --dir apps/web build` | ビルド           |
 
-1. 依存を取得する。
-
-   ```bash
-   pnpm install
-   ```
-
-2. 開発サーバーを起動する。
-
-   ```bash
-   pnpm --dir apps/web dev
-   ```
-
-   - アクセス: http://localhost:3000
-
-## 主なコマンド
-
-| コマンド                    | 用途               |
-| --------------------------- | ------------------ |
-| `pnpm --dir apps/web dev`   | 開発サーバー起動。 |
-| `pnpm --dir apps/web lint`  | Lint 実行。        |
-| `pnpm --dir apps/web build` | 本番ビルド。       |
-| `pnpm --filter web test`    | テスト実行。       |
-
-## 画面と機能
+## 画面構成
 
 ### トップページ `/`
 
-- 検索ボックスとカテゴリチップで絞り込み。
-- タグクリックで検索語に反映。
-- 「さらに読み込む」で 9 件ずつ追加表示。
+- 検索ボックスとカテゴリチップで絞り込み
+- 「さらに読み込む」で 9 件ずつ追加表示
 
 ### 店舗詳細 `/shop/[id]`
 
-- 画像スライダー、タグ、メニュー、地図リンク。
-- 共有/お気に入りボタンはローカル状態で動作。
-- 存在しない ID はカスタム 404 を表示し、一覧へ誘導。
+- 画像スライダー、タグ、メニュー、地図リンク
+- 共有/お気に入りボタン
 
-## 環境変数
+## ポート
 
-- なし（ダミーデータで動作）。
+http://localhost:3000
+
+---
+
+## テーマ・スタイル
+
+### CSS変数
+
+Web では `@team/theme` から自動生成された CSS変数を使用する。
+
+```
+app/
+├── globals.css       # Tailwind + テーマ変数インポート
+└── theme-vars.css    # 自動生成（編集禁止）
+```
+
+### カラーの使用
+
+```tsx
+// カスタムテーマクラス（推奨）
+<div className="bg-theme-primary text-on-primary">...</div>
+
+// CSS変数を直接使用
+<div style={{ backgroundColor: 'var(--color-primary)' }}>...</div>
+```
+
+### カラー変更時
+
+1. `packages/theme/src/colors.ts` を編集
+2. CSS変数を再生成:
+   ```bash
+   pnpm --filter @team/theme generate:css
+   ```
+3. 変更をコミット
+
+> **Note:** `theme-vars.css` は自動生成ファイルのため、直接編集しないこと。

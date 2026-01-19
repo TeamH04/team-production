@@ -3,6 +3,7 @@ package usecase
 import (
 	"context"
 
+	"github.com/TeamH04/team-production/apps/backend/internal/domain/constants"
 	"github.com/TeamH04/team-production/apps/backend/internal/domain/entity"
 	"github.com/TeamH04/team-production/apps/backend/internal/usecase/input"
 	"github.com/TeamH04/team-production/apps/backend/internal/usecase/output"
@@ -34,7 +35,6 @@ func NewReviewUseCase(
 }
 
 func (uc *reviewUseCase) GetReviewsByStoreID(ctx context.Context, storeID string, sort string, viewerID string) ([]entity.Review, error) {
-	// ストアの存在確認
 	if err := ensureStoreExists(ctx, uc.storeRepo, storeID); err != nil {
 		return nil, err
 	}
@@ -43,17 +43,20 @@ func (uc *reviewUseCase) GetReviewsByStoreID(ctx context.Context, storeID string
 }
 
 func (uc *reviewUseCase) Create(ctx context.Context, storeID string, userID string, input input.CreateReview) error {
-	if storeID == "" || userID == "" {
-		return ErrInvalidInput
+	if err := validateNotEmpty(storeID, userID); err != nil {
+		return err
 	}
 
-	// ストアの存在確認
 	if err := ensureStoreExists(ctx, uc.storeRepo, storeID); err != nil {
 		return err
 	}
 
 	if input.Rating < 1 || input.Rating > 5 {
 		return ErrInvalidRating
+	}
+
+	if err := validateRatingDetails(input.RatingDetails); err != nil {
+		return err
 	}
 
 	menuIDs := dedupeStrings(input.MenuIDs)
@@ -107,8 +110,8 @@ func (uc *reviewUseCase) Create(ctx context.Context, storeID string, userID stri
 }
 
 func (uc *reviewUseCase) LikeReview(ctx context.Context, reviewID string, userID string) error {
-	if reviewID == "" || userID == "" {
-		return ErrInvalidInput
+	if err := validateNotEmpty(reviewID, userID); err != nil {
+		return err
 	}
 	if err := ensureReviewExists(ctx, uc.reviewRepo, reviewID); err != nil {
 		return err
@@ -117,8 +120,8 @@ func (uc *reviewUseCase) LikeReview(ctx context.Context, reviewID string, userID
 }
 
 func (uc *reviewUseCase) UnlikeReview(ctx context.Context, reviewID string, userID string) error {
-	if reviewID == "" || userID == "" {
-		return ErrInvalidInput
+	if err := validateNotEmpty(reviewID, userID); err != nil {
+		return err
 	}
 	if err := ensureReviewExists(ctx, uc.reviewRepo, reviewID); err != nil {
 		return err
@@ -128,10 +131,10 @@ func (uc *reviewUseCase) UnlikeReview(ctx context.Context, reviewID string, user
 
 func normalizeReviewSort(sort string) string {
 	switch sort {
-	case "liked":
-		return "liked"
+	case constants.SortByLiked:
+		return constants.SortByLiked
 	default:
-		return "new"
+		return constants.SortByNew
 	}
 }
 
@@ -152,4 +155,19 @@ func dedupeStrings(values []string) []string {
 		result = append(result, value)
 	}
 	return result
+}
+
+// validateRatingDetails は詳細評価の各フィールドが1-5の範囲内かを検証します
+func validateRatingDetails(rd *input.RatingDetails) error {
+	if rd == nil {
+		return nil
+	}
+
+	fields := []*int{rd.Taste, rd.Atmosphere, rd.Service, rd.Speed, rd.Cleanliness}
+	for _, f := range fields {
+		if f != nil && (*f < 1 || *f > 5) {
+			return ErrInvalidRatingDetails
+		}
+	}
+	return nil
 }

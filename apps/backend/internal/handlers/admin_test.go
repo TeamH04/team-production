@@ -1,6 +1,7 @@
 package handlers_test
 
 import (
+	"encoding/json"
 	"net/http"
 	"testing"
 
@@ -30,6 +31,15 @@ func TestAdminHandler_GetPendingStores_Success(t *testing.T) {
 	err := h.GetPendingStores(tc.Context)
 
 	testutil.AssertSuccess(t, err, tc.Recorder, http.StatusOK)
+
+	// Verify response body contains expected pending stores
+	var response []map[string]interface{}
+	if err := json.Unmarshal(tc.Recorder.Body.Bytes(), &response); err != nil {
+		t.Fatalf("failed to parse response body: %v", err)
+	}
+	if len(response) != 2 {
+		t.Errorf("expected 2 pending stores, got %d", len(response))
+	}
 }
 
 func TestAdminHandler_GetPendingStores_Empty(t *testing.T) {

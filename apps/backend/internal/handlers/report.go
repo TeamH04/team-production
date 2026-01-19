@@ -26,7 +26,7 @@ func (h *ReportHandler) CreateReport(c echo.Context) error {
 	}
 
 	var dto createReportDTO
-	if err := bindJSON(c, &dto); err != nil {
+	if err = bindJSON(c, &dto); err != nil {
 		return err
 	}
 

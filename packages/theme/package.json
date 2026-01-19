@@ -1,6 +1,21 @@
 {
   "name": "@team/theme",
   "version": "0.0.1",
-  "main": "src/index.ts",
-  "types": "src/index.ts"
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    }
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "generate:css": "tsx scripts/generate-css-vars.ts"
+  },
+  "devDependencies": {
+    "tsx": "^4.21.0"
+  }
 }

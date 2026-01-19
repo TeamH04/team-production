@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/TeamH04/team-production/apps/backend/internal/domain/constants"
 	"github.com/TeamH04/team-production/apps/backend/internal/domain/entity"
 	"github.com/TeamH04/team-production/apps/backend/internal/repository/model"
 	"github.com/TeamH04/team-production/apps/backend/internal/usecase/output"
@@ -42,7 +43,7 @@ func (r *reviewRepository) FindByStoreID(ctx context.Context, storeID string, so
 		Where("r.store_id = ?", storeID).
 		Group("r.review_id")
 
-	if sort == "liked" {
+	if sort == constants.SortByLiked {
 		query = query.Order("likes_count desc").Order("r.created_at desc")
 	} else {
 		query = query.Order("r.created_at desc")
@@ -276,26 +277,4 @@ func fetchReviewFiles(ctx context.Context, db *gorm.DB, reviewIDs []string) (map
 	}
 
 	return result, nil
-}
-
-func buildMenuRefs(menus []entity.Menu) []model.Menu {
-	if len(menus) == 0 {
-		return []model.Menu{}
-	}
-	records := make([]model.Menu, len(menus))
-	for i, menu := range menus {
-		records[i] = model.Menu{MenuID: menu.MenuID}
-	}
-	return records
-}
-
-func buildFileRefs(files []entity.File) []model.File {
-	if len(files) == 0 {
-		return []model.File{}
-	}
-	records := make([]model.File, len(files))
-	for i, file := range files {
-		records[i] = model.File{FileID: file.FileID}
-	}
-	return records
 }

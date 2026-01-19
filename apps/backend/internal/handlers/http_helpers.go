@@ -1,16 +1,26 @@
 package handlers
 
 import (
+	"net/http"
 	"strconv"
-	"strings"
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 
 	"github.com/TeamH04/team-production/apps/backend/internal/domain/entity"
 	"github.com/TeamH04/team-production/apps/backend/internal/presentation"
+	"github.com/TeamH04/team-production/apps/backend/internal/presentation/presenter"
 	"github.com/TeamH04/team-production/apps/backend/internal/presentation/requestcontext"
+	"github.com/TeamH04/team-production/apps/backend/internal/security"
 	"github.com/TeamH04/team-production/apps/backend/internal/usecase"
+	"github.com/TeamH04/team-production/apps/backend/internal/usecase/input"
+)
+
+// Error message constants
+const (
+	ErrMsgInvalidJSON     = "invalid JSON"
+	ErrMsgInvalidStoreID  = "invalid store id"
+	ErrMsgInvalidReviewID = "invalid review id"
 )
 
 // getRequiredUser extracts the authenticated user from the request context.
@@ -26,7 +36,7 @@ func getRequiredUser(c echo.Context) (entity.User, error) {
 // bindJSON binds JSON request body to the given struct and returns BadRequest on error.
 func bindJSON[T any](c echo.Context, dst *T) error {
 	if err := c.Bind(dst); err != nil {
-		return presentation.NewBadRequest("invalid JSON")
+		return presentation.NewBadRequest(ErrMsgInvalidJSON)
 	}
 	return nil
 }
@@ -49,12 +59,23 @@ func parseUUIDParam(c echo.Context, name, errMsg string) (string, error) {
 }
 
 func bearerTokenFromHeader(value string) string {
-	if value == "" {
-		return ""
+	token, _ := security.ExtractBearerToken(value) //nolint:errcheck // ExtractBearerToken only returns nil error
+	return token
+}
+
+// fetchAndRespondWithCurrentUser retrieves the authenticated user's full details and returns JSON response.
+// This is used by both AuthHandler.GetMe and AdminHandler.GetUserByID.
+func fetchAndRespondWithCurrentUser(c echo.Context, userUseCase input.UserUseCase) error {
+	userFromCtx, err := getRequiredUser(c)
+	if err != nil {
+		return err
 	}
-	const prefix = "Bearer "
-	if strings.HasPrefix(value, prefix) {
-		return strings.TrimSpace(strings.TrimPrefix(value, prefix))
+
+	user, err := userUseCase.FindByID(c.Request().Context(), userFromCtx.UserID)
+	if err != nil {
+		return err
 	}
-	return strings.TrimSpace(value)
+
+	resp := presenter.NewUserResponse(user)
+	return c.JSON(http.StatusOK, resp)
 }

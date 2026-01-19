@@ -1,3 +1,5 @@
+import { LAYOUT } from '@team/constants';
+import { palette } from '@team/mobile-ui';
 import { Tabs } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { Platform, StyleSheet, View } from 'react-native';
@@ -6,9 +8,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import KuguriTitle from '@/assets/icons/kaguri.svg';
 import { HapticTab } from '@/components/HapticTab';
 import { IconSymbol } from '@/components/ui/IconSymbol';
-import { HEADER_HEIGHT } from '@/constants/layout';
-import { palette } from '@/constants/palette';
 import { fonts } from '@/constants/typography';
+
+const HEADER_HEIGHT = LAYOUT.HEADER_HEIGHT;
 
 export default function TabLayout() {
   const headerLogo = (

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { fetchAuthMe, type ApiUser } from '@/lib/api';
+import { api, type ApiUser } from '@/lib/api';
 import { getAccessToken } from '@/lib/auth';
 
 type UseAuthMeOptions = {
@@ -39,7 +39,7 @@ export function useAuthMe(options: UseAuthMeOptions = {}): UseAuthMeResult {
       return;
     }
     try {
-      const me = await fetchAuthMe(token);
+      const me = await api.fetchAuthMe(token);
       if (activeRef.current) {
         setData(me);
       }

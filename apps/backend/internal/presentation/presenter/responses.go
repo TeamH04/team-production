@@ -63,19 +63,19 @@ type RatingDetailsResponse struct {
 }
 
 type ReviewResponse struct {
-	ReviewID      string                `json:"review_id"`
-	StoreID       string                `json:"store_id"`
-	UserID        string                `json:"user_id"`
-	Rating        int                   `json:"rating"`
+	ReviewID      string                 `json:"review_id"`
+	StoreID       string                 `json:"store_id"`
+	UserID        string                 `json:"user_id"`
+	Rating        int                    `json:"rating"`
 	RatingDetails *RatingDetailsResponse `json:"rating_details,omitempty"`
-	Content       *string               `json:"content,omitempty"`
-	MenuIDs       []string              `json:"menu_ids,omitempty"`
-	Menus         []MenuResponse        `json:"menus,omitempty"`
-	FileIDs       []string              `json:"file_ids,omitempty"`
-	Files         []FileResponse        `json:"files,omitempty"`
-	LikesCount    int                   `json:"likes_count"`
-	LikedByMe     bool                  `json:"liked_by_me"`
-	CreatedAt     time.Time             `json:"created_at"`
+	Content       *string                `json:"content,omitempty"`
+	MenuIDs       []string               `json:"menu_ids,omitempty"`
+	Menus         []MenuResponse         `json:"menus,omitempty"`
+	FileIDs       []string               `json:"file_ids,omitempty"`
+	Files         []FileResponse         `json:"files,omitempty"`
+	LikesCount    int                    `json:"likes_count"`
+	LikedByMe     bool                   `json:"liked_by_me"`
+	CreatedAt     time.Time              `json:"created_at"`
 }
 
 type UserResponse struct {

@@ -1,3 +1,4 @@
+import { TIMING } from '@team/constants';
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
@@ -35,32 +36,30 @@ describe('ShopDetail', () => {
     vi.unstubAllGlobals();
   });
 
-  describe('表示', () => {
-    test('店舗名が表示される', () => {
+  describe('基本情報の表示', () => {
+    test('店舗名がヘッダーとサイドバーに表示される', () => {
       render(<ShopDetail shop={createMockShop()} />);
 
-      expect(screen.getAllByText('テストカフェ').length).toBeGreaterThan(0);
+      // h1見出しで店舗名を確認
+      expect(screen.getByRole('heading', { level: 1, name: 'テストカフェ' })).toBeInTheDocument();
+      // サイドバーのh2見出しでも店舗名を確認
+      expect(screen.getByRole('heading', { level: 2, name: 'テストカフェ' })).toBeInTheDocument();
     });
 
     test('評価が小数点1桁で表示される', () => {
       render(<ShopDetail shop={createMockShop({ rating: 4.567 })} />);
 
-      expect(screen.getAllByText(/4\.6/).length).toBeGreaterThan(0);
+      // 評価は複数箇所に表示される（メイン + サイドバー）
+      const ratingTexts = screen.getAllByText(/★\s*4\.6/);
+      expect(ratingTexts).toHaveLength(2);
     });
 
     test('予算ラベルが正しく変換される', () => {
       render(<ShopDetail shop={createMockShop({ budget: '$$$' })} />);
 
-      expect(screen.getAllByText(/¥¥¥/).length).toBeGreaterThan(0);
-    });
-
-    test('タグがリンクとして表示される', () => {
-      render(<ShopDetail shop={createMockShop({ tags: ['コーヒー', 'Wi-Fi'] })} />);
-
-      const tagLinks = screen
-        .getAllByRole('link')
-        .filter(link => link.textContent?.startsWith('#'));
-      expect(tagLinks.length).toBeGreaterThan(0);
+      // 予算は複数箇所に表示される（画像オーバーレイ + メイン + サイドバー）
+      const budgetTexts = screen.getAllByText(/¥¥¥/);
+      expect(budgetTexts).toHaveLength(3);
     });
 
     test('説明文が表示される', () => {
@@ -69,6 +68,48 @@ describe('ShopDetail', () => {
       expect(screen.getByText(/おしゃれなカフェです/)).toBeInTheDocument();
     });
 
+    test('カテゴリが表示される', () => {
+      render(<ShopDetail shop={createMockShop({ category: 'レストラン' })} />);
+
+      expect(screen.getByText('レストラン')).toBeInTheDocument();
+    });
+
+    test('徒歩分数が表示される', () => {
+      render(<ShopDetail shop={createMockShop({ distanceMinutes: 5 })} />);
+
+      // 徒歩5分が複数箇所に表示される
+      const distanceTexts = screen.getAllByText(/徒歩5分/);
+      expect(distanceTexts.length).toBeGreaterThanOrEqual(1);
+    });
+  });
+
+  describe('タグの表示', () => {
+    test('タグがリンクとして表示される', () => {
+      render(<ShopDetail shop={createMockShop({ tags: ['コーヒー', 'Wi-Fi'] })} />);
+
+      expect(screen.getByRole('link', { name: '#コーヒー' })).toBeInTheDocument();
+      expect(screen.getByRole('link', { name: '#Wi-Fi' })).toBeInTheDocument();
+    });
+
+    test('タグリンクは検索ページへ遷移する', () => {
+      render(<ShopDetail shop={createMockShop({ tags: ['コーヒー'] })} />);
+
+      const tagLink = screen.getByRole('link', { name: '#コーヒー' });
+      expect(tagLink).toHaveAttribute('href', '/?q=%E3%82%B3%E3%83%BC%E3%83%92%E3%83%BC');
+    });
+
+    test('タグが空配列の場合はタグセクションが表示されない', () => {
+      render(<ShopDetail shop={createMockShop({ tags: [] })} />);
+
+      // タグリンクが存在しないことを確認
+      const tagLinks = screen
+        .queryAllByRole('link')
+        .filter(link => link.textContent?.startsWith('#'));
+      expect(tagLinks).toHaveLength(0);
+    });
+  });
+
+  describe('メニューの表示', () => {
     test('メニューがある場合表示される', () => {
       const shopWithMenu = createMockShop({
         menu: [
@@ -83,8 +124,14 @@ describe('ShopDetail', () => {
       expect(screen.getByText('ケーキ')).toBeInTheDocument();
     });
 
-    test('メニューがない場合セクションが表示されない', () => {
+    test('メニューがundefinedの場合セクションが表示されない', () => {
       render(<ShopDetail shop={createMockShop({ menu: undefined })} />);
+
+      expect(screen.queryByText('おすすめメニュー')).not.toBeInTheDocument();
+    });
+
+    test('メニューが空配列の場合セクションが表示されない', () => {
+      render(<ShopDetail shop={createMockShop({ menu: [] })} />);
 
       expect(screen.queryByText('おすすめメニュー')).not.toBeInTheDocument();
     });
@@ -124,7 +171,7 @@ describe('ShopDetail', () => {
       expect(img).toBeInTheDocument();
     });
 
-    test('前の画像へ移動できる (循環)', async () => {
+    test('前の画像へ移動できる（循環）', async () => {
       const user = userEvent.setup();
       const shopWithImages = createMockShop({
         imageUrls: ['https://example.com/1.jpg', 'https://example.com/2.jpg'],
@@ -153,7 +200,7 @@ describe('ShopDetail', () => {
       render(<ShopDetail shop={shopWithImages} />);
 
       const indicators = screen.getAllByRole('button', { name: /番目の画像へ移動/ });
-      expect(indicators.length).toBe(3);
+      expect(indicators).toHaveLength(3);
 
       await user.click(indicators[2]);
 
@@ -180,12 +227,18 @@ describe('ShopDetail', () => {
     });
 
     test('再クリックでお気に入り解除', async () => {
+      // 事前にお気に入り状態を設定
+      storageMock.setData({ 'shop-favorites': JSON.stringify(['test-shop-1']) });
+
       const user = userEvent.setup();
       render(<ShopDetail shop={createMockShop()} />);
 
-      const favoriteButton = screen.getByRole('button', { name: /お気に入りに追加/ });
+      // すでにお気に入り済み状態
+      expect(screen.getByText('お気に入り済み')).toBeInTheDocument();
+
+      // クリックして解除
+      const favoriteButton = screen.getByRole('button', { name: /お気に入り済み/ });
       await user.click(favoriteButton);
-      await user.click(screen.getByRole('button', { name: /お気に入り済み/ }));
 
       expect(screen.getByText('お気に入りに追加')).toBeInTheDocument();
     });
@@ -199,24 +252,33 @@ describe('ShopDetail', () => {
 
       await waitFor(() => {
         expect(localStorage.setItem).toHaveBeenCalledWith(
-          'shop-web-favorites',
+          'shop-favorites',
           expect.stringContaining('test-shop-1'),
         );
       });
     });
 
     test('ページ読み込み時にlocalStorageから状態を復元する', () => {
-      storageMock.setData({ 'shop-web-favorites': JSON.stringify(['test-shop-1']) });
+      storageMock.setData({ 'shop-favorites': JSON.stringify(['test-shop-1']) });
 
       render(<ShopDetail shop={createMockShop()} />);
 
       expect(screen.getByText('お気に入り済み')).toBeInTheDocument();
     });
+
+    test('localStorageに不正なJSONがある場合はデフォルト値が使用される', () => {
+      storageMock.setData({ 'shop-favorites': '{invalid json' });
+
+      // エラーにならずレンダリングされる
+      render(<ShopDetail shop={createMockShop()} />);
+
+      // デフォルト値（空配列）が使用されるため、お気に入りでない状態
+      expect(screen.getByText('お気に入りに追加')).toBeInTheDocument();
+    });
   });
 
   describe('共有機能', () => {
-    test('navigator.share対応時にシェア実行', async () => {
-      vi.useFakeTimers();
+    test('シェアボタンクリックで共有ダイアログが表示される', async () => {
       const mockShare = vi.fn().mockResolvedValue(undefined);
       vi.stubGlobal('navigator', { share: mockShare, clipboard: undefined });
 
@@ -230,12 +292,13 @@ describe('ShopDetail', () => {
       expect(mockShare).toHaveBeenCalledWith(
         expect.objectContaining({
           title: 'テストカフェ',
+          text: expect.stringContaining('テストカフェ'),
+          url: expect.any(String),
         }),
       );
     });
 
-    test('navigator.share未対応時にクリップボードコピー', async () => {
-      vi.useFakeTimers();
+    test('シェア未対応ブラウザでリンクがクリップボードにコピーされる', async () => {
       const mockWriteText = vi.fn().mockResolvedValue(undefined);
       vi.stubGlobal('navigator', {
         share: undefined,
@@ -249,11 +312,11 @@ describe('ShopDetail', () => {
         fireEvent.click(shareButton);
       });
 
-      expect(mockWriteText).toHaveBeenCalled();
+      // 実際のURLがコピーされることを検証
+      expect(mockWriteText).toHaveBeenCalledWith(expect.stringContaining('localhost'));
     });
 
-    test('成功メッセージが表示される', async () => {
-      vi.useFakeTimers();
+    test('共有成功時にメッセージが表示される', async () => {
       const mockWriteText = vi.fn().mockResolvedValue(undefined);
       vi.stubGlobal('navigator', {
         share: undefined,
@@ -266,11 +329,36 @@ describe('ShopDetail', () => {
       await act(async () => {
         fireEvent.click(shareButton);
       });
+
       expect(screen.getByText('リンクをコピーしました')).toBeInTheDocument();
     });
 
-    test('エラー時にエラーメッセージが表示される', async () => {
+    test('共有成功メッセージが一定時間後に消える', async () => {
       vi.useFakeTimers();
+      const mockWriteText = vi.fn().mockResolvedValue(undefined);
+      vi.stubGlobal('navigator', {
+        share: undefined,
+        clipboard: { writeText: mockWriteText },
+      });
+
+      render(<ShopDetail shop={createMockShop()} />);
+
+      const shareButton = screen.getAllByRole('button', { name: /共有する|リンクを共有する/ })[0];
+      await act(async () => {
+        fireEvent.click(shareButton);
+      });
+
+      expect(screen.getByText('リンクをコピーしました')).toBeInTheDocument();
+
+      // TOAST_DURATION経過後にメッセージが消える
+      act(() => {
+        vi.advanceTimersByTime(TIMING.TOAST_DURATION + 100);
+      });
+
+      expect(screen.queryByText('リンクをコピーしました')).not.toBeInTheDocument();
+    });
+
+    test('共有エラー時にエラーメッセージが表示される', async () => {
       const mockShare = vi.fn().mockRejectedValue(new Error('Share failed'));
       vi.stubGlobal('navigator', { share: mockShare, clipboard: undefined });
 
@@ -280,18 +368,20 @@ describe('ShopDetail', () => {
       await act(async () => {
         fireEvent.click(shareButton);
       });
+
       expect(screen.getByText('共有に失敗しました')).toBeInTheDocument();
     });
   });
 
   describe('Googleマップリンク', () => {
     test('正しいマップURLが生成される', () => {
-      render(<ShopDetail shop={createMockShop({ placeId: 'place-abc123' })} />);
+      render(<ShopDetail shop={createMockShop({ placeId: 'place-abc123', name: 'Test Cafe' })} />);
 
       const mapLink = screen.getByRole('link', { name: 'マップで開く' });
+      // buildGoogleMapsUrl(placeId, shopName) で生成されるURL
       expect(mapLink).toHaveAttribute(
         'href',
-        'https://www.google.com/maps/search/?api=1&query=Google&query_place_id=place-abc123',
+        'https://www.google.com/maps/search/?api=1&query_place_id=place-abc123&query=Test+Cafe',
       );
     });
 
@@ -300,6 +390,14 @@ describe('ShopDetail', () => {
 
       const mapLink = screen.getByRole('link', { name: 'マップで開く' });
       expect(mapLink).toHaveAttribute('target', '_blank');
+    });
+
+    test('placeIdがundefinedでもマップリンクが機能する', () => {
+      render(<ShopDetail shop={createMockShop({ placeId: undefined, name: 'テストカフェ' })} />);
+
+      const mapLink = screen.getByRole('link', { name: 'マップで開く' });
+      // placeIdがない場合は店舗名のみで検索
+      expect(mapLink).toHaveAttribute('href', expect.stringContaining('query='));
     });
   });
 });

@@ -5,269 +5,167 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/uuid"
+	"github.com/stretchr/testify/require"
+
 	"github.com/TeamH04/team-production/apps/backend/internal/apperr"
 	"github.com/TeamH04/team-production/apps/backend/internal/domain/entity"
 	"github.com/TeamH04/team-production/apps/backend/internal/repository"
 	"github.com/TeamH04/team-production/apps/backend/internal/repository/testutil"
+	"github.com/TeamH04/team-production/apps/backend/internal/usecase/output"
 )
 
-func TestStoreRepository_Create_Success(t *testing.T) {
+// setupStoreTest creates common test dependencies for store tests
+func setupStoreTest(t *testing.T) output.StoreRepository {
+	t.Helper()
 	db := testutil.SetupTestDB(t)
-	defer testutil.CleanupTestDB(t, db)
-
 	repo := repository.NewStoreRepository(db)
+	t.Cleanup(func() {
+		testutil.CleanupTestDB(t, db)
+	})
+	return repo
+}
 
+// newTestStore creates a test store with unique IDs and optional overrides
+func newTestStore(t *testing.T, overrides ...func(*entity.Store)) *entity.Store {
+	t.Helper()
 	store := &entity.Store{
-		StoreID:   "store-123",
+		StoreID:   "store-" + uuid.New().String()[:8],
 		Name:      "Test Store",
 		Address:   "Test Address",
-		PlaceID:   "place-123",
 		Latitude:  35.6812,
 		Longitude: 139.7671,
+		PlaceID:   "place-" + uuid.New().String()[:8],
 		Category:  "カフェ・喫茶",
 		Budget:    "$$",
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
 	}
+	for _, fn := range overrides {
+		fn(store)
+	}
+	return store
+}
+
+func TestStoreRepository_Create_Success(t *testing.T) {
+	repo := setupStoreTest(t)
+
+	store := newTestStore(t)
 
 	err := repo.Create(context.Background(), store)
-
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	if store.StoreID == "" {
-		t.Error("expected StoreID to be set")
-	}
+	require.NoError(t, err)
+	require.NotEmpty(t, store.StoreID)
 }
 
 func TestStoreRepository_FindAll_Success(t *testing.T) {
-	db := testutil.SetupTestDB(t)
-	defer testutil.CleanupTestDB(t, db)
+	repo := setupStoreTest(t)
 
-	repo := repository.NewStoreRepository(db)
-
-	// Create some stores
-	store1 := &entity.Store{
-		StoreID:   "store-1",
-		Name:      "Store 1",
-		Address:   "Address 1",
-		PlaceID:   "place-1",
-		Latitude:  35.6812,
-		Longitude: 139.7671,
-		Category:  "カフェ・喫茶",
-		Budget:    "$$",
-	}
-	store2 := &entity.Store{
-		StoreID:   "store-2",
-		Name:      "Store 2",
-		Address:   "Address 2",
-		PlaceID:   "place-2",
-		Latitude:  35.6813,
-		Longitude: 139.7672,
-		Category:  "カフェ・喫茶",
-		Budget:    "$$",
-	}
-	if err := repo.Create(context.Background(), store1); err != nil {
-		t.Fatalf("failed to create store1: %v", err)
-	}
-	if err := repo.Create(context.Background(), store2); err != nil {
-		t.Fatalf("failed to create store2: %v", err)
-	}
+	// Create some stores with unique IDs
+	store1 := newTestStore(t, func(s *entity.Store) {
+		s.Name = "Store 1"
+		s.Address = "Address 1"
+	})
+	store2 := newTestStore(t, func(s *entity.Store) {
+		s.Name = "Store 2"
+		s.Address = "Address 2"
+		s.Latitude = 35.6813
+		s.Longitude = 139.7672
+	})
+	require.NoError(t, repo.Create(context.Background(), store1))
+	require.NoError(t, repo.Create(context.Background(), store2))
 
 	// Find all stores
 	stores, err := repo.FindAll(context.Background())
-
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	if len(stores) != 2 {
-		t.Errorf("expected 2 stores, got %d", len(stores))
-	}
+	require.NoError(t, err)
+	require.Len(t, stores, 2)
 }
 
 func TestStoreRepository_FindAll_Empty(t *testing.T) {
-	db := testutil.SetupTestDB(t)
-	defer testutil.CleanupTestDB(t, db)
-
-	repo := repository.NewStoreRepository(db)
+	repo := setupStoreTest(t)
 
 	stores, err := repo.FindAll(context.Background())
-
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	if len(stores) != 0 {
-		t.Errorf("expected 0 stores, got %d", len(stores))
-	}
+	require.NoError(t, err)
+	require.Empty(t, stores)
 }
 
 func TestStoreRepository_FindByID_Success(t *testing.T) {
-	db := testutil.SetupTestDB(t)
-	defer testutil.CleanupTestDB(t, db)
-
-	repo := repository.NewStoreRepository(db)
+	repo := setupStoreTest(t)
 
 	// Create a store
-	store := &entity.Store{
-		StoreID:   "store-123",
-		Name:      "Test Store",
-		Address:   "Test Address",
-		PlaceID:   "place-123",
-		Latitude:  35.6812,
-		Longitude: 139.7671,
-		Category:  "カフェ・喫茶",
-		Budget:    "$$",
-	}
-	if err := repo.Create(context.Background(), store); err != nil {
-		t.Fatalf("failed to create store: %v", err)
-	}
+	store := newTestStore(t)
+	require.NoError(t, repo.Create(context.Background(), store))
 
 	// Find by ID
-	found, err := repo.FindByID(context.Background(), "store-123")
-
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	if found.StoreID != "store-123" {
-		t.Errorf("expected StoreID store-123, got %s", found.StoreID)
-	}
-	if found.Name != "Test Store" {
-		t.Errorf("expected Name Test Store, got %s", found.Name)
-	}
+	found, err := repo.FindByID(context.Background(), store.StoreID)
+	require.NoError(t, err)
+	require.Equal(t, store.StoreID, found.StoreID)
+	require.Equal(t, store.Name, found.Name)
 }
 
 func TestStoreRepository_FindByID_NotFound(t *testing.T) {
-	db := testutil.SetupTestDB(t)
-	defer testutil.CleanupTestDB(t, db)
+	repo := setupStoreTest(t)
 
-	repo := repository.NewStoreRepository(db)
+	nonexistentID := "store-" + uuid.New().String()[:8]
+	_, err := repo.FindByID(context.Background(), nonexistentID)
 
-	_, err := repo.FindByID(context.Background(), "nonexistent")
-
-	if !apperr.IsCode(err, apperr.CodeNotFound) {
-		t.Errorf("expected CodeNotFound error, got %v", err)
-	}
+	require.True(t, apperr.IsCode(err, apperr.CodeNotFound), "expected CodeNotFound error, got %v", err)
 }
 
 func TestStoreRepository_FindPending_Success(t *testing.T) {
-	db := testutil.SetupTestDB(t)
-	defer testutil.CleanupTestDB(t, db)
+	repo := setupStoreTest(t)
 
-	repo := repository.NewStoreRepository(db)
-
-	// Create approved and pending stores
-	approvedStore := &entity.Store{
-		StoreID:    "store-approved",
-		Name:       "Approved Store",
-		Address:    "Address 1",
-		PlaceID:    "place-1",
-		Latitude:   35.6812,
-		Longitude:  139.7671,
-		IsApproved: true,
-		Category:   "カフェ・喫茶",
-		Budget:     "$$",
-	}
-	pendingStore := &entity.Store{
-		StoreID:    "store-pending",
-		Name:       "Pending Store",
-		Address:    "Address 2",
-		PlaceID:    "place-2",
-		Latitude:   35.6813,
-		Longitude:  139.7672,
-		IsApproved: false,
-		Category:   "カフェ・喫茶",
-		Budget:     "$$",
-	}
-	if err := repo.Create(context.Background(), approvedStore); err != nil {
-		t.Fatalf("failed to create approved store: %v", err)
-	}
-	if err := repo.Create(context.Background(), pendingStore); err != nil {
-		t.Fatalf("failed to create pending store: %v", err)
-	}
+	// Create approved and pending stores with unique IDs
+	approvedStore := newTestStore(t, func(s *entity.Store) {
+		s.Name = "Approved Store"
+		s.IsApproved = true
+	})
+	pendingStore := newTestStore(t, func(s *entity.Store) {
+		s.Name = "Pending Store"
+		s.IsApproved = false
+	})
+	require.NoError(t, repo.Create(context.Background(), approvedStore))
+	require.NoError(t, repo.Create(context.Background(), pendingStore))
 
 	// Find pending stores
 	stores, err := repo.FindPending(context.Background())
-
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	if len(stores) != 1 {
-		t.Errorf("expected 1 pending store, got %d", len(stores))
-	}
-	if len(stores) > 0 && stores[0].StoreID != "store-pending" {
-		t.Errorf("expected pending store, got %s", stores[0].StoreID)
-	}
+	require.NoError(t, err)
+	require.Len(t, stores, 1)
+	require.Equal(t, pendingStore.StoreID, stores[0].StoreID)
 }
 
 func TestStoreRepository_Update_Success(t *testing.T) {
-	db := testutil.SetupTestDB(t)
-	defer testutil.CleanupTestDB(t, db)
-
-	repo := repository.NewStoreRepository(db)
+	repo := setupStoreTest(t)
 
 	// Create a store
-	store := &entity.Store{
-		StoreID:   "store-123",
-		Name:      "Original Name",
-		Address:   "Test Address",
-		PlaceID:   "place-123",
-		Latitude:  35.6812,
-		Longitude: 139.7671,
-		Category:  "カフェ・喫茶",
-		Budget:    "$$",
-	}
-	if err := repo.Create(context.Background(), store); err != nil {
-		t.Fatalf("failed to create store: %v", err)
-	}
+	store := newTestStore(t, func(s *entity.Store) {
+		s.Name = "Original Name"
+	})
+	require.NoError(t, repo.Create(context.Background(), store))
 
 	// Update the store
 	store.Name = "Updated Name"
 	store.UpdatedAt = time.Now()
 	err := repo.Update(context.Background(), store)
-
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	require.NoError(t, err)
 
 	// Verify the update
-	found, err := repo.FindByID(context.Background(), "store-123")
-	if err != nil {
-		t.Fatalf("failed to find store: %v", err)
-	}
-	if found.Name != "Updated Name" {
-		t.Errorf("expected Name Updated Name, got %s", found.Name)
-	}
+	found, err := repo.FindByID(context.Background(), store.StoreID)
+	require.NoError(t, err)
+	require.Equal(t, "Updated Name", found.Name)
 }
 
 func TestStoreRepository_Delete_Success(t *testing.T) {
-	db := testutil.SetupTestDB(t)
-	defer testutil.CleanupTestDB(t, db)
-
-	repo := repository.NewStoreRepository(db)
+	repo := setupStoreTest(t)
 
 	// Create a store
-	store := &entity.Store{
-		StoreID:   "store-123",
-		Name:      "Test Store",
-		Address:   "Test Address",
-		PlaceID:   "place-123",
-		Latitude:  35.6812,
-		Longitude: 139.7671,
-		Category:  "カフェ・喫茶",
-		Budget:    "$$",
-	}
-	if err := repo.Create(context.Background(), store); err != nil {
-		t.Fatalf("failed to create store: %v", err)
-	}
+	store := newTestStore(t)
+	require.NoError(t, repo.Create(context.Background(), store))
 
 	// Delete the store
-	err := repo.Delete(context.Background(), "store-123")
-
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	err := repo.Delete(context.Background(), store.StoreID)
+	require.NoError(t, err)
 
 	// Verify the deletion
-	_, err = repo.FindByID(context.Background(), "store-123")
-	if !apperr.IsCode(err, apperr.CodeNotFound) {
-		t.Errorf("expected CodeNotFound after deletion, got %v", err)
-	}
+	_, err = repo.FindByID(context.Background(), store.StoreID)
+	require.True(t, apperr.IsCode(err, apperr.CodeNotFound), "expected CodeNotFound after deletion, got %v", err)
 }

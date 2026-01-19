@@ -1,44 +1,26 @@
-import { fontFamilies } from '@team/theme';
+import { fontFamilies, typographyScale } from '@team/theme';
 
 export const fonts = {
   regular: fontFamilies.sans,
   medium: fontFamilies.medium,
 } as const;
 
-export const typography = {
-  h1: {
-    fontFamily: fonts.medium,
-    fontSize: 28,
-    lineHeight: 36,
-  },
-  h2: {
-    fontFamily: fonts.medium,
-    fontSize: 24,
-    lineHeight: 32,
-  },
-  h3: {
-    fontFamily: fonts.medium,
-    fontSize: 20,
-    lineHeight: 28,
-  },
-  body: {
-    fontFamily: fonts.regular,
-    fontSize: 16,
-    lineHeight: 24,
-  },
-  bodySmall: {
-    fontFamily: fonts.regular,
-    fontSize: 14,
-    lineHeight: 20,
-  },
-  caption: {
-    fontFamily: fonts.regular,
-    fontSize: 12,
-    lineHeight: 16,
-  },
-  button: {
-    fontFamily: fonts.medium,
-    fontSize: 16,
-    lineHeight: 24,
-  },
-} as const;
+// @team/theme のタイポグラフィスケールをReact Native用に変換
+const createTypography = () => {
+  const result = {} as Record<
+    keyof typeof typographyScale,
+    { fontFamily: string; fontSize: number; lineHeight: number }
+  >;
+
+  for (const [key, value] of Object.entries(typographyScale)) {
+    result[key as keyof typeof typographyScale] = {
+      fontFamily: value.fontWeight === 'medium' ? fonts.medium : fonts.regular,
+      fontSize: value.fontSize,
+      lineHeight: value.lineHeight,
+    };
+  }
+
+  return result;
+};
+
+export const typography = createTypography();
