@@ -1,6 +1,7 @@
 package router
 
 import (
+	"log/slog"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
@@ -35,7 +36,27 @@ func NewServer(deps *Dependencies) *echo.Echo {
 	configureErrorHandler(e)
 
 	// グローバルミドルウェア
-	e.Use(middleware.Logger())
+	e.Use(middleware.RequestLoggerWithConfig(middleware.RequestLoggerConfig{
+		LogStatus:   true,
+		LogURI:      true,
+		LogMethod:   true,
+		LogError:    true,
+		LogLatency:  true,
+		HandleError: true,
+		LogValuesFunc: func(c echo.Context, v middleware.RequestLoggerValues) error {
+			// 2xx はログをスキップ、エラー時のみログ出力
+			if v.Status >= 400 {
+				slog.Warn("REQUEST",
+					"method", v.Method,
+					"uri", v.URI,
+					"status", v.Status,
+					"latency", v.Latency,
+					"error", v.Error,
+				)
+			}
+			return nil
+		},
+	}))
 	e.Use(middleware.Recover())
 	e.Use(middleware.CORS())
 
