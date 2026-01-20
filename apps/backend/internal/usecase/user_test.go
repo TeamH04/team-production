@@ -411,8 +411,16 @@ func (m *raceConditionMockUserRepo) Update(ctx context.Context, user entity.User
 	return nil
 }
 
+func (m *raceConditionMockUserRepo) UpdateInTx(ctx context.Context, tx interface{}, user entity.User) error {
+	return m.Update(ctx, user)
+}
+
 // UpdateRole is not used in this test scenario
 func (m *raceConditionMockUserRepo) UpdateRole(ctx context.Context, userID string, role string) error {
+	return nil
+}
+
+func (m *raceConditionMockUserRepo) UpdateRoleInTx(ctx context.Context, tx interface{}, userID string, role string) error {
 	return nil
 }
 
@@ -498,7 +506,15 @@ func (m *raceConditionUpdateFailMockUserRepo) Update(ctx context.Context, user e
 	return m.updateErr
 }
 
+func (m *raceConditionUpdateFailMockUserRepo) UpdateInTx(ctx context.Context, tx interface{}, user entity.User) error {
+	return m.Update(ctx, user)
+}
+
 func (m *raceConditionUpdateFailMockUserRepo) UpdateRole(ctx context.Context, userID string, role string) error {
+	return nil
+}
+
+func (m *raceConditionUpdateFailMockUserRepo) UpdateRoleInTx(ctx context.Context, tx interface{}, userID string, role string) error {
 	return nil
 }
 
@@ -1212,5 +1228,13 @@ func (m *raceConditionNoUpdateMockUserRepo) Update(ctx context.Context, user ent
 }
 
 func (m *raceConditionNoUpdateMockUserRepo) UpdateRole(ctx context.Context, userID string, role string) error {
+	return nil
+}
+
+func (m *raceConditionNoUpdateMockUserRepo) UpdateInTx(ctx context.Context, tx interface{}, user entity.User) error {
+	return m.Update(ctx, user)
+}
+
+func (m *raceConditionNoUpdateMockUserRepo) UpdateRoleInTx(ctx context.Context, tx interface{}, userID string, role string) error {
 	return nil
 }
