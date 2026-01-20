@@ -38,7 +38,7 @@ export interface SupabaseConfig {
 export const DEFAULT_SUPABASE_AUTH_OPTIONS = {
   autoRefreshToken: true,
   persistSession: true,
-  detectSessionInUrl: true,
+  detectSessionInUrl: false,
   flowType: 'pkce' as const,
 };
 
