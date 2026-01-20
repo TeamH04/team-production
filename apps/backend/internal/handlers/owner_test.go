@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/TeamH04/team-production/apps/backend/internal/domain/entity"
+	"github.com/TeamH04/team-production/apps/backend/internal/domain/role"
 	"github.com/TeamH04/team-production/apps/backend/internal/handlers"
 	"github.com/TeamH04/team-production/apps/backend/internal/handlers/testutil"
 	"github.com/TeamH04/team-production/apps/backend/internal/usecase"
@@ -90,6 +91,23 @@ func TestOwnerHandler_Complete_Unauthorized(t *testing.T) {
 	err := h.Complete(tc.Context)
 
 	testutil.AssertError(t, err, "unauthorized")
+	if mockUC.CompleteCalled {
+		t.Error("expected Complete not to be called")
+	}
+}
+
+func TestOwnerHandler_Complete_AlreadyOwner(t *testing.T) {
+	body := `{"contact_name":"Owner","store_name":"Test Store","opening_date":"20250101"}`
+	tc := testutil.NewTestContextWithJSON(http.MethodPost, "/auth/owner/signup/complete", body)
+	user := entity.User{UserID: "user-1", Email: "owner@example.com", Role: role.Owner}
+	tc.SetUser(user, role.Owner)
+
+	mockUC := &mockOwnerUseCase{}
+	h := handlers.NewOwnerHandler(mockUC)
+
+	err := h.Complete(tc.Context)
+
+	testutil.AssertError(t, err, "already owner")
 	if mockUC.CompleteCalled {
 		t.Error("expected Complete not to be called")
 	}

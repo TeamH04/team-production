@@ -5,7 +5,9 @@ import (
 
 	"github.com/labstack/echo/v4"
 
+	"github.com/TeamH04/team-production/apps/backend/internal/domain/role"
 	"github.com/TeamH04/team-production/apps/backend/internal/presentation/presenter"
+	"github.com/TeamH04/team-production/apps/backend/internal/usecase"
 	"github.com/TeamH04/team-production/apps/backend/internal/usecase/input"
 )
 
@@ -37,6 +39,9 @@ func (h *OwnerHandler) Complete(c echo.Context) error {
 	userFromCtx, err := getRequiredUser(c)
 	if err != nil {
 		return err
+	}
+	if userFromCtx.Role == role.Owner {
+		return usecase.ErrAlreadyOwner
 	}
 
 	user, err := h.ownerUseCase.Complete(
