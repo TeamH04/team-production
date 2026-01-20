@@ -94,6 +94,7 @@ export default function RegisterShopScreen() {
   const [stepIndex, setStepIndex] = useState(0);
   const [isStationModalVisible, setIsStationModalVisible] = useState(false);
   const [stations, setStations] = useState<ApiStation[]>([]);
+  const [stationLoadError, setStationLoadError] = useState(false);
 
   const handleBack = useCallback(() => {
     if (stepIndex > 0) {
@@ -109,17 +110,24 @@ export default function RegisterShopScreen() {
 
   useEffect(() => {
     // 駅データの取得
+    let isMounted = true;
     const fetchStations = async () => {
       try {
         const data = await api.fetchStations();
-        if (data) {
+        if (isMounted && data) {
           setStations(data);
         }
-      } catch {
-        // 駅データの取得に失敗した場合は空のリストのまま
+      } catch (err) {
+        if (isMounted) {
+          console.warn('Failed to fetch stations:', err);
+          setStationLoadError(true);
+        }
       }
     };
     fetchStations();
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   useEffect(() => {
@@ -424,6 +432,12 @@ export default function RegisterShopScreen() {
                 selectedStation={currentStep.value.station}
                 stations={stations}
               />
+
+              {stationLoadError && (
+                <Text style={styles.stationLoadWarning}>
+                  駅リストの読み込みに失敗しました。駅名を直接入力することもできます。
+                </Text>
+              )}
             </View>
           ) : isSingleValueStep(currentStep) ? (
             <TextInput
@@ -602,6 +616,12 @@ const styles = StyleSheet.create({
     color: palette.secondaryText,
     fontFamily: fonts.medium,
     fontSize: 14,
+  },
+  stationLoadWarning: {
+    color: palette.secondaryText,
+    fontFamily: fonts.regular,
+    fontSize: 12,
+    marginTop: 4,
   },
   stepCard: {
     backgroundColor: palette.surface,

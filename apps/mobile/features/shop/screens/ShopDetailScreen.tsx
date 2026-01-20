@@ -1,5 +1,12 @@
 import { Ionicons } from '@expo/vector-icons';
-import { buildGoogleMapsUrl, RATING_CATEGORIES } from '@team/constants';
+import {
+  AUTH_REQUIRED,
+  BORDER_RADIUS,
+  buildGoogleMapsUrl,
+  getRatingDisplay,
+  RATING_CATEGORIES,
+  UI_LABELS,
+} from '@team/constants';
 import { palette } from '@team/mobile-ui';
 import { BUDGET_LABEL } from '@team/shop-core';
 import { Image } from 'expo-image';
@@ -32,11 +39,11 @@ import type { RatingDetails } from '@team/types';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
-// 評価値に応じた表示を返す
-const getRatingEmoji = (value: number) => {
-  if (value === 5) return { icon: 'happy' as const, color: palette.errorText, label: '満足' };
-  if (value === 4) return { icon: 'remove' as const, color: palette.accent, label: '普通' };
-  return { icon: 'sad' as const, color: palette.primary, label: '不満' };
+// 評価値に応じたカラーを返す
+const getRatingColor = (sentiment: 'satisfied' | 'neutral' | 'dissatisfied') => {
+  if (sentiment === 'satisfied') return palette.ratingSatisfied;
+  if (sentiment === 'neutral') return palette.ratingNeutral;
+  return palette.ratingDissatisfied;
 };
 
 type RatingDetailsDisplayProps = {
@@ -60,11 +67,12 @@ function RatingDetailsDisplay({ ratingDetails }: RatingDetailsDisplayProps) {
         {RATING_CATEGORIES.map(cat => {
           const value = ratingDetails[cat.key as keyof RatingDetails];
           if (value === null || value === undefined || value === 0) return null;
-          const emoji = getRatingEmoji(value);
+          const display = getRatingDisplay(value);
+          const color = getRatingColor(display.sentiment);
           return (
             <View key={cat.key} style={ratingStyles.item}>
-              <View style={[ratingStyles.iconBadge, { backgroundColor: emoji.color + '15' }]}>
-                <Ionicons name={emoji.icon} size={16} color={emoji.color} />
+              <View style={[ratingStyles.iconBadge, { backgroundColor: color + '15' }]}>
+                <Ionicons name={display.icon} size={16} color={color} />
               </View>
               <Text style={ratingStyles.label}>{cat.label}</Text>
             </View>
@@ -154,7 +162,7 @@ export default function ShopDetailScreen() {
   useLayoutEffect(() => {
     if (!shop) return;
     navigation.setOptions?.({
-      headerBackTitle: '戻る',
+      headerBackTitle: UI_LABELS.BACK,
       headerShadowVisible: false,
       headerShown: true,
       headerStatusBarHeight: 0,
@@ -175,7 +183,7 @@ export default function ShopDetailScreen() {
 
   useFocusEffect(
     useCallback(() => {
-      navigation.setOptions?.({ headerBackTitle: '戻る' });
+      navigation.setOptions?.({ headerBackTitle: UI_LABELS.BACK });
     }, [navigation]),
   );
 
@@ -183,7 +191,9 @@ export default function ShopDetailScreen() {
   useFocusEffect(
     useCallback(() => {
       if (!id) return;
-      loadReviews(id, reviewSort).catch(() => undefined);
+      loadReviews(id, reviewSort).catch(err => {
+        console.warn('Failed to load reviews:', err);
+      });
     }, [id, loadReviews, reviewSort]),
   );
 
@@ -243,10 +253,10 @@ export default function ShopDetailScreen() {
         await toggleLike(shop.id, reviewId);
       } catch (err) {
         const message = err instanceof Error ? err.message : 'Unknown error';
-        if (message === 'auth_required') {
+        if (message === AUTH_REQUIRED) {
           Alert.alert('ログインが必要です', 'いいねにはログインが必要です。', [
-            { text: 'キャンセル', style: 'cancel' },
-            { text: 'ログイン', onPress: () => router.push('/login') },
+            { text: UI_LABELS.CANCEL, style: 'cancel' },
+            { text: UI_LABELS.LOGIN, onPress: () => router.push('/login') },
           ]);
           return;
         }
@@ -262,10 +272,10 @@ export default function ShopDetailScreen() {
       await toggleFavorite(shop.id);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Unknown error';
-      if (message === 'auth_required') {
+      if (message === AUTH_REQUIRED) {
         Alert.alert('ログインが必要です', 'お気に入りにはログインが必要です。', [
-          { text: 'キャンセル', style: 'cancel' },
-          { text: 'ログイン', onPress: () => router.push('/login') },
+          { text: UI_LABELS.CANCEL, style: 'cancel' },
+          { text: UI_LABELS.LOGIN, onPress: () => router.push('/login') },
         ]);
         return;
       }
@@ -290,7 +300,7 @@ export default function ShopDetailScreen() {
       <View style={[styles.screen, styles.centered]}>
         <Text style={styles.titleLoading}>店舗が見つかりませんでした</Text>
         <Pressable style={styles.secondaryBtn} onPress={() => router.back()}>
-          <Text style={styles.secondaryBtnText}>戻る</Text>
+          <Text style={styles.secondaryBtnText}>{UI_LABELS.BACK}</Text>
         </Pressable>
       </View>
     );
@@ -423,7 +433,7 @@ export default function ShopDetailScreen() {
                 style={styles.tagPill}
                 accessibilityLabel={`タグ ${tag} で検索`}
                 onPress={() => {
-                  navigation.setOptions?.({ headerBackTitle: '戻る' });
+                  navigation.setOptions?.({ headerBackTitle: UI_LABELS.BACK });
                   router.navigate({ pathname: '/(tabs)', params: { tag } });
                 }}
               >
@@ -470,7 +480,7 @@ export default function ShopDetailScreen() {
 
                   <Pressable
                     onPress={() => {
-                      navigation.setOptions?.({ headerBackTitle: '戻る' });
+                      navigation.setOptions?.({ headerBackTitle: UI_LABELS.BACK });
                       router.push({
                         pathname: '/menu',
                         params: { id: shop.id },
@@ -560,7 +570,7 @@ export default function ShopDetailScreen() {
 
                 <Pressable
                   onPress={() => {
-                    navigation.setOptions?.({ headerBackTitle: '戻る' });
+                    navigation.setOptions?.({ headerBackTitle: UI_LABELS.BACK });
                     router.push({
                       pathname: '/shop/[id]/review',
                       params: { id: shop.id },
@@ -723,7 +733,7 @@ const styles = StyleSheet.create({
   likeButton: {
     backgroundColor: palette.highlight,
     borderColor: palette.accent,
-    borderRadius: 999,
+    borderRadius: BORDER_RADIUS.PILL,
     borderWidth: 1,
     paddingHorizontal: 12,
     paddingVertical: 6,
@@ -866,7 +876,7 @@ const styles = StyleSheet.create({
   sortPill: {
     backgroundColor: palette.secondarySurface,
     borderColor: palette.border,
-    borderRadius: 999,
+    borderRadius: BORDER_RADIUS.PILL,
     borderWidth: 1,
     marginRight: 8,
     paddingHorizontal: 12,
@@ -881,7 +891,7 @@ const styles = StyleSheet.create({
   sortTextActive: { color: palette.primaryOnAccent },
   tagPill: {
     backgroundColor: palette.tagSurface,
-    borderRadius: 999,
+    borderRadius: BORDER_RADIUS.PILL,
     marginRight: 8,
     marginTop: 8,
     paddingHorizontal: 12,
@@ -894,7 +904,6 @@ const styles = StyleSheet.create({
     flex: 1,
     fontFamily: fonts.medium,
     fontSize: 22,
-    marginRight: 0,
   },
   titleLoading: { color: palette.secondaryText, fontFamily: fonts.medium, fontSize: 18 },
   visitedBtn: { marginLeft: 8 },

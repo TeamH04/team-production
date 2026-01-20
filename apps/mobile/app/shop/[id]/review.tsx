@@ -1,5 +1,12 @@
 import { Ionicons } from '@expo/vector-icons';
-import { RATING_CATEGORIES } from '@team/constants';
+import {
+  AUTH_REQUIRED,
+  BORDER_RADIUS,
+  getRatingDisplay,
+  RATING_CATEGORIES,
+  REVIEW_CONFIG,
+  UI_LABELS,
+} from '@team/constants';
 import { palette } from '@team/mobile-ui';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
@@ -39,7 +46,7 @@ export default function ReviewModalScreen() {
   useLayoutEffect(() => {
     navigation.setOptions?.({
       title: 'レビュー',
-      headerBackTitle: '戻る',
+      headerBackTitle: UI_LABELS.BACK,
       headerStyle: { backgroundColor: palette.accent },
       headerTintColor: palette.textOnAccent,
       headerShadowVisible: false,
@@ -61,7 +68,9 @@ export default function ReviewModalScreen() {
         }));
         setMenuOptions(mapped);
       })
-      .catch(() => undefined)
+      .catch(err => {
+        console.warn('Failed to fetch menus:', err);
+      })
       .finally(() => {
         if (active) {
           setMenuLoading(false);
@@ -73,14 +82,13 @@ export default function ReviewModalScreen() {
   }, [id]);
 
   // ユーザー入力用のstate
-  const ratingOptions = useMemo<RatingOption[]>(
-    () => [
-      { value: 5, label: '満足', icon: 'happy-outline' },
-      { value: 4, label: '普通', icon: 'remove-outline' },
-      { value: 2, label: '不満', icon: 'sad-outline' },
-    ],
-    [],
-  );
+  const ratingOptions = useMemo<RatingOption[]>(() => {
+    const values = [5, 4, 2] as const;
+    return values.map(value => {
+      const display = getRatingDisplay(value);
+      return { value, label: display.label, icon: `${display.icon}-outline` as const };
+    });
+  }, []);
   const [categoryRatings, setCategoryRatings] = useState<Record<string, number>>(() =>
     Object.fromEntries(RATING_CATEGORIES.map(category => [category.key, 0])),
   );
@@ -92,9 +100,10 @@ export default function ReviewModalScreen() {
   const [stepIndex, setStepIndex] = useState(0);
 
   const getRatingColor = (value: number) => {
-    if (value === 5) return palette.errorText;
-    if (value === 4) return palette.accent;
-    return palette.primary;
+    const { sentiment } = getRatingDisplay(value);
+    if (sentiment === 'satisfied') return palette.ratingSatisfied;
+    if (sentiment === 'neutral') return palette.ratingNeutral;
+    return palette.ratingDissatisfied;
   };
 
   const steps = useMemo<ReviewStep[]>(() => {
@@ -135,8 +144,8 @@ export default function ReviewModalScreen() {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsMultipleSelection: true,
-      selectionLimit: 6,
-      quality: 0.8,
+      selectionLimit: REVIEW_CONFIG.MAX_IMAGES,
+      quality: REVIEW_CONFIG.IMAGE_QUALITY,
     });
     if (!result.canceled) {
       setAssets(result.assets);
@@ -194,10 +203,10 @@ export default function ReviewModalScreen() {
       router.back();
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Unknown error';
-      if (message === 'auth_required') {
+      if (message === AUTH_REQUIRED) {
         Alert.alert('ログインが必要です', 'レビュー投稿にはログインが必要です。', [
-          { text: 'キャンセル', style: 'cancel' },
-          { text: 'ログイン', onPress: () => router.push('/login') },
+          { text: UI_LABELS.CANCEL, style: 'cancel' },
+          { text: UI_LABELS.LOGIN, onPress: () => router.push('/login') },
         ]);
       } else {
         Alert.alert('投稿に失敗しました', message);
@@ -462,7 +471,7 @@ const styles = StyleSheet.create({
   menuItem: {
     backgroundColor: palette.menuBackground,
     borderColor: palette.border,
-    borderRadius: 999,
+    borderRadius: BORDER_RADIUS.PILL,
     borderWidth: 1,
     marginRight: 8,
     marginTop: 8,
@@ -498,7 +507,7 @@ const styles = StyleSheet.create({
   },
   progressBarBg: {
     backgroundColor: palette.border,
-    borderRadius: 999,
+    borderRadius: BORDER_RADIUS.PILL,
     flex: 1,
     height: 8,
     overflow: 'hidden',
@@ -517,7 +526,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: palette.menuBackground,
     borderColor: palette.border,
-    borderRadius: 999,
+    borderRadius: BORDER_RADIUS.PILL,
     borderWidth: 1,
     flexDirection: 'row',
     gap: 6,

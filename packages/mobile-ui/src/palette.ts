@@ -79,6 +79,15 @@ export const palette = {
   starInactive: withAlpha(textOnBackground, 0.2),
   starHighlight: warning.base,
 
+  // レビュー評価の感情カラー
+  // 注: 既存UIとの一貫性を保つため、従来の色マッピングを維持
+  // - 満足: 赤系(error.dark) - 強い肯定を表現
+  // - 普通: 緑系(secondary) - 中立を表現
+  // - 不満: 茶系(primary) - ブランドカラーで落ち着いた表現
+  ratingSatisfied: error.dark,
+  ratingNeutral: secondary,
+  ratingDissatisfied: primary,
+
   // お気に入り
   favoriteActive: error.base,
 
