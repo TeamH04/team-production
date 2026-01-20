@@ -154,6 +154,7 @@ func createFullUser() entity.User {
 		UserID:     "user-001",
 		Name:       "Test User",
 		Email:      "test@example.com",
+		Phone:      ptrString("090-1234-5678"),
 		IconFileID: ptrString("file-001"),
 		IconURL:    ptrString("https://example.com/icon.jpg"),
 		Provider:   "google",
@@ -574,6 +575,7 @@ func assertUserRequiredFields(t *testing.T, got UserResponse, want entity.User) 
 // assertUserOptionalFields verifies optional fields of UserResponse
 func assertUserOptionalFields(t *testing.T, got UserResponse, want entity.User) {
 	t.Helper()
+	assertOptionalString(t, "Phone", got.Phone, want.Phone)
 	assertOptionalString(t, "IconFileID", got.IconFileID, want.IconFileID)
 	assertOptionalString(t, "IconURL", got.IconURL, want.IconURL)
 	assertOptionalString(t, "Gender", got.Gender, want.Gender)

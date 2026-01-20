@@ -6,10 +6,11 @@ const (
 	HealthPath = "/health"
 
 	// Auth
-	AuthSignupPath = "/signup"
-	AuthLoginPath  = "/login"
-	AuthMePath     = "/me"
-	AuthRolePath   = "/role"
+	AuthSignupPath          = "/signup"
+	AuthLoginPath           = "/login"
+	AuthMePath              = "/me"
+	AuthRolePath            = "/role"
+	OwnerSignupCompletePath = "/owner/signup/complete"
 
 	// Stores
 	StoresPath       = "/stores"

@@ -140,6 +140,13 @@ func (m *mockAuthUseCase) Login(ctx context.Context, in input.AuthLoginInput) (*
 	return nil, nil
 }
 
+// mockOwnerUseCase implements input.OwnerUseCase for testing
+type mockOwnerUseCase struct{}
+
+func (m *mockOwnerUseCase) Complete(ctx context.Context, user entity.User, in input.OwnerSignupCompleteInput) (*entity.User, error) {
+	return &entity.User{}, nil
+}
+
 // mockAdminUseCase implements input.AdminUseCase for testing
 type mockAdminUseCase struct{}
 
@@ -195,6 +202,7 @@ func createTestDependencies() *Dependencies {
 	favoriteUC := &mockFavoriteUseCase{}
 	reportUC := &mockReportUseCase{}
 	authUC := &mockAuthUseCase{}
+	ownerUC := &mockOwnerUseCase{}
 	adminUC := &mockAdminUseCase{}
 	mediaUC := &mockMediaUseCase{}
 	tokenVerifier := &mockTokenVerifier{}
@@ -202,17 +210,18 @@ func createTestDependencies() *Dependencies {
 	bucket := "test-bucket"
 
 	return &Dependencies{
-		UserUC:          userUC,
-		StoreHandler:    handlers.NewStoreHandler(storeUC, storage, bucket),
-		MenuHandler:     handlers.NewMenuHandler(menuUC),
-		ReviewHandler:   handlers.NewReviewHandler(reviewUC, tokenVerifier, storage, bucket),
-		UserHandler:     handlers.NewUserHandler(userUC, storage, bucket),
-		FavoriteHandler: handlers.NewFavoriteHandler(favoriteUC),
-		ReportHandler:   handlers.NewReportHandler(reportUC),
-		AuthHandler:     handlers.NewAuthHandler(authUC, userUC),
-		AdminHandler:    handlers.NewAdminHandler(adminUC, reportUC, userUC),
-		MediaHandler:    handlers.NewMediaHandler(mediaUC),
-		TokenVerifier:   tokenVerifier,
+		UserUC:             userUC,
+		StoreHandler:       handlers.NewStoreHandler(storeUC, storage, bucket),
+		MenuHandler:        handlers.NewMenuHandler(menuUC),
+		ReviewHandler:      handlers.NewReviewHandler(reviewUC, tokenVerifier, storage, bucket),
+		UserHandler:        handlers.NewUserHandler(userUC, storage, bucket),
+		FavoriteHandler:    handlers.NewFavoriteHandler(favoriteUC),
+		ReportHandler:      handlers.NewReportHandler(reportUC),
+		AuthHandler:        handlers.NewAuthHandler(authUC, userUC),
+		OwnerHandler: handlers.NewOwnerHandler(ownerUC),
+		AdminHandler:       handlers.NewAdminHandler(adminUC, reportUC, userUC),
+		MediaHandler:       handlers.NewMediaHandler(mediaUC),
+		TokenVerifier:      tokenVerifier,
 	}
 }
 
@@ -267,6 +276,7 @@ func TestRoutes(t *testing.T) {
 		{http.MethodPost, "/api/auth" + AuthLoginPath},
 		{http.MethodGet, "/api/auth" + AuthMePath},
 		{http.MethodPut, "/api/auth" + AuthRolePath},
+		{http.MethodPost, "/api/auth" + OwnerSignupCompletePath},
 
 		// Store routes
 		{http.MethodGet, "/api" + StoresPath},
@@ -333,7 +343,7 @@ func TestRouteCount(t *testing.T) {
 
 	// Count expected routes:
 	// Health: 1
-	// Auth: 4
+	// Auth: 5
 	// Store: 5
 	// Menu: 2
 	// Review: 4
@@ -343,8 +353,8 @@ func TestRouteCount(t *testing.T) {
 	// Media: 1
 	// Admin: 6
 	// Echo internal routes for admin group (echo_route_not_found): 2
-	// Total: 32
-	expectedCount := 32
+	// Total: 33
+	expectedCount := 33
 
 	if len(routes) != expectedCount {
 		t.Errorf("expected %d routes, got %d", expectedCount, len(routes))
@@ -370,6 +380,7 @@ func TestAuthRoutes(t *testing.T) {
 		{http.MethodPost, "/api/auth/login"},
 		{http.MethodGet, "/api/auth/me"},
 		{http.MethodPut, "/api/auth/role"},
+		{http.MethodPost, "/api/auth/owner/signup/complete"},
 	}
 
 	for _, expected := range authRoutes {
@@ -567,6 +578,7 @@ func TestEndpointConstants(t *testing.T) {
 		{"AuthLoginPath", AuthLoginPath, "/login"},
 		{"AuthMePath", AuthMePath, "/me"},
 		{"AuthRolePath", AuthRolePath, "/role"},
+		{"OwnerSignupCompletePath", OwnerSignupCompletePath, "/owner/signup/complete"},
 		{"StoresPath", StoresPath, "/stores"},
 		{"StoreByIDPath", StoreByIDPath, "/stores/:id"},
 		{"StoreMenusPath", StoreMenusPath, "/stores/:id/menus"},
@@ -843,9 +855,9 @@ func TestAPIGroupRouting(t *testing.T) {
 		}
 	}
 
-	// Should have at least 29 API routes (excluding health and internal routes)
-	if apiRouteCount < 29 {
-		t.Errorf("expected at least 29 API routes, got %d", apiRouteCount)
+	// Should have at least 30 API routes (excluding health and internal routes)
+	if apiRouteCount < 30 {
+		t.Errorf("expected at least 30 API routes, got %d", apiRouteCount)
 	}
 }
 
@@ -864,9 +876,9 @@ func TestAuthGroupRouting(t *testing.T) {
 		}
 	}
 
-	// Should have exactly 4 auth routes
-	if authRouteCount != 4 {
-		t.Errorf("expected 4 auth routes, got %d", authRouteCount)
+	// Should have exactly 5 auth routes
+	if authRouteCount != 5 {
+		t.Errorf("expected 5 auth routes, got %d", authRouteCount)
 	}
 }
 

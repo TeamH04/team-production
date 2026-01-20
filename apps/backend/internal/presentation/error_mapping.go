@@ -19,6 +19,8 @@ func StatusFromError(err error) int {
 		return http.StatusUnauthorized
 	case apperr.CodeForbidden:
 		return http.StatusForbidden
+	case apperr.CodeTooMany:
+		return http.StatusTooManyRequests
 	default:
 		return http.StatusInternalServerError
 	}

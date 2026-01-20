@@ -883,6 +883,7 @@ func TestUpdateUser_AllFields(t *testing.T) {
 	uc := usecase.NewUserUseCase(userRepo, reviewRepo)
 
 	newName := "New Name"
+	newPhone := "090-1234-5678"
 	newIconURL := testIconURL
 	newIconFileID := "file-123"
 	newGender := testGenderMale
@@ -890,6 +891,7 @@ func TestUpdateUser_AllFields(t *testing.T) {
 
 	result, err := uc.UpdateUser(context.Background(), "user-1", input.UpdateUserInput{
 		Name:       &newName,
+		Phone:      &newPhone,
 		IconURL:    &newIconURL,
 		IconFileID: &newIconFileID,
 		Gender:     &newGender,
@@ -903,6 +905,9 @@ func TestUpdateUser_AllFields(t *testing.T) {
 	}
 	if result.IconURL == nil || *result.IconURL != newIconURL {
 		t.Errorf("expected IconURL %s, got %v", newIconURL, result.IconURL)
+	}
+	if result.Phone == nil || *result.Phone != newPhone {
+		t.Errorf("expected Phone %s, got %v", newPhone, result.Phone)
 	}
 	if result.IconFileID == nil || *result.IconFileID != newIconFileID {
 		t.Errorf("expected IconFileID %s, got %v", newIconFileID, result.IconFileID)

@@ -46,6 +46,10 @@ func buildRouterDependencies(cfg *config.Config, db *gorm.DB) *router.Dependenci
 	reportUseCase := usecase.NewReportUseCase(reportRepo, userRepo)
 	adminUseCase := usecase.NewAdminUseCase(storeRepo)
 	authUseCase := usecase.NewAuthUseCase(supabaseClient, userRepo)
+	ownerUseCase := usecase.NewOwnerUseCase(
+		userUseCase,
+		supabaseClient,
+	)
 
 	// Application handlers (use case adapters)
 	log.Println("  - Initializing handlers...")
@@ -55,6 +59,7 @@ func buildRouterDependencies(cfg *config.Config, db *gorm.DB) *router.Dependenci
 	favoriteHandler := handlers.NewFavoriteHandler(favoriteUseCase)
 	reportHandler := handlers.NewReportHandler(reportUseCase)
 	authHandler := handlers.NewAuthHandler(authUseCase, userUseCase)
+	ownerHandler := handlers.NewOwnerHandler(ownerUseCase)
 	adminHandler := handlers.NewAdminHandler(adminUseCase, reportUseCase, userUseCase)
 	// supabaseClient は TokenVerifier（JWT検証）と StorageProvider（署名付きURL生成）の両方を実装しているため、
 	// 同一インスタンスをそれぞれの依存として注入する。
@@ -64,16 +69,17 @@ func buildRouterDependencies(cfg *config.Config, db *gorm.DB) *router.Dependenci
 	log.Println("Dependencies setup completed!")
 
 	return &router.Dependencies{
-		UserUC:          userUseCase,
-		StoreHandler:    storeHandler,
-		MenuHandler:     menuHandler,
-		ReviewHandler:   reviewHandler,
-		UserHandler:     userHandler,
-		FavoriteHandler: favoriteHandler,
-		ReportHandler:   reportHandler,
-		AuthHandler:     authHandler,
-		AdminHandler:    adminHandler,
-		TokenVerifier:   supabaseClient,
-		MediaHandler:    mediaHandler,
+		UserUC:             userUseCase,
+		StoreHandler:       storeHandler,
+		MenuHandler:        menuHandler,
+		ReviewHandler:      reviewHandler,
+		UserHandler:        userHandler,
+		FavoriteHandler:    favoriteHandler,
+		ReportHandler:      reportHandler,
+		AuthHandler:        authHandler,
+		OwnerHandler:       ownerHandler,
+		AdminHandler:       adminHandler,
+		TokenVerifier:      supabaseClient,
+		MediaHandler:       mediaHandler,
 	}
 }

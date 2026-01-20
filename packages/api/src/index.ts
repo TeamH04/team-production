@@ -207,6 +207,27 @@ export function createApiClient(options: ApiClientOptions) {
     });
   }
 
+  async function completeOwnerSignup(
+    input: {
+      contact_name: string;
+      store_name: string;
+      opening_date: string;
+      phone?: string;
+    },
+    accessToken: string,
+  ) {
+    return request<ApiUser>('/auth/owner/signup/complete', {
+      method: 'POST',
+      headers: buildHeaders(accessToken, undefined, true),
+      body: JSON.stringify({
+        contact_name: input.contact_name,
+        store_name: input.store_name,
+        opening_date: input.opening_date,
+        phone: input.phone ?? '',
+      }),
+    });
+  }
+
   async function createReview(
     storeId: string,
     input: {
@@ -265,6 +286,7 @@ export function createApiClient(options: ApiClientOptions) {
     addFavorite,
     removeFavorite,
     fetchAuthMe,
+    completeOwnerSignup,
     createReview,
     createReviewUploads,
     likeReview,
@@ -361,6 +383,7 @@ export const API_FUNCTION_NAMES = [
   'addFavorite',
   'removeFavorite',
   'fetchAuthMe',
+  'completeOwnerSignup',
   'createReview',
   'createReviewUploads',
   'likeReview',
