@@ -92,3 +92,9 @@ export type {
   UseSearchStateOptions,
   UseSearchStateResult,
 } from './useSearchState';
+export { useSearchHistoryStorage } from './useSearchHistoryStorage';
+export type {
+  StorageAdapter,
+  UseSearchHistoryStorageOptions,
+  UseSearchHistoryStorageResult,
+} from './useSearchHistoryStorage';

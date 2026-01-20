@@ -47,6 +47,7 @@ export {
   SORT_OPTIONS,
   FAVORITES_SORT_OPTIONS,
   SEARCH_SORT_OPTIONS,
+  DEFAULT_SEARCH_SORT_ORDERS,
   type SortOption,
   type SortOptionValue,
   type SortOrder,
@@ -54,6 +55,7 @@ export {
   type FavoritesSortOption,
   type SearchSortType,
   type SearchSortOption,
+  type SearchSortOrders,
 } from './sort';
 export { ENV_KEYS, createEnvConfig, type EnvConfig, type EnvKey } from './env';
 export { OAUTH_CONFIG } from './oauth';

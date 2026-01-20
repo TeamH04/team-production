@@ -56,3 +56,15 @@ export const SEARCH_SORT_OPTIONS: SearchSortOption[] = [
   { label: '評価順', value: 'rating' },
   { label: '登録順', value: 'registered' },
 ];
+
+/**
+ * 検索ソートの初期順序（各ソートタイプごとの昇順/降順）
+ */
+export type SearchSortOrders = Record<SearchSortType, SortOrder>;
+
+export const DEFAULT_SEARCH_SORT_ORDERS: SearchSortOrders = {
+  default: 'desc',
+  newest: 'desc',
+  rating: 'desc',
+  registered: 'desc',
+};

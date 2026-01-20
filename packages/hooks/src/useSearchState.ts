@@ -1,16 +1,19 @@
-import { SEARCH_HISTORY_MAX } from '@team/constants';
+import {
+  DEFAULT_SEARCH_SORT_ORDERS,
+  SEARCH_HISTORY_MAX,
+  type SearchSortOrders,
+  type SearchSortType,
+  type SortOrder,
+} from '@team/constants';
+import { getSortOrderLabel as getSortOrderLabelUtil } from '@team/shop-core';
 import { useCallback, useState } from 'react';
-
-import type { SearchSortType, SortOrder } from '@team/constants';
 
 // =============================================================================
 // Types
 // =============================================================================
 
-/**
- * ソート順序の状態（各ソートタイプごとの昇順/降順）
- */
-export type SearchSortOrders = Record<SearchSortType, SortOrder>;
+// Note: SearchSortOrders は @team/constants からre-export
+export type { SearchSortOrders };
 
 /**
  * 検索状態
@@ -105,17 +108,6 @@ export interface UseSearchStateResult {
 }
 
 // =============================================================================
-// Default Values
-// =============================================================================
-
-const DEFAULT_SORT_ORDERS: SearchSortOrders = {
-  default: 'desc',
-  newest: 'desc',
-  rating: 'desc',
-  registered: 'desc',
-};
-
-// =============================================================================
 // Hook Implementation
 // =============================================================================
 
@@ -150,7 +142,7 @@ const DEFAULT_SORT_ORDERS: SearchSortOrders = {
 export function useSearchState({
   initialHistory = [],
   initialSortBy = 'default',
-  initialSortOrders = DEFAULT_SORT_ORDERS,
+  initialSortOrders = DEFAULT_SEARCH_SORT_ORDERS,
   dependencies,
 }: UseSearchStateOptions): UseSearchStateResult {
   const { getTagsByCategory } = dependencies;
@@ -238,18 +230,9 @@ export function useSearchState({
     }));
   }, [sortBy]);
 
-  // ソート順序ラベル取得
+  // ソート順序ラベル取得（@team/shop-core の関数を使用）
   const getSortOrderLabel = useCallback(() => {
-    const order = sortOrders[sortBy];
-    switch (sortBy) {
-      case 'newest':
-      case 'registered':
-        return order === 'desc' ? '新しい順' : '古い順';
-      case 'rating':
-        return order === 'desc' ? '高い順' : '低い順';
-      default:
-        return '';
-    }
+    return getSortOrderLabelUtil(sortBy, sortOrders[sortBy]);
   }, [sortBy, sortOrders]);
 
   // すべてクリア
