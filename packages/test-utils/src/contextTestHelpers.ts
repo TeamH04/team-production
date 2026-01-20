@@ -4,7 +4,7 @@
  * 各Context（Favorites, Reviews, Stores等）のテストで重複している
  * 認証モード別のセットアップパターンを共通化
  */
-import { mock } from 'node:test';
+import { mock } from './mocks';
 
 import { TEST_DEFAULT_TOKEN } from './fixtures';
 
