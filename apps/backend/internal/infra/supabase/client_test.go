@@ -431,6 +431,103 @@ func TestClient_Login_NotConfigured(t *testing.T) {
 	}
 }
 
+// TestClient_UpdateUser tests the UpdateUser method.
+func TestClient_UpdateUser(t *testing.T) {
+	t.Run("successful update with metadata", func(t *testing.T) {
+		_, client := setupTestServer(t, func(w http.ResponseWriter, r *http.Request) {
+			assert.Equal(t, http.MethodPut, r.Method)
+			assert.Contains(t, r.URL.Path, "/auth/v1/admin/users/user-123")
+			assert.Equal(t, "application/json", r.Header.Get("Content-Type"))
+			assert.NotEmpty(t, r.Header.Get("apikey"))
+			assert.NotEmpty(t, r.Header.Get("Authorization"))
+
+			var payload map[string]interface{}
+			err := json.NewDecoder(r.Body).Decode(&payload)
+			require.NoError(t, err)
+			appMeta, ok := payload["app_metadata"].(map[string]interface{})
+			require.True(t, ok, "app_metadata should be a map")
+			userMeta, ok := payload["user_metadata"].(map[string]interface{})
+			require.True(t, ok, "user_metadata should be a map")
+			assert.Equal(t, "owner", appMeta["role"])
+			assert.Equal(t, "Owner Name", userMeta["name"])
+
+			w.Header().Set("Content-Type", "application/json")
+			writeJSON(w, map[string]interface{}{})
+		})
+
+		err := client.UpdateUser(context.Background(), "user-123", output.AuthUserUpdate{
+			AppMetadata: map[string]any{"role": "owner"},
+			UserMetadata: map[string]any{
+				"name": "Owner Name",
+			},
+		})
+
+		require.NoError(t, err)
+	})
+
+	t.Run("successful update with password", func(t *testing.T) {
+		_, client := setupTestServer(t, func(w http.ResponseWriter, r *http.Request) {
+			var payload map[string]interface{}
+			err := json.NewDecoder(r.Body).Decode(&payload)
+			require.NoError(t, err)
+			assert.Equal(t, "new-password", payload["password"])
+			w.Header().Set("Content-Type", "application/json")
+			writeJSON(w, map[string]interface{}{})
+		})
+
+		err := client.UpdateUser(context.Background(), "user-456", output.AuthUserUpdate{
+			Password: "new-password",
+		})
+
+		require.NoError(t, err)
+	})
+
+	t.Run("no-op when input is empty", func(t *testing.T) {
+		called := false
+		_, client := setupTestServer(t, func(w http.ResponseWriter, _ *http.Request) {
+			called = true
+			w.WriteHeader(http.StatusOK)
+		})
+
+		err := client.UpdateUser(context.Background(), "user-789", output.AuthUserUpdate{})
+
+		require.NoError(t, err)
+		assert.False(t, called, "expected no request when payload is empty")
+	})
+
+	t.Run("missing configuration", func(t *testing.T) {
+		client := NewClient("", "anon", "")
+		err := client.UpdateUser(context.Background(), "user-123", output.AuthUserUpdate{
+			Password: "new-password",
+		})
+		requireErrorContains(t, err, "not configured")
+	})
+
+	t.Run("missing user ID", func(t *testing.T) {
+		_, client := setupTestServer(t, func(w http.ResponseWriter, _ *http.Request) {
+			w.WriteHeader(http.StatusOK)
+		})
+		err := client.UpdateUser(context.Background(), "  ", output.AuthUserUpdate{
+			Password: "new-password",
+		})
+		requireErrorContains(t, err, "userID is required")
+	})
+
+	t.Run("error response", func(t *testing.T) {
+		_, client := setupTestServer(t, func(w http.ResponseWriter, _ *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusBadRequest)
+			writeJSON(w, map[string]string{"message": "invalid payload"})
+		})
+
+		err := client.UpdateUser(context.Background(), "user-123", output.AuthUserUpdate{
+			Password: "new-password",
+		})
+
+		requireErrorContains(t, err, "invalid payload")
+	})
+}
+
 // TestClient_CreateSignedUpload tests the CreateSignedUpload method.
 func TestClient_CreateSignedUpload(t *testing.T) {
 	t.Run("successful signed upload", func(t *testing.T) {

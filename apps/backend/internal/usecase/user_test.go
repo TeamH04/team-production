@@ -1015,6 +1015,31 @@ func TestUpdateUser_OnlyBirthday(t *testing.T) {
 	}
 }
 
+func TestUpdateUser_EmptyPhoneClearsValue(t *testing.T) {
+	currentPhone := "090-1111-2222"
+	existingUser := entity.User{
+		UserID: "user-1",
+		Name:   "Test User",
+		Email:  "test@example.com",
+		Phone:  &currentPhone,
+	}
+	userRepo := &testutil.MockUserRepository{FindByIDResult: existingUser}
+	reviewRepo := &testutil.MockReviewRepository{}
+
+	uc := usecase.NewUserUseCase(userRepo, reviewRepo)
+
+	emptyPhone := ""
+	result, err := uc.UpdateUser(context.Background(), "user-1", input.UpdateUserInput{
+		Phone: &emptyPhone,
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if result.Phone != nil {
+		t.Errorf("expected Phone to be nil, got %v", result.Phone)
+	}
+}
+
 // --- deriveNameFromEmail Edge Cases ---
 
 func TestEnsureUser_DeriveNameFromEmail_EdgeCases(t *testing.T) {
