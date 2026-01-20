@@ -18,7 +18,7 @@ func NewStationHandler(u input.StationUseCase) *StationHandler {
 func (h *StationHandler) ListStations(c echo.Context) error {
 	stations, err := h.u.ListStations(c.Request().Context())
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, echo.Map{"error": err.Error()})
+		return err
 	}
 	return c.JSON(http.StatusOK, stations)
 }

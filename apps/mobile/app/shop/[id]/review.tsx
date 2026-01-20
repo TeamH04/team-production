@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import { RATING_CATEGORIES } from '@team/constants';
 import { palette } from '@team/mobile-ui';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
@@ -71,16 +72,6 @@ export default function ReviewModalScreen() {
   }, [id]);
 
   // ユーザー入力用のstate
-  const ratingCategories = useMemo(
-    () => [
-      { key: 'taste', label: '味' },
-      { key: 'atmosphere', label: '雰囲気' },
-      { key: 'cleanliness', label: '清潔感' },
-      { key: 'service', label: '接客' },
-      { key: 'speed', label: '提供速度' },
-    ],
-    []
-  );
   const ratingOptions = useMemo<RatingOption[]>(
     () => [
       { value: 5, label: '満足', icon: 'happy-outline' },
@@ -90,7 +81,7 @@ export default function ReviewModalScreen() {
     [],
   );
   const [categoryRatings, setCategoryRatings] = useState<Record<string, number>>(() =>
-    Object.fromEntries(ratingCategories.map(category => [category.key, 0]))
+    Object.fromEntries(RATING_CATEGORIES.map(category => [category.key, 0]))
   );
   const [comment, setComment] = useState(''); // コメント
   const [suggestion, setSuggestion] = useState('');
@@ -102,13 +93,13 @@ export default function ReviewModalScreen() {
   const getRatingColor = (value: number) => {
     if (value === 5) return palette.errorText;
     if (value === 4) return palette.accent;
-    return '#264053';
+    return palette.primary;
   };
 
   const steps = useMemo<ReviewStep[]>(() => {
     const hasMenuStep = menuLoading || menu.length > 0;
     const result: ReviewStep[] = [
-      { key: 'ratings', title: '項目別評価', optional: true },
+      { key: 'ratings', title: '項目別評価', optional: false },
       { key: 'comment', title: 'コメント', optional: true },
     ];
     if (hasMenuStep) {
@@ -125,7 +116,7 @@ export default function ReviewModalScreen() {
 
   const hasStepInput = useMemo(() => {
     if (currentStep.key === 'ratings') {
-      return ratingCategories.some(category => (categoryRatings[category.key] ?? 0) > 0);
+      return RATING_CATEGORIES.some(category => (categoryRatings[category.key] ?? 0) > 0);
     }
     if (currentStep.key === 'comment') {
       return comment.trim().length > 0 || suggestion.trim().length > 0;
@@ -136,7 +127,6 @@ export default function ReviewModalScreen() {
     categoryRatings,
     comment,
     currentStep.key,
-    ratingCategories,
     selectedMenuIds,
     suggestion,
   ]);
@@ -160,14 +150,19 @@ export default function ReviewModalScreen() {
   };
 
   const handleSubmit = async () => {
-    const ratings = ratingCategories.map(category => categoryRatings[category.key] ?? 0);
+    const ratings = RATING_CATEGORIES.map(category => categoryRatings[category.key] ?? 0);
     const ratedValues = ratings.filter(value => value > 0);
     if (!shop) return;
 
-    const averagedRating =
-      ratedValues.length > 0
-        ? Math.round(ratedValues.reduce((sum, value) => sum + value, 0) / ratedValues.length)
-        : 0;
+    if (ratedValues.length === 0) {
+      Alert.alert('評価を入力してください', '少なくとも1つの項目を評価してください。');
+      setStepIndex(0);
+      return;
+    }
+
+    const averagedRating = Math.round(
+      ratedValues.reduce((sum, value) => sum + value, 0) / ratedValues.length,
+    );
     const trimmedComment = comment.trim();
     const trimmedSuggestion = suggestion.trim();
     const combinedComment = trimmedSuggestion
@@ -184,7 +179,7 @@ export default function ReviewModalScreen() {
         service: categoryRatings.service ?? null,
         speed: categoryRatings.speed ?? null,
         cleanliness: categoryRatings.cleanliness ?? null,
-      }
+      };
       await addReview(
         shop.id,
         {
@@ -200,7 +195,7 @@ export default function ReviewModalScreen() {
           fileName: asset.fileName ?? `review-${Date.now()}-${index}.jpg`,
           contentType: asset.mimeType ?? 'image/jpeg',
           fileSize: asset.fileSize ?? undefined,
-        }))
+        })),
       );
       router.back();
     } catch (err) {
@@ -219,6 +214,11 @@ export default function ReviewModalScreen() {
   };
 
   const handleNext = () => {
+    if (!currentStep.optional && !hasStepInput) {
+      Alert.alert('入力が必要です', '少なくとも1つの項目を評価してください。');
+      return;
+    }
+
     if (stepIndex < totalSteps - 1) {
       setStepIndex(prev => Math.min(prev + 1, totalSteps - 1));
       return;
@@ -276,7 +276,7 @@ export default function ReviewModalScreen() {
 
           {currentStep.key === 'ratings' && (
             <View>
-              {ratingCategories.map(category => (
+              {RATING_CATEGORIES.map(category => (
                 <View key={category.key} style={styles.categoryBlock}>
                   <Text style={styles.categoryLabel}>{category.label}</Text>
                   <View style={styles.ratingRow}>

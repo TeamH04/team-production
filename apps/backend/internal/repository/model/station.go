@@ -11,6 +11,8 @@ type Station struct {
 	Lng  *float64 `gorm:"type:double precision"`
 }
 
+func (Station) TableName() string { return "stations" }
+
 func (s *Station) Entity() entity.Station {
 	return entity.Station{
 		ID:   s.ID,

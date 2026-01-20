@@ -24,6 +24,8 @@ export interface ShopCardProps {
   formatMeta?: (shop: Shop) => string;
   /** ブースト表示（炎アイコン・ボーダー強調） */
   isBoosted?: boolean;
+  /** おすすめカテゴリ（例：「味」「接客」など）- large variantで表示 */
+  featuredCategory?: string;
 }
 
 /**

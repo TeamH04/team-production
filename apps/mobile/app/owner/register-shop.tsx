@@ -60,6 +60,23 @@ type AccessStepUI = AccessStep & {
 
 type Step = SingleValueStepUI | MultiValueStepUI | BudgetRangeStepUI | AccessStepUI;
 
+// 型ガード関数
+function isBudgetRangeStep(step: Step): step is BudgetRangeStepUI {
+  return 'isBudgetRange' in step && step.isBudgetRange === true;
+}
+
+function isAccessStep(step: Step): step is AccessStepUI {
+  return 'isAccess' in step && step.isAccess === true;
+}
+
+function isMultiValueStep(step: Step): step is MultiValueStepUI {
+  return 'isMultiple' in step && step.isMultiple === true;
+}
+
+function isSingleValueStep(step: Step): step is SingleValueStepUI {
+  return !isBudgetRangeStep(step) && !isAccessStep(step) && !isMultiValueStep(step);
+}
+
 export default function RegisterShopScreen() {
   const router = useRouter();
   const navigation = useNavigation();
@@ -98,8 +115,8 @@ export default function RegisterShopScreen() {
         if (data) {
           setStations(data);
         }
-      } catch (e) {
-        console.error('Failed to fetch stations', e);
+      } catch {
+        // 駅データの取得に失敗した場合は空のリストのまま
       }
     };
     fetchStations();
@@ -295,16 +312,16 @@ export default function RegisterShopScreen() {
           <Text style={styles.title}>{currentStep.title}</Text>
           <Text style={styles.subtitle}>{currentStep.description}</Text>
 
-          {currentStep.key === 'menu' || currentStep.key === 'tags' ? (
+          {isMultiValueStep(currentStep) ? (
             <View style={styles.menuContainer}>
-              {(currentStep.value as ItemWithId[]).map((item, idx) => (
+              {currentStep.value.map((item, idx) => (
                 <TextInput
                   key={item.id}
                   value={item.value}
                   onChangeText={text => {
-                    const newItems = [...(currentStep.value as ItemWithId[])];
+                    const newItems = [...currentStep.value];
                     newItems[idx] = { ...newItems[idx], value: text };
-                    (currentStep.onChange as (items: ItemWithId[]) => void)(newItems);
+                    currentStep.onChange(newItems);
                   }}
                   style={styles.input}
                   placeholder={`${currentStep.placeholder}${idx > 0 ? ` ${idx + 1}` : ''}`}
@@ -316,13 +333,13 @@ export default function RegisterShopScreen() {
                 onPress={() => {
                   const prefix = currentStep.key === 'menu' ? 'menu' : 'tag';
                   const newItems = [
-                    ...(currentStep.value as ItemWithId[]),
+                    ...currentStep.value,
                     {
                       id: `${prefix}-${Date.now()}-${Math.random()}`,
                       value: '',
                     },
                   ];
-                  (currentStep.onChange as (items: ItemWithId[]) => void)(newItems);
+                  currentStep.onChange(newItems);
                 }}
                 style={styles.addMenuBtn}
               >
@@ -331,18 +348,16 @@ export default function RegisterShopScreen() {
                 </Text>
               </Pressable>
             </View>
-          ) : currentStep.key === 'budget' ? (
+          ) : isBudgetRangeStep(currentStep) ? (
             <View style={styles.budgetContainer}>
               <View style={styles.budgetRow}>
                 <View style={styles.budgetInputWrapper}>
                   <Text style={styles.budgetLabel}>最小値（円）</Text>
                   <TextInput
-                    value={(currentStep.value as Record<string, string>).min}
-                    onChangeText={
-                      (currentStep.onChange as Record<string, (text: string) => void>).min
-                    }
+                    value={currentStep.value.min}
+                    onChangeText={currentStep.onChange.min}
                     style={styles.input}
-                    placeholder={(currentStep.placeholder as Record<string, string>).min}
+                    placeholder={currentStep.placeholder.min}
                     placeholderTextColor={palette.tertiaryText}
                     keyboardType='number-pad'
                   />
@@ -351,19 +366,17 @@ export default function RegisterShopScreen() {
                 <View style={styles.budgetInputWrapper}>
                   <Text style={styles.budgetLabel}>最大値（円）</Text>
                   <TextInput
-                    value={(currentStep.value as Record<string, string>).max}
-                    onChangeText={
-                      (currentStep.onChange as Record<string, (text: string) => void>).max
-                    }
+                    value={currentStep.value.max}
+                    onChangeText={currentStep.onChange.max}
                     style={styles.input}
-                    placeholder={(currentStep.placeholder as Record<string, string>).max}
+                    placeholder={currentStep.placeholder.max}
                     placeholderTextColor={palette.tertiaryText}
                     keyboardType='number-pad'
                   />
                 </View>
               </View>
             </View>
-          ) : currentStep.isAccess ? (
+          ) : isAccessStep(currentStep) ? (
             <View style={styles.accessContainer}>
               <View style={styles.inputGroup}>
                 <Text style={styles.inputLabel}>最寄り駅</Text>
@@ -380,12 +393,10 @@ export default function RegisterShopScreen() {
                   <Text
                     style={[
                       styles.inputFlex,
-                      !(currentStep.value as Record<string, string>).station &&
-                        styles.placeholderText,
+                      !currentStep.value.station && styles.placeholderText,
                     ]}
                   >
-                    {(currentStep.value as Record<string, string>).station ||
-                      (currentStep.placeholder as Record<string, string>).station}
+                    {currentStep.value.station || currentStep.placeholder.station}
                   </Text>
                 </Pressable>
               </View>
@@ -399,12 +410,10 @@ export default function RegisterShopScreen() {
                     style={styles.icon}
                   />
                   <TextInput
-                    value={(currentStep.value as Record<string, string>).minutes}
-                    onChangeText={
-                      (currentStep.onChange as Record<string, (text: string) => void>).minutes
-                    }
+                    value={currentStep.value.minutes}
+                    onChangeText={currentStep.onChange.minutes}
                     style={styles.inputFlex}
-                    placeholder={(currentStep.placeholder as Record<string, string>).minutes}
+                    placeholder={currentStep.placeholder.minutes}
                     placeholderTextColor={palette.tertiaryText}
                     keyboardType='number-pad'
                   />
@@ -414,23 +423,21 @@ export default function RegisterShopScreen() {
               <StationSelect
                 visible={isStationModalVisible}
                 onClose={() => setIsStationModalVisible(false)}
-                onSelect={station => {
-                  (currentStep.onChange as Record<string, (text: string) => void>).station(station);
-                }}
-                selectedStation={(currentStep.value as Record<string, string>).station}
+                onSelect={currentStep.onChange.station}
+                selectedStation={currentStep.value.station}
                 stations={stations}
               />
             </View>
-          ) : (
+          ) : isSingleValueStep(currentStep) ? (
             <TextInput
-              value={currentStep.value as string}
-              onChangeText={currentStep.onChange as (text: string) => void}
+              value={currentStep.value}
+              onChangeText={currentStep.onChange}
               style={styles.input}
-              placeholder={currentStep.placeholder as string}
+              placeholder={currentStep.placeholder}
               placeholderTextColor={palette.tertiaryText}
               keyboardType={currentStep.keyboardType}
             />
-          )}
+          ) : null}
         </View>
       </ScrollView>
 

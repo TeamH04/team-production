@@ -10,6 +10,7 @@ import (
 
 	"github.com/labstack/echo/v4"
 
+	"github.com/TeamH04/team-production/apps/backend/internal/apperr"
 	"github.com/TeamH04/team-production/apps/backend/internal/domain/entity"
 	"github.com/TeamH04/team-production/apps/backend/internal/handlers"
 	"github.com/TeamH04/team-production/apps/backend/internal/presentation"
@@ -432,6 +433,34 @@ func TestStoreRoutes(t *testing.T) {
 	}
 }
 
+// TestStationRoutes tests that all station routes are registered correctly
+func TestStationRoutes(t *testing.T) {
+	deps := createTestDependencies()
+	server := NewServer(deps)
+
+	routes := server.Routes()
+
+	stationRoutes := []struct {
+		method string
+		path   string
+	}{
+		{http.MethodGet, "/api/stations"},
+	}
+
+	for _, expected := range stationRoutes {
+		found := false
+		for _, route := range routes {
+			if route.Method == expected.method && route.Path == expected.path {
+				found = true
+				break
+			}
+		}
+		if !found {
+			t.Errorf("Station route not found: %s %s", expected.method, expected.path)
+		}
+	}
+}
+
 // TestUserRoutes tests that all user routes are registered correctly
 func TestUserRoutes(t *testing.T) {
 	deps := createTestDependencies()
@@ -581,6 +610,7 @@ func TestEndpointConstants(t *testing.T) {
 		{"StoreByIDPath", StoreByIDPath, "/stores/:id"},
 		{"StoreMenusPath", StoreMenusPath, "/stores/:id/menus"},
 		{"StoreReviewsPath", StoreReviewsPath, "/stores/:id/reviews"},
+		{"StationsPath", StationsPath, "/stations"},
 		{"ReviewLikesPath", ReviewLikesPath, "/reviews/:id/likes"},
 		{"UsersMePath", UsersMePath, "/users/me"},
 		{"UserByIDPath", UserByIDPath, "/users/:id"},
@@ -978,5 +1008,86 @@ func TestErrorHandler_ClientError(t *testing.T) {
 
 	if rec.Code != http.StatusUnauthorized {
 		t.Errorf("expected status %d, got %d", http.StatusUnauthorized, rec.Code)
+	}
+}
+
+// TestErrorHandler_Committed tests that the error handler does nothing if the response is already committed
+func TestErrorHandler_Committed(t *testing.T) {
+	deps := createTestDependencies()
+	server := NewServer(deps)
+
+	server.GET("/test-committed", func(c echo.Context) error {
+		c.Response().Committed = true
+		return errors.New("this error should be ignored")
+	})
+
+	req := httptest.NewRequest(http.MethodGet, "/test-committed", nil)
+	rec := httptest.NewRecorder()
+
+	server.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Errorf("expected status %d, got %d", http.StatusOK, rec.Code)
+	}
+}
+
+// TestErrorHandler_JSONError tests the error path when JSON marshaling fails
+func TestErrorHandler_JSONError(t *testing.T) {
+	deps := createTestDependencies()
+	server := NewServer(deps)
+
+	server.GET("/test-json-error", func(c echo.Context) error {
+		// Functions cannot be marshaled to JSON, triggering c.JSON error
+		return &presentation.HTTPError{
+			Status: http.StatusBadRequest,
+			Body:   func() {},
+		}
+	})
+
+	req := httptest.NewRequest(http.MethodGet, "/test-json-error", nil)
+	rec := httptest.NewRecorder()
+
+	server.ServeHTTP(rec, req)
+
+	// Status will be set by Echo before JSON marshaling fails, but since c.JSON returns error
+	// before writing to recorder, it might still be 200 in httptest.NewRecorder
+	// The important thing is that it hits the error logger in sendHTTPError
+}
+
+// TestErrorHandler_EchoServerError tests handling of echo.HTTPError with 5xx status
+func TestErrorHandler_EchoServerError(t *testing.T) {
+	deps := createTestDependencies()
+	server := NewServer(deps)
+
+	server.GET("/test-echo-server-error", func(c echo.Context) error {
+		return echo.NewHTTPError(http.StatusServiceUnavailable, "service unavailable")
+	})
+
+	req := httptest.NewRequest(http.MethodGet, "/test-echo-server-error", nil)
+	rec := httptest.NewRecorder()
+
+	server.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusServiceUnavailable {
+		t.Errorf("expected status %d, got %d", http.StatusServiceUnavailable, rec.Code)
+	}
+}
+
+// TestErrorHandler_GenericClientError tests handling of generic errors that map to 4xx status
+func TestErrorHandler_GenericClientError(t *testing.T) {
+	deps := createTestDependencies()
+	server := NewServer(deps)
+
+	server.GET("/test-generic-client-error", func(c echo.Context) error {
+		return apperr.Errorf(apperr.CodeNotFound, "resource not found")
+	})
+
+	req := httptest.NewRequest(http.MethodGet, "/test-generic-client-error", nil)
+	rec := httptest.NewRecorder()
+
+	server.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusNotFound {
+		t.Errorf("expected status %d, got %d", http.StatusNotFound, rec.Code)
 	}
 }

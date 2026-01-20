@@ -40,11 +40,21 @@ export function StationSelect({
 
   const lines = useMemo(() => {
     const lineSet = new Set<string>();
+    const startChars = ['(', '（', '〔'];
+    const endChars = [')', '）', '〕'];
+
     stations.forEach(s => {
       // Extract line from brackets like (JR), [阪急], 〔ポートライナー〕
-      const match = s.name.match(/[（(〔](.+?)[)）〕]/);
-      if (match) {
-        lineSet.add(match[1]);
+      // Regex avoided for performance/security
+      for (let i = 0; i < startChars.length; i++) {
+        const start = s.name.indexOf(startChars[i]);
+        if (start !== -1) {
+          const end = s.name.indexOf(endChars[i], start);
+          if (end !== -1) {
+            lineSet.add(s.name.substring(start + 1, end));
+            break; // Found a match, move to next station
+          }
+        }
       }
     });
     return Array.from(lineSet).sort();
@@ -264,7 +274,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     paddingHorizontal: SPACING.LG,
     paddingVertical: SPACING.MD,
-    // width: '30%', // Grid layout ish - Removing fixed width for better chip flow
   },
   stationChipSelected: {
     backgroundColor: palette.accent,

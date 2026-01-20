@@ -1,41 +1,19 @@
 import { Ionicons } from '@expo/vector-icons';
-import { BORDER_RADIUS, LAYOUT, SPACING } from '@team/constants';
-import { palette, type ShopCardVariant } from '@team/mobile-ui';
-import { BUDGET_LABEL, type Shop } from '@team/shop-core';
+import { BORDER_RADIUS, formatRating, LAYOUT, SPACING } from '@team/constants';
+import {
+  palette,
+  type CardStyle,
+  type ShopCardProps,
+  type ShopCardVariant,
+} from '@team/mobile-ui';
+import { BUDGET_LABEL } from '@team/shop-core';
 import { Image } from 'expo-image';
 import { memo } from 'react';
-import {
-  Pressable,
-  Image as RNImage,
-  StyleSheet,
-  Text,
-  View,
-  type StyleProp,
-  type ViewStyle,
-} from 'react-native';
+import { Pressable, Image as RNImage, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
 
 import { fonts } from '@/constants/typography';
 
-// カードStyle用の汎用型
-type CardStyle = StyleProp<ViewStyle>;
-
-function formatRating(rating: number): string {
-  return rating.toFixed(1);
-}
-
-export type ShopCardProps = {
-  shop: Shop;
-  onPress: (shopId: string) => void;
-  variant?: ShopCardVariant;
-  style?: CardStyle;
-  formatMeta?: (shop: Shop) => string;
-  /** ブースト表示（炎アイコン・ボーダー強調） */
-  isBoosted?: boolean;
-  /** おすすめカテゴリ（例：「味」「接客」など）- large variantで表示 */
-  featuredCategory?: string;
-};
-
-export type { ShopCardVariant };
+export type { CardStyle, ShopCardProps, ShopCardVariant };
 
 /**
  * 店舗カードの共通コンポーネント

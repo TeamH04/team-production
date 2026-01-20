@@ -21,10 +21,10 @@ import { useShopNavigator } from '@/hooks/useShopNavigator';
 
 // ページネーション設定
 const PAGE_SIZE = 10;
-// ブースト対象の店舗数
+// ブースト対象の店舗数（一覧上部に優先的に表示する店舗数）
 const BOOST_COUNT = 3;
 
-// おすすめカテゴリ（インデックスに応じて循環表示）
+// おすすめカテゴリ（評価カテゴリと同じ5件をインデックスに応じて循環表示）
 const FEATURED_CATEGORIES = ['味', '接客', '雰囲気', '提供速度', '清潔感'];
 
 const KEY_EXTRACTOR = (item: Shop) => item.id;
@@ -139,11 +139,9 @@ export default function HomeScreen() {
   }, [activeCategory, activeTag, stores]);
 
   // ブースト対象のショップIDを計算（スコアリングで上位N件を選出）
-  // 注意：以前あった「交互に表示するロジック」は削除済みですが、
-  // ブースト表示自体（炎アイコンなど）は維持するためにID特定のみ行います。
   const boostedShopIds = useMemo(() => {
     const scored = filteredShops.map(shop => {
-      // 簡易的なスコアリング（IDの文字コード和）
+      // TODO: 実際のスコアリングロジックに置き換える
       const score = shop.id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
       return { id: shop.id, score };
     });
@@ -218,7 +216,7 @@ export default function HomeScreen() {
       <ShopResultsList
         key={listKey}
         emptyState={renderEmptyState}
-        filteredShops={filteredShops} // ここで通常のリストを渡す（交互ロジック適用済みリストではない）
+        filteredShops={filteredShops}
         renderListHeader={renderListHeader}
         renderShop={renderShop}
       />

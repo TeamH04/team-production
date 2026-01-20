@@ -57,7 +57,7 @@ export {
 } from './sort';
 export { ENV_KEYS, createEnvConfig, type EnvConfig, type EnvKey } from './env';
 export { OAUTH_CONFIG } from './oauth';
-export { REVIEW_CONFIG } from './review';
+export { REVIEW_CONFIG, RATING_CATEGORIES, type RatingCategoryKey } from './review';
 export { ROLES, type RoleType } from './roles';
 
 /**

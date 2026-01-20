@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import { buildGoogleMapsUrl, RATING_CATEGORIES } from '@team/constants';
 import { palette } from '@team/mobile-ui';
 import { BUDGET_LABEL } from '@team/shop-core';
 import { Image } from 'expo-image';
@@ -23,6 +24,7 @@ import { useFavorites } from '@/features/favorites/FavoritesContext';
 import { useReviews } from '@/features/reviews/ReviewsContext';
 import { useStores } from '@/features/stores/StoresContext';
 import { useVisited } from '@/features/visited/VisitedContext';
+import { ENV } from '@/lib/config';
 import { storage } from '@/lib/storage';
 
 import type { ReviewSort } from '@/lib/api';
@@ -30,19 +32,10 @@ import type { RatingDetails } from '@team/types';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
-// 評価カテゴリの定義
-const RATING_CATEGORIES = [
-  { key: 'taste', label: '味' },
-  { key: 'atmosphere', label: '雰囲気' },
-  { key: 'service', label: '接客' },
-  { key: 'speed', label: '提供速度' },
-  { key: 'cleanliness', label: '清潔感' },
-] as const;
-
 // 評価値に応じた表示を返す
 const getRatingEmoji = (value: number) => {
-  if (value === 3) return { icon: 'happy' as const, color: palette.errorText, label: '満足' };
-  if (value === 2) return { icon: 'remove' as const, color: palette.accent, label: '普通' };
+  if (value === 5) return { icon: 'happy' as const, color: palette.errorText, label: '満足' };
+  if (value === 4) return { icon: 'remove' as const, color: palette.accent, label: '普通' };
   return { icon: 'sad' as const, color: palette.primary, label: '不満' };
 };
 
@@ -140,7 +133,7 @@ export default function ShopDetailScreen() {
 
   const shop = useMemo(() => (id ? (getStoreById(id) ?? null) : null), [getStoreById, id]);
 
-  const webBaseUrl = process.env.EXPO_PUBLIC_WEB_BASE_URL?.replace(/\/$/, '');
+  const webBaseUrl = ENV.WEB_BASE_URL?.replace(/\/$/, '');
   const reviews = useMemo(() => (shop ? getReviews(shop.id) : []), [shop, getReviews]);
   const isFav = useMemo(() => (shop ? isFavorite(shop.id) : false), [shop, isFavorite]);
   const isVis = useMemo(() => (shop ? isVisited(shop.id) : false), [shop, isVisited]);
@@ -196,7 +189,7 @@ export default function ShopDetailScreen() {
 
   const mapOpenUrl = useMemo(() => {
     if (!shop?.placeId) return null;
-    return `http://googleusercontent.com/maps.google.com/?query_place_id=${shop.placeId}`;
+    return buildGoogleMapsUrl(shop.placeId, shop.name);
   }, [shop]);
 
   const scrollToImage = useCallback((index: number) => {
@@ -832,6 +825,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   reviewBody: { color: palette.primaryText, fontFamily: fonts.regular, marginTop: 8 },
+  reviewDate: { color: palette.secondaryText, fontFamily: fonts.regular, fontSize: 13 },
   reviewDivider: {
     borderBottomColor: palette.divider,
     borderBottomWidth: 1,
@@ -855,7 +849,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     marginTop: 2,
   },
-  reviewDate: { color: palette.secondaryText, fontFamily: fonts.regular, fontSize: 13 },
   screen: { backgroundColor: palette.background, flex: 1 },
   secondaryBtn: {
     backgroundColor: palette.secondarySurface,
