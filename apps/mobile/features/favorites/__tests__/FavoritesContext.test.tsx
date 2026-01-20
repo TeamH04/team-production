@@ -161,10 +161,25 @@ describe('FavoritesContext', () => {
       });
 
       test('APIエラー時にロールバックされる', async () => {
-        const { addFavoriteApi } = setupRemoteDependencies();
-        addFavoriteApi.mock.mockImplementation(async () => {
+        // エラーを投げるモックで依存性を直接設定
+        const token = 'token-1';
+        const resolveAuth = createMockAuth({ mode: 'remote', token });
+        const fetchUserFavorites = createMockFetch<ApiFavorite[]>([]);
+        const addFavoriteApi = createMockApiCall<ApiFavorite, [string, string]>(() => {
           throw new Error('API Error');
         });
+        const removeFavoriteApi = createMockApiCall<void, [string, string]>();
+        const getSupabase = createMockGetSupabase();
+
+        __setFavoritesDependenciesForTesting({
+          resolveAuth,
+          fetchUserFavorites,
+          addFavoriteApi,
+          removeFavoriteApi,
+          getSupabase,
+          isSupabaseConfigured: createMockIsSupabaseConfigured(false),
+        });
+
         const { getValue, unmount } = createFavoritesHarness();
 
         await assert.rejects(
