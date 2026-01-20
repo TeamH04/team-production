@@ -1,3 +1,4 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createSafeContext } from '@team/core-utils';
 import { useUserState } from '@team/hooks';
 import { useMemo } from 'react';
@@ -8,6 +9,8 @@ import { getAccessToken } from '@/lib/auth';
 import type { UserState } from '@team/hooks';
 import type { Gender, UserProfile } from '@team/types';
 import type { ReactNode } from 'react';
+
+const PROFILE_REGISTERED_KEY = '@user/isProfileRegistered';
 
 const [UserContextProvider, useUser] = createSafeContext<UserState>('User');
 
@@ -29,6 +32,9 @@ async function fetchUser(): Promise<UserProfile | null> {
   // gender は任意フィールドのため判定条件に含めない
   // 新規登録ユーザーは name が空または email のみの状態
   const isProfileRegistered = !!(apiUser.name && apiUser.email);
+
+  // ローカルストレージにも保存（オフライン時のフォールバック用）
+  await AsyncStorage.setItem(PROFILE_REGISTERED_KEY, isProfileRegistered.toString());
 
   return {
     name: apiUser.name,
