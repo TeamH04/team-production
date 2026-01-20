@@ -63,6 +63,18 @@ mobile: ## Start mobile app (Expo dev client)
 	@printf '%b\n' "$(BLUE)Starting mobile app...$(NC)"
 	$(MOBILE_CMD)
 
+mobile-tunnel: ## Start mobile app with tunnel (for networks blocking LAN)
+	@printf '%b\n' "$(BLUE)Starting mobile app with tunnel...$(NC)"
+	cd $(MOBILE_DIR) && $(PNPM) expo start --dev-client --tunnel
+
+mobile-go: ## Start mobile app with Expo Go (no custom build needed)
+	@printf '%b\n' "$(BLUE)Starting mobile app with Expo Go...$(NC)"
+	cd $(MOBILE_DIR) && $(PNPM) expo start --go
+
+mobile-go-tunnel: ## Start mobile app with Expo Go + tunnel
+	@printf '%b\n' "$(BLUE)Starting mobile app with Expo Go + tunnel...$(NC)"
+	cd $(MOBILE_DIR) && $(PNPM) expo start --go --tunnel
+
 web: ## Start web app (Next.js)
 	$(PNPM) --dir apps/web dev
 
