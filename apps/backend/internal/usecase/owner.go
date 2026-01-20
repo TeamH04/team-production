@@ -12,17 +12,20 @@ import (
 )
 
 type ownerUseCase struct {
-	userUseCase input.UserUseCase
+	userRepo    output.UserRepository
+	transaction output.Transaction
 	authAdmin   output.OwnerAuthAdmin
 }
 
 // NewOwnerUseCase creates an OwnerUseCase implementation.
 func NewOwnerUseCase(
-	userUseCase input.UserUseCase,
+	userRepo output.UserRepository,
+	transaction output.Transaction,
 	authAdmin output.OwnerAuthAdmin,
 ) input.OwnerUseCase {
 	return &ownerUseCase{
-		userUseCase: userUseCase,
+		userRepo:    userRepo,
+		transaction: transaction,
 		authAdmin:   authAdmin,
 	}
 }
@@ -63,20 +66,39 @@ func (uc *ownerUseCase) Complete(
 		return nil, err
 	}
 
-	if err := uc.userUseCase.UpdateUserRole(ctx, user.UserID, role.Owner); err != nil {
+	if uc.transaction == nil {
+		return nil, output.ErrInvalidTransaction
+	}
+
+	currentUser, err := mustFindUser(ctx, uc.userRepo, user.UserID)
+	if err != nil {
 		return nil, err
 	}
 
-	updateInput := input.UpdateUserInput{}
-	updateInput.Name = &contactName
-	if phone != "" {
-		updateInput.Phone = &phone
-	}
-	if _, err := uc.userUseCase.UpdateUser(ctx, user.UserID, updateInput); err != nil {
+	if err := uc.transaction.StartTransaction(func(tx interface{}) error {
+		if err := uc.userRepo.UpdateRoleInTx(ctx, tx, user.UserID, role.Owner); err != nil {
+			return err
+		}
+		updatedUser := currentUser
+		updatedUser.Role = role.Owner
+		updatedUser.Name = contactName
+		if phoneProvided {
+			if phone == "" {
+				updatedUser.Phone = nil
+			} else {
+				updatedUser.Phone = &phone
+			}
+		}
+		updatedUser.UpdatedAt = time.Now()
+		if err := uc.userRepo.UpdateInTx(ctx, tx, updatedUser); err != nil {
+			return err
+		}
+		return nil
+	}); err != nil {
 		return nil, err
 	}
 
-	updatedUser, err := uc.userUseCase.FindByID(ctx, user.UserID)
+	updatedUser, err := uc.userRepo.FindByID(ctx, user.UserID)
 	if err != nil {
 		return nil, err
 	}

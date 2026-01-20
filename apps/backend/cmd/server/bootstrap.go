@@ -47,7 +47,8 @@ func buildRouterDependencies(cfg *config.Config, db *gorm.DB) *router.Dependenci
 	adminUseCase := usecase.NewAdminUseCase(storeRepo)
 	authUseCase := usecase.NewAuthUseCase(supabaseClient, userRepo)
 	ownerUseCase := usecase.NewOwnerUseCase(
-		userUseCase,
+		userRepo,
+		transaction,
 		supabaseClient,
 	)
 
