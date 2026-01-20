@@ -391,10 +391,7 @@ export default function RegisterShopScreen() {
                     style={styles.icon}
                   />
                   <Text
-                    style={[
-                      styles.inputFlex,
-                      !currentStep.value.station && styles.placeholderText,
-                    ]}
+                    style={[styles.inputFlex, !currentStep.value.station && styles.placeholderText]}
                   >
                     {currentStep.value.station || currentStep.placeholder.station}
                   </Text>

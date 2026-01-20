@@ -25,7 +25,7 @@ export type {
   ApiUser,
   ReviewSort,
   SignedUploadFile,
-  UploadFileInput
+  UploadFileInput,
 };
 
 type UploadResponse = {

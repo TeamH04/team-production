@@ -3,11 +3,7 @@
  * Used in profile edit and registration screens.
  */
 
-import {
-  BORDER_RADIUS,
-  GENRES,
-  toggleGenre as toggleGenreUtil,
-} from '@team/constants';
+import { BORDER_RADIUS, GENRES, toggleGenre as toggleGenreUtil } from '@team/constants';
 import { fontFamilies } from '@team/theme';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 

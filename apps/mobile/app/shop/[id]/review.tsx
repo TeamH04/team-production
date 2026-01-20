@@ -51,7 +51,8 @@ export default function ReviewModalScreen() {
     if (!id) return;
     let active = true;
     setMenuLoading(true);
-    api.fetchStoreMenus(id)
+    api
+      .fetchStoreMenus(id)
       .then(menus => {
         if (!active) return;
         const mapped = menus.map(item => ({
@@ -81,7 +82,7 @@ export default function ReviewModalScreen() {
     [],
   );
   const [categoryRatings, setCategoryRatings] = useState<Record<string, number>>(() =>
-    Object.fromEntries(RATING_CATEGORIES.map(category => [category.key, 0]))
+    Object.fromEntries(RATING_CATEGORIES.map(category => [category.key, 0])),
   );
   const [comment, setComment] = useState(''); // コメント
   const [suggestion, setSuggestion] = useState('');
@@ -122,14 +123,7 @@ export default function ReviewModalScreen() {
       return comment.trim().length > 0 || suggestion.trim().length > 0;
     }
     return selectedMenuIds.length > 0 || assets.length > 0;
-  }, [
-    assets.length,
-    categoryRatings,
-    comment,
-    currentStep.key,
-    selectedMenuIds,
-    suggestion,
-  ]);
+  }, [assets.length, categoryRatings, comment, currentStep.key, selectedMenuIds, suggestion]);
 
   useEffect(() => {
     if (stepIndex >= totalSteps) {
@@ -362,7 +356,7 @@ export default function ReviewModalScreen() {
                           key={item.id}
                           onPress={() =>
                             setSelectedMenuIds(prev =>
-                              selected ? prev.filter(id => id !== item.id) : [...prev, item.id]
+                              selected ? prev.filter(id => id !== item.id) : [...prev, item.id],
                             )
                           }
                           style={[styles.menuItem, selected && styles.menuItemSelected]}

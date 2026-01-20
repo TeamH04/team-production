@@ -104,7 +104,11 @@ export function StationSelect({
           </View>
 
           <View style={styles.filterContainer}>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterScroll}>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={styles.filterScroll}
+            >
               <Pressable
                 onPress={() => setSelectedArea(null)}
                 style={[styles.filterChip, !selectedArea && styles.filterChipActive]}
@@ -119,14 +123,20 @@ export function StationSelect({
                   onPress={() => setSelectedArea(area === selectedArea ? null : area)}
                   style={[styles.filterChip, selectedArea === area && styles.filterChipActive]}
                 >
-                  <Text style={[styles.filterText, selectedArea === area && styles.filterTextActive]}>
+                  <Text
+                    style={[styles.filterText, selectedArea === area && styles.filterTextActive]}
+                  >
                     {area}
                   </Text>
                 </Pressable>
               ))}
             </ScrollView>
             <View style={styles.filterDivider} />
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterScroll}>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={styles.filterScroll}
+            >
               <Pressable
                 onPress={() => setSelectedLine(null)}
                 style={[styles.filterChip, !selectedLine && styles.filterChipActive]}
@@ -141,7 +151,9 @@ export function StationSelect({
                   onPress={() => setSelectedLine(line === selectedLine ? null : line)}
                   style={[styles.filterChip, selectedLine === line && styles.filterChipActive]}
                 >
-                  <Text style={[styles.filterText, selectedLine === line && styles.filterTextActive]}>
+                  <Text
+                    style={[styles.filterText, selectedLine === line && styles.filterTextActive]}
+                  >
                     {line}
                   </Text>
                 </Pressable>

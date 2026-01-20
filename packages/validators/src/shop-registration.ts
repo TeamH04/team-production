@@ -123,7 +123,12 @@ export function validateStep(step: StepData): ValidationResult {
   }
 
   // key based extra validations
-  if (step.key === 'minutesFromStation' && !step.isMultiple && !step.isBudgetRange && !step.isAccess) {
+  if (
+    step.key === 'minutesFromStation' &&
+    !step.isMultiple &&
+    !step.isBudgetRange &&
+    !step.isAccess
+  ) {
     const result = validatePositiveInteger(step.value.trim() || undefined, '最寄り駅からの分数', 3);
     if (!result.isValid) {
       return result;

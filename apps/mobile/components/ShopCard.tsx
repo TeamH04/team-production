@@ -1,15 +1,18 @@
 import { Ionicons } from '@expo/vector-icons';
 import { BORDER_RADIUS, formatRating, LAYOUT, SPACING } from '@team/constants';
-import {
-  palette,
-  type CardStyle,
-  type ShopCardProps,
-  type ShopCardVariant,
-} from '@team/mobile-ui';
+import { palette, type CardStyle, type ShopCardProps, type ShopCardVariant } from '@team/mobile-ui';
 import { BUDGET_LABEL } from '@team/shop-core';
 import { Image } from 'expo-image';
 import { memo } from 'react';
-import { Pressable, Image as RNImage, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
+import {
+  Pressable,
+  Image as RNImage,
+  StyleSheet,
+  Text,
+  View,
+  type StyleProp,
+  type ViewStyle,
+} from 'react-native';
 
 import { fonts } from '@/constants/typography';
 
@@ -132,7 +135,8 @@ const styles = StyleSheet.create({
   boostBadgeCompact: {
     padding: 4,
     right: 8,
-    top: 8,  },
+    top: 8,
+  },
   categoryBadge: {
     alignItems: 'center',
     backgroundColor: palette.metaBadgeBg,

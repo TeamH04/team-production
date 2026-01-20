@@ -13,7 +13,7 @@ export type {
   ApiUser,
   ReviewSort,
   SignedUploadFile,
-  UploadFileInput
+  UploadFileInput,
 } from '@team/api';
 
 export const api = createConfiguredApiClient({
