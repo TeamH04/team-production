@@ -22,10 +22,10 @@ func NewOwnerHandler(ownerUseCase input.OwnerUseCase) *OwnerHandler {
 }
 
 type ownerSignupCompleteDTO struct {
-	ContactName string `json:"contact_name"`
-	StoreName   string `json:"store_name"`
-	OpeningDate string `json:"opening_date"`
-	Phone       string `json:"phone"`
+	ContactName string  `json:"contact_name"`
+	StoreName   string  `json:"store_name"`
+	OpeningDate string  `json:"opening_date"`
+	Phone       *string `json:"phone"`
 }
 
 func (h *OwnerHandler) Complete(c echo.Context) error {

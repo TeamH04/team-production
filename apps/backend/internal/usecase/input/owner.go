@@ -11,7 +11,7 @@ type OwnerSignupCompleteInput struct {
 	ContactName string
 	StoreName   string
 	OpeningDate string
-	Phone       string
+	Phone       *string
 }
 
 // OwnerUseCase defines owner-related flows.

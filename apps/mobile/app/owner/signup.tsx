@@ -109,12 +109,13 @@ export default function OwnerSignupScreen() {
       return;
     }
 
+    if (!isSupabaseConfigured()) {
+      Alert.alert('未設定', ERROR_MESSAGES.SUPABASE_NOT_CONFIGURED);
+      return;
+    }
+
     try {
       setOtpSending(true);
-      if (!isSupabaseConfigured()) {
-        Alert.alert('未設定', ERROR_MESSAGES.SUPABASE_NOT_CONFIGURED);
-        return;
-      }
       const { error } = await getSupabase().auth.signInWithOtp({
         email: trimmedEmail,
         options: { shouldCreateUser: true },
@@ -178,8 +179,8 @@ export default function OwnerSignupScreen() {
         accessToken,
       );
 
-      Alert.alert('作成完了', 'オーナー用アカウントを作成しました。ログインしてください。');
-      router.replace(ROUTES.OWNER_LOGIN);
+      Alert.alert('作成完了', 'オーナー用アカウントを作成しました。');
+      router.replace(ROUTES.OWNER);
     } catch (e: unknown) {
       const message = e instanceof Error ? e.message : '送信に失敗しました';
       Alert.alert('作成失敗', message);

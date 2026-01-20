@@ -212,19 +212,30 @@ export function createApiClient(options: ApiClientOptions) {
       contact_name: string;
       store_name: string;
       opening_date: string;
-      phone?: string;
+      phone?: string | null;
     },
     accessToken: string,
   ) {
+    const trimmedPhone = input.phone?.trim();
+    const payload: {
+      contact_name: string;
+      store_name: string;
+      opening_date: string;
+      phone?: string | null;
+    } = {
+      contact_name: input.contact_name,
+      store_name: input.store_name,
+      opening_date: input.opening_date,
+    };
+    if (trimmedPhone) {
+      payload.phone = trimmedPhone;
+    } else if (input.phone === null) {
+      payload.phone = null;
+    }
     return request<ApiUser>('/auth/owner/signup/complete', {
       method: 'POST',
       headers: buildHeaders(accessToken, undefined, true),
-      body: JSON.stringify({
-        contact_name: input.contact_name,
-        store_name: input.store_name,
-        opening_date: input.opening_date,
-        phone: input.phone ?? '',
-      }),
+      body: JSON.stringify(payload),
     });
   }
 

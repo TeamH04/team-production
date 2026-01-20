@@ -35,7 +35,11 @@ func (uc *ownerUseCase) Complete(
 	contactName := strings.TrimSpace(payload.ContactName)
 	storeName := strings.TrimSpace(payload.StoreName)
 	openingDate := strings.TrimSpace(payload.OpeningDate)
-	phone := strings.TrimSpace(payload.Phone)
+	phone := ""
+	phoneProvided := payload.Phone != nil
+	if phoneProvided {
+		phone = strings.TrimSpace(*payload.Phone)
+	}
 	email := strings.TrimSpace(user.Email)
 
 	if err := validateNotEmpty(contactName, storeName, openingDate); err != nil {
@@ -63,17 +67,13 @@ func (uc *ownerUseCase) Complete(
 		return nil, err
 	}
 
-	if contactName != "" || phone != "" {
-		updateInput := input.UpdateUserInput{}
-		if contactName != "" {
-			updateInput.Name = &contactName
-		}
-		if phone != "" {
-			updateInput.Phone = &phone
-		}
-		if _, err := uc.userUseCase.UpdateUser(ctx, user.UserID, updateInput); err != nil {
-			return nil, err
-		}
+	updateInput := input.UpdateUserInput{}
+	updateInput.Name = &contactName
+	if phone != "" {
+		updateInput.Phone = &phone
+	}
+	if _, err := uc.userUseCase.UpdateUser(ctx, user.UserID, updateInput); err != nil {
+		return nil, err
 	}
 
 	updatedUser, err := uc.userUseCase.FindByID(ctx, user.UserID)
