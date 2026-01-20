@@ -25,6 +25,11 @@ export function getSupabase(): SupabaseClient {
       url: supabaseUrl,
       anonKey: supabasePublishableKey,
       storage: AsyncStorage,
+      additionalOptions: {
+        auth: {
+          detectSessionInUrl: false,
+        },
+      },
     });
   }
   return client;
