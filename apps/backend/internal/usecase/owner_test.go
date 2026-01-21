@@ -73,12 +73,6 @@ func TestOwnerUseCase_Complete_Success(t *testing.T) {
 	if !transaction.StartTransactionCalled {
 		t.Error("expected transaction to be started")
 	}
-	if !userRepo.UpdateRoleInTxCalled {
-		t.Error("expected UpdateRoleInTx to be called")
-	}
-	if userRepo.UpdateRoleInTxCalledWith.Role != role.Owner {
-		t.Errorf("expected role %s, got %s", role.Owner, userRepo.UpdateRoleInTxCalledWith.Role)
-	}
 	if !userRepo.UpdateInTxCalled {
 		t.Error("expected UpdateInTx to be called")
 	}
@@ -184,37 +178,6 @@ func TestOwnerUseCase_Complete_TransactionNil(t *testing.T) {
 	_, err := uc.Complete(context.Background(), user, payload)
 	if !errors.Is(err, output.ErrInvalidTransaction) {
 		t.Errorf("expected ErrInvalidTransaction, got %v", err)
-	}
-}
-
-func TestOwnerUseCase_Complete_UpdateRoleError(t *testing.T) {
-	userRepo := &testutil.MockUserRepository{
-		FindByIDResult:    entity.User{UserID: "user-1", Email: "owner@example.com"},
-		UpdateRoleInTxErr: errors.New("role error"),
-	}
-	transaction := &testutil.MockTransaction{}
-	admin := &mockOwnerAuthAdmin{}
-	uc := usecase.NewOwnerUseCase(userRepo, transaction, admin)
-
-	payload := input.OwnerSignupCompleteInput{
-		ContactName: "owner",
-		StoreName:   "store",
-		OpeningDate: "20250101",
-	}
-	user := entity.User{UserID: "user-1", Email: "owner@example.com"}
-
-	_, err := uc.Complete(context.Background(), user, payload)
-	if err == nil {
-		t.Fatal("expected error, got nil")
-	}
-	if !transaction.StartTransactionCalled {
-		t.Error("expected transaction to be started")
-	}
-	if !userRepo.UpdateRoleInTxCalled {
-		t.Error("expected UpdateRoleInTx to be called")
-	}
-	if userRepo.UpdateInTxCalled {
-		t.Error("expected UpdateInTx not to be called")
 	}
 }
 

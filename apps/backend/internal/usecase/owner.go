@@ -70,23 +70,23 @@ func (uc *ownerUseCase) Complete(
 		return nil, output.ErrInvalidTransaction
 	}
 
+	// Fetch a full snapshot before the transaction because UpdateInTx persists a full record.
 	currentUser, err := mustFindUser(ctx, uc.userRepo, user.UserID)
 	if err != nil {
 		return nil, err
 	}
 
+	var updatedUser entity.User
 	if err := uc.transaction.StartTransaction(func(tx interface{}) error {
-		if err := uc.userRepo.UpdateRoleInTx(ctx, tx, user.UserID, role.Owner); err != nil {
-			return err
-		}
-		updatedUser := currentUser
+		updatedUser = currentUser
 		updatedUser.Role = role.Owner
 		updatedUser.Name = contactName
 		if phoneProvided {
 			if phone == "" {
 				updatedUser.Phone = nil
 			} else {
-				updatedUser.Phone = &phone
+				p := phone
+				updatedUser.Phone = &p
 			}
 		}
 		updatedUser.UpdatedAt = time.Now()
@@ -98,10 +98,6 @@ func (uc *ownerUseCase) Complete(
 		return nil, err
 	}
 
-	updatedUser, err := uc.userRepo.FindByID(ctx, user.UserID)
-	if err != nil {
-		return nil, err
-	}
 	return &updatedUser, nil
 }
 
