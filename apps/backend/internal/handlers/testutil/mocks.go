@@ -132,7 +132,9 @@ type MockUserRepository struct {
 	FindByEmailErr    error
 	CreateErr         error
 	UpdateErr         error
+	UpdateInTxErr     error
 	UpdateRoleErr     error
+	UpdateRoleInTxErr error
 
 	// Call tracking
 	FindByIDCalled        bool
@@ -143,8 +145,19 @@ type MockUserRepository struct {
 	CreateCalledWith      *entity.User
 	UpdateCalled          bool
 	UpdateCalledWith      entity.User
-	UpdateRoleCalled      bool
-	UpdateRoleCalledWith  struct {
+	UpdateInTxCalled      bool
+	UpdateInTxCalledWith  struct {
+		Tx   interface{}
+		User entity.User
+	}
+	UpdateRoleCalled     bool
+	UpdateRoleCalledWith struct {
+		UserID string
+		Role   string
+	}
+	UpdateRoleInTxCalled     bool
+	UpdateRoleInTxCalledWith struct {
+		Tx     interface{}
 		UserID string
 		Role   string
 	}
@@ -184,11 +197,31 @@ func (m *MockUserRepository) Update(ctx context.Context, user entity.User) error
 	return nil
 }
 
+func (m *MockUserRepository) UpdateInTx(ctx context.Context, tx interface{}, user entity.User) error {
+	m.UpdateInTxCalled = true
+	m.UpdateInTxCalledWith.Tx = tx
+	m.UpdateInTxCalledWith.User = user
+	if m.UpdateInTxErr != nil {
+		return m.UpdateInTxErr
+	}
+	m.FindByIDResult = user
+	return nil
+}
+
 func (m *MockUserRepository) UpdateRole(ctx context.Context, userID string, role string) error {
 	m.UpdateRoleCalled = true
 	m.UpdateRoleCalledWith.UserID = userID
 	m.UpdateRoleCalledWith.Role = role
 	return m.UpdateRoleErr
+}
+
+func (m *MockUserRepository) UpdateRoleInTx(ctx context.Context, tx interface{}, userID string, role string) error {
+	m.UpdateRoleInTxCalled = true
+	m.UpdateRoleInTxCalledWith.Tx = tx
+	m.UpdateRoleInTxCalledWith.UserID = userID
+	m.UpdateRoleInTxCalledWith.Role = role
+	m.FindByIDResult.Role = role
+	return m.UpdateRoleInTxErr
 }
 
 // Reset clears all call tracking state
@@ -201,9 +234,16 @@ func (m *MockUserRepository) Reset() {
 	m.CreateCalledWith = nil
 	m.UpdateCalled = false
 	m.UpdateCalledWith = entity.User{}
+	m.UpdateInTxCalled = false
+	m.UpdateInTxCalledWith.Tx = nil
+	m.UpdateInTxCalledWith.User = entity.User{}
 	m.UpdateRoleCalled = false
 	m.UpdateRoleCalledWith.UserID = ""
 	m.UpdateRoleCalledWith.Role = ""
+	m.UpdateRoleInTxCalled = false
+	m.UpdateRoleInTxCalledWith.Tx = nil
+	m.UpdateRoleInTxCalledWith.UserID = ""
+	m.UpdateRoleInTxCalledWith.Role = ""
 }
 
 // MockReviewRepository implements output.ReviewRepository for testing.

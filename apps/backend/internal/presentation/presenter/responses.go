@@ -82,6 +82,7 @@ type UserResponse struct {
 	UserID     string     `json:"user_id"`
 	Name       string     `json:"name"`
 	Email      string     `json:"email"`
+	Phone      *string    `json:"phone,omitempty"`
 	IconFileID *string    `json:"icon_file_id,omitempty"`
 	IconURL    *string    `json:"icon_url,omitempty"`
 	Provider   string     `json:"provider"`
@@ -258,6 +259,7 @@ func NewUserResponse(user entity.User) UserResponse {
 		UserID:     user.UserID,
 		Name:       user.Name,
 		Email:      user.Email,
+		Phone:      user.Phone,
 		IconFileID: user.IconFileID,
 		IconURL:    user.IconURL,
 		Provider:   user.Provider,

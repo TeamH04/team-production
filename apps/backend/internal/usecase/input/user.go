@@ -28,6 +28,7 @@ type EnsureUserInput struct {
 
 type UpdateUserInput struct {
 	Name       *string
+	Phone      *string
 	IconURL    *string
 	IconFileID *string
 	Gender     *string

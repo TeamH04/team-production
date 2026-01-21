@@ -16,16 +16,17 @@ import (
 
 // Dependencies bundles the HTTP handlers and middleware collaborators required by the router.
 type Dependencies struct {
-	UserUC          input.UserUseCase
-	StoreHandler    *handlers.StoreHandler
-	MenuHandler     *handlers.MenuHandler
-	ReviewHandler   *handlers.ReviewHandler
-	UserHandler     *handlers.UserHandler
-	FavoriteHandler *handlers.FavoriteHandler
-	ReportHandler   *handlers.ReportHandler
-	AuthHandler     *handlers.AuthHandler
-	AdminHandler    *handlers.AdminHandler
-	MediaHandler    *handlers.MediaHandler
+	UserUC             input.UserUseCase
+	StoreHandler       *handlers.StoreHandler
+	MenuHandler        *handlers.MenuHandler
+	ReviewHandler      *handlers.ReviewHandler
+	UserHandler        *handlers.UserHandler
+	FavoriteHandler    *handlers.FavoriteHandler
+	ReportHandler      *handlers.ReportHandler
+	AuthHandler        *handlers.AuthHandler
+	OwnerHandler *handlers.OwnerHandler
+	AdminHandler       *handlers.AdminHandler
+	MediaHandler       *handlers.MediaHandler
 
 	TokenVerifier  security.TokenVerifier
 	AuthMiddleware *mw.AuthMiddleware
@@ -118,6 +119,7 @@ func setupAuthRoutes(api *echo.Group, deps *Dependencies) {
 	auth.POST(AuthLoginPath, deps.AuthHandler.Login)
 	auth.GET(AuthMePath, deps.AuthHandler.GetMe, deps.AuthMiddleware.JWTAuth(deps.TokenVerifier))
 	auth.PUT(AuthRolePath, deps.AuthHandler.UpdateRole, deps.AuthMiddleware.JWTAuth(deps.TokenVerifier))
+	auth.POST(OwnerSignupCompletePath, deps.OwnerHandler.Complete, deps.AuthMiddleware.JWTAuth(deps.TokenVerifier))
 }
 
 // setupStoreRoutes は店舗関連のルーティングを設定します

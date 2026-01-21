@@ -20,6 +20,7 @@
 | POST   | `/auth/login`                    | なし        | パスワードログイン（アクセストークン返却）      |
 | GET    | `/auth/me`                       | user        | トークンのユーザー情報を取得                    |
 | PUT    | `/auth/role`                     | user        | ロール変更（例: user→owner）                    |
+| POST   | `/auth/owner/signup/complete`    | user        | Supabase OTP完了後のオーナー登録確定            |
 | GET    | `/stores`                        | なし        | 店舗一覧（メニュー/レビュー付き）               |
 | GET    | `/stores/:id`                    | なし        | 店舗詳細取得                                    |
 | POST   | `/stores`                        | owner/admin | 店舗作成（承認フラグ `is_approved` 含む）       |
@@ -52,6 +53,9 @@
 - `POST /auth/signup`
   - Req: `{ "email", "password", "name" }`
   - Res: ユーザー JSON（`user_id`, `email`, `role`, `created_at` など）
+- `POST /auth/owner/signup/complete`
+  - Req: `{ "contact_name", "store_name", "opening_date", "phone?" }`
+  - Res: ユーザー JSON（`user_id`, `email`, `role`, `created_at` など）
 - `POST /auth/login`
   - Req: `{ "email", "password" }`
   - Res: `{ access_token, refresh_token, token_type, expires_in, user: { id, email, role } }`
@@ -73,7 +77,7 @@
 
 ### ユーザー / お気に入り
 
-- `User` フィールド: `user_id`, `name`, `email`, `icon_url?`, `gender?`, `birthday?`, `role`, `created_at`, `updated_at`。
+- `User` フィールド: `user_id`, `name`, `email`, `phone?`, `icon_url?`, `gender?`, `birthday?`, `role`, `created_at`, `updated_at`。
 - `Favorite` フィールド: `favorite_id`, `user_id`, `store_id`, `created_at`, `store?`（Store をネスト）。
 
 ### 通報 / 管理

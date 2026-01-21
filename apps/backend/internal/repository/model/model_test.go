@@ -75,6 +75,7 @@ func assertUserFields(t *testing.T, expected, result entity.User) {
 	assert.Equal(t, expected.UserID, result.UserID, "UserID mismatch")
 	assert.Equal(t, expected.Name, result.Name, "Name mismatch")
 	assert.Equal(t, expected.Email, result.Email, "Email mismatch")
+	assert.Equal(t, expected.Phone, result.Phone, "Phone mismatch")
 	assert.Equal(t, expected.Provider, result.Provider, "Provider mismatch")
 	assert.Equal(t, expected.Role, result.Role, "Role mismatch")
 	assert.Equal(t, expected.IconURL, result.IconURL, "IconURL mismatch")
@@ -551,6 +552,7 @@ func TestUser_Entity(t *testing.T) {
 				UserID:     "user-123",
 				Name:       "John Doe",
 				Email:      "john@example.com",
+				Phone:      strPtr("090-1234-5678"),
 				IconURL:    strPtr("https://example.com/icon.png"),
 				IconFileID: strPtr("file-icon-1"),
 				Provider:   "google",
@@ -564,6 +566,7 @@ func TestUser_Entity(t *testing.T) {
 				UserID:     "user-123",
 				Name:       "John Doe",
 				Email:      "john@example.com",
+				Phone:      strPtr("090-1234-5678"),
 				IconURL:    strPtr("https://example.com/icon.png"),
 				IconFileID: strPtr("file-icon-1"),
 				Provider:   "google",

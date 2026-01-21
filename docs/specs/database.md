@@ -17,6 +17,7 @@
 | `user_id`    | UUID PK     | Supabase Auth と同一 ID                         |
 | `name`       | text        |                                                 |
 | `email`      | text UNIQUE | 小文字で保存                                    |
+| `phone`      | text        | nullable                                        |
 | `icon_url`   | text        | nullable                                        |
 | `gender`     | text        | nullable                                        |
 | `birthday`   | date        | nullable                                        |
@@ -119,6 +120,7 @@ erDiagram
         uuid user_id PK
         text name
         text email
+        text phone
         text icon_url
         text gender
         date birthday

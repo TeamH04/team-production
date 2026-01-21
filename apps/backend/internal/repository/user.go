@@ -41,6 +41,7 @@ func (r *userRepository) Create(ctx context.Context, user *entity.User) error {
 		UserID:     user.UserID,
 		Name:       user.Name,
 		Email:      user.Email,
+		Phone:      user.Phone,
 		IconURL:    user.IconURL,
 		IconFileID: user.IconFileID,
 		Provider:   user.Provider,
@@ -61,6 +62,7 @@ func (r *userRepository) Update(ctx context.Context, user entity.User) error {
 		UserID:     user.UserID,
 		Name:       user.Name,
 		Email:      user.Email,
+		Phone:      user.Phone,
 		IconURL:    user.IconURL,
 		IconFileID: user.IconFileID,
 		Provider:   user.Provider,
@@ -73,8 +75,40 @@ func (r *userRepository) Update(ctx context.Context, user entity.User) error {
 	return mapDBError(r.db.WithContext(ctx).Model(&model.User{UserID: user.UserID}).Updates(record).Error)
 }
 
+func (r *userRepository) UpdateInTx(ctx context.Context, tx interface{}, user entity.User) error {
+	gormTx, ok := tx.(*gorm.DB)
+	if !ok || gormTx == nil {
+		return output.ErrInvalidTransaction
+	}
+	record := model.User{
+		UserID:     user.UserID,
+		Name:       user.Name,
+		Email:      user.Email,
+		Phone:      user.Phone,
+		IconURL:    user.IconURL,
+		IconFileID: user.IconFileID,
+		Provider:   user.Provider,
+		Gender:     user.Gender,
+		Birthday:   user.Birthday,
+		Role:       user.Role,
+		CreatedAt:  user.CreatedAt,
+		UpdatedAt:  user.UpdatedAt,
+	}
+	return mapDBError(gormTx.WithContext(ctx).Model(&model.User{UserID: user.UserID}).Updates(record).Error)
+}
+
 func (r *userRepository) UpdateRole(ctx context.Context, userID string, role string) error {
 	return mapDBError(r.db.WithContext(ctx).Model(&model.User{}).
+		Where("user_id = ?", userID).
+		Update("role", role).Error)
+}
+
+func (r *userRepository) UpdateRoleInTx(ctx context.Context, tx interface{}, userID string, role string) error {
+	gormTx, ok := tx.(*gorm.DB)
+	if !ok || gormTx == nil {
+		return output.ErrInvalidTransaction
+	}
+	return mapDBError(gormTx.WithContext(ctx).Model(&model.User{}).
 		Where("user_id = ?", userID).
 		Update("role", role).Error)
 }

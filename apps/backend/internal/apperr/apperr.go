@@ -15,6 +15,7 @@ const (
 	CodeConflict     Code = "conflict"
 	CodeUnauthorized Code = "unauthorized"
 	CodeForbidden    Code = "forbidden"
+	CodeTooMany      Code = "too_many_requests"
 	CodeInternal     Code = "internal"
 )
 
