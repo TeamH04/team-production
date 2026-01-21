@@ -122,7 +122,12 @@ func (uc *userUseCase) UpdateUser(ctx context.Context, userID string, input inpu
 		user.Name = *input.Name
 	}
 	if input.Phone != nil {
-		user.Phone = input.Phone
+		trimmed := strings.TrimSpace(*input.Phone)
+		if trimmed == "" {
+			user.Phone = nil
+		} else {
+			user.Phone = &trimmed
+		}
 	}
 	if input.IconURL != nil {
 		user.IconURL = input.IconURL
