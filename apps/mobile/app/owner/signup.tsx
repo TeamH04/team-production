@@ -136,6 +136,7 @@ export default function OwnerSignupScreen() {
 
   const handleVerify = async () => {
     const trimmedEmail = email.trim();
+    const trimmedPhone = phone.trim();
     if (!otpCode.trim()) {
       Alert.alert(VALIDATION_MESSAGES.INPUT_ERROR_TITLE, 'ワンタイムパスコードを入力してください');
       return;
@@ -174,7 +175,7 @@ export default function OwnerSignupScreen() {
           contact_name: contactName,
           store_name: storeName,
           opening_date: openingDate.replace(/\D/g, ''),
-          phone,
+          phone: trimmedPhone ? trimmedPhone : undefined,
         },
         accessToken,
       );
@@ -183,7 +184,18 @@ export default function OwnerSignupScreen() {
       router.replace(ROUTES.OWNER);
     } catch (e: unknown) {
       const message = e instanceof Error ? e.message : '送信に失敗しました';
-      Alert.alert('作成失敗', message);
+      Alert.alert('作成失敗', message, [
+        { text: '再試行' },
+        {
+          text: '入力内容を修正する',
+          style: 'cancel',
+          onPress: () => {
+            setStep('form');
+            setOtpCode('');
+            setLastOtpSentAt(null);
+          },
+        },
+      ]);
     } finally {
       setOtpVerifying(false);
     }
