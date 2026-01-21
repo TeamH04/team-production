@@ -212,7 +212,7 @@ export function createApiClient(options: ApiClientOptions) {
       contact_name: string;
       store_name: string;
       opening_date: string;
-      phone?: string | null;
+      phone?: string;
     },
     accessToken: string,
   ) {
@@ -221,7 +221,7 @@ export function createApiClient(options: ApiClientOptions) {
       contact_name: string;
       store_name: string;
       opening_date: string;
-      phone?: string | null;
+      phone?: string;
     } = {
       contact_name: input.contact_name,
       store_name: input.store_name,
@@ -229,8 +229,6 @@ export function createApiClient(options: ApiClientOptions) {
     };
     if (trimmedPhone) {
       payload.phone = trimmedPhone;
-    } else if (input.phone === null) {
-      payload.phone = null;
     }
     return request<ApiUser>('/auth/owner/signup/complete', {
       method: 'POST',
