@@ -32,7 +32,7 @@ async function fetchUser(): Promise<UserProfile | null> {
   // プロフィール登録済みかどうかは、name と email が存在するかで判定
   // gender は任意フィールドのため判定条件に含めない
   // 新規登録ユーザーは name が空または email のみの状態
-  const isProfileRegistered = !!(apiUser.name && apiUser.email);
+  const isProfileRegistered = !!(apiUser.name?.trim() && apiUser.email);
 
   // ローカルストレージにも保存（オフライン時のフォールバック用）
   await AsyncStorage.setItem(PROFILE_REGISTERED_KEY, isProfileRegistered.toString());
