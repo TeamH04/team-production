@@ -62,7 +62,7 @@ export const createLocalStorageMock = (options?: CreateLocalStorageMockOptions) 
  * node:test の mock.fn 互換のインターフェースを提供し、
  * ブラウザ環境バンドル時に node:test をインポートしないようにする
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
 export const mock = {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   fn: <T extends (...args: any[]) => any>(implementation?: T) => {
