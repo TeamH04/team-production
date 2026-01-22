@@ -16,7 +16,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { fonts } from '@/constants/typography';
-import { useUser } from '@/features/user/UserContext';
+import { PROFILE_REGISTERED_KEY, useUser } from '@/features/user/UserContext';
 
 export default function RegisterProfileScreen() {
   const router = useRouter();
@@ -36,7 +36,7 @@ export default function RegisterProfileScreen() {
       return;
     }
 
-    await AsyncStorage.setItem('@user/isProfileRegistered', 'true');
+    await AsyncStorage.setItem(PROFILE_REGISTERED_KEY, 'true');
     setUser({
       ...user,
       name: name,

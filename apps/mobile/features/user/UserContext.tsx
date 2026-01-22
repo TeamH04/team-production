@@ -10,7 +10,8 @@ import type { UserState } from '@team/hooks';
 import type { Gender, UserProfile } from '@team/types';
 import type { ReactNode } from 'react';
 
-const PROFILE_REGISTERED_KEY = '@user/isProfileRegistered';
+/** AsyncStorage キー: プロフィール登録済みフラグ */
+export const PROFILE_REGISTERED_KEY = '@user/isProfileRegistered';
 
 const [UserContextProvider, useUser] = createSafeContext<UserState>('User');
 
