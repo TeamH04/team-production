@@ -7,6 +7,7 @@ import {
   RATING_CATEGORIES,
   UI_LABELS,
 } from '@team/constants';
+import { devWarn } from '@team/core-utils';
 import { palette } from '@team/mobile-ui';
 import { BUDGET_LABEL } from '@team/shop-core';
 import { Image } from 'expo-image';
@@ -192,7 +193,7 @@ export default function ShopDetailScreen() {
     useCallback(() => {
       if (!id) return;
       loadReviews(id, reviewSort).catch(err => {
-        console.warn('Failed to load reviews:', err);
+        devWarn('Failed to load reviews:', err);
       });
     }, [id, loadReviews, reviewSort]),
   );

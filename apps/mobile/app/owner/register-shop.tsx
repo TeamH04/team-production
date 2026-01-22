@@ -9,6 +9,7 @@ import {
   UI_LABELS,
   VALIDATION_MESSAGES,
 } from '@team/constants';
+import { devWarn } from '@team/core-utils';
 import { palette, StationSelect } from '@team/mobile-ui';
 import { useNavigation, useRouter, type Href } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
@@ -119,7 +120,7 @@ export default function RegisterShopScreen() {
         }
       } catch (err) {
         if (isMounted) {
-          console.warn('Failed to fetch stations:', err);
+          devWarn('Failed to fetch stations:', err);
           setStationLoadError(true);
         }
       }

@@ -7,6 +7,7 @@ import {
   REVIEW_CONFIG,
   UI_LABELS,
 } from '@team/constants';
+import { devWarn } from '@team/core-utils';
 import { palette } from '@team/mobile-ui';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
@@ -69,7 +70,7 @@ export default function ReviewModalScreen() {
         setMenuOptions(mapped);
       })
       .catch(err => {
-        console.warn('Failed to fetch menus:', err);
+        devWarn('Failed to fetch menus:', err);
       })
       .finally(() => {
         if (active) {
