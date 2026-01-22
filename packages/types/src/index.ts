@@ -83,6 +83,7 @@ export type ApiUser = {
   user_id: string;
   name: string;
   email: string;
+  phone?: string | null;
   icon_file_id?: string | null;
   icon_url?: string | null;
   provider: string;

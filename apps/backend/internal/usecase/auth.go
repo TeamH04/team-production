@@ -42,6 +42,7 @@ func (uc *authUseCase) Signup(ctx context.Context, input input.AuthSignupInput) 
 		Email:    input.Email,
 		Password: input.Password,
 		Name:     input.Name,
+		Role:     input.Role,
 	}
 
 	if _, err := uc.userRepo.FindByEmail(ctx, strings.ToLower(input.Email)); err == nil {
@@ -93,6 +94,9 @@ func validateSignupInput(input input.AuthSignupInput) error {
 	}
 	if len(input.Password) < constants.MinPasswordLength {
 		return ErrInvalidInput
+	}
+	if input.Role != "" && !IsValidRole(input.Role) {
+		return ErrInvalidRole
 	}
 	return nil
 }

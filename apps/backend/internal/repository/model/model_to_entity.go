@@ -108,6 +108,7 @@ func (u User) Entity() entity.User {
 		UserID:     u.UserID,
 		Name:       u.Name,
 		Email:      u.Email,
+		Phone:      u.Phone,
 		IconURL:    u.IconURL,
 		IconFileID: u.IconFileID,
 		Provider:   provider,

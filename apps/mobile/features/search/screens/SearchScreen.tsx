@@ -1,9 +1,11 @@
+/* global __DEV__ */
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   BORDER_RADIUS,
+  DEFAULT_SEARCH_SORT_ORDERS,
   ERROR_MESSAGES,
   LAYOUT,
   ROUTES,
-  SEARCH_HISTORY_MAX,
   SEARCH_SORT_OPTIONS,
   SPACING,
   VISITED_FILTER_OPTIONS,
@@ -11,10 +13,15 @@ import {
   type SortOrder,
 } from '@team/constants';
 import { getIdNum } from '@team/core-utils';
-import { useShopFilter } from '@team/hooks';
-import { ToggleButton } from '@team/mobile-ui';
-import { palette } from '@team/mobile-ui';
-import { formatShopMeta, sortShops } from '@team/shop-core';
+import { useSearchHistoryStorage, useShopFilter } from '@team/hooks';
+import { palette, ToggleButton } from '@team/mobile-ui';
+import {
+  extractCategories,
+  extractTagsByCategory,
+  formatShopMeta,
+  getSortOrderLabel,
+  sortShops,
+} from '@team/shop-core';
 import { useRouter } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
 import {
@@ -33,7 +40,7 @@ import { fonts } from '@/constants/typography';
 import { useStores } from '@/features/stores/StoresContext';
 import { useVisited } from '@/features/visited/VisitedContext';
 
-import type { VisitedFilter } from '@team/types';
+import type { Shop, VisitedFilter } from '@team/types';
 
 export default function SearchScreen() {
   const router = useRouter();
@@ -42,16 +49,18 @@ export default function SearchScreen() {
   const [currentSearchText, setCurrentSearchText] = useState('');
   const [activeCategories, setActiveCategories] = useState<string[]>([]);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
-  const [searchHistory, setSearchHistory] = useState<string[]>([]);
   const { stores: shops, loading, error: loadError } = useStores();
   const [filterVisited, setFilterVisited] = useState<VisitedFilter>('all');
 
   const [sortBy, setSortBy] = useState<SearchSortType>('default');
-  const [sortOrders, setSortOrders] = useState<Record<SearchSortType, SortOrder>>({
-    default: 'desc',
-    newest: 'desc',
-    rating: 'desc',
-    registered: 'desc',
+  const [sortOrders, setSortOrders] = useState<Record<SearchSortType, SortOrder>>(
+    DEFAULT_SEARCH_SORT_ORDERS,
+  );
+
+  // 検索履歴の永続化（@team/hooksから）
+  const { searchHistory, addToHistory, removeFromHistory } = useSearchHistoryStorage({
+    storage: AsyncStorage,
+    isDev: __DEV__,
   });
 
   const { filteredShops: baseFilteredShops } = useShopFilter({
@@ -62,96 +71,80 @@ export default function SearchScreen() {
     sortType: 'default',
   });
 
-  const CATEGORY_OPTIONS = useMemo(() => {
-    const set = new Set<string>();
-    for (const shop of shops) {
-      set.add(shop.category);
-    }
-    return Array.from(set).sort();
-  }, [shops]);
-
-  const TAGS_BY_CATEGORY = useMemo(() => {
-    const m = new Map<string, Set<string>>();
-    shops.forEach(shop => {
-      const cat = shop.category;
-
-      let set = m.get(cat);
-      if (!set) {
-        set = new Set<string>();
-        m.set(cat, set);
-      }
-
-      for (const t of shop.tags) {
-        set.add(t);
-      }
-    });
-    return Object.fromEntries(
-      Array.from(m.entries(), ([cat, set]) => [cat, Array.from(set).sort()] as const),
-    ) as Record<string, string[]>;
-  }, [shops]);
+  // カテゴリ・タグ抽出（@team/shop-coreから）
+  const categoryOptions = useMemo(() => extractCategories(shops), [shops]);
+  const tagsByCategory = useMemo(() => extractTagsByCategory(shops), [shops]);
 
   const hasSearchCriteria =
     currentSearchText.length > 0 || selectedTags.length > 0 || activeCategories.length > 0;
 
-  const handleClearAll = () => {
+  const handleClearAll = useCallback(() => {
     setUserTypedText('');
     setCurrentSearchText('');
     setActiveCategories([]);
     setSelectedTags([]);
     setSortBy('default');
     setFilterVisited('all');
-  };
+  }, []);
 
-  const handleSearch = (textToSearch?: string) => {
-    const targetText = textToSearch !== undefined ? textToSearch : userTypedText;
-    const trimmedText = targetText.trim();
+  const handleSearch = useCallback(
+    (textToSearch?: string) => {
+      const targetText = textToSearch !== undefined ? textToSearch : userTypedText;
+      const trimmedText = targetText.trim();
 
-    if (trimmedText === '') return;
+      if (trimmedText === '') return;
 
-    // 検索履歴を更新
-    setSearchHistory(prev => {
-      // 既にある場合は一旦消して、配列の先頭に追加（重複防止）
-      const filtered = prev.filter(item => item !== trimmedText);
-      return [trimmedText, ...filtered].slice(0, SEARCH_HISTORY_MAX); // 最大10件
-    });
+      // 検索履歴を更新（useSearchHistoryStorageから）
+      addToHistory(trimmedText);
 
-    setCurrentSearchText(trimmedText);
-    if (textToSearch === undefined) {
-      setUserTypedText('');
-    }
-  };
+      setCurrentSearchText(trimmedText);
+      if (textToSearch === undefined) {
+        setUserTypedText('');
+      }
+    },
+    [userTypedText, addToHistory],
+  );
 
-  const handleSearchSortTypePress = (value: SearchSortType) => {
-    if (sortBy !== value) setSortBy(value);
-  };
+  const handleSearchSortTypePress = useCallback(
+    (value: SearchSortType) => {
+      if (sortBy !== value) setSortBy(value);
+    },
+    [sortBy],
+  );
 
-  const toggleSortOrder = () => {
+  const toggleSortOrder = useCallback(() => {
     setSortOrders(prev => ({
       ...prev,
       [sortBy]: prev[sortBy] === 'desc' ? 'asc' : 'desc',
     }));
-  };
+  }, [sortBy]);
 
-  const handleRemoveHistory = (item: string) => {
-    setSearchHistory(searchHistory.filter(h => h !== item));
-  };
+  const handleRemoveHistory = useCallback(
+    (item: string) => {
+      removeFromHistory(item);
+    },
+    [removeFromHistory],
+  );
 
-  const handleCategoryPress = (category: string) => {
-    setActiveCategories(prev => {
-      const isDeselecting = prev.includes(category);
-      if (isDeselecting) {
-        const tagsToRemove = TAGS_BY_CATEGORY[category] || [];
-        setSelectedTags(currentTags => currentTags.filter(tag => !tagsToRemove.includes(tag)));
-        return prev.filter(c => c !== category);
-      } else {
-        return [...prev, category];
-      }
-    });
-  };
+  const handleCategoryPress = useCallback(
+    (category: string) => {
+      setActiveCategories(prev => {
+        const isDeselecting = prev.includes(category);
+        if (isDeselecting) {
+          const tagsToRemove = tagsByCategory[category] || [];
+          setSelectedTags(currentTags => currentTags.filter(tag => !tagsToRemove.includes(tag)));
+          return prev.filter(c => c !== category);
+        } else {
+          return [...prev, category];
+        }
+      });
+    },
+    [tagsByCategory],
+  );
 
-  const handleTagPress = (tag: string) => {
+  const handleTagPress = useCallback((tag: string) => {
     setSelectedTags(prev => (prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]));
-  };
+  }, []);
 
   const handleShopPress = useCallback(
     (shopId: string) => {
@@ -160,18 +153,11 @@ export default function SearchScreen() {
     [router],
   );
 
-  const getSortOrderLabel = () => {
-    const currentOrder = sortOrders[sortBy];
-    switch (sortBy) {
-      case 'newest':
-      case 'registered':
-        return currentOrder === 'desc' ? '新しい順' : '古い順';
-      case 'rating':
-        return currentOrder === 'desc' ? '高い順' : '低い順';
-      default:
-        return '';
-    }
-  };
+  // ソートラベル取得（@team/shop-coreから）
+  const sortOrderLabel = useMemo(
+    () => getSortOrderLabel(sortBy, sortOrders[sortBy]),
+    [sortBy, sortOrders],
+  );
 
   const searchResults = useMemo(() => {
     if (!hasSearchCriteria) return [];
@@ -217,6 +203,22 @@ export default function SearchScreen() {
     return filtered;
   }, [baseFilteredShops, filterVisited, hasSearchCriteria, isVisited, sortBy, sortOrders]);
 
+  const formatShopMetaCompact = useCallback((shop: Shop) => formatShopMeta(shop, 'compact'), []);
+
+  const renderHistoryItem = useCallback(
+    ({ item }: { item: string }) => (
+      <View style={styles.historyItem}>
+        <Pressable onPress={() => handleSearch(item)} style={styles.historyTextContainer}>
+          <Text style={styles.historyText}>{item}</Text>
+        </Pressable>
+        <Pressable onPress={() => handleRemoveHistory(item)}>
+          <Text style={styles.removeBtn}>✕</Text>
+        </Pressable>
+      </View>
+    ),
+    [handleSearch, handleRemoveHistory],
+  );
+
   return (
     <ScrollView
       style={styles.container}
@@ -255,7 +257,7 @@ export default function SearchScreen() {
           <View style={styles.tagGroupsContainer}>
             <Text style={styles.sectionLabel}>カテゴリから探す（複数選択可）</Text>
             <View style={styles.categoriesRow}>
-              {CATEGORY_OPTIONS.map(cat => (
+              {categoryOptions.map(cat => (
                 <ToggleButton
                   key={cat}
                   label={cat}
@@ -274,7 +276,7 @@ export default function SearchScreen() {
                   <View key={`tags-${cat}`} style={styles.tagGroup}>
                     <Text style={styles.subSectionLabel}>{`${cat}のタグ`}</Text>
                     <View style={styles.tagsRow}>
-                      {(TAGS_BY_CATEGORY[cat] || []).map(tag => (
+                      {(tagsByCategory[cat] || []).map(tag => (
                         <ToggleButton
                           key={tag}
                           label={tag}
@@ -307,7 +309,7 @@ export default function SearchScreen() {
       )}
 
       {!loading && !loadError && hasSearchCriteria && (
-        <View style={styles.resultsSection}>
+        <View>
           <Text style={styles.resultsTitle}>{`検索結果：${searchResults.length}件`}</Text>
 
           <View style={styles.visitedFilterRow}>
@@ -317,7 +319,6 @@ export default function SearchScreen() {
                 label={option.label}
                 isActive={filterVisited === option.value}
                 onPress={() => setFilterVisited(option.value)}
-                style={styles.visitedFilterButton}
                 size='small'
               />
             ))}
@@ -338,7 +339,6 @@ export default function SearchScreen() {
                       label={option.label}
                       isActive={sortBy === option.value}
                       onPress={() => handleSearchSortTypePress(option.value)}
-                      style={styles.sortButton}
                       size='small'
                     />
                   ))}
@@ -347,7 +347,7 @@ export default function SearchScreen() {
                   <View style={styles.fixedOrderContainer}>
                     <View style={styles.verticalDivider} />
                     <Pressable onPress={toggleSortOrder} style={styles.orderButton}>
-                      <Text style={styles.orderButtonText}>{getSortOrderLabel()}</Text>
+                      <Text style={styles.orderButtonText}>{sortOrderLabel}</Text>
                     </Pressable>
                   </View>
                 )}
@@ -359,7 +359,7 @@ export default function SearchScreen() {
                     key={item.id}
                     shop={item}
                     onPress={handleShopPress}
-                    formatMeta={shop => formatShopMeta(shop, 'compact')}
+                    formatMeta={formatShopMetaCompact}
                   />
                 ))}
               </View>
@@ -385,17 +385,7 @@ export default function SearchScreen() {
               data={searchHistory}
               keyExtractor={(item, index) => `${item}-${index}`}
               scrollEnabled={false}
-              renderItem={({ item }) => (
-                <View style={styles.historyItem}>
-                  {/* タップした時にその履歴ワードで再検索を実行 */}
-                  <Pressable onPress={() => handleSearch(item)} style={styles.historyTextContainer}>
-                    <Text style={styles.historyText}>{item}</Text>
-                  </Pressable>
-                  <Pressable onPress={() => handleRemoveHistory(item)}>
-                    <Text style={styles.removeBtn}>✕</Text>
-                  </Pressable>
-                </View>
-              )}
+              renderItem={renderHistoryItem}
             />
           ) : (
             <View style={styles.emptyHistoryBox}>
@@ -418,7 +408,7 @@ const styles = StyleSheet.create({
     borderRadius: BORDER_RADIUS.PILL,
   },
   categorySection: {
-    marginBottom: 24,
+    marginBottom: SPACING.XL,
   },
   clearButton: {
     padding: SPACING.SM,
@@ -450,7 +440,7 @@ const styles = StyleSheet.create({
   },
   emptyHistoryBox: {
     alignItems: 'center',
-    paddingVertical: 60,
+    paddingVertical: SPACING.XXXL,
   },
   emptyHistoryText: {
     color: palette.secondaryText,
@@ -463,13 +453,13 @@ const styles = StyleSheet.create({
   },
   emptyState: {
     alignItems: 'center',
-    paddingVertical: 60,
+    paddingVertical: SPACING.XXXL,
   },
   emptyTitle: {
     color: palette.secondaryText,
     fontFamily: fonts.medium,
     fontSize: 16,
-    marginBottom: 40,
+    marginBottom: SPACING.XXXL,
   },
   fixedOrderContainer: {
     alignItems: 'center',
@@ -478,7 +468,7 @@ const styles = StyleSheet.create({
     paddingLeft: 4,
   },
   headerTextBlock: {
-    marginBottom: 32,
+    marginBottom: SPACING.XXL,
   },
   historyItem: {
     alignItems: 'center',
@@ -526,7 +516,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     padding: SPACING.SM,
   },
-  resultsSection: {},
   resultsTitle: {
     color: palette.primaryText,
     fontFamily: fonts.medium,
@@ -554,11 +543,11 @@ const styles = StyleSheet.create({
   searchWrapper: {
     alignItems: 'center',
     backgroundColor: palette.surface,
-    borderRadius: 24,
+    borderRadius: BORDER_RADIUS.PILL,
     flex: 1,
     flexDirection: 'row',
     paddingHorizontal: SPACING.XL,
-    paddingVertical: 10,
+    paddingVertical: SPACING.MD,
   },
   sectionLabel: {
     color: palette.secondaryText,
@@ -570,7 +559,6 @@ const styles = StyleSheet.create({
     boxShadow: '0px 6px 10px rgba(0, 0, 0, 0.05)',
     elevation: 3,
   },
-  sortButton: {},
   sortOptionsContent: {
     alignItems: 'center',
     gap: SPACING.SM,
@@ -616,7 +604,6 @@ const styles = StyleSheet.create({
     marginRight: SPACING.SM,
     width: 1,
   },
-  visitedFilterButton: {},
   visitedFilterRow: {
     flexDirection: 'row',
     gap: SPACING.SM,

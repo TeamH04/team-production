@@ -2,6 +2,69 @@ import { BUDGET_LABEL } from './constants';
 
 import type { Shop } from '@team/types';
 
+// =============================================================================
+// カテゴリ・タグ抽出ユーティリティ
+// =============================================================================
+
+/**
+ * ショップ一覧からカテゴリ一覧を抽出
+ * @param shops ショップ配列
+ * @returns ソート済みのユニークなカテゴリ配列
+ *
+ * @example
+ * ```ts
+ * const categories = extractCategories(shops);
+ * // ['カフェ', 'ラーメン', 'レストラン']
+ * ```
+ */
+export function extractCategories(shops: Shop[]): string[] {
+  const categorySet = new Set<string>();
+  for (const shop of shops) {
+    categorySet.add(shop.category);
+  }
+  return Array.from(categorySet).sort();
+}
+
+/**
+ * ショップ一覧からカテゴリごとのタグマップを抽出
+ * @param shops ショップ配列
+ * @returns カテゴリをキーとしたタグ配列のレコード
+ *
+ * @example
+ * ```ts
+ * const tagsByCategory = extractTagsByCategory(shops);
+ * // { 'カフェ': ['Wi-Fi', '静か'], 'ラーメン': ['こってり', 'あっさり'] }
+ * ```
+ */
+export function extractTagsByCategory(shops: Shop[]): Record<string, string[]> {
+  const categoryTagsMap = new Map<string, Set<string>>();
+
+  for (const shop of shops) {
+    const category = shop.category;
+
+    let tagSet = categoryTagsMap.get(category);
+    if (!tagSet) {
+      tagSet = new Set<string>();
+      categoryTagsMap.set(category, tagSet);
+    }
+
+    for (const tag of shop.tags ?? []) {
+      tagSet.add(tag);
+    }
+  }
+
+  return Object.fromEntries(
+    Array.from(categoryTagsMap.entries(), ([category, tagSet]) => [
+      category,
+      Array.from(tagSet).sort(),
+    ]),
+  ) as Record<string, string[]>;
+}
+
+// =============================================================================
+// メタ情報フォーマット
+// =============================================================================
+
 export type ShopMetaFormat = 'full' | 'compact';
 
 /**

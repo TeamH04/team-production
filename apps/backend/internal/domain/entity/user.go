@@ -7,6 +7,7 @@ type User struct {
 	UserID     string
 	Name       string
 	Email      string
+	Phone      *string
 	IconFileID *string
 	Provider   string
 	IconURL    *string

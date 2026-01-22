@@ -11,6 +11,7 @@ type AuthSignupInput struct {
 	Email    string
 	Password string
 	Name     string
+	Role     string
 }
 
 type AuthLoginInput struct {

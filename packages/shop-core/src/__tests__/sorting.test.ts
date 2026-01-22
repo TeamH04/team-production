@@ -3,9 +3,60 @@ import { describe, test } from 'node:test';
 
 import { createMockShop } from '@team/test-utils';
 
-import { sortShops } from '../sorting';
+import { getSortOrderLabel, sortShops } from '../sorting';
 
 import type { SortType } from '@team/types';
+import type { SearchSortType, SortOrder } from '@team/constants';
+
+describe('getSortOrderLabel', () => {
+  describe('newest の場合', () => {
+    test('desc の場合は "新しい順" を返す', () => {
+      const result = getSortOrderLabel('newest', 'desc');
+      assert.equal(result, '新しい順');
+    });
+
+    test('asc の場合は "古い順" を返す', () => {
+      const result = getSortOrderLabel('newest', 'asc');
+      assert.equal(result, '古い順');
+    });
+  });
+
+  describe('registered の場合', () => {
+    test('desc の場合は "新しい順" を返す', () => {
+      const result = getSortOrderLabel('registered', 'desc');
+      assert.equal(result, '新しい順');
+    });
+
+    test('asc の場合は "古い順" を返す', () => {
+      const result = getSortOrderLabel('registered', 'asc');
+      assert.equal(result, '古い順');
+    });
+  });
+
+  describe('rating の場合', () => {
+    test('desc の場合は "高い順" を返す', () => {
+      const result = getSortOrderLabel('rating', 'desc');
+      assert.equal(result, '高い順');
+    });
+
+    test('asc の場合は "低い順" を返す', () => {
+      const result = getSortOrderLabel('rating', 'asc');
+      assert.equal(result, '低い順');
+    });
+  });
+
+  describe('default ケース', () => {
+    test('未知の sortBy の場合は空文字列を返す', () => {
+      const result = getSortOrderLabel('unknown' as SearchSortType, 'desc');
+      assert.equal(result, '');
+    });
+
+    test('未知の sortBy で asc の場合も空文字列を返す', () => {
+      const result = getSortOrderLabel('invalid' as SearchSortType, 'asc');
+      assert.equal(result, '');
+    });
+  });
+});
 
 describe('sortShops', () => {
   describe('default ソート', () => {
@@ -23,6 +74,7 @@ describe('sortShops', () => {
       assert.equal(result[2].id, 'shop-3');
     });
 
+    // パフォーマンス最適化: default ソートは処理不要のため、配列コピーを避けて同じ参照を返す
     test('default の場合は同じ配列参照を返す', () => {
       const shops = [createMockShop({ id: 'shop-1' })];
       const result = sortShops(shops, 'default');
@@ -92,6 +144,8 @@ describe('sortShops', () => {
       assert.equal(result[2].name, 'カフェC');
     });
 
+    // このテストは localeCompare の 'ja' ロケールに依存する
+    // ひらがな・カタカナが五十音順で正しくソートされることを確認
     test('ひらがな・カタカナ混在でも正しくソートする', () => {
       const shops = [
         createMockShop({ id: 'shop-1', name: 'うどん屋' }),
@@ -192,6 +246,8 @@ describe('sortShops', () => {
       );
     });
 
+    // イミュータビリティ保証: ソート操作が元の配列を変更しないことを確認するため、
+    // 新しい配列インスタンスが返されることをテストする
     test('ソート結果は新しい配列インスタンスである（default以外）', () => {
       const shops = [createMockShop({ id: 'shop-1' })];
 
@@ -278,12 +334,16 @@ describe('sortShops', () => {
       ];
 
       // 不正な日付は NaN になるため、ソート結果の安定性を確認
+      // 注: NaN との比較は常に false を返すため、ソート順序は不定
       const result = sortShops(shops, 'newest');
 
       // 有効な日付を持つ shop-2 が結果に含まれていることを確認
       assert.ok(result.some(s => s.id === 'shop-2'));
       // 配列の長さが維持されていることを確認
       assert.equal(result.length, 3);
+      // すべての要素が結果に含まれていることを確認
+      assert.ok(result.some(s => s.id === 'shop-1'));
+      assert.ok(result.some(s => s.id === 'shop-3'));
     });
   });
 

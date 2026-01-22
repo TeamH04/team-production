@@ -1,0 +1,6 @@
+BEGIN;
+
+ALTER TABLE public.users
+    DROP COLUMN IF EXISTS phone;
+
+COMMIT;
