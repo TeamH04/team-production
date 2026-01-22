@@ -366,9 +366,10 @@ func TestRouteCount(t *testing.T) {
 	// Report: 1
 	// Media: 1
 	// Admin: 6
+	// Station: 1
 	// Echo internal routes for admin group (echo_route_not_found): 2
-	// Total: 33
-	expectedCount := 33
+	// Total: 34
+	expectedCount := 34
 
 	if len(routes) != expectedCount {
 		t.Errorf("expected %d routes, got %d", expectedCount, len(routes))
