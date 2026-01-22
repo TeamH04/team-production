@@ -52,7 +52,7 @@ function ShopCardComponent({
           style={[styles.largeContainer, isBoosted && styles.largeContainerBoosted]}
         >
           {isBoosted && (
-            <View style={styles.boostBadge}>
+            <View style={styles.boostBadge} accessibilityLabel='注目の店舗'>
               <Ionicons name='flame' size={16} color={palette.boostRed} />
             </View>
           )}
@@ -64,7 +64,10 @@ function ShopCardComponent({
                 {shop.name}
               </Text>
               {featuredCategory && (
-                <View style={styles.categoryBadge}>
+                <View
+                  style={styles.categoryBadge}
+                  accessibilityLabel={`${featuredCategory}がおすすめ`}
+                >
                   <Text style={styles.categoryBadgeText}>{featuredCategory}</Text>
                   <Ionicons name='thumbs-up' size={12} color={palette.metaBadgeText} />
                 </View>
@@ -96,7 +99,10 @@ function ShopCardComponent({
         style={[styles.compactContainer, isBoosted && styles.compactContainerBoosted]}
       >
         {isBoosted && (
-          <View style={[styles.boostBadge, styles.boostBadgeCompact]}>
+          <View
+            style={[styles.boostBadge, styles.boostBadgeCompact]}
+            accessibilityLabel='注目の店舗'
+          >
             <Ionicons name='flame' size={12} color={palette.boostRed} />
           </View>
         )}

@@ -15,6 +15,12 @@ import {
 
 import { palette } from '../palette';
 
+// 括弧パターン定数（ReDoS対策済み - バックトラッキングを避ける）
+const BRACKET_CHARS = {
+  START: ['(', '（', '〔'] as const,
+  END: [')', '）', '〕'] as const,
+} as const;
+
 interface StationSelectProps {
   visible: boolean;
   onClose: () => void;
@@ -40,19 +46,17 @@ export function StationSelect({
 
   const lines = useMemo(() => {
     const lineSet = new Set<string>();
-    const startChars = ['(', '（', '〔'];
-    const endChars = [')', '）', '〕'];
 
     stations.forEach(s => {
-      // Extract line from brackets like (JR), [阪急], 〔ポートライナー〕
-      // Regex avoided for performance/security
-      for (let i = 0; i < startChars.length; i++) {
-        const start = s.name.indexOf(startChars[i]);
+      // 括弧内の路線名を抽出（例: (JR), （阪急）, 〔ポートライナー〕）
+      // 正規表現ではなくindexOf/substringを使用してReDoS脆弱性を回避
+      for (let i = 0; i < BRACKET_CHARS.START.length; i++) {
+        const start = s.name.indexOf(BRACKET_CHARS.START[i]);
         if (start !== -1) {
-          const end = s.name.indexOf(endChars[i], start);
+          const end = s.name.indexOf(BRACKET_CHARS.END[i], start);
           if (end !== -1) {
             lineSet.add(s.name.substring(start + 1, end));
-            break; // Found a match, move to next station
+            break;
           }
         }
       }
@@ -65,10 +69,11 @@ export function StationSelect({
       const matchesSearch =
         station.name.includes(searchQuery) || station.kana.includes(searchQuery);
       const matchesArea = selectedArea ? station.kind === selectedArea : true;
+      // 括弧パターンを使用して路線マッチングを行う（ReDoS対策済み）
       const matchesLine = selectedLine
-        ? station.name.includes(`(${selectedLine})`) ||
-          station.name.includes(`（${selectedLine}）`) ||
-          station.name.includes(`〔${selectedLine}〕`)
+        ? BRACKET_CHARS.START.some((start, i) =>
+            station.name.includes(`${start}${selectedLine}${BRACKET_CHARS.END[i]}`),
+          )
         : true;
       return matchesSearch && matchesArea && matchesLine;
     });

@@ -22,6 +22,7 @@ import { useShopNavigator } from '@/hooks/useShopNavigator';
 // ページネーション設定
 const PAGE_SIZE = 10;
 // ブースト対象の店舗数（一覧上部に優先的に表示する店舗数）
+// 現在は上位3店舗をブーストする仕様
 const BOOST_COUNT = 3;
 
 // おすすめカテゴリ（評価カテゴリと同じ5件をインデックスに応じて循環表示）
