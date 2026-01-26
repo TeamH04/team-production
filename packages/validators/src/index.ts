@@ -4,6 +4,7 @@ export {
   type SingleValueStep,
   type MultiValueStep,
   type BudgetRangeStep,
+  type AccessStep,
   type StepData,
   toStepData,
   validateStep,

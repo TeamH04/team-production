@@ -56,3 +56,53 @@ export const createLocalStorageMock = (options?: CreateLocalStorageMockOptions) 
     },
   };
 };
+
+/**
+ * テストランナー（Vitest/Jest）に応じたモック関数を提供するヘルパー
+ * node:test の mock.fn 互換のインターフェースを提供し、
+ * ブラウザ環境バンドル時に node:test をインポートしないようにする
+ */
+
+export const mock = {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  fn: <T extends (...args: any[]) => any>(implementation?: T) => {
+    // Vitest
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if (typeof globalThis !== 'undefined' && (globalThis as any).vi) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      return (globalThis as any).vi.fn(implementation);
+    }
+    // Jest
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if (typeof globalThis !== 'undefined' && (globalThis as any).jest) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      return (globalThis as any).jest.fn(implementation);
+    }
+
+    // Fallback implementation
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const calls: any[][] = [];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const mockFn = (...args: any[]) => {
+      calls.push(args);
+      return implementation?.(...args);
+    };
+    mockFn.mock = { calls };
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return mockFn as any;
+  },
+  restoreAll: () => {
+    // Vitest
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if (typeof globalThis !== 'undefined' && (globalThis as any).vi) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (globalThis as any).vi.restoreAllMocks();
+    }
+    // Jest
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    else if (typeof globalThis !== 'undefined' && (globalThis as any).jest) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (globalThis as any).jest.restoreAllMocks();
+    }
+  },
+};

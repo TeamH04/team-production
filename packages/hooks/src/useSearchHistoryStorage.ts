@@ -116,7 +116,7 @@ export function useSearchHistoryStorage({
         }
       } catch (error) {
         if (isDev) {
-          console.warn('Failed to load search history:', error);
+          console.error('Failed to load search history:', error);
         }
       } finally {
         if (isMounted) {
@@ -142,7 +142,7 @@ export function useSearchHistoryStorage({
         await storage.setItem(storageKey, JSON.stringify(searchHistory));
       } catch (error) {
         if (isDev) {
-          console.warn('Failed to save search history:', error);
+          console.error('Failed to save search history:', error);
         }
       }
     };

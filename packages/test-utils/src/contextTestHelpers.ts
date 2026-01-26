@@ -4,9 +4,8 @@
  * 各Context（Favorites, Reviews, Stores等）のテストで重複している
  * 認証モード別のセットアップパターンを共通化
  */
-import { mock } from 'node:test';
-
 import { TEST_DEFAULT_TOKEN } from './fixtures';
+import { mock } from './mocks';
 
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { AuthState } from '@team/core-utils';

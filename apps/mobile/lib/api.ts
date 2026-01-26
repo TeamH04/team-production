@@ -8,6 +8,7 @@ export type {
   ApiMenu,
   ApiRatingDetails,
   ApiReview,
+  ApiStation,
   ApiStore,
   ApiUser,
   ReviewSort,

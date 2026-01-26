@@ -11,7 +11,7 @@ export const palette = {
   // 基本のサーフェスとテキスト
   background,
   // プラットフォーム固有の背景
-  backgroundAndroid: '#E8E7E5',
+  backgroundAndroid: background,
   surface: background, // 可読性と一貫性のためにテーマの背景を使用
   primaryText: textOnBackground,
   secondaryText: withAlpha(textOnBackground, 0.7),
@@ -79,6 +79,15 @@ export const palette = {
   starInactive: withAlpha(textOnBackground, 0.2),
   starHighlight: warning.base,
 
+  // レビュー評価の感情カラー
+  // 注: 既存UIとの一貫性を保つため、従来の色マッピングを維持
+  // - 満足: 赤系(error.dark) - 強い肯定を表現
+  // - 普通: 緑系(secondary) - 中立を表現
+  // - 不満: 茶系(primary) - ブランドカラーで落ち着いた表現
+  ratingSatisfied: error.dark,
+  ratingNeutral: secondary,
+  ratingDissatisfied: primary,
+
   // お気に入り
   favoriteActive: error.base,
 
@@ -140,4 +149,12 @@ export const palette = {
   meshAccent2: '#7A8C79',
   meshAccent3: '#3D473C',
   meshHighlight: 'rgba(255, 255, 255, 0.08)',
+
+  // ブースト機能UI
+  boostRed: '#ce332d',
+  boostBorder: '#C94A45',
+  boostBadgeBg: 'rgba(255, 255, 255, 0.45)',
+  metaBadgeBg: '#FFF4D6',
+  metaBadgeBorder: '#F4B740',
+  metaBadgeText: '#B45309',
 };

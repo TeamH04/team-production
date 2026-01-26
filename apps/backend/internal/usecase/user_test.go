@@ -411,8 +411,16 @@ func (m *raceConditionMockUserRepo) Update(ctx context.Context, user entity.User
 	return nil
 }
 
+func (m *raceConditionMockUserRepo) UpdateInTx(ctx context.Context, tx interface{}, user entity.User) error {
+	return m.Update(ctx, user)
+}
+
 // UpdateRole is not used in this test scenario
 func (m *raceConditionMockUserRepo) UpdateRole(ctx context.Context, userID string, role string) error {
+	return nil
+}
+
+func (m *raceConditionMockUserRepo) UpdateRoleInTx(ctx context.Context, tx interface{}, userID string, role string) error {
 	return nil
 }
 
@@ -498,7 +506,15 @@ func (m *raceConditionUpdateFailMockUserRepo) Update(ctx context.Context, user e
 	return m.updateErr
 }
 
+func (m *raceConditionUpdateFailMockUserRepo) UpdateInTx(ctx context.Context, tx interface{}, user entity.User) error {
+	return m.Update(ctx, user)
+}
+
 func (m *raceConditionUpdateFailMockUserRepo) UpdateRole(ctx context.Context, userID string, role string) error {
+	return nil
+}
+
+func (m *raceConditionUpdateFailMockUserRepo) UpdateRoleInTx(ctx context.Context, tx interface{}, userID string, role string) error {
 	return nil
 }
 
@@ -883,6 +899,7 @@ func TestUpdateUser_AllFields(t *testing.T) {
 	uc := usecase.NewUserUseCase(userRepo, reviewRepo)
 
 	newName := "New Name"
+	newPhone := "090-1234-5678"
 	newIconURL := testIconURL
 	newIconFileID := "file-123"
 	newGender := testGenderMale
@@ -890,6 +907,7 @@ func TestUpdateUser_AllFields(t *testing.T) {
 
 	result, err := uc.UpdateUser(context.Background(), "user-1", input.UpdateUserInput{
 		Name:       &newName,
+		Phone:      &newPhone,
 		IconURL:    &newIconURL,
 		IconFileID: &newIconFileID,
 		Gender:     &newGender,
@@ -903,6 +921,9 @@ func TestUpdateUser_AllFields(t *testing.T) {
 	}
 	if result.IconURL == nil || *result.IconURL != newIconURL {
 		t.Errorf("expected IconURL %s, got %v", newIconURL, result.IconURL)
+	}
+	if result.Phone == nil || *result.Phone != newPhone {
+		t.Errorf("expected Phone %s, got %v", newPhone, result.Phone)
 	}
 	if result.IconFileID == nil || *result.IconFileID != newIconFileID {
 		t.Errorf("expected IconFileID %s, got %v", newIconFileID, result.IconFileID)
@@ -1007,6 +1028,31 @@ func TestUpdateUser_OnlyBirthday(t *testing.T) {
 	}
 	if result.Birthday == nil || !result.Birthday.Equal(newBirthday) {
 		t.Errorf("expected Birthday %v, got %v", newBirthday, result.Birthday)
+	}
+}
+
+func TestUpdateUser_EmptyPhoneClearsValue(t *testing.T) {
+	currentPhone := "090-1111-2222"
+	existingUser := entity.User{
+		UserID: "user-1",
+		Name:   "Test User",
+		Email:  "test@example.com",
+		Phone:  &currentPhone,
+	}
+	userRepo := &testutil.MockUserRepository{FindByIDResult: existingUser}
+	reviewRepo := &testutil.MockReviewRepository{}
+
+	uc := usecase.NewUserUseCase(userRepo, reviewRepo)
+
+	emptyPhone := ""
+	result, err := uc.UpdateUser(context.Background(), "user-1", input.UpdateUserInput{
+		Phone: &emptyPhone,
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if result.Phone != nil {
+		t.Errorf("expected Phone to be nil, got %v", result.Phone)
 	}
 }
 
@@ -1182,5 +1228,13 @@ func (m *raceConditionNoUpdateMockUserRepo) Update(ctx context.Context, user ent
 }
 
 func (m *raceConditionNoUpdateMockUserRepo) UpdateRole(ctx context.Context, userID string, role string) error {
+	return nil
+}
+
+func (m *raceConditionNoUpdateMockUserRepo) UpdateInTx(ctx context.Context, tx interface{}, user entity.User) error {
+	return m.Update(ctx, user)
+}
+
+func (m *raceConditionNoUpdateMockUserRepo) UpdateRoleInTx(ctx context.Context, tx interface{}, userID string, role string) error {
 	return nil
 }

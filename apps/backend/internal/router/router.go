@@ -1,6 +1,7 @@
 package router
 
 import (
+	"log/slog"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
@@ -18,11 +19,13 @@ type Dependencies struct {
 	UserUC          input.UserUseCase
 	StoreHandler    *handlers.StoreHandler
 	MenuHandler     *handlers.MenuHandler
+	StationHandler  *handlers.StationHandler
 	ReviewHandler   *handlers.ReviewHandler
 	UserHandler     *handlers.UserHandler
 	FavoriteHandler *handlers.FavoriteHandler
 	ReportHandler   *handlers.ReportHandler
 	AuthHandler     *handlers.AuthHandler
+	OwnerHandler    *handlers.OwnerHandler
 	AdminHandler    *handlers.AdminHandler
 	MediaHandler    *handlers.MediaHandler
 
@@ -42,7 +45,34 @@ func NewServer(deps *Dependencies) *echo.Echo {
 	}
 
 	// グローバルミドルウェア
-	e.Use(middleware.RequestLogger())
+	e.Use(middleware.RequestLoggerWithConfig(middleware.RequestLoggerConfig{
+		LogStatus:   true,
+		LogURI:      true,
+		LogMethod:   true,
+		LogError:    true,
+		LogLatency:  true,
+		HandleError: true,
+		LogValuesFunc: func(c echo.Context, v middleware.RequestLoggerValues) error {
+			// 400以上のステータスコード（エラー）のみログ出力
+			if v.Status >= 400 {
+				attrs := []any{
+					"method", v.Method,
+					"uri", v.URI,
+					"status", v.Status,
+					"latency", v.Latency,
+				}
+				if v.Error != nil {
+					attrs = append(attrs, "error", v.Error)
+				}
+				if v.Status >= 500 {
+					slog.Error("REQUEST", attrs...)
+				} else {
+					slog.Warn("REQUEST", attrs...)
+				}
+			}
+			return nil
+		},
+	}))
 	e.Use(middleware.Recover())
 	e.Use(middleware.CORS())
 
@@ -67,6 +97,9 @@ func setupAPIRoutes(e *echo.Echo, deps *Dependencies) {
 	// 店舗関連エンドポイント
 	setupStoreRoutes(api, deps)
 
+	// 駅関連エンドポイント
+	setupStationRoutes(api, deps)
+
 	// ユーザー関連エンドポイント
 	setupUserRoutes(api, deps)
 
@@ -90,6 +123,7 @@ func setupAuthRoutes(api *echo.Group, deps *Dependencies) {
 	auth.POST(AuthLoginPath, deps.AuthHandler.Login)
 	auth.GET(AuthMePath, deps.AuthHandler.GetMe, deps.AuthMiddleware.JWTAuth(deps.TokenVerifier))
 	auth.PUT(AuthRolePath, deps.AuthHandler.UpdateRole, deps.AuthMiddleware.JWTAuth(deps.TokenVerifier))
+	auth.POST(OwnerSignupCompletePath, deps.OwnerHandler.Complete, deps.AuthMiddleware.JWTAuth(deps.TokenVerifier))
 }
 
 // setupStoreRoutes は店舗関連のルーティングを設定します
@@ -111,6 +145,11 @@ func setupStoreRoutes(api *echo.Group, deps *Dependencies) {
 	// レビューいいねエンドポイント
 	api.POST(ReviewLikesPath, deps.ReviewHandler.LikeReview, deps.AuthMiddleware.JWTAuth(deps.TokenVerifier))
 	api.DELETE(ReviewLikesPath, deps.ReviewHandler.UnlikeReview, deps.AuthMiddleware.JWTAuth(deps.TokenVerifier))
+}
+
+// setupStationRoutes は駅関連のルーティングを設定します
+func setupStationRoutes(api *echo.Group, deps *Dependencies) {
+	api.GET(StationsPath, deps.StationHandler.ListStations)
 }
 
 // setupUserRoutes はユーザー関連のルーティングを設定します

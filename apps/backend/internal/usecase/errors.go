@@ -55,6 +55,9 @@ var (
 	// ErrUserAlreadyExists はメールアドレス重複時のエラー
 	ErrUserAlreadyExists = apperr.New(apperr.CodeConflict, errors.New("user already exists"))
 
+	// ErrAlreadyOwner は既にオーナーの場合のエラー
+	ErrAlreadyOwner = apperr.New(apperr.CodeConflict, errors.New("already owner"))
+
 	// ErrInvalidContentType は許可されていないContent-Typeの場合のエラー
 	ErrInvalidContentType = apperr.New(apperr.CodeInvalidInput, errors.New("invalid content type: only image files are allowed"))
 

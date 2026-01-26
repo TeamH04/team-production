@@ -83,6 +83,7 @@ export type ApiUser = {
   user_id: string;
   name: string;
   email: string;
+  phone?: string | null;
   icon_file_id?: string | null;
   icon_url?: string | null;
   provider: string;
@@ -131,6 +132,15 @@ export type SignedUploadFile = {
   path: string;
   token: string;
   content_type: string;
+};
+
+export type ApiStation = {
+  id: number;
+  name: string;
+  kana: string;
+  kind: string;
+  lat?: number | null;
+  lng?: number | null;
 };
 
 // =============================================================================
@@ -217,6 +227,7 @@ export type Review = {
   shopId: string;
   userId: string;
   rating: number;
+  ratingDetails?: RatingDetails;
   comment?: string;
   createdAt: string;
   menuItemIds?: string[];

@@ -82,6 +82,7 @@ func (dto signupDTO) toInput() input.AuthSignupInput {
 		Email:    dto.Email,
 		Password: dto.Password,
 		Name:     dto.Name,
+		Role:     "",
 	}
 }
 

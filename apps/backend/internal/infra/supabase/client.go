@@ -227,6 +227,65 @@ func decodeSupabaseErrorFromBody(status int, body []byte) error {
 	return supErr
 }
 
+// UpdateUser updates a Supabase Auth user via Admin API.
+func (c *Client) UpdateUser(ctx context.Context, userID string, input output.AuthUserUpdate) error {
+	if c.baseURL == "" || c.serviceKey == "" {
+		return errors.New("supabase admin api not configured")
+	}
+	if strings.TrimSpace(userID) == "" {
+		return errors.New("userID is required")
+	}
+
+	payload := map[string]any{}
+	if strings.TrimSpace(input.Password) != "" {
+		payload["password"] = input.Password
+	}
+	if len(input.AppMetadata) > 0 {
+		payload["app_metadata"] = input.AppMetadata
+	}
+	if len(input.UserMetadata) > 0 {
+		payload["user_metadata"] = input.UserMetadata
+	}
+	if len(payload) == 0 {
+		return nil
+	}
+
+	body, err := json.Marshal(payload)
+	if err != nil {
+		return err
+	}
+
+	req, err := http.NewRequestWithContext(
+		ctx,
+		http.MethodPut,
+		c.authEndpoint("/admin/users/"+userID),
+		bytes.NewReader(body),
+	)
+	if err != nil {
+		return err
+	}
+	req.Header.Set(infrahttp.HeaderContentType, infrahttp.MimeTypeJSON)
+	req.Header.Set(infrahttp.HeaderAPIKey, c.serviceKey)
+	req.Header.Set(infrahttp.HeaderAuthorization, security.BearerPrefix+c.serviceKey)
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	respBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return err
+	}
+
+	if infrahttp.IsHTTPError(resp.StatusCode) {
+		return decodeSupabaseErrorFromBody(resp.StatusCode, respBody)
+	}
+
+	return nil
+}
+
 // Signup creates a new user via Supabase Admin API.
 func (c *Client) Signup(ctx context.Context, input output.AuthSignupInput) (*output.AuthUser, error) {
 	if c.baseURL == "" || c.serviceKey == "" {
@@ -240,6 +299,11 @@ func (c *Client) Signup(ctx context.Context, input output.AuthSignupInput) (*out
 		"user_metadata": map[string]string{
 			"name": input.Name,
 		},
+	}
+	if strings.TrimSpace(input.Role) != "" {
+		payload["app_metadata"] = map[string]string{
+			"role": strings.TrimSpace(input.Role),
+		}
 	}
 
 	body, err := json.Marshal(payload)

@@ -6,6 +6,7 @@ import type {
   ApiMenu,
   ApiRatingDetails,
   ApiReview,
+  ApiStation,
   ApiStore,
   ApiUser,
   ReviewSort,
@@ -19,6 +20,7 @@ export type {
   ApiMenu,
   ApiRatingDetails,
   ApiReview,
+  ApiStation,
   ApiStore,
   ApiUser,
   ReviewSort,
@@ -167,6 +169,10 @@ export function createApiClient(options: ApiClientOptions) {
     return fetchWithAuth<ApiStore>('/stores');
   }
 
+  async function fetchStations() {
+    return request<ApiStation[]>('/stations');
+  }
+
   async function fetchStoreById(storeId: string) {
     return request<ApiStore>(`/stores/${encodePathSegment(storeId)}`, {
       headers: buildHeaders(),
@@ -204,6 +210,36 @@ export function createApiClient(options: ApiClientOptions) {
   async function fetchAuthMe(accessToken: string) {
     return request<ApiUser>('/auth/me', {
       headers: buildHeaders(accessToken),
+    });
+  }
+
+  async function completeOwnerSignup(
+    input: {
+      contact_name: string;
+      store_name: string;
+      opening_date: string;
+      phone?: string;
+    },
+    accessToken: string,
+  ) {
+    const trimmedPhone = input.phone?.trim();
+    const payload: {
+      contact_name: string;
+      store_name: string;
+      opening_date: string;
+      phone?: string;
+    } = {
+      contact_name: input.contact_name,
+      store_name: input.store_name,
+      opening_date: input.opening_date,
+    };
+    if (trimmedPhone) {
+      payload.phone = trimmedPhone;
+    }
+    return request<ApiUser>('/auth/owner/signup/complete', {
+      method: 'POST',
+      headers: buildHeaders(accessToken, undefined, true),
+      body: JSON.stringify(payload),
     });
   }
 
@@ -258,6 +294,7 @@ export function createApiClient(options: ApiClientOptions) {
   return {
     fetchStoreReviews,
     fetchStores,
+    fetchStations,
     fetchStoreById,
     fetchStoreMenus,
     fetchUserReviews,
@@ -265,6 +302,7 @@ export function createApiClient(options: ApiClientOptions) {
     addFavorite,
     removeFavorite,
     fetchAuthMe,
+    completeOwnerSignup,
     createReview,
     createReviewUploads,
     likeReview,
@@ -354,6 +392,7 @@ export type PlatformApiConfig = {
 export const API_FUNCTION_NAMES = [
   'fetchStoreReviews',
   'fetchStores',
+  'fetchStations',
   'fetchStoreById',
   'fetchStoreMenus',
   'fetchUserReviews',
@@ -361,6 +400,7 @@ export const API_FUNCTION_NAMES = [
   'addFavorite',
   'removeFavorite',
   'fetchAuthMe',
+  'completeOwnerSignup',
   'createReview',
   'createReviewUploads',
   'likeReview',

@@ -59,7 +59,14 @@ export {
 } from './sort';
 export { ENV_KEYS, createEnvConfig, type EnvConfig, type EnvKey } from './env';
 export { OAUTH_CONFIG } from './oauth';
-export { REVIEW_CONFIG } from './review';
+export {
+  REVIEW_CONFIG,
+  RATING_CATEGORIES,
+  getRatingDisplay,
+  type RatingCategoryKey,
+  type RatingSentiment,
+  type RatingDisplay,
+} from './review';
 export { ROLES, type RoleType } from './roles';
 
 /**

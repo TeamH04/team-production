@@ -1,14 +1,4 @@
-import {
-  BORDER_RADIUS,
-  ERROR_MESSAGES,
-  FONT_WEIGHT,
-  LAYOUT,
-  MOBILE_PAGE_SIZE,
-  ROUTES,
-  TIMING,
-} from '@team/constants';
-import { usePagination } from '@team/hooks';
-import { useShopFilter } from '@team/hooks';
+import { BORDER_RADIUS, ERROR_MESSAGES, LAYOUT, ROUTES, TIMING } from '@team/constants';
 import { palette } from '@team/mobile-ui';
 import { type Shop } from '@team/shop-core';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -29,13 +19,22 @@ import { fonts } from '@/constants/typography';
 import { useStores } from '@/features/stores/StoresContext';
 import { useShopNavigator } from '@/hooks/useShopNavigator';
 
+// ページネーション設定
+const PAGE_SIZE = 10;
+// ブースト対象の店舗数（一覧上部に優先的に表示する店舗数）
+// 現在は上位3店舗をブーストする仕様
+const BOOST_COUNT = 3;
+
+// おすすめカテゴリ（評価カテゴリと同じ5件をインデックスに応じて循環表示）
+const FEATURED_CATEGORIES = ['味', '接客', '雰囲気', '提供速度', '清潔感'];
+
 const KEY_EXTRACTOR = (item: Shop) => item.id;
 
 type ShopResultsListProps = {
   emptyState: ReactElement;
   filteredShops: Shop[];
   renderListHeader: ReactElement;
-  renderShop: ({ item }: { item: Shop }) => ReactElement;
+  renderShop: ({ item, index }: { item: Shop; index: number }) => ReactElement;
 };
 
 function ShopResultsList({
@@ -44,16 +43,10 @@ function ShopResultsList({
   renderListHeader,
   renderShop,
 }: ShopResultsListProps) {
+  const [visibleCount, setVisibleCount] = useState(() => Math.min(PAGE_SIZE, filteredShops.length));
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const loadMoreTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const listRef = useAnimatedRef<FlatList<Shop>>();
-
-  const {
-    visibleItems: visibleShops,
-    hasMore: hasMoreResults,
-    loadMore,
-    reset: resetPagination,
-  } = usePagination(filteredShops, { pageSize: MOBILE_PAGE_SIZE });
 
   useEffect(() => {
     if (loadMoreTimeout.current) {
@@ -63,11 +56,11 @@ function ShopResultsList({
 
     const resetId = setTimeout(() => {
       setIsLoadingMore(false);
-      resetPagination();
+      setVisibleCount(Math.min(PAGE_SIZE, filteredShops.length));
     }, 0);
 
     return () => clearTimeout(resetId);
-  }, [filteredShops, resetPagination]);
+  }, [filteredShops]);
 
   useEffect(() => {
     return () => {
@@ -78,17 +71,23 @@ function ShopResultsList({
     };
   }, []);
 
+  const visibleShops = useMemo(() => {
+    return filteredShops.slice(0, visibleCount);
+  }, [filteredShops, visibleCount]);
+
+  const hasMoreResults = visibleCount < filteredShops.length;
+
   const handleLoadMore = useCallback(() => {
     if (isLoadingMore || !hasMoreResults) return;
 
     setIsLoadingMore(true);
 
     loadMoreTimeout.current = setTimeout(() => {
-      loadMore();
+      setVisibleCount(prev => Math.min(prev + PAGE_SIZE, filteredShops.length));
       setIsLoadingMore(false);
       loadMoreTimeout.current = null;
     }, TIMING.LOAD_MORE_DELAY);
-  }, [hasMoreResults, isLoadingMore, loadMore]);
+  }, [filteredShops.length, hasMoreResults, isLoadingMore]);
 
   return (
     <Animated.FlatList
@@ -126,17 +125,47 @@ export default function HomeScreen() {
 
   const listKey = `${activeTag ?? 'all'}-${activeCategory ?? 'all'}`;
 
-  const { filteredShops } = useShopFilter({
-    shops: stores,
-    searchText: '',
-    categories: activeCategory ? [activeCategory] : [],
-    tags: activeTag ? [activeTag] : [],
-    sortType: 'default',
-  });
+  // 手動フィルタリング
+  const filteredShops = useMemo(() => {
+    if (!activeTag && !activeCategory) {
+      return stores;
+    }
+
+    return stores.filter(shop => {
+      const matchesTag = activeTag ? shop.tags?.includes(activeTag) : true;
+      const matchesCategory = activeCategory ? shop.category === activeCategory : true;
+
+      return matchesTag && matchesCategory;
+    });
+  }, [activeCategory, activeTag, stores]);
+
+  // ブースト対象のショップIDを計算（スコアリングで上位N件を選出）
+  const boostedShopIds = useMemo(() => {
+    const scored = filteredShops.map(shop => {
+      // TODO: 実際のスコアリングロジックに置き換える
+      const score = shop.id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+      return { id: shop.id, score };
+    });
+
+    return new Set(
+      scored
+        .sort((a, b) => b.score - a.score)
+        .slice(0, BOOST_COUNT)
+        .map(entry => entry.id),
+    );
+  }, [filteredShops]);
 
   const renderShop = useCallback(
-    ({ item }: { item: Shop }) => <ShopCard shop={item} onPress={navigateToShop} variant='large' />,
-    [navigateToShop],
+    ({ item, index }: { item: Shop; index: number }) => (
+      <ShopCard
+        shop={item}
+        onPress={navigateToShop}
+        variant='large'
+        isBoosted={boostedShopIds.has(item.id)}
+        featuredCategory={FEATURED_CATEGORIES[index % FEATURED_CATEGORIES.length]}
+      />
+    ),
+    [boostedShopIds, navigateToShop],
   );
 
   const renderListHeader = useMemo(() => {
@@ -199,8 +228,8 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   clearFilterText: {
     color: palette.accent,
+    fontFamily: fonts.medium,
     fontSize: 14,
-    fontWeight: FONT_WEIGHT.BOLD,
   },
 
   content: {
@@ -240,8 +269,8 @@ const styles = StyleSheet.create({
 
   filterText: {
     color: palette.primaryText,
+    fontFamily: fonts.medium,
     fontSize: 14,
-    fontWeight: FONT_WEIGHT.SEMIBOLD,
   },
 
   footerLoader: {

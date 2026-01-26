@@ -16,6 +16,7 @@ const COLORS = {
   BADGE_BG: palette.menuBadgeBg,
   BADGE_TEXT: palette.menuBadgeText,
   BLACK: palette.black,
+  BACKGROUND: palette.background,
   BORDER_LIGHT: palette.menuBorderLight,
   BORDER_MEDIUM: palette.menuBorderMedium,
   BORDER_SOFT: palette.menuBorderSoft,
@@ -371,7 +372,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   listContent: {
-    backgroundColor: COLORS.WHITE,
+    backgroundColor: COLORS.BACKGROUND,
     flexGrow: 1,
     paddingBottom: 40,
     paddingHorizontal: SPACING.MD,
@@ -471,7 +472,7 @@ const styles = StyleSheet.create({
     fontSize: 10,
   },
   screen: {
-    backgroundColor: COLORS.WHITE,
+    backgroundColor: COLORS.BACKGROUND,
     flex: 1,
   },
   sectionHeader: {

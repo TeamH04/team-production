@@ -16,6 +16,7 @@ type testUser struct {
 	UserID     string     `gorm:"column:user_id;primaryKey"`
 	Name       string     `gorm:"column:name"`
 	Email      string     `gorm:"column:email"`
+	Phone      *string    `gorm:"column:phone"`
 	IconURL    *string    `gorm:"column:icon_url"`
 	IconFileID *string    `gorm:"column:icon_file_id"`
 	Provider   string     `gorm:"column:provider"`

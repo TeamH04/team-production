@@ -75,6 +75,7 @@ func (h *UserHandler) GetUserReviews(c echo.Context) error {
 
 type updateUserDTO struct {
 	Name       *string    `json:"name"`
+	Phone      *string    `json:"phone"`
 	IconURL    *string    `json:"icon_url"`
 	IconFileID *string    `json:"icon_file_id"`
 	Gender     *string    `json:"gender"`
@@ -84,6 +85,7 @@ type updateUserDTO struct {
 func (dto updateUserDTO) toInput() input.UpdateUserInput {
 	return input.UpdateUserInput{
 		Name:       dto.Name,
+		Phone:      dto.Phone,
 		IconURL:    dto.IconURL,
 		IconFileID: dto.IconFileID,
 		Gender:     dto.Gender,
