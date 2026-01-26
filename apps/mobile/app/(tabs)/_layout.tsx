@@ -17,8 +17,6 @@ const TAB_INACTIVE_TINT = withAlpha(palette.textOnAccent, 0.6);
 
 type TabIconProps = {
   color: string;
-  focused: boolean;
-  size: number;
 };
 
 type IconName = Parameters<typeof IconSymbol>[0]['name'];
@@ -26,11 +24,7 @@ type IconName = Parameters<typeof IconSymbol>[0]['name'];
 const renderTabIcon =
   (name: IconName) =>
   ({ color }: TabIconProps) => {
-    return (
-      <View>
-        <IconSymbol size={TAB_ICON_SIZE} name={name} color={color} />
-      </View>
-    );
+    return <IconSymbol size={TAB_ICON_SIZE} name={name} color={color} />;
   };
 
 export default function TabLayout() {
