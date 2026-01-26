@@ -28,3 +28,4 @@ export {
   type SupabaseConfig,
 } from './supabase';
 export { toggleArrayItem, addToArray, removeFromArray } from './arrayUtils';
+export { devLog, devWarn, devError } from './logger';

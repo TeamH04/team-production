@@ -98,6 +98,13 @@ type ReviewsContextValue = {
 const [ReviewsContextProvider, useReviews] = createSafeContext<ReviewsContextValue>('Reviews');
 export { useReviews };
 
+// reviewsByShop から reviewId で検索するヘルパー
+const findReviewById = (reviewsByShop: ReviewsState, reviewId: string): Review | undefined => {
+  return Object.values(reviewsByShop)
+    .flat()
+    .find(r => r.id === reviewId);
+};
+
 export function ReviewsProvider({ children }: { children: React.ReactNode }) {
   const [reviewsByShop, setReviewsByShop] = useSafeState<ReviewsState>({});
   const [userReviews, setUserReviews] = useSafeState<Review[]>([]);
@@ -280,20 +287,12 @@ export function ReviewsProvider({ children }: { children: React.ReactNode }) {
   );
 
   const isReviewLiked = useCallback(
-    (reviewId: string) => {
-      const all = Object.values(reviewsByShop).flat();
-      const review = all.find(item => item.id === reviewId);
-      return review?.likedByMe ?? false;
-    },
+    (reviewId: string) => findReviewById(reviewsByShop, reviewId)?.likedByMe ?? false,
     [reviewsByShop],
   );
 
   const getReviewLikesCount = useCallback(
-    (reviewId: string) => {
-      const all = Object.values(reviewsByShop).flat();
-      const review = all.find(item => item.id === reviewId);
-      return review?.likesCount ?? 0;
-    },
+    (reviewId: string) => findReviewById(reviewsByShop, reviewId)?.likesCount ?? 0,
     [reviewsByShop],
   );
 
@@ -305,9 +304,15 @@ export function ReviewsProvider({ children }: { children: React.ReactNode }) {
   const loadUserReviews = useCallback(async () => {
     const authResult = await ensureAuthenticated(dependencyInjector.get().resolveAuth);
     if (authResult.skipped) return;
-    const token = authResult.token!;
+    if (!authResult.token) {
+      throw new Error('Token is required');
+    }
+    const token = authResult.token;
     const user = await dependencyInjector.get().getCurrentUser();
-    const reviews = await dependencyInjector.get().fetchUserReviews(user!.id, token);
+    if (!user) {
+      throw new Error('User not found');
+    }
+    const reviews = await dependencyInjector.get().fetchUserReviews(user.id, token);
     const mapped = reviews.map(mapApiReview);
     mapped.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
     setUserReviews(mapped);

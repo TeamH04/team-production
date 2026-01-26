@@ -5,7 +5,7 @@ import { getReviewFileUrl } from '@team/hooks';
 import { palette, type ReviewCardProps } from '@team/mobile-ui';
 import { Image } from 'expo-image';
 import { memo } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
 
 /**
  * レビューカードの共通コンポーネント
@@ -27,6 +27,10 @@ function ReviewCardComponent({
   const likes = likeCount ?? review.likesCount;
 
   const formattedDate = formatDateJa(review.createdAt);
+
+  // NOTE: @team/mobile-ui の ViewStyle と apps/mobile の ViewStyle の型定義が
+  // 異なるパッケージインスタンスを参照しているため、明示的にキャストする
+  const containerStyle = style as StyleProp<ViewStyle>;
 
   const content = (
     <View style={styles.card}>
@@ -106,13 +110,13 @@ function ReviewCardComponent({
 
   if (onPress) {
     return (
-      <Pressable onPress={onPress} style={[styles.shadow, style]}>
+      <Pressable onPress={onPress} style={[styles.shadow, containerStyle]}>
         {content}
       </Pressable>
     );
   }
 
-  return <View style={[styles.shadow, style]}>{content}</View>;
+  return <View style={[styles.shadow, containerStyle]}>{content}</View>;
 }
 
 export const ReviewCard = memo(ReviewCardComponent);

@@ -24,6 +24,7 @@ type SetupOptions = {
   shouldFail?: boolean;
   uploadError?: boolean;
   uploadFileCount?: number;
+  likeReviewFail?: boolean;
 };
 
 const setupDependencies = (options: SetupOptions = {}) => {
@@ -34,6 +35,7 @@ const setupDependencies = (options: SetupOptions = {}) => {
     shouldFail = false,
     uploadError = false,
     uploadFileCount = 2,
+    likeReviewFail = false,
   } = options;
 
   const resolveAuth = mock.fn(async (): Promise<AuthState> => {
@@ -62,7 +64,10 @@ const setupDependencies = (options: SetupOptions = {}) => {
     content_type: 'image/jpeg',
   }));
   const createReviewUploads = mock.fn(async () => ({ files: uploadFiles }));
-  const likeReview = mock.fn(async () => undefined);
+  const likeReview = mock.fn(async () => {
+    if (likeReviewFail) throw new Error('API Error');
+    return undefined;
+  });
   const unlikeReview = mock.fn(async () => undefined);
   const deleteReviewApi = mock.fn(async () => undefined);
 
@@ -404,10 +409,7 @@ describe('ReviewsContext', () => {
           likes_count: 5,
         }),
       ];
-      const { likeReview } = setupDependencies({ reviews: mockReviews });
-      likeReview.mock.mockImplementation(async () => {
-        throw new Error('API Error');
-      });
+      setupDependencies({ reviews: mockReviews, likeReviewFail: true });
       const harness: ContextHarness<ReturnType<typeof useReviews>> = createContextHarness(
         useReviews,
         ReviewsProvider,

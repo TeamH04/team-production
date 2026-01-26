@@ -1,5 +1,6 @@
 export const fontFamilies = {
   sans: 'KiwiMaruRegular',
+  regular: 'KiwiMaruRegular',
   medium: 'KiwiMaruMedium',
 } as const;
 

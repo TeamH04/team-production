@@ -512,6 +512,7 @@ const styles = StyleSheet.create({
   },
   removeBtn: {
     color: palette.secondaryText,
+    fontFamily: fonts.regular,
     fontSize: 18,
     padding: SPACING.SM,
   },

@@ -1,4 +1,5 @@
-import { BORDER_RADIUS, FONT_SIZE, FONT_WEIGHT, SPACING } from '@team/constants';
+import { BORDER_RADIUS, FONT_SIZE, SPACING } from '@team/constants';
+import { fontFamilies } from '@team/theme';
 import { Pressable, StyleSheet, Text, type StyleProp, type ViewStyle } from 'react-native';
 
 import { palette } from '../palette';
@@ -63,8 +64,8 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
   },
   text: {
+    fontFamily: fontFamilies.medium,
     fontSize: FONT_SIZE.MD,
-    fontWeight: FONT_WEIGHT.SEMIBOLD,
   },
   textActive: {
     color: palette.white,

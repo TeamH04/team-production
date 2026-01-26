@@ -26,6 +26,7 @@ func buildRouterDependencies(cfg *config.Config, db *gorm.DB) *router.Dependenci
 	favoriteRepo := repository.NewFavoriteRepository(db)
 	reportRepo := repository.NewReportRepository(db)
 	fileRepo := repository.NewFileRepository(db)
+	stationRepo := repository.NewStationRepository(db)
 	transaction := repository.NewGormTransaction(db)
 
 	// External services
@@ -44,6 +45,7 @@ func buildRouterDependencies(cfg *config.Config, db *gorm.DB) *router.Dependenci
 	userUseCase := usecase.NewUserUseCase(userRepo, reviewRepo)
 	favoriteUseCase := usecase.NewFavoriteUseCase(favoriteRepo, userRepo, storeRepo)
 	reportUseCase := usecase.NewReportUseCase(reportRepo, userRepo)
+	stationUseCase := usecase.NewStationUseCase(stationRepo)
 	adminUseCase := usecase.NewAdminUseCase(storeRepo)
 	authUseCase := usecase.NewAuthUseCase(supabaseClient, userRepo)
 	ownerUseCase := usecase.NewOwnerUseCase(
@@ -59,6 +61,7 @@ func buildRouterDependencies(cfg *config.Config, db *gorm.DB) *router.Dependenci
 	userHandler := handlers.NewUserHandler(userUseCase, supabaseClient, cfg.SupabaseStorageBucket)
 	favoriteHandler := handlers.NewFavoriteHandler(favoriteUseCase)
 	reportHandler := handlers.NewReportHandler(reportUseCase)
+	stationHandler := handlers.NewStationHandler(stationUseCase)
 	authHandler := handlers.NewAuthHandler(authUseCase, userUseCase)
 	ownerHandler := handlers.NewOwnerHandler(ownerUseCase)
 	adminHandler := handlers.NewAdminHandler(adminUseCase, reportUseCase, userUseCase)
@@ -70,17 +73,18 @@ func buildRouterDependencies(cfg *config.Config, db *gorm.DB) *router.Dependenci
 	log.Println("Dependencies setup completed!")
 
 	return &router.Dependencies{
-		UserUC:             userUseCase,
-		StoreHandler:       storeHandler,
-		MenuHandler:        menuHandler,
-		ReviewHandler:      reviewHandler,
-		UserHandler:        userHandler,
-		FavoriteHandler:    favoriteHandler,
-		ReportHandler:      reportHandler,
-		AuthHandler:        authHandler,
-		OwnerHandler:       ownerHandler,
-		AdminHandler:       adminHandler,
-		TokenVerifier:      supabaseClient,
-		MediaHandler:       mediaHandler,
+		UserUC:          userUseCase,
+		StoreHandler:    storeHandler,
+		MenuHandler:     menuHandler,
+		StationHandler:  stationHandler,
+		ReviewHandler:   reviewHandler,
+		UserHandler:     userHandler,
+		FavoriteHandler: favoriteHandler,
+		ReportHandler:   reportHandler,
+		AuthHandler:     authHandler,
+		OwnerHandler:    ownerHandler,
+		AdminHandler:    adminHandler,
+		TokenVerifier:   supabaseClient,
+		MediaHandler:    mediaHandler,
 	}
 }
