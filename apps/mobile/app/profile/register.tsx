@@ -1,3 +1,4 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { BORDER_RADIUS, ROUTES } from '@team/constants';
 import { GenreChipSelector, palette } from '@team/mobile-ui';
 import { Stack, useRouter } from 'expo-router';
@@ -15,7 +16,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { fonts } from '@/constants/typography';
-import { useUser } from '@/features/user/UserContext';
+import { PROFILE_REGISTERED_KEY, useUser } from '@/features/user/UserContext';
 
 export default function RegisterProfileScreen() {
   const router = useRouter();
@@ -29,12 +30,13 @@ export default function RegisterProfileScreen() {
     return selectedGenres.length > 0;
   }, [selectedGenres]);
 
-  const onSave = () => {
+  const onSave = async () => {
     if (!user) {
       Alert.alert('ユーザー情報が見つかりません', 'ログインし直してください');
       return;
     }
 
+    await AsyncStorage.setItem(PROFILE_REGISTERED_KEY, 'true');
     setUser({
       ...user,
       name: name,

@@ -165,34 +165,6 @@ jobs:
             echo "has_results=false" >> $GITHUB_OUTPUT
           fi
 
-      - name: Comment benchmark results
-        if: github.event_name == 'pull_request' && steps.benchmark.outputs.has_results == 'true'
-        uses: actions/github-script@v8
-        with:
-          script: |
-            const fs = require('fs');
-            const benchmarkPath = './apps/backend/benchmark_result.txt';
-
-            if (fs.existsSync(benchmarkPath)) {
-              const benchmark = fs.readFileSync(benchmarkPath, 'utf8');
-              const comment = [
-                '## Benchmark Results',
-                '',
-                '```',
-                benchmark,
-                '```',
-                '',
-                '> Benchmark comparison with base branch coming soon!'
-              ].join('\n');
-
-              github.rest.issues.createComment({
-                issue_number: context.issue.number,
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                body: comment
-              });
-            }
-
   # ----- Backend Build -----
   backend-build:
     name: Backend Build

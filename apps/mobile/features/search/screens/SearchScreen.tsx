@@ -1,4 +1,5 @@
 /* global __DEV__ */
+declare const __DEV__: boolean;
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   BORDER_RADIUS,
