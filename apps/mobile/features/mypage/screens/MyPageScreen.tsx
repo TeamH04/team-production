@@ -9,16 +9,17 @@ import {
   SHADOW_STYLES,
 } from '@team/constants';
 import { formatDateJa } from '@team/core-utils';
+import { useAuthErrorHandler } from '@team/hooks';
 import { palette } from '@team/mobile-ui';
-import { SHOPS } from '@team/shop-core';
 import { useRouter } from 'expo-router';
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Alert, Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { EmptyState } from '@/components/EmptyState';
 import { HeaderWithBack } from '@/components/HeaderWithBack';
 import { fonts } from '@/constants/typography';
 import { useReviews } from '@/features/reviews/ReviewsContext';
+import { useStores } from '@/features/stores/StoresContext';
 import { useUser } from '@/features/user/UserContext';
 import { useAuthMe } from '@/hooks/useAuthMe';
 import { getSupabase } from '@/lib/auth';
@@ -36,18 +37,20 @@ export default function MyPageScreen({
 }) {
   // 画面遷移用
   const router = useRouter();
+  const { isAuthError, getErrorMessage } = useAuthErrorHandler();
 
-  // 店舗ごとのレビュー一覧を取得
-  const { reviewsByShop, getLikedReviews } = useReviews();
+  // ユーザーのレビュー一覧を取得
+  const { userReviews, loadUserReviews } = useReviews();
+  const { loading: storesLoading, getStoreById } = useStores();
 
   // ユーザー情報
   const { user } = useUser();
 
-  // 全店舗のレビューを一つの配列にまとめ、新しい順で最大20件を返す
+  // ユーザーのレビューを新しい順で最大20件に絞る
   const reviews = useMemo(() => {
-    const all = Object.values(reviewsByShop).flat();
-    return all.sort((a, b) => b.createdAt.localeCompare(a.createdAt)).slice(0, 20);
-  }, [reviewsByShop]);
+    const sorted = [...userReviews].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+    return sorted.slice(0, 20);
+  }, [userReviews]);
 
   // 表示画面の種類を定義（Union 型で管理）
   type ScreenType = 'main' | 'reviewHistory' | 'settings' | 'notifications' | 'likedReviews';
@@ -61,6 +64,9 @@ export default function MyPageScreen({
 
   // 現在表示している画面を管理（Union 型で一元管理）
   const [currentScreen, setCurrentScreen] = useState<ScreenType>('main');
+  const [reviewLoading, setReviewLoading] = useState(false);
+  const [reviewAuthRequired, setReviewAuthRequired] = useState(false);
+  const [reviewError, setReviewError] = useState<string | null>(null);
   // authUser: DB側の最新プロフィール（Supabase連携含む）を取得して表示に反映する
   // authUserLoading: 上記の取得状態をUIに反映する（読み込み中表示など）
   const { data: authUser, loading: authUserLoading } = useAuthMe({
@@ -146,6 +152,34 @@ export default function MyPageScreen({
     router.push(ROUTES.PROFILE_EDIT);
   }, [router, user]);
 
+  const reviewRequestIdRef = useRef(0);
+
+  const loadUserReviewsForScreen = useCallback(async () => {
+    if (currentScreen !== 'reviewHistory' && currentScreen !== 'likedReviews') return;
+    const requestId = ++reviewRequestIdRef.current;
+    setReviewLoading(true);
+    setReviewAuthRequired(false);
+    setReviewError(null);
+    try {
+      await loadUserReviews();
+    } catch (err) {
+      if (isAuthError(err)) {
+        setReviewAuthRequired(true);
+        return;
+      }
+      setReviewError(getErrorMessage(err));
+    } finally {
+      if (reviewRequestIdRef.current === requestId) {
+        setReviewLoading(false);
+      }
+    }
+  }, [currentScreen, getErrorMessage, isAuthError, loadUserReviews]);
+
+  useEffect(() => {
+    const run = loadUserReviewsForScreen;
+    void run();
+  }, [loadUserReviewsForScreen]);
+
   const displayName = authUser?.name ?? user?.name ?? '未設定';
   const displayEmail = authUser?.email ?? user?.email ?? '未設定';
   const displayGender = authUser?.gender ?? user?.gender ?? null;
@@ -164,10 +198,17 @@ export default function MyPageScreen({
     return formatProviderLabel(displayProvider);
   }, [displayProvider]);
 
+  const likedReviews = useMemo(() => {
+    return [...userReviews]
+      .filter(review => review.likedByMe)
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  }, [userReviews]);
+
+  const reviewsLoading = reviewLoading || storesLoading;
+
   // 画面の描画（switch 文で管理）
   switch (currentScreen) {
     case 'likedReviews': {
-      const likedReviews = getLikedReviews();
       return (
         <ScrollView
           ref={likedReviewsScrollRef}
@@ -180,12 +221,18 @@ export default function MyPageScreen({
           {/* いいねしたレビューヘッダー */}
           <HeaderWithBack title='いいねしたレビュー' onBack={handleBackPress} />
 
-          {likedReviews.length === 0 ? (
+          {reviewAuthRequired ? (
+            <EmptyState message='いいねしたレビューを見るにはログインが必要です' />
+          ) : reviewError ? (
+            <EmptyState message={reviewError} />
+          ) : reviewsLoading ? (
+            <EmptyState message='いいねしたレビューを読み込み中...' loading />
+          ) : likedReviews.length === 0 ? (
             <EmptyState message='いいねしたレビューがありません' />
           ) : (
             <View>
               {likedReviews.map(review => {
-                const shop = SHOPS.find(s => s.id === review.shopId);
+                const shop = getStoreById(review.shopId);
                 return (
                   <Pressable
                     key={review.id}
@@ -241,14 +288,22 @@ export default function MyPageScreen({
           showsVerticalScrollIndicator={false}
         >
           {/* レビュー履歴ヘッダー */}
-          <HeaderWithBack title='レビュー履歴' onBack={handleBackPress} />
+          <View style={styles.sectionHeader}>
+            <HeaderWithBack title='レビュー履歴' onBack={handleBackPress} />
+          </View>
 
-          {reviews.length === 0 ? (
+          {reviewAuthRequired ? (
+            <EmptyState message='レビュー履歴を見るにはログインが必要です' />
+          ) : reviewError ? (
+            <EmptyState message={reviewError} />
+          ) : reviewsLoading ? (
+            <EmptyState message='レビューを読み込み中...' loading />
+          ) : reviews.length === 0 ? (
             <EmptyState message='まだレビューがありません' />
           ) : (
             <View>
               {reviews.map(review => {
-                const shop = SHOPS.find(s => s.id === review.shopId);
+                const shop = getStoreById(review.shopId);
                 return (
                   <Pressable
                     key={review.id}
@@ -633,6 +688,9 @@ const styles = StyleSheet.create({
   },
   reviewHeader: {
     marginBottom: 4,
+  },
+  sectionHeader: {
+    marginBottom: 16,
   },
   reviewImage: {
     borderRadius: 8,
