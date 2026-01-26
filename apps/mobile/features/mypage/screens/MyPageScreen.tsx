@@ -689,9 +689,6 @@ const styles = StyleSheet.create({
   reviewHeader: {
     marginBottom: 4,
   },
-  sectionHeader: {
-    marginBottom: 16,
-  },
   reviewImage: {
     borderRadius: 8,
     height: 100,
@@ -714,6 +711,9 @@ const styles = StyleSheet.create({
     elevation: 3,
     marginBottom: 16,
     padding: 16,
+  },
+  sectionHeader: {
+    marginBottom: 16,
   },
   sectionHeaderRow: {
     alignItems: 'center',
