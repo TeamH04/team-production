@@ -312,19 +312,22 @@ export default function SearchScreen() {
         <View>
           <Text style={styles.resultsTitle}>{`検索結果：${searchResults.length}件`}</Text>
 
+          {baseFilteredShops.length > 0 && (
+            <View style={styles.visitedFilterRow}>
+              {VISITED_FILTER_OPTIONS.map(option => (
+                <ToggleButton
+                  key={option.value}
+                  label={option.label}
+                  isActive={filterVisited === option.value}
+                  onPress={() => setFilterVisited(option.value)}
+                  size='small'
+                />
+              ))}
+            </View>
+          )}
+
           {searchResults.length > 0 ? (
             <View>
-              <View style={styles.visitedFilterRow}>
-                {VISITED_FILTER_OPTIONS.map(option => (
-                  <ToggleButton
-                    key={option.value}
-                    label={option.label}
-                    isActive={filterVisited === option.value}
-                    onPress={() => setFilterVisited(option.value)}
-                    size='small'
-                  />
-                ))}
-              </View>
               <View style={styles.sortRow}>
                 <ScrollView
                   horizontal

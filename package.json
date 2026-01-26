@@ -57,7 +57,7 @@
       "react-dom": "19.2.3",
       "@types/react": "~19.2.9",
       "@types/react-dom": "~19.2.3",
-      "@supabase/supabase-js": "^2.91.1"
+      "@supabase/supabase-js": "2.91.1"
     },
     "onlyBuiltDependencies": [
       "esbuild",

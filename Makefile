@@ -45,7 +45,9 @@ install: ## Install dependencies + setup Git hooks
 	@if [ ! -f .git/hooks/pre-commit ]; then \
 		printf '%s\n' '#!/bin/sh' \
 			'printf "\\033[34m▶ Running pre-commit checks...\\033[0m\\n"' \
-			'pnpm run format:check --log-level=warn && pnpm run lint && pnpm turbo run typecheck' \
+			'pnpm run format:check --log-level=warn || exit 1' \
+			'pnpm run lint || exit 1' \
+			'pnpm turbo run typecheck || exit 1' \
 			'printf "\\033[32m✓ All checks passed\\033[0m\\n"' \
 			> .git/hooks/pre-commit; \
 		chmod +x .git/hooks/pre-commit; \

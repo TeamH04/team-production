@@ -9,7 +9,7 @@ overrides:
   react-dom: 19.2.3
   '@types/react': ~19.2.9
   '@types/react-dom': ~19.2.3
-  '@supabase/supabase-js': ^2.91.1
+  '@supabase/supabase-js': 2.91.1
 
 importers:
 
@@ -94,7 +94,7 @@ importers:
         specifier: ^7.1.28
         version: 7.1.28(react-native@0.83.1(@babel/core@7.28.6)(@types/react@19.2.9)(react@19.2.3))(react@19.2.3)
       '@supabase/supabase-js':
-        specifier: ^2.91.1
+        specifier: 2.91.1
         version: 2.91.1
       '@team/api':
         specifier: workspace:*
@@ -375,7 +375,7 @@ importers:
   packages/auth-client:
     dependencies:
       '@supabase/supabase-js':
-        specifier: ^2.91.1
+        specifier: 2.91.1
         version: 2.91.1
       '@team/constants':
         specifier: workspace:*
@@ -397,7 +397,7 @@ importers:
   packages/core-utils:
     dependencies:
       '@supabase/supabase-js':
-        specifier: ^2.91.1
+        specifier: 2.91.1
         version: 2.91.1
       '@team/constants':
         specifier: workspace:*
