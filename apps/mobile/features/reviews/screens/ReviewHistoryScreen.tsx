@@ -1,8 +1,7 @@
 import { BORDER_RADIUS, formatRating, LAYOUT, ROUTES, SHADOW_STYLES } from '@team/constants';
 import { formatDateJa } from '@team/core-utils';
 import { useAuthErrorHandler } from '@team/hooks';
-import { TabContent } from '@team/mobile-ui';
-import { palette } from '@team/mobile-ui';
+import { palette, TabContent } from '@team/mobile-ui';
 import { resolveMenuName, type Shop } from '@team/shop-core';
 import { Image } from 'expo-image';
 import { useFocusEffect, useRouter } from 'expo-router';
@@ -327,5 +326,6 @@ const styles = StyleSheet.create({
     fontFamily: fonts.medium,
     fontSize: 20,
     marginBottom: 12,
+    textAlign: 'center',
   },
 });

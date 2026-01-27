@@ -25,20 +25,20 @@ const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
     backgroundColor: palette.secondarySurface,
-    borderRadius: SPACING.XL,
+    borderRadius: SPACING.LG,
     flexDirection: 'row',
-    paddingHorizontal: 14,
-    paddingVertical: SPACING.SM,
+    paddingHorizontal: 10,
+    paddingVertical: SPACING.XS,
   },
   icon: {
     color: palette.primary,
-    fontSize: FONT_SIZE.XXL,
+    fontSize: FONT_SIZE.XL,
     fontWeight: FONT_WEIGHT.BOLD,
     marginRight: SPACING.XS,
   },
   text: {
     color: palette.primary,
-    fontSize: FONT_SIZE.MD,
+    fontSize: FONT_SIZE.SM,
     fontWeight: FONT_WEIGHT.SEMIBOLD,
   },
 });

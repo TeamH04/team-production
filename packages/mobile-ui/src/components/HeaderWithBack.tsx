@@ -15,9 +15,13 @@ export interface HeaderWithBackProps {
 export function HeaderWithBack({ title, onBack, rightElement }: HeaderWithBackProps) {
   return (
     <View style={styles.container}>
-      <BackButton onPress={onBack} />
-      <Text style={styles.title}>{title}</Text>
-      {rightElement ?? <View style={styles.spacer} />}
+      <View style={styles.left}>
+        <BackButton onPress={onBack} />
+      </View>
+      <Text style={styles.title} numberOfLines={1} ellipsizeMode='tail'>
+        {title}
+      </Text>
+      <View style={styles.right}>{rightElement}</View>
     </View>
   );
 }
@@ -25,18 +29,30 @@ export function HeaderWithBack({ title, onBack, rightElement }: HeaderWithBackPr
 const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
-    flexDirection: 'row',
+    justifyContent: 'center',
     paddingHorizontal: SPACING.MD,
     paddingVertical: SPACING.SM,
+    position: 'relative',
   },
-  spacer: {
-    width: 40, // BackButtonと同じ幅でバランス
+  left: {
+    bottom: 0,
+    justifyContent: 'center',
+    left: SPACING.MD,
+    position: 'absolute',
+    top: 0,
+  },
+  right: {
+    bottom: 0,
+    justifyContent: 'center',
+    position: 'absolute',
+    right: SPACING.MD,
+    top: 0,
   },
   title: {
     color: palette.primaryText,
-    flex: 1,
     fontSize: FONT_SIZE.LG,
     fontWeight: FONT_WEIGHT.SEMIBOLD,
+    maxWidth: '70%',
     textAlign: 'center',
   },
 });

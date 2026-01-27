@@ -399,6 +399,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 24,
   },
+  editButton: {
+    alignItems: 'center',
+  },
+  editText: {
+    color: palette.secondaryText,
+    fontFamily: fonts.medium,
+    fontSize: 13,
+    textDecorationLine: 'underline',
+  },
   errorText: {
     color: palette.dangerBorder,
     fontFamily: fonts.regular,
@@ -423,15 +432,6 @@ const styles = StyleSheet.create({
     fontFamily: fonts.medium,
     fontSize: 14,
     marginTop: 10,
-  },
-  editButton: {
-    alignItems: 'center',
-  },
-  editText: {
-    color: palette.secondaryText,
-    fontFamily: fonts.medium,
-    fontSize: 13,
-    textDecorationLine: 'underline',
   },
   otpActions: {
     gap: 12,

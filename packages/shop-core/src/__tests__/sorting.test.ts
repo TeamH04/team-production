@@ -5,8 +5,8 @@ import { createMockShop } from '@team/test-utils';
 
 import { getSortOrderLabel, sortShops } from '../sorting';
 
+import type { SearchSortType } from '@team/constants';
 import type { SortType } from '@team/types';
-import type { SearchSortType, SortOrder } from '@team/constants';
 
 describe('getSortOrderLabel', () => {
   describe('newest の場合', () => {
