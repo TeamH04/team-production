@@ -181,6 +181,13 @@ export default function HomePageClient() {
             <p className='mt-2 text-sm text-slate-600'>
               キーワードを変えるか、カテゴリを切り替えて別の候補を探してみてください。
             </p>
+            <Image
+              src='/empty-search.png'
+              alt='検索結果なし'
+              width={280}
+              height={200}
+              className='mx-auto mt-6'
+            />
           </div>
         ) : (
           <>

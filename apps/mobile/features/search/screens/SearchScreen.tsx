@@ -1,5 +1,4 @@
 /* global __DEV__ */
-declare const __DEV__: boolean;
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   BORDER_RADIUS,
@@ -313,17 +312,19 @@ export default function SearchScreen() {
         <View>
           <Text style={styles.resultsTitle}>{`検索結果：${searchResults.length}件`}</Text>
 
-          <View style={styles.visitedFilterRow}>
-            {VISITED_FILTER_OPTIONS.map(option => (
-              <ToggleButton
-                key={option.value}
-                label={option.label}
-                isActive={filterVisited === option.value}
-                onPress={() => setFilterVisited(option.value)}
-                size='small'
-              />
-            ))}
-          </View>
+          {baseFilteredShops.length > 0 && (
+            <View style={styles.visitedFilterRow}>
+              {VISITED_FILTER_OPTIONS.map(option => (
+                <ToggleButton
+                  key={option.value}
+                  label={option.label}
+                  isActive={filterVisited === option.value}
+                  onPress={() => setFilterVisited(option.value)}
+                  size='small'
+                />
+              ))}
+            </View>
+          )}
 
           {searchResults.length > 0 ? (
             <View>

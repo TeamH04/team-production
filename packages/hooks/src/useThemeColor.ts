@@ -72,7 +72,7 @@ export function getThemeColor<TColors>(options: GetThemeColorOptions<TColors>): 
  * ```
  */
 export function createUseThemeColor<TColors>(
-  useColorScheme: () => 'light' | 'dark' | null | undefined,
+  useColorScheme: () => 'light' | 'dark' | 'unspecified' | null | undefined,
   colors: { light: TColors; dark: TColors },
 ) {
   return function useThemeColor(
