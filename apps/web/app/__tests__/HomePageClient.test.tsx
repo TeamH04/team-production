@@ -1,4 +1,5 @@
 import { TIMING } from '@team/constants';
+import { createMockShop } from '@team/test-utils';
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
@@ -8,56 +9,63 @@ import HomePageClient from '../HomePageClient';
 
 import type * as ShopCoreModule from '@team/shop-core';
 
+// テスト用店舗データ
+const TEST_SHOPS = [
+  createMockShop({ id: 'shop-1', name: 'テストカフェ1', tags: ['コーヒー', 'Wi-Fi'] }),
+  createMockShop({ id: 'shop-2', name: 'テストカフェ2', tags: ['紅茶'] }),
+  createMockShop({
+    id: 'shop-3',
+    name: 'テストレストラン',
+    category: 'レストラン',
+    tags: ['豚骨', '深夜営業'],
+  }),
+  createMockShop({
+    id: 'shop-4',
+    name: 'テストバー',
+    category: 'バー・居酒屋',
+    tags: ['カクテル'],
+  }),
+  createMockShop({
+    id: 'shop-5',
+    name: '店舗5',
+    tags: ['静か', 'Wi-Fi', '電源あり', '作業向け'],
+    rating: 4.8,
+  }),
+  createMockShop({
+    id: 'shop-6',
+    name: '店舗6',
+    category: 'レストラン',
+    tags: ['ランチ', 'テイクアウト'],
+    rating: 3.5,
+  }),
+  createMockShop({
+    id: 'shop-7',
+    name: '店舗7',
+    category: 'バー・居酒屋',
+    tags: ['飲み放題'],
+    budget: '$$$',
+  }),
+  createMockShop({ id: 'shop-8', name: '店舗8', tags: ['ペット可', '禁煙'], rating: 4.2 }),
+  createMockShop({ id: 'shop-9', name: '店舗9', tags: ['個室あり'], budget: '$$' }),
+  createMockShop({ id: 'shop-10', name: '店舗10', tags: ['駐車場あり', '子連れ歓迎'] }),
+];
+
+// useShops フックをモック
+vi.mock('../../lib/dataSource/hooks', () => ({
+  useShops: () => ({
+    shops: TEST_SHOPS,
+    loading: false,
+    error: null,
+    reload: vi.fn(),
+  }),
+}));
+
 // vi.mock はホイスティングされるため、ファクトリ内で vi.importActual を使用
 vi.mock('@team/shop-core', async importOriginal => {
   const actual = (await importOriginal()) as typeof ShopCoreModule;
-  // TEST_SHOPS, TEST_CATEGORIES は別途インポートするとホイスティング問題が発生するため
-  // ここでインライン定義する必要がある
-  const { createMockShop } = await import('@team/test-utils');
-  const testShops = [
-    createMockShop({ id: 'shop-1', name: 'テストカフェ1', tags: ['コーヒー', 'Wi-Fi'] }),
-    createMockShop({ id: 'shop-2', name: 'テストカフェ2', tags: ['紅茶'] }),
-    createMockShop({
-      id: 'shop-3',
-      name: 'テストレストラン',
-      category: 'レストラン',
-      tags: ['豚骨', '深夜営業'],
-    }),
-    createMockShop({
-      id: 'shop-4',
-      name: 'テストバー',
-      category: 'バー・居酒屋',
-      tags: ['カクテル'],
-    }),
-    // 多様なテストデータ（タグ数、カテゴリ、評価のバリエーション）
-    createMockShop({
-      id: 'shop-5',
-      name: '店舗5',
-      tags: ['静か', 'Wi-Fi', '電源あり', '作業向け'],
-      rating: 4.8,
-    }),
-    createMockShop({
-      id: 'shop-6',
-      name: '店舗6',
-      category: 'レストラン',
-      tags: ['ランチ', 'テイクアウト'],
-      rating: 3.5,
-    }),
-    createMockShop({
-      id: 'shop-7',
-      name: '店舗7',
-      category: 'バー・居酒屋',
-      tags: ['飲み放題'],
-      budget: '$$$',
-    }),
-    createMockShop({ id: 'shop-8', name: '店舗8', tags: ['ペット可', '禁煙'], rating: 4.2 }),
-    createMockShop({ id: 'shop-9', name: '店舗9', tags: ['個室あり'], budget: '$$' }),
-    createMockShop({ id: 'shop-10', name: '店舗10', tags: ['駐車場あり', '子連れ歓迎'] }),
-  ];
   const testCategories = ['カフェ・喫茶', 'レストラン', 'バー・居酒屋'] as const;
   return {
     ...actual,
-    SHOPS: testShops,
     CATEGORIES: testCategories,
   };
 });

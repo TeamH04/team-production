@@ -1,5 +1,5 @@
 import { TIMING } from '@team/constants';
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
@@ -11,14 +11,57 @@ import {
 } from '../../../../test-utils';
 import ShopDetail from '../ShopDetail';
 
+import type { ReviewWithUser } from '@team/types';
+
 vi.mock('next/image', () => nextImageMock);
 
 vi.mock('next/link', () => nextLinkMock);
 
 const storageMock = createLocalStorageMock();
 
+// モック状態を管理
+let mockFavoriteIds: string[] = [];
+let mockReviews: ReviewWithUser[] = [];
+
+const mockToggleFavorite = vi.fn(async (shopId: string) => {
+  if (mockFavoriteIds.includes(shopId)) {
+    mockFavoriteIds = mockFavoriteIds.filter(id => id !== shopId);
+  } else {
+    mockFavoriteIds = [...mockFavoriteIds, shopId];
+  }
+});
+
+const mockAddReview = vi.fn();
+const mockToggleLike = vi.fn();
+
+vi.mock('../../../../lib/dataSource/hooks', () => ({
+  useFavorites: () => ({
+    favoriteIds: mockFavoriteIds,
+    loading: false,
+    error: null,
+    isFavorite: (shopId: string) => mockFavoriteIds.includes(shopId),
+    toggleFavorite: mockToggleFavorite,
+    reload: vi.fn(),
+  }),
+  useShopReviews: () => ({
+    reviews: mockReviews,
+    loading: false,
+    error: null,
+    reload: vi.fn(),
+    addReview: mockAddReview,
+    toggleLike: mockToggleLike,
+  }),
+}));
+
 describe('ShopDetail', () => {
   beforeEach(() => {
+    // モック状態をリセット
+    mockFavoriteIds = [];
+    mockReviews = [];
+    mockToggleFavorite.mockClear();
+    mockAddReview.mockClear();
+    mockToggleLike.mockClear();
+
     storageMock.reset();
     vi.stubGlobal('localStorage', {
       getItem: vi.fn((key: string) => storageMock.mock.getItem(key)),
@@ -223,12 +266,12 @@ describe('ShopDetail', () => {
       const favoriteButton = screen.getByRole('button', { name: /お気に入りに追加/ });
       await user.click(favoriteButton);
 
-      expect(screen.getByText('お気に入り済み')).toBeInTheDocument();
+      expect(mockToggleFavorite).toHaveBeenCalledWith('test-shop-1');
     });
 
     test('再クリックでお気に入り解除', async () => {
       // 事前にお気に入り状態を設定
-      storageMock.setData({ 'shop-favorites': JSON.stringify(['test-shop-1']) });
+      mockFavoriteIds = ['test-shop-1'];
 
       const user = userEvent.setup();
       render(<ShopDetail shop={createMockShop()} />);
@@ -240,45 +283,29 @@ describe('ShopDetail', () => {
       const favoriteButton = screen.getByRole('button', { name: /お気に入り済み/ });
       await user.click(favoriteButton);
 
-      expect(screen.getByText('お気に入りに追加')).toBeInTheDocument();
+      expect(mockToggleFavorite).toHaveBeenCalledWith('test-shop-1');
     });
 
-    test('localStorageに永続化される', async () => {
-      const user = userEvent.setup();
-      render(<ShopDetail shop={createMockShop()} />);
-
-      const favoriteButton = screen.getByRole('button', { name: /お気に入りに追加/ });
-      await user.click(favoriteButton);
-
-      await waitFor(() => {
-        expect(localStorage.setItem).toHaveBeenCalledWith(
-          'shop-favorites',
-          expect.stringContaining('test-shop-1'),
-        );
-      });
-    });
-
-    test('ページ読み込み時にlocalStorageから状態を復元する', () => {
-      storageMock.setData({ 'shop-favorites': JSON.stringify(['test-shop-1']) });
+    test('ページ読み込み時にお気に入り状態が表示される', () => {
+      // 事前にお気に入り状態を設定
+      mockFavoriteIds = ['test-shop-1'];
 
       render(<ShopDetail shop={createMockShop()} />);
 
       expect(screen.getByText('お気に入り済み')).toBeInTheDocument();
     });
 
-    test('localStorageに不正なJSONがある場合はデフォルト値が使用される', () => {
-      storageMock.setData({ 'shop-favorites': '{invalid json' });
+    test('お気に入りでない店舗は「お気に入りに追加」と表示される', () => {
+      mockFavoriteIds = ['other-shop'];
 
-      // エラーにならずレンダリングされる
       render(<ShopDetail shop={createMockShop()} />);
 
-      // デフォルト値（空配列）が使用されるため、お気に入りでない状態
       expect(screen.getByText('お気に入りに追加')).toBeInTheDocument();
     });
   });
 
   describe('共有機能', () => {
-    test('シェアボタンクリックで共有ダイアログが表示される', async () => {
+    test('シェアボタンクリックでshare APIが正しい引数で呼ばれる', async () => {
       const mockShare = vi.fn().mockResolvedValue(undefined);
       vi.stubGlobal('navigator', { share: mockShare, clipboard: undefined });
 
