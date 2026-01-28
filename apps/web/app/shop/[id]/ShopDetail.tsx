@@ -1,14 +1,20 @@
 'use client';
 
-import { buildGoogleMapsUrl, formatRating, STORAGE_KEYS } from '@team/constants';
-import { useFavoriteToggle, useImageGallery, useLocalStorage, useShare } from '@team/hooks';
+import { buildGoogleMapsUrl, formatRating } from '@team/constants';
+import { useImageGallery, useShare } from '@team/hooks';
 import { BUDGET_LABEL, getShopImages } from '@team/shop-core';
 import { colors } from '@team/theme';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
+
+import { ReviewCard } from '../../../components/ReviewCard';
+import { ReviewForm } from '../../../components/ReviewForm';
+import { useFavorites, useShopReviews } from '../../../lib/dataSource/hooks';
+import { REVIEW_LIMITS } from '../../../lib/styles';
 
 import type { Shop } from '@team/shop-core';
+import type React from 'react';
 
 type ShopDetailProps = {
   shop: Shop;
@@ -33,9 +39,31 @@ function HeartIcon({ filled }: { filled: boolean }) {
 }
 
 export default function ShopDetail({ shop }: ShopDetailProps) {
-  const [favorites, setFavorites] = useLocalStorage<string[]>(STORAGE_KEYS.FAVORITES, []);
-  const { isFavorite, toggleFavorite } = useFavoriteToggle({ favorites, setFavorites });
+  const { isFavorite, toggleFavorite } = useFavorites();
   const { share, shareMessage } = useShare();
+
+  const { reviews, addReview, toggleLike, error: reviewsError } = useShopReviews(shop.id);
+  const [showReviewForm, setShowReviewForm] = useState(false);
+
+  const handleReviewSubmit = useCallback(
+    async (data: { rating: number; ratingDetails: Record<string, number>; comment: string }) => {
+      await addReview({
+        shopId: shop.id,
+        rating: data.rating,
+        ratingDetails: data.ratingDetails,
+        comment: data.comment,
+      });
+      setShowReviewForm(false);
+    },
+    [shop.id, addReview],
+  );
+
+  const handleLikeToggle = useCallback(
+    (reviewId: string, currentlyLiked: boolean) => {
+      void toggleLike(reviewId, currentlyLiked);
+    },
+    [toggleLike],
+  );
 
   const imageList = useMemo(() => getShopImages(shop), [shop]);
 
@@ -56,12 +84,19 @@ export default function ShopDetail({ shop }: ShopDetailProps) {
 
   const isFav = isFavorite(shop.id);
 
-  const handleShare = () => {
+  const handleShare = useCallback(() => {
     const url = typeof window !== 'undefined' ? window.location.href : '';
     const text = `${shop.name} | ${shop.category} - ${shop.description}`;
-
     share({ title: shop.name, text, url });
-  };
+  }, [shop.name, shop.category, shop.description, share]);
+
+  const handleDotClick = useCallback(
+    (e: React.MouseEvent<HTMLButtonElement>) => {
+      const index = Number(e.currentTarget.dataset.index);
+      goToImage(index);
+    },
+    [goToImage],
+  );
 
   return (
     <div className='flex flex-col gap-10 lg:flex-row'>
@@ -104,7 +139,8 @@ export default function ShopDetail({ shop }: ShopDetailProps) {
                   <button
                     key={idx}
                     type='button'
-                    onClick={() => goToImage(idx)}
+                    data-index={idx}
+                    onClick={handleDotClick}
                     className={`h-2 w-10 rounded-full transition ${
                       idx === currentImage ? 'bg-white' : 'bg-white/40'
                     }`}
@@ -239,22 +275,48 @@ export default function ShopDetail({ shop }: ShopDetailProps) {
           </a>
         </div>
 
-        <div className='space-y-2 rounded-2xl bg-slate-50 p-4 ring-1 ring-slate-100'>
+        <div className='space-y-4 rounded-2xl bg-slate-50 p-4 ring-1 ring-slate-100'>
           <div className='flex items-center justify-between'>
             <p className='text-sm font-semibold text-slate-900'>レビュー</p>
             <span className='rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600'>
-              Coming soon
+              {reviews.length} 件
             </span>
           </div>
-          <p className='text-sm leading-6 text-slate-700'>
-            Webでもレビューを投稿できるように準備中です。気に入ったポイントをメモしておきましょう。
-          </p>
-          <button
-            type='button'
-            className='w-full rounded-2xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-slate-800'
-          >
-            レビューを書く（近日公開）
-          </button>
+
+          {reviewsError && <p className='text-sm text-red-600'>レビューの読み込みに失敗しました</p>}
+
+          {showReviewForm ? (
+            <ReviewForm
+              shopId={shop.id}
+              onSubmit={handleReviewSubmit}
+              onCancel={() => setShowReviewForm(false)}
+            />
+          ) : (
+            <button
+              type='button'
+              onClick={() => setShowReviewForm(true)}
+              className='w-full rounded-2xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-slate-800'
+            >
+              レビューを書く
+            </button>
+          )}
+
+          {reviews.length > 0 && (
+            <div className='space-y-3'>
+              {reviews.slice(0, REVIEW_LIMITS.MAX_SIDEBAR_REVIEWS).map(review => (
+                <ReviewCard
+                  key={review.id}
+                  review={review}
+                  onLikeToggle={() => handleLikeToggle(review.id, review.likedByMe)}
+                />
+              ))}
+              {reviews.length > REVIEW_LIMITS.MAX_SIDEBAR_REVIEWS && (
+                <p className='text-center text-xs text-slate-500'>
+                  他 {reviews.length - REVIEW_LIMITS.MAX_SIDEBAR_REVIEWS} 件のレビュー
+                </p>
+              )}
+            </div>
+          )}
         </div>
 
         <div className='rounded-2xl bg-slate-50 p-4 ring-1 ring-slate-100'>
