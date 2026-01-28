@@ -26,8 +26,8 @@ function getDevApiBaseUrl(): string | undefined {
   // Device.isDevice: 実機の場合true、シミュレータ/エミュレータの場合false
   const isSimulator = !Device.isDevice;
 
-  // ホストURIからIPアドレス部分を抽出
-  const hostIp = hostUri?.split(':')[0];
+  // ホストURIからホスト部分（IPv4, ホスト名, IPv6）を抽出
+  const hostIp = hostUri?.match(/^\[[^\]]+\]|^[^:]+/)?.[0];
 
   // プラットフォームとデバイスタイプに応じて適切なホストを選択
   let apiHost: string;
