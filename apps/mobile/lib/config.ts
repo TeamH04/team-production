@@ -12,6 +12,9 @@ import { Platform } from 'react-native';
 import { createEnvConfig } from '@team/constants';
 export type { EnvConfig, EnvKey } from '@team/constants';
 
+const DEFAULT_API_PORT = '8080';
+const DEFAULT_API_PATH = '/api';
+
 /**
  * 開発環境でのAPIベースURLを自動判定する
  *
@@ -62,7 +65,10 @@ function getDevApiBaseUrl(): string | undefined {
     apiHost = 'localhost';
   }
 
-  const url = `http://${apiHost}:8080/api`;
+  const apiPort = process.env.EXPO_PUBLIC_API_PORT ?? DEFAULT_API_PORT;
+  const apiPath = process.env.EXPO_PUBLIC_API_PATH ?? DEFAULT_API_PATH;
+  const normalizedPath = apiPath.startsWith('/') ? apiPath : `/${apiPath}`;
+  const url = `http://${apiHost}:${apiPort}${normalizedPath}`;
 
   return url;
 }
