@@ -3,6 +3,7 @@
  * 各モジュールはここから環境変数を取得する
  */
 import Constants from 'expo-constants';
+import * as Device from 'expo-device';
 import { Platform } from 'react-native';
 
 import { createEnvConfig } from '@team/constants';
@@ -21,29 +22,37 @@ function getDevApiBaseUrl(): string | undefined {
   // Expo開発サーバーのホスト情報を取得 (例: "192.168.11.6:8081")
   const hostUri = Constants.expoConfig?.hostUri;
 
-  if (!hostUri) {
-    return undefined;
-  }
+  // シミュレータ/エミュレータかどうかを判定
+  // Device.isDevice: 実機の場合true、シミュレータ/エミュレータの場合false
+  const isSimulator = !Device.isDevice;
+
 
   // ホストURIからIPアドレス部分を抽出
-  const hostIp = hostUri.split(':')[0];
+  const hostIp = hostUri?.split(':')[0];
 
-  // プラットフォームに応じて適切なホストを選択
+  // プラットフォームとデバイスタイプに応じて適切なホストを選択
   let apiHost: string;
 
   if (Platform.OS === 'android') {
-    // Androidエミュレータの場合は10.0.2.2、実機の場合はホストIP
-    // hostIpがlocalhostや127.0.0.1の場合はエミュレータと判定
-    if (hostIp === 'localhost' || hostIp === '127.0.0.1') {
+    if (isSimulator) {
+      // Androidエミュレータ: 10.0.2.2はホストマシンのlocalhost
       apiHost = '10.0.2.2';
     } else {
+      // Android実機: ホストIPが必要
+      if (!hostIp) {
+        return undefined;
+      }
       apiHost = hostIp;
     }
   } else if (Platform.OS === 'ios') {
-    // iOSシミュレータはlocalhostでOK、実機はホストIP
-    if (hostIp === 'localhost' || hostIp === '127.0.0.1') {
+    if (isSimulator) {
+      // iOSシミュレータ: Mac上で動作するのでlocalhost
       apiHost = 'localhost';
     } else {
+      // iOS実機: ホストIPが必要
+      if (!hostIp) {
+        return undefined;
+      }
       apiHost = hostIp;
     }
   } else {
@@ -51,7 +60,9 @@ function getDevApiBaseUrl(): string | undefined {
     apiHost = 'localhost';
   }
 
-  return `http://${apiHost}:8080/api`;
+  const url = `http://${apiHost}:8080/api`;
+
+  return url;
 }
 
 /**
