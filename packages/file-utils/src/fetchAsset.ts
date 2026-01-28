@@ -7,6 +7,23 @@ export interface AssetInfo {
 }
 
 /**
+ * 許可されたURIスキーム
+ */
+const ALLOWED_URI_SCHEMES = ['file:', 'https:', 'http:', 'blob:', 'data:'];
+
+/**
+ * URIスキームを検証する
+ * @param uri - 検証するURI
+ * @throws 許可されていないスキームの場合
+ */
+function validateUri(uri: string): void {
+  const isAllowed = ALLOWED_URI_SCHEMES.some(scheme => uri.startsWith(scheme));
+  if (!isAllowed) {
+    throw new Error(`Invalid URI scheme. Allowed: ${ALLOWED_URI_SCHEMES.join(', ')}`);
+  }
+}
+
+/**
  * URI からファイルを取得し、Uint8Array に変換する
  * 複数の環境（ブラウザ、React Native）に対応
  *
@@ -21,7 +38,12 @@ export interface AssetInfo {
  * });
  */
 export async function fetchAssetAsBytes(asset: AssetInfo): Promise<Uint8Array> {
+  validateUri(asset.uri);
   const response = await fetch(asset.uri);
+
+  if (!response.ok) {
+    throw new Error(`Fetch failed with status: ${response.status}`);
+  }
 
   // 方法1: arrayBuffer が直接使える場合（モダンブラウザ）
   if (typeof response.arrayBuffer === 'function') {

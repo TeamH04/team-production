@@ -55,13 +55,27 @@ export type UseFavoritesStateResult = {
 };
 
 /**
- * お気に入り状態管理のためのカスタムフック
+ * お気に入り状態管理フック（API連携・楽観的更新対応）
  *
  * このフックは以下の機能を提供します：
  * - お気に入り一覧の状態管理
  * - 楽観的更新によるお気に入りの追加/削除
  * - 認証対応（ローカルモード・リモートモード）
  * - レースコンディション対策
+ * - 操作中状態の追跡（isOperationPending）
+ *
+ * ## useFavoriteToggle との違い
+ * | 機能 | useFavoriteToggle | useFavoritesState |
+ * |------|-------------------|-------------------|
+ * | API連携 | なし | あり |
+ * | 楽観的更新 | なし | あり |
+ * | 認証対応 | なし | あり |
+ * | レースコンディション対策 | なし | あり |
+ * | 操作中状態の追跡 | なし | あり |
+ *
+ * ## 使い分けの指針
+ * - **useFavoriteToggle**: ローカル状態のみで十分な場合（例: localStorage との連携）
+ * - **useFavoritesState**: バックエンドAPIとの同期が必要な場合
  *
  * @example
  * ```tsx
@@ -91,6 +105,8 @@ export type UseFavoritesStateResult = {
  *   },
  * });
  * ```
+ *
+ * @see useFavoriteToggle ローカル状態のみで十分な場合はこちらを使用
  */
 export function useFavoritesState<TToken = string>(
   options: UseFavoritesStateOptions<TToken>,
@@ -154,13 +170,18 @@ export function useFavoritesState<TToken = string>(
   // レースコンディション対策: favoritesRefを使用して最新の状態を参照
   const toggleFavorite = useCallback(
     async (shopId: string) => {
+      // Prevent duplicate operations
+      if (isItemPending(shopId)) {
+        return;
+      }
+
       if (favoritesRef.current.has(shopId)) {
         await removeFavorite(shopId);
         return;
       }
       await addFavorite(shopId);
     },
-    [addFavorite, removeFavorite],
+    [addFavorite, removeFavorite, isItemPending],
   );
 
   // isFavorite をメモ化

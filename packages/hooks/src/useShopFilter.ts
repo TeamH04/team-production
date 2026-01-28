@@ -1,6 +1,7 @@
-import { filterShops, sortShops, type SortType } from '@team/shop-core';
+import { filterShops, sortShops } from '@team/shop-core';
 import { useMemo } from 'react';
 
+import type { SortType } from '@team/types';
 import type { Shop, ShopCategory } from '@team/types';
 
 export interface UseShopFilterOptions {

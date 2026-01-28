@@ -51,7 +51,24 @@ export function removeFavoriteId(ids: string[], id: string): string[] {
 }
 
 /**
- * Hook for managing favorite toggle state with localStorage or any state management
+ * シンプルなお気に入りトグル機能を提供するフック
+ *
+ * ローカル状態のみを管理し、APIとの同期は行いません。
+ * localStorage や React の状態管理と組み合わせて使用できます。
+ *
+ * ## 特徴
+ * - 同期的な状態更新（APIコールなし）
+ * - 軽量で依存関係が少ない
+ * - カスタム状態形状に対応
+ *
+ * ## useFavoritesState との違い
+ * | 機能 | useFavoriteToggle | useFavoritesState |
+ * |------|-------------------|-------------------|
+ * | API連携 | なし | あり |
+ * | 楽観的更新 | なし | あり |
+ * | 認証対応 | なし | あり |
+ * | レースコンディション対策 | なし | あり |
+ * | 操作中状態の追跡 | なし | あり |
  *
  * @example
  * // Simple usage with string array (Web with localStorage)
@@ -66,6 +83,8 @@ export function removeFavoriteId(ids: string[], id: string): string[] {
  *   getFavoriteIds: (state) => state.ids,
  *   createNewState: (state, ids) => ({ ...state, ids }),
  * });
+ *
+ * @see useFavoritesState API連携と楽観的更新が必要な場合はこちらを使用
  */
 export function useFavoriteToggle<T = string[]>({
   favorites,
@@ -75,7 +94,8 @@ export function useFavoriteToggle<T = string[]>({
 }: UseFavoriteToggleOptions<T>): UseFavoriteToggleResult {
   const favoriteIds = useMemo(() => getFavoriteIds(favorites), [favorites, getFavoriteIds]);
 
-  const isFavorite = useCallback((id: string) => favoriteIds.includes(id), [favoriteIds]);
+  const favoriteSet = useMemo(() => new Set(favoriteIds), [favoriteIds]);
+  const isFavorite = useCallback((id: string) => favoriteSet.has(id), [favoriteSet]);
 
   // Factory function to create favorite action callbacks
   const createFavoriteAction = useCallback(
@@ -99,10 +119,13 @@ export function useFavoriteToggle<T = string[]>({
     [createFavoriteAction],
   );
 
-  return {
-    isFavorite,
-    toggleFavorite,
-    addFavorite,
-    removeFavorite,
-  };
+  return useMemo(
+    () => ({
+      isFavorite,
+      toggleFavorite,
+      addFavorite,
+      removeFavorite,
+    }),
+    [isFavorite, toggleFavorite, addFavorite, removeFavorite],
+  );
 }

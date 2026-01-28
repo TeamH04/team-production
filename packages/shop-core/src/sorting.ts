@@ -1,4 +1,4 @@
-import type { SearchSortType, SortOrder } from '@team/constants';
+import type { FavoritesSortType, SearchSortType, SortOrder } from '@team/constants';
 import type { Shop, SortType } from '@team/types';
 
 // =============================================================================
@@ -72,4 +72,36 @@ export function sortShops(shops: Shop[], sortType: SortType): Shop[] {
   }
 
   return sorted;
+}
+
+// =============================================================================
+// お気に入りソート変換
+// =============================================================================
+
+/**
+ * FavoritesSortType を SortType に変換する
+ * @param favoriteSort お気に入りソート種別
+ * @returns 汎用ソート種別
+ *
+ * @example
+ * ```ts
+ * favoriteSortToSortType('rating-high'); // 'rating-high'
+ * favoriteSortToSortType('newest');      // 'newest'
+ * ```
+ */
+export function favoriteSortToSortType(favoriteSort: FavoritesSortType): SortType {
+  switch (favoriteSort) {
+    case 'newest':
+      return 'newest';
+    case 'rating-high':
+      return 'rating-high';
+    case 'rating-low':
+      return 'rating-low';
+    case 'name-asc':
+      return 'name-asc';
+    case 'name-desc':
+      return 'name-desc';
+    default:
+      return 'default';
+  }
 }

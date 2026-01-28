@@ -46,3 +46,49 @@ export function getRatingDisplay(value: number): RatingDisplay {
   if (value === 4) return { icon: 'remove', label: '普通', sentiment: 'neutral' };
   return { icon: 'sad', label: '不満', sentiment: 'dissatisfied' };
 }
+
+/**
+ * 評価バッジの型
+ * レビューカードで評価詳細を表示する際に使用
+ */
+export type RatingBadge = {
+  /** カテゴリキー (taste, atmosphere, etc.) */
+  key: RatingCategoryKey;
+  /** カテゴリラベル (味, 雰囲気, etc.) */
+  label: string;
+  /** 表示ラベル (満足, 普通, 不満) */
+  displayLabel: string;
+  /** 感情タイプ（色の決定に使用） */
+  sentiment: RatingSentiment;
+};
+
+/**
+ * 評価詳細から表示用バッジ配列を生成
+ *
+ * @param ratingDetails 評価詳細（nullable）
+ * @returns 表示用バッジ配列（値が存在するカテゴリのみ）
+ *
+ * @example
+ * const badges = buildRatingBadges(review.ratingDetails);
+ * // => [{ key: 'taste', label: '味', displayLabel: '満足', sentiment: 'satisfied' }, ...]
+ */
+export function buildRatingBadges(
+  ratingDetails: Record<string, number | null | undefined> | null | undefined,
+): RatingBadge[] {
+  if (!ratingDetails) return [];
+
+  const badges: RatingBadge[] = [];
+  for (const category of RATING_CATEGORIES) {
+    const value = ratingDetails[category.key];
+    if (value != null) {
+      const display = getRatingDisplay(value);
+      badges.push({
+        key: category.key,
+        label: category.label,
+        displayLabel: display.label,
+        sentiment: display.sentiment,
+      });
+    }
+  }
+  return badges;
+}

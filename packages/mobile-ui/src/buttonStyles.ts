@@ -3,14 +3,8 @@
  * These presets can be used with Pressable or TouchableOpacity components.
  */
 
-import {
-  BORDER_RADIUS,
-  FONT_SIZE,
-  FONT_WEIGHT,
-  LAYOUT,
-  SHADOW_STYLES,
-  SPACING,
-} from '@team/constants';
+import { BORDER_RADIUS, FONT_SIZE, FONT_WEIGHT, LAYOUT, SPACING } from '@team/constants';
+import { shadows } from '@team/theme';
 
 import { palette } from './palette';
 
@@ -22,25 +16,25 @@ import type { TextStyle, ViewStyle } from 'react-native';
 export const buttonContainerStyles = {
   /** Primary button with shadow - pill shaped */
   primary: {
-    ...SHADOW_STYLES.DEFAULT,
+    ...shadows.button,
     backgroundColor: palette.button,
     borderColor: palette.buttonBorder,
     borderRadius: BORDER_RADIUS.PILL,
     borderWidth: 1,
     height: LAYOUT.BUTTON_HEIGHT_MD,
-    minWidth: 160,
+    minWidth: LAYOUT.BUTTON_MIN_WIDTH,
     overflow: 'hidden',
   } as ViewStyle,
 
   /** Large primary button */
   primaryLarge: {
-    ...SHADOW_STYLES.DEFAULT,
+    ...shadows.button,
     backgroundColor: palette.button,
     borderColor: palette.buttonBorder,
     borderRadius: BORDER_RADIUS.PILL,
     borderWidth: 1,
     height: LAYOUT.BUTTON_HEIGHT_LG,
-    minWidth: 160,
+    minWidth: LAYOUT.BUTTON_MIN_WIDTH,
     overflow: 'hidden',
   } as ViewStyle,
 

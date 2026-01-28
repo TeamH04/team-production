@@ -884,15 +884,7 @@ export const STATION_AREAS: StationArea[] = [
   },
 ];
 
-export const AREA_OPTIONS = (() => {
-  const options: string[] = [];
-  for (const station of STATION_AREAS) {
-    if (!options.includes(station.area)) {
-      options.push(station.area);
-    }
-  }
-  return options;
-})();
+export const AREA_OPTIONS = Array.from(new Set(STATION_AREAS.map(station => station.area)));
 
 const EARTH_RADIUS_KM = 6371;
 

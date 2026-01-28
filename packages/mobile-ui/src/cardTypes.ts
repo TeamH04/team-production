@@ -1,11 +1,13 @@
 import { type StyleProp, type ViewStyle } from 'react-native';
 
-import type { Review, Shop } from '@team/types';
+import type {
+  MobileReviewCardPropsBase,
+  MobileShopCardPropsBase,
+  ShopCardVariant,
+} from '@team/types';
 
-/**
- * ShopCard のバリアント型
- */
-export type ShopCardVariant = 'large' | 'compact';
+// Re-export ShopCardVariant for convenience
+export type { ShopCardVariant };
 
 /**
  * カードコンポーネントのスタイル型
@@ -15,30 +17,16 @@ export type CardStyle = StyleProp<ViewStyle>;
 
 /**
  * ShopCard コンポーネントの props
+ * @team/types の MobileShopCardPropsBase を拡張し、スタイルプロパティを追加
  */
-export interface ShopCardProps {
-  shop: Shop;
-  onPress: (shopId: string) => void;
-  variant?: ShopCardVariant;
+export interface ShopCardProps extends MobileShopCardPropsBase {
   style?: CardStyle;
-  formatMeta?: (shop: Shop) => string;
-  /** ブースト表示（炎アイコン・ボーダー強調） */
-  isBoosted?: boolean;
-  /** おすすめカテゴリ（例：「味」「接客」など）- large variantで表示 */
-  featuredCategory?: string;
 }
 
 /**
  * ReviewCard コンポーネントの props
+ * @team/types の MobileReviewCardPropsBase を拡張し、スタイルプロパティを追加
  */
-export interface ReviewCardProps {
-  review: Review;
-  shopName?: string;
-  shopImage?: string;
-  onPress?: () => void;
-  onLikePress?: () => void;
-  isLiked?: boolean;
-  likeCount?: number;
-  showShopInfo?: boolean;
+export interface ReviewCardProps extends MobileReviewCardPropsBase {
   style?: CardStyle;
 }

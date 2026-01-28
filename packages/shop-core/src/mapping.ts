@@ -1,14 +1,26 @@
-import { formatPrice } from '@team/constants';
+import {
+  formatPrice,
+  DEFAULT_SHOP_CATEGORY,
+  DEFAULT_SHOP_BUDGET,
+  DEFAULT_DISTANCE_MINUTES,
+  DEFAULT_RATING,
+} from '@team/constants';
 
 import { IMAGE_POOL } from './constants';
 
 import type { StorageUrlResolver } from './types';
-import type { ApiStore, Shop, ShopCategory, MoneyBucket } from '@team/types';
+import type {
+  ApiFile,
+  ApiMenu,
+  ApiReview,
+  ApiStore,
+  MoneyBucket,
+  Review,
+  ReviewFile,
+  Shop,
+  ShopCategory,
+} from '@team/types';
 
-const DEFAULT_CATEGORY: ShopCategory = 'カフェ・喫茶';
-const DEFAULT_BUDGET: MoneyBucket = '$$';
-const DEFAULT_DISTANCE_MINUTES = 5;
-const DEFAULT_RATING = 0;
 const DEFAULT_IMAGE_URL = IMAGE_POOL[0]; // コーヒー
 
 const VALID_CATEGORIES: readonly ShopCategory[] = [
@@ -72,10 +84,10 @@ export function mapApiStoreToShop(
   const imageUrl = apiThumbnailUrl || apiImageUrls?.[0] || DEFAULT_IMAGE_URL;
   const imageUrls = apiImageUrls ?? (imageUrl ? [imageUrl] : undefined);
 
-  const category = isValidCategory(store.category) ? store.category : DEFAULT_CATEGORY;
+  const category = isValidCategory(store.category) ? store.category : DEFAULT_SHOP_CATEGORY;
   const distanceMinutes = store.distance_minutes ?? DEFAULT_DISTANCE_MINUTES;
   const rating = store.average_rating ?? DEFAULT_RATING;
-  const budget = isValidBudget(store.budget) ? store.budget : DEFAULT_BUDGET;
+  const budget = isValidBudget(store.budget) ? store.budget : DEFAULT_SHOP_BUDGET;
   const tags = store.tags ?? [];
   const createdAt = normalizeDate(store.created_at);
   const openedAt = normalizeDate(store.opened_at, createdAt);
@@ -118,4 +130,60 @@ export function mapApiStoreToShop(
 
 export function mapApiStoresToShops(stores: ApiStore[], urlResolver?: StorageUrlResolver): Shop[] {
   return stores.map(store => mapApiStoreToShop(store, urlResolver));
+}
+
+/**
+ * APIレビューのファイルをフロントエンド型に変換
+ */
+export function mapApiReviewFile(file: ApiFile): ReviewFile {
+  return {
+    id: file.file_id,
+    fileName: file.file_name,
+    objectKey: file.object_key,
+    url: file.url ?? undefined,
+    contentType: file.content_type ?? undefined,
+  };
+}
+
+/**
+ * APIレビューをフロントエンド型に変換
+ *
+ * @param review - APIから返されたレビュー
+ * @returns フロントエンド用のレビュー型
+ *
+ * @example
+ * ```ts
+ * const apiReviews = await api.fetchStoreReviews(shopId, sort, token);
+ * const reviews = apiReviews.map(mapApiReview);
+ * ```
+ */
+export function mapApiReview(review: ApiReview): Review {
+  const menus: ApiMenu[] = review.menus ?? [];
+  const menuItemIds = menus.length > 0 ? menus.map(menu => menu.menu_id) : (review.menu_ids ?? []);
+  const menuItemName = menus.length > 0 ? menus.map(menu => menu.name).join(' / ') : undefined;
+
+  return {
+    id: review.review_id,
+    shopId: review.store_id,
+    userId: review.user_id,
+    rating: review.rating,
+    ratingDetails: review.rating_details ?? undefined,
+    comment: review.content ?? undefined,
+    createdAt: review.created_at,
+    menuItemIds: menuItemIds && menuItemIds.length > 0 ? menuItemIds : undefined,
+    menuItemName,
+    likesCount: review.likes_count ?? 0,
+    likedByMe: review.liked_by_me ?? false,
+    files: (review.files ?? []).map(mapApiReviewFile),
+  };
+}
+
+/**
+ * ReviewFile から表示用 URL を取得する
+ * file.url が存在すればそれを、なければ objectKey を返す
+ * @param file ReviewFile オブジェクト
+ * @returns 表示用 URL または undefined
+ */
+export function getReviewFileUrl(file: ReviewFile): string | undefined {
+  return file.url ?? file.objectKey;
 }

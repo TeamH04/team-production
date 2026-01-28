@@ -1,87 +1,24 @@
 import assert from 'node:assert/strict';
-import { after, afterEach, before, beforeEach, describe, test } from 'node:test';
+import { afterEach, beforeEach, describe, test } from 'node:test';
 
-import { act, useEffect, useRef } from 'react';
-import TestRenderer from 'react-test-renderer';
+import {
+  createHookHarness,
+  flushPromises,
+  setupReactActEnvironment,
+  type HookHarness,
+} from '@team/test-utils';
+import { act } from 'react';
 
 import { useUserState, type UserStateConfig } from '../useUserState';
 
 import type { UserProfile } from '@team/types';
-import type { ReactTestRenderer } from 'react-test-renderer';
 
 // =============================================================================
 // Test Setup Utilities
 // =============================================================================
 
-const globalForReactAct = globalThis as typeof globalThis & {
-  IS_REACT_ACT_ENVIRONMENT?: boolean;
-};
-
-let originalReactActEnv: boolean | undefined;
-
-const flushPromises = (): Promise<void> =>
-  new Promise(resolve => {
-    if (typeof setImmediate !== 'undefined') {
-      setImmediate(resolve);
-    } else {
-      setTimeout(resolve, 0);
-    }
-  });
-
-// =============================================================================
-// Test Harness
-// =============================================================================
-
-type HookHarness<T> = {
-  getValue: () => T;
-  unmount: () => void;
-};
-
-const createHookHarness = <T,>(useHook: () => T): HookHarness<T> => {
-  let currentValue: T | undefined;
-  let renderer: ReactTestRenderer | undefined;
-
-  const handleValue = (value: T) => {
-    currentValue = value;
-  };
-
-  const Consumer = ({ onValue }: { onValue: (value: T) => void }) => {
-    const value = useHook();
-    const mountedRef = useRef(true);
-
-    useEffect(() => {
-      return () => {
-        mountedRef.current = false;
-      };
-    }, []);
-
-    useEffect(() => {
-      if (mountedRef.current) {
-        onValue(value);
-      }
-    }, [value, onValue]);
-
-    return null;
-  };
-
-  act(() => {
-    renderer = TestRenderer.create(<Consumer onValue={handleValue} />);
-  });
-
-  return {
-    getValue: () => {
-      if (currentValue === undefined) {
-        throw new Error('Hook has not rendered yet');
-      }
-      return currentValue;
-    },
-    unmount: () => {
-      act(() => {
-        renderer?.unmount();
-      });
-    },
-  };
-};
+// React act環境を有効化
+setupReactActEnvironment();
 
 // =============================================================================
 // Test Data
@@ -120,15 +57,6 @@ const createMockUserProfile = (
 
 describe('useUserState', () => {
   let harness: HookHarness<ReturnType<typeof useUserState>> | undefined;
-
-  before(() => {
-    originalReactActEnv = globalForReactAct.IS_REACT_ACT_ENVIRONMENT;
-    globalForReactAct.IS_REACT_ACT_ENVIRONMENT = true;
-  });
-
-  after(() => {
-    globalForReactAct.IS_REACT_ACT_ENVIRONMENT = originalReactActEnv;
-  });
 
   afterEach(() => {
     harness?.unmount();

@@ -3,9 +3,6 @@
   "version": "0.0.1",
   "private": true,
   "type": "module",
-  "engines": {
-    "node": ">=20.0.0"
-  },
   "main": "./src/index.ts",
   "types": "./src/index.ts",
   "exports": {
@@ -20,5 +17,22 @@
   "dependencies": {
     "@team/core-utils": "workspace:*",
     "@team/types": "workspace:*"
+  },
+  "peerDependencies": {
+    "@supabase/supabase-js": "^2.0.0",
+    "@team/shop-core": "workspace:*",
+    "react": ">=18.0.0",
+    "react-test-renderer": ">=18.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@supabase/supabase-js": {
+      "optional": true
+    },
+    "@team/shop-core": {
+      "optional": true
+    },
+    "react-test-renderer": {
+      "optional": true
+    }
   }
 }

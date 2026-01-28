@@ -23,8 +23,23 @@ export type Genre = (typeof GENRES)[number];
  * @param genre - トグル対象のジャンル名
  * @returns 新しいジャンル配列
  */
-export function toggleGenre(genres: Genre[], genre: Genre): Genre[] {
-  return genres.includes(genre)
-    ? genres.filter(existing => existing !== genre)
-    : [...genres, genre];
+/**
+ * 配列から要素をトグル（存在すれば削除、なければ追加）
+ * Note: core-utils/toggleArrayItem と同じロジックだが、
+ * 循環依存を避けるためここでインライン実装
+ */
+export function toggleGenre(genres: readonly Genre[], genre: Genre): Genre[] {
+  const result: Genre[] = [];
+  let found = false;
+  for (const existing of genres) {
+    if (existing === genre) {
+      found = true;
+    } else {
+      result.push(existing);
+    }
+  }
+  if (!found) {
+    result.push(genre);
+  }
+  return result;
 }

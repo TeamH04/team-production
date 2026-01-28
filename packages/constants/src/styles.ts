@@ -4,6 +4,15 @@
 
 /**
  * Shadow style presets for React Native.
+ *
+ * @deprecated Use `shadows` from `@team/theme` instead.
+ * This export will be removed in a future version.
+ *
+ * Migration guide:
+ * - `SHADOW_STYLES.DEFAULT` → `shadows.button` from `@team/theme`
+ * - `SHADOW_STYLES.CARD` → `shadows.card` from `@team/theme`
+ * - `SHADOW_STYLES.LIGHT` → `shadows.xs` from `@team/theme`
+ * - `SHADOW_STYLES.SECTION` → `shadows.md` from `@team/theme`
  */
 export const SHADOW_STYLES = {
   /** Default shadow for buttons and interactive elements */

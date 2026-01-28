@@ -64,8 +64,12 @@ export function toUint8Array(data: CryptoBufferSource): Uint8Array {
  * OAuth認証用のランダムなnonce文字列を生成
  * @param length 生成する文字列の長さ（デフォルト: 32）
  * @returns ランダムな16進数文字列
+ * @throws {Error} crypto APIが利用できない環境の場合
  */
 export function createNonce(length = 32): string {
+  if (typeof crypto === 'undefined' || typeof crypto.getRandomValues !== 'function') {
+    throw new Error('crypto.getRandomValues is not available in this environment');
+  }
   const randomBytes = new Uint8Array(length);
   crypto.getRandomValues(randomBytes);
   return Array.from(randomBytes, byte => byte.toString(16).padStart(2, '0')).join('');
