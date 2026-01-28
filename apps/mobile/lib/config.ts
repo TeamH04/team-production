@@ -92,6 +92,10 @@ function getApiBaseUrl(): string {
     return devUrl;
   }
 
+  console.warn(
+    'Failed to auto-detect API base URL. Please set EXPO_PUBLIC_API_BASE_URL manually.',
+  );
+
   // 開発環境での最終フォールバック
   return '';
 }
