@@ -1,7 +1,11 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "baseUrl": "."
+    "baseUrl": ".",
+    "paths": {
+      "@team/test-utils": ["../test-utils/src"],
+      "@team/test-utils/*": ["../test-utils/src/*"]
+    }
   },
   "include": ["src"]
 }

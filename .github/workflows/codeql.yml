@@ -6,6 +6,7 @@ on:
     paths:
       - 'apps/backend/**'
       - 'apps/mobile/**'
+      - 'apps/web/**'
       - 'packages/**'
       - '.github/workflows/**'
       - '.github/actions/**'
@@ -15,6 +16,7 @@ on:
     paths:
       - 'apps/backend/**'
       - 'apps/mobile/**'
+      - 'apps/web/**'
       - 'packages/**'
       - '.github/workflows/**'
       - '.github/actions/**'
@@ -61,6 +63,7 @@ jobs:
               - 'apps/backend/**'
             mobile:
               - 'apps/mobile/**'
+              - 'apps/web/**'
               - 'packages/**'
             actions:
               - '.github/workflows/**'

@@ -47,6 +47,7 @@ paths-ignore:
 # 分析対象パス
 paths:
   - "apps/mobile"
+  - "apps/web"
   - "packages"
 
 # 脅威モデル設定
