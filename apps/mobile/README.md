@@ -35,6 +35,8 @@ make dev       # DB + backend + mobile 同時起動
 | 変数                                   | 説明              |
 | -------------------------------------- | ----------------- |
 | `EXPO_PUBLIC_API_BASE_URL`             | APIベースURL      |
+| `EXPO_PUBLIC_API_PORT`                 | APIポート(任意)   |
+| `EXPO_PUBLIC_API_PATH`                 | APIパス(任意)     |
 | `EXPO_PUBLIC_SUPABASE_URL`             | Supabase URL      |
 | `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Supabase 公開キー |
 
