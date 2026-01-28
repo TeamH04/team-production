@@ -76,15 +76,20 @@ function getApiBaseUrl(): string {
     return envUrl;
   }
 
-  // 開発環境では自動判定
-  if (__DEV__) {
-    const devUrl = getDevApiBaseUrl();
-    if (devUrl) {
-      return devUrl;
-    }
+  // 本番ビルドでは環境変数が必須
+  if (!__DEV__) {
+    throw new Error(
+      'EXPO_PUBLIC_API_BASE_URL must be set and non-empty in production builds.',
+    );
   }
 
-  // フォールバック
+  // 開発環境では自動判定
+  const devUrl = getDevApiBaseUrl();
+  if (devUrl) {
+    return devUrl;
+  }
+
+  // 開発環境での最終フォールバック
   return '';
 }
 
