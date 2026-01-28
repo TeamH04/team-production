@@ -1,4 +1,5 @@
-import { ROUTES } from '@team/constants';
+import { ROUTES, SESSION_NOT_FOUND } from '@team/constants';
+import { extractErrorMessage } from '@team/core-utils';
 import * as Linking from 'expo-linking';
 import { type Href, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
@@ -31,9 +32,9 @@ export default function OAuthCallback() {
         try {
           await ensureUserExistsInDB();
         } catch (err) {
-          const raw = err instanceof Error ? err.message : 'ログイン処理に失敗しました';
+          const raw = extractErrorMessage(err, 'ログイン処理に失敗しました');
           const message =
-            raw === 'session_not_found'
+            raw === SESSION_NOT_FOUND
               ? 'セッションを取得できませんでした。もう一度ログインしてください。'
               : raw;
           Alert.alert('ログイン失敗', message);

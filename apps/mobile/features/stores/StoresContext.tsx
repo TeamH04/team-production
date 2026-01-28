@@ -1,5 +1,5 @@
 import { ERROR_MESSAGES } from '@team/constants';
-import { createDependencyInjector, createSafeContext } from '@team/core-utils';
+import { createDependencyInjector, createSafeContext, devWarn } from '@team/core-utils';
 import { useStoresState } from '@team/hooks';
 import React, { useCallback } from 'react';
 
@@ -33,8 +33,10 @@ const [StoresContextProvider, useStores] = createSafeContext<StoresContextValue>
 
 export { useStores };
 
-const handleError = (err: unknown) =>
-  err instanceof Error ? err.message : ERROR_MESSAGES.STORE_FETCH_FAILED;
+const handleError = (err: unknown) => {
+  devWarn('Failed to load stores:', err);
+  return err instanceof Error ? err.message : ERROR_MESSAGES.STORE_FETCH_FAILED;
+};
 
 export function StoresProvider({ children }: { children: React.ReactNode }) {
   const getDependencies = useCallback(() => dependencyInjector.get(), []);

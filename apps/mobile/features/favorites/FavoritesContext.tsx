@@ -3,6 +3,7 @@ import {
   type AuthState,
   createDependencyInjector,
   createSafeContext,
+  devWarn,
   ensureAuthenticated,
   resolveAuthForOptimisticUpdate,
 } from '@team/core-utils';
@@ -47,8 +48,8 @@ const dependencyInjector = createDependencyInjector<FavoritesDependencies>({
   getSupabase,
 });
 
-export const __setFavoritesDependenciesForTesting = dependencyInjector.setForTesting;
-export const __resetFavoritesDependenciesForTesting = dependencyInjector.reset;
+export const setFavoritesDependenciesForTesting = dependencyInjector.setForTesting;
+export const resetFavoritesDependenciesForTesting = dependencyInjector.reset;
 
 // Context 本体
 const [FavoritesContextProvider, useFavorites] =
@@ -103,7 +104,9 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
       .get()
       .getSupabase()
       .auth.onAuthStateChange(() => {
-        void loadFavorites().catch(() => undefined);
+        void loadFavorites().catch(err => {
+          devWarn('Failed to load favorites on auth state change:', err);
+        });
       });
     return () => {
       data.subscription.unsubscribe();

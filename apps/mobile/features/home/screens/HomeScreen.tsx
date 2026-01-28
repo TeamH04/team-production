@@ -1,4 +1,12 @@
-import { BORDER_RADIUS, ERROR_MESSAGES, LAYOUT, ROUTES, TIMING } from '@team/constants';
+import {
+  BORDER_RADIUS,
+  ERROR_MESSAGES,
+  LAYOUT,
+  RATING_CATEGORIES,
+  ROUTES,
+  TIMING,
+} from '@team/constants';
+import { useShopFilter } from '@team/hooks';
 import { palette } from '@team/mobile-ui';
 import { type Shop } from '@team/shop-core';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -25,8 +33,8 @@ const PAGE_SIZE = 10;
 // 現在は上位3店舗をブーストする仕様
 const BOOST_COUNT = 3;
 
-// おすすめカテゴリ（評価カテゴリと同じ5件をインデックスに応じて循環表示）
-const FEATURED_CATEGORIES = ['味', '接客', '雰囲気', '提供速度', '清潔感'];
+// おすすめカテゴリ（評価カテゴリのラベルをインデックスに応じて循環表示）
+const FEATURED_CATEGORIES = RATING_CATEGORIES.map(c => c.label);
 
 const KEY_EXTRACTOR = (item: Shop) => item.id;
 
@@ -125,19 +133,14 @@ export default function HomeScreen() {
 
   const listKey = `${activeTag ?? 'all'}-${activeCategory ?? 'all'}`;
 
-  // 手動フィルタリング
-  const filteredShops = useMemo(() => {
-    if (!activeTag && !activeCategory) {
-      return stores;
-    }
-
-    return stores.filter(shop => {
-      const matchesTag = activeTag ? shop.tags?.includes(activeTag) : true;
-      const matchesCategory = activeCategory ? shop.category === activeCategory : true;
-
-      return matchesTag && matchesCategory;
-    });
-  }, [activeCategory, activeTag, stores]);
+  // useShopFilter フックによるフィルタリング
+  const { filteredShops } = useShopFilter({
+    shops: stores,
+    searchText: '',
+    categories: activeCategory ? [activeCategory] : [],
+    tags: activeTag ? [activeTag] : [],
+    sortType: 'default',
+  });
 
   // ブースト対象のショップIDを計算（スコアリングで上位N件を選出）
   const boostedShopIds = useMemo(() => {

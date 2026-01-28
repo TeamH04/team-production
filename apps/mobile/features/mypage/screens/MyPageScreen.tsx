@@ -1,7 +1,6 @@
-﻿import Ionicons from '@expo/vector-icons/Ionicons';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import {
   BORDER_RADIUS,
-  ERROR_MESSAGES,
   formatRating,
   ICON_SIZE,
   LAYOUT,
@@ -105,10 +104,9 @@ export default function MyPageScreen({
       await getSupabase().auth.signOut();
       router.replace(ROUTES.LOGIN);
     } catch (err) {
-      const message = err instanceof Error ? err.message : ERROR_MESSAGES.UNKNOWN;
-      Alert.alert('ログアウトに失敗しました', message);
+      Alert.alert('ログアウトに失敗しました', getErrorMessage(err));
     }
-  }, [router]);
+  }, [getErrorMessage, router]);
 
   // 詳細画面へのナビゲーション
   const handleGoToReviewHistory = useCallback(() => {

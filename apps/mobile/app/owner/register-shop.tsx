@@ -9,7 +9,7 @@ import {
   UI_LABELS,
   VALIDATION_MESSAGES,
 } from '@team/constants';
-import { devWarn } from '@team/core-utils';
+import { devWarn, extractErrorMessage } from '@team/core-utils';
 import { palette, StationSelect } from '@team/mobile-ui';
 import { useNavigation, useRouter, type Href } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
@@ -270,8 +270,8 @@ export default function RegisterShopScreen() {
       await new Promise(resolve => setTimeout(resolve, TIMING.MOCK_SUBMIT_DELAY));
       Alert.alert('送信完了', '店舗登録リクエストを受け付けました');
       router.replace(ROUTES.OWNER as Href);
-    } catch (e: unknown) {
-      const message = e instanceof Error ? e.message : '送信に失敗しました';
+    } catch (err) {
+      const message = extractErrorMessage(err, '送信に失敗しました');
       Alert.alert('エラー', message);
     } finally {
       setLoading(false);
