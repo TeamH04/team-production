@@ -26,7 +26,6 @@ function getDevApiBaseUrl(): string | undefined {
   // Device.isDevice: 実機の場合true、シミュレータ/エミュレータの場合false
   const isSimulator = !Device.isDevice;
 
-
   // ホストURIからIPアドレス部分を抽出
   const hostIp = hostUri?.split(':')[0];
 
