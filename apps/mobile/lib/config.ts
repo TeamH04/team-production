@@ -5,12 +5,26 @@ declare const __DEV__: boolean;
  * 環境変数設定を集約するモジュール
  * 各モジュールはここから環境変数を取得する
  */
-import Constants from 'expo-constants';
-import * as Device from 'expo-device';
-import { Platform } from 'react-native';
-
 import { createEnvConfig } from '@team/constants';
 export type { EnvConfig, EnvKey } from '@team/constants';
+
+type ExpoConstantsModule = typeof import('expo-constants');
+type ExpoDeviceModule = typeof import('expo-device');
+type ReactNativeModule = typeof import('react-native');
+
+const loadExpoConstants = (): NonNullable<ExpoConstantsModule['default']> => {
+  const module = require('expo-constants') as ExpoConstantsModule;
+  return module.default ?? (module as unknown as NonNullable<ExpoConstantsModule['default']>);
+};
+
+const loadExpoDevice = (): ExpoDeviceModule => {
+  return require('expo-device') as ExpoDeviceModule;
+};
+
+const loadPlatform = (): ReactNativeModule['Platform'] => {
+  const module = require('react-native') as ReactNativeModule;
+  return module.Platform;
+};
 
 const DEFAULT_API_PORT = '8080';
 const DEFAULT_API_PATH = '/api';
@@ -25,11 +39,12 @@ const DEFAULT_API_PATH = '/api';
  * @returns 開発環境用のAPIベースURL、判定不可の場合はundefined
  */
 function getDevApiBaseUrl(): string | undefined {
-  // Expo開発サーバーのホスト情報を取得 (例: "192.168.11.6:8081")
+  const Constants = loadExpoConstants();
+  const Device = loadExpoDevice();
+  const Platform = loadPlatform();
+
   const hostUri = Constants.expoConfig?.hostUri;
 
-  // シミュレータ/エミュレータかどうかを判定
-  // Device.isDevice: 実機の場合true、シミュレータ/エミュレータの場合false
   const isSimulator = !Device.isDevice;
 
   // ホストURIからホスト部分（IPv4, ホスト名, IPv6）を抽出
@@ -85,15 +100,22 @@ function getApiBaseUrl(): string {
     return envUrl;
   }
 
-  // 本番ビルドでは環境変数が必須
-  if (!__DEV__) {
+  // 開発環境・テスト環境・CI環境かどうかを判定
+  const isTestOrCI = process.env.NODE_ENV === 'test' || process.env.CI === 'true';
+  const isDev = typeof __DEV__ !== 'undefined' ? __DEV__ : process.env.NODE_ENV !== 'production';
+
+  // 本番ビルドでは環境変数が必須（テスト・CI環境は除く）
+  if (!isDev && !isTestOrCI) {
     throw new Error('EXPO_PUBLIC_API_BASE_URL must be set and non-empty in production builds.');
   }
 
-  // 開発環境では自動判定
-  const devUrl = getDevApiBaseUrl();
-  if (devUrl) {
-    return devUrl;
+  const isReactNativeRuntime =
+    typeof navigator !== 'undefined' && navigator.product === 'ReactNative';
+  if (process.env.NODE_ENV !== 'test' && isReactNativeRuntime) {
+    const devUrl = getDevApiBaseUrl();
+    if (devUrl) {
+      return devUrl;
+    }
   }
 
   console.warn('Failed to auto-detect API base URL. Please set EXPO_PUBLIC_API_BASE_URL manually.');
