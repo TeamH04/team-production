@@ -49,7 +49,7 @@ export default function OwnerHomeScreen() {
       <View style={styles.card}>
         <Text style={styles.cardTitle}>クイックアクション</Text>
         <View style={styles.actionsRow}>
-          <Pressable style={styles.actionBtn} onPress={() => router.push(ROUTES.HOME)}>
+          <Pressable style={styles.actionBtn} onPress={() => router.push(ROUTES.TABS as Href)}>
             <Text style={styles.actionText}>ユーザーホームへ</Text>
           </Pressable>
           <Pressable
