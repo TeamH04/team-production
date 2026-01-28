@@ -1,28 +1,32 @@
 /* global __DEV__ */
-declare const __DEV__: boolean;
 
 /**
  * 環境変数設定を集約するモジュール
  * 各モジュールはここから環境変数を取得する
  */
 import { createEnvConfig } from '@team/constants';
+
+import type Constants from 'expo-constants';
+import type * as Device from 'expo-device';
+import type { Platform } from 'react-native';
+
 export type { EnvConfig, EnvKey } from '@team/constants';
 
-type ExpoConstantsModule = typeof import('expo-constants');
-type ExpoDeviceModule = typeof import('expo-device');
-type ReactNativeModule = typeof import('react-native');
+type ExpoConstantsModule = typeof Constants;
+type ExpoDeviceModule = typeof Device;
+type PlatformModule = typeof Platform;
 
-const loadExpoConstants = (): NonNullable<ExpoConstantsModule['default']> => {
-  const module = require('expo-constants') as ExpoConstantsModule;
-  return module.default ?? (module as unknown as NonNullable<ExpoConstantsModule['default']>);
+const loadExpoConstants = (): NonNullable<ExpoConstantsModule> => {
+  const module = require('expo-constants') as { default: ExpoConstantsModule };
+  return module.default ?? (module as unknown as NonNullable<ExpoConstantsModule>);
 };
 
 const loadExpoDevice = (): ExpoDeviceModule => {
   return require('expo-device') as ExpoDeviceModule;
 };
 
-const loadPlatform = (): ReactNativeModule['Platform'] => {
-  const module = require('react-native') as ReactNativeModule;
+const loadPlatform = (): PlatformModule => {
+  const module = require('react-native') as { Platform: PlatformModule };
   return module.Platform;
 };
 
