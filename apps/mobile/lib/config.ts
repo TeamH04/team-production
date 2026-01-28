@@ -1,3 +1,6 @@
+/* global __DEV__ */
+declare const __DEV__: boolean;
+
 /**
  * 環境変数設定を集約するモジュール
  * 各モジュールはここから環境変数を取得する
