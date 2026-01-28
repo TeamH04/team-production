@@ -2,8 +2,18 @@
 BEGIN;
 
 -- Remove old seed data to avoid duplicates
-DELETE FROM public.stores WHERE store_id IN ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb');
-DELETE FROM public.files WHERE file_id IN ('11111111-1111-1111-1111-111111111111', '22222222-2222-2222-2222-222222222222');
+DELETE FROM public.stores
+WHERE store_id IN (
+  'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+  'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
+  'cccccccc-cccc-cccc-cccc-cccccccccccc'
+);
+DELETE FROM public.files
+WHERE file_id IN (
+  '11111111-1111-1111-1111-111111111111',
+  '22222222-2222-2222-2222-222222222222',
+  '33333333-3333-3333-3333-333333333334'
+);
 
 -- Insert File for URL: https://images.unsplash.com/photo-1509042239860-f550ce710b93?auto=format&fit=crop&w=600&q=80
 INSERT INTO public.files (file_id, file_kind, file_name, object_key, content_type, is_deleted, created_at)
