@@ -6,7 +6,8 @@ import { useCallback, useMemo } from 'react';
 
 import { EmptyState, PageError, PageLoading, ReviewCard } from '../../components';
 import { useFavorites, useShops, useUserReviews } from '../../lib/dataSource/hooks';
-import { createNavigateToHomeAction, REVIEW_LIMITS } from '../../lib/styles';
+import { createNavigateToHomeAction } from '../../lib/navigation';
+import { REVIEW_LIMITS } from '../../lib/styles';
 
 export default function MyPage() {
   const {
@@ -31,7 +32,7 @@ export default function MyPage() {
     reloadReviews();
   }, [reloadFavorites, reloadShops, reloadReviews]);
 
-  const shopNameMap = useMemo(() => new Map(shops.map(s => [s.id, s.name])), [shops]);
+  const shopNameMap = useMemo(() => new Map(shops.map(shop => [shop.id, shop.name])), [shops]);
 
   const getShopName = useCallback(
     (shopId: string) => shopNameMap.get(shopId) ?? '不明な店舗',
@@ -53,14 +54,14 @@ export default function MyPage() {
   return (
     <div className='min-h-screen bg-slate-50'>
       <header className='bg-gradient-to-br from-sky-700 via-sky-600 to-indigo-700 text-white'>
-        <div className='mx-auto max-w-6xl px-6 py-8 lg:px-10'>
+        <div className='mx-auto max-w-6xl px-4 py-6 sm:px-6 sm:py-8 lg:px-10'>
           <p className='text-sm font-semibold uppercase tracking-[0.28em] text-sky-100'>My Page</p>
           <h1 className='mt-2 text-3xl font-bold'>マイページ</h1>
           <p className='mt-2 text-sky-100'>あなたの活動履歴を確認できます</p>
         </div>
       </header>
 
-      <main className='mx-auto max-w-6xl px-6 py-12 lg:px-10'>
+      <main className='mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-12 lg:px-10'>
         <div className='grid gap-6 lg:grid-cols-3'>
           <div className='space-y-6 lg:col-span-1'>
             <div className='rounded-3xl bg-white p-6 shadow-lg ring-1 ring-slate-100'>
