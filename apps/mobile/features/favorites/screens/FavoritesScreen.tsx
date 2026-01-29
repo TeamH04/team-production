@@ -6,8 +6,9 @@ import { formatShopMeta } from '@team/shop-core';
 import { withAlpha } from '@team/theme';
 import { useFocusEffect } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
-import { Alert, FlatList, Modal, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Alert, FlatList, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { SearchBar } from '@/components/SearchBar';
 import { ShopCard } from '@/components/ShopCard';
 import { fonts } from '@/constants/typography';
 import { useFavorites } from '@/features/favorites/FavoritesContext';
@@ -74,27 +75,14 @@ export default function FavoritesScreen() {
       {/* 検索・ソート操作パネル */}
       <View style={styles.controlPanel}>
         {/* 検索バー */}
-        <View style={styles.searchInputContainer}>
-          <Ionicons name='search' size={18} color={palette.secondaryText} />
-          <TextInput
-            style={styles.searchInput}
-            placeholder='検索'
-            placeholderTextColor={palette.secondaryText}
-            value={searchText}
-            onChangeText={setSearchText}
-            accessibilityLabel='お気に入り検索'
-            accessibilityHint='店舗名、説明、カテゴリーで検索'
-          />
-          {searchText.length > 0 && (
-            <Pressable
-              onPress={() => setSearchText('')}
-              accessibilityLabel='検索を削除'
-              accessibilityRole='button'
-            >
-              <Ionicons name='close' size={18} color={palette.secondaryText} />
-            </Pressable>
-          )}
-        </View>
+        <SearchBar
+          value={searchText}
+          onChangeText={setSearchText}
+          onClear={() => setSearchText('')}
+          placeholder='検索'
+          accessibilityLabel='お気に入り検索'
+          accessibilityHint='店舗名、説明、カテゴリーで検索'
+        />
 
         {/* ソートボタン */}
         <Pressable
@@ -217,24 +205,6 @@ const styles = StyleSheet.create({
     color: palette.primaryText,
     fontFamily: fonts.medium,
     fontSize: 28,
-  },
-  searchInput: {
-    color: palette.primaryText,
-    flex: 1,
-    fontFamily: fonts.regular,
-    fontSize: 14,
-    marginHorizontal: 8,
-  },
-  searchInputContainer: {
-    alignItems: 'center',
-    backgroundColor: palette.surface,
-    borderColor: palette.border,
-    borderRadius: 8,
-    borderWidth: 1,
-    flex: 1,
-    flexDirection: 'row',
-    paddingHorizontal: 12,
-    paddingVertical: 10,
   },
   sortButton: {
     alignItems: 'center',

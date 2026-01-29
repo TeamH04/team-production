@@ -47,13 +47,17 @@ export default function ShopDetail({ shop }: ShopDetailProps) {
 
   const handleReviewSubmit = useCallback(
     async (data: { rating: number; ratingDetails: Record<string, number>; comment: string }) => {
-      await addReview({
-        shopId: shop.id,
-        rating: data.rating,
-        ratingDetails: data.ratingDetails,
-        comment: data.comment,
-      });
-      setShowReviewForm(false);
+      try {
+        await addReview({
+          shopId: shop.id,
+          rating: data.rating,
+          ratingDetails: data.ratingDetails,
+          comment: data.comment,
+        });
+        setShowReviewForm(false);
+      } catch (err) {
+        console.error('Failed to submit review:', err);
+      }
     },
     [shop.id, addReview],
   );
@@ -93,6 +97,7 @@ export default function ShopDetail({ shop }: ShopDetailProps) {
   const handleDotClick = useCallback(
     (e: React.MouseEvent<HTMLButtonElement>) => {
       const index = Number(e.currentTarget.dataset.index);
+      if (Number.isNaN(index)) return;
       goToImage(index);
     },
     [goToImage],

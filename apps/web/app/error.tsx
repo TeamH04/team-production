@@ -51,6 +51,7 @@ export default function Error({
 
           {/* リトライボタン */}
           <button
+            type='button'
             onClick={reset}
             className='inline-flex items-center justify-center px-6 py-3 bg-slate-800 text-white font-medium rounded-lg hover:bg-slate-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2'
           >

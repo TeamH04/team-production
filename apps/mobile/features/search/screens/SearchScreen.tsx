@@ -24,17 +24,9 @@ import {
 } from '@team/shop-core';
 import { useRouter } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
-import {
-  FlatList,
-  Image,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
+import { FlatList, Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
+import { SearchBar } from '@/components/SearchBar';
 import { ShopCard } from '@/components/ShopCard';
 import { fonts } from '@/constants/typography';
 import { useStores } from '@/features/stores/StoresContext';
@@ -230,28 +222,15 @@ export default function SearchScreen() {
       </View>
 
       <View style={styles.searchBarContainer}>
-        <View style={styles.searchBarRow}>
-          <View style={[styles.searchWrapper, styles.shadowLight]}>
-            <TextInput
-              style={styles.searchInput}
-              placeholder='お店名・雰囲気'
-              placeholderTextColor={palette.secondaryText}
-              value={userTypedText}
-              onChangeText={setUserTypedText}
-              onSubmitEditing={() => handleSearch()}
-              returnKeyType='search'
-            />
-            <Pressable
-              onPress={handleClearAll}
-              style={[
-                styles.clearButton,
-                !userTypedText && !hasSearchCriteria && styles.clearButtonHidden,
-              ]}
-            >
-              <Text style={styles.clearButtonText}>✕</Text>
-            </Pressable>
-          </View>
-        </View>
+        <SearchBar
+          value={userTypedText}
+          onChangeText={setUserTypedText}
+          onClear={handleClearAll}
+          placeholder='お店名・雰囲気'
+          onSubmitEditing={() => handleSearch()}
+          showClearButton={!!userTypedText || hasSearchCriteria}
+          accessibilityLabel='店舗検索'
+        />
 
         {currentSearchText.length === 0 && (
           <View style={styles.tagGroupsContainer}>
@@ -410,17 +389,6 @@ const styles = StyleSheet.create({
   categorySection: {
     marginBottom: SPACING.XL,
   },
-  clearButton: {
-    padding: SPACING.SM,
-  },
-  clearButtonHidden: {
-    opacity: 0,
-  },
-  clearButtonText: {
-    color: palette.secondaryText,
-    fontFamily: fonts.regular,
-    fontSize: 20,
-  },
   container: {
     backgroundColor: palette.background,
     flex: 1,
@@ -530,34 +498,11 @@ const styles = StyleSheet.create({
   searchBarContainer: {
     marginBottom: SPACING.LG,
   },
-  searchBarRow: {
-    flexDirection: 'row',
-    marginBottom: SPACING.XL,
-  },
-  searchInput: {
-    color: palette.primaryText,
-    flex: 1,
-    fontFamily: fonts.regular,
-    fontSize: 16,
-  },
-  searchWrapper: {
-    alignItems: 'center',
-    backgroundColor: palette.surface,
-    borderRadius: BORDER_RADIUS.PILL,
-    flex: 1,
-    flexDirection: 'row',
-    paddingHorizontal: SPACING.XL,
-    paddingVertical: SPACING.MD,
-  },
   sectionLabel: {
     color: palette.secondaryText,
     fontFamily: fonts.medium,
     fontSize: 14,
     marginBottom: SPACING.LG,
-  },
-  shadowLight: {
-    boxShadow: '0px 6px 10px rgba(0, 0, 0, 0.05)',
-    elevation: 3,
   },
   sortOptionsContent: {
     alignItems: 'center',
