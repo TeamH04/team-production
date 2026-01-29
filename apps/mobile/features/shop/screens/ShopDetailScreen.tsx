@@ -3,6 +3,7 @@ import {
   AUTH_REQUIRED,
   BORDER_RADIUS,
   buildGoogleMapsUrl,
+  ERROR_MESSAGES,
   getRatingDisplay,
   RATING_CATEGORIES,
   UI_LABELS,
@@ -116,6 +117,16 @@ const ratingStyles = StyleSheet.create({
     fontSize: 12,
   },
 });
+
+/**
+ * 認証が必要な操作で未認証時にアラートを表示するヘルパー
+ */
+function showAuthRequiredAlert(router: ReturnType<typeof useRouter>, featureDescription: string) {
+  Alert.alert(ERROR_MESSAGES.AUTH_REQUIRED, `${featureDescription}にはログインが必要です。`, [
+    { text: UI_LABELS.CANCEL, style: 'cancel' },
+    { text: UI_LABELS.LOGIN, onPress: () => router.push('/login') },
+  ]);
+}
 
 export default function ShopDetailScreen() {
   const params = useLocalSearchParams<{ id?: string | string[] }>();
@@ -253,12 +264,9 @@ export default function ShopDetailScreen() {
       try {
         await toggleLike(shop.id, reviewId);
       } catch (err) {
-        const message = extractErrorMessage(err, 'Unknown error');
+        const message = extractErrorMessage(err, ERROR_MESSAGES.UNKNOWN);
         if (message === AUTH_REQUIRED) {
-          Alert.alert('ログインが必要です', 'いいねにはログインが必要です。', [
-            { text: UI_LABELS.CANCEL, style: 'cancel' },
-            { text: UI_LABELS.LOGIN, onPress: () => router.push('/login') },
-          ]);
+          showAuthRequiredAlert(router, 'いいね');
           return;
         }
         Alert.alert('いいねに失敗しました', message);
@@ -272,12 +280,9 @@ export default function ShopDetailScreen() {
     try {
       await toggleFavorite(shop.id);
     } catch (err) {
-      const message = extractErrorMessage(err, 'Unknown error');
+      const message = extractErrorMessage(err, ERROR_MESSAGES.UNKNOWN);
       if (message === AUTH_REQUIRED) {
-        Alert.alert('ログインが必要です', 'お気に入りにはログインが必要です。', [
-          { text: UI_LABELS.CANCEL, style: 'cancel' },
-          { text: UI_LABELS.LOGIN, onPress: () => router.push('/login') },
-        ]);
+        showAuthRequiredAlert(router, 'お気に入り');
         return;
       }
       const isCurrentlyFavorite = isFavorite ? isFavorite(shop.id) : false;

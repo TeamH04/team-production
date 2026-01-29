@@ -1,4 +1,4 @@
-import { ROUTES, SESSION_NOT_FOUND } from '@team/constants';
+import { AUTH_ERROR_MESSAGES, ROUTES, SESSION_NOT_FOUND } from '@team/constants';
 import { extractErrorMessage } from '@team/core-utils';
 import * as Linking from 'expo-linking';
 import { type Href, useRouter } from 'expo-router';
@@ -49,7 +49,7 @@ export default function OAuthCallback() {
       } catch (e: unknown) {
         setStatus('error');
         const message = e instanceof Error ? e.message : 'サインイン処理に失敗しました';
-        Alert.alert('認証エラー', message);
+        Alert.alert(AUTH_ERROR_MESSAGES.AUTH_ERROR_TITLE, message);
       }
     };
     complete();

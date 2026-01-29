@@ -12,18 +12,12 @@ export default function NotFound() {
           ページが削除されたか、URL
           が正しくない可能性があります。店舗一覧からあらためてお探しください。
         </p>
-        <div className='mt-8 flex flex-col gap-3'>
+        <div className='mt-8'>
           <Link
             href='/'
             className='inline-flex items-center justify-center gap-2 rounded-full bg-sky-600 px-5 py-3 text-sm font-semibold text-white shadow-lg transition hover:-translate-y-0.5 hover:bg-sky-700'
           >
             店舗一覧へ戻る
-          </Link>
-          <Link
-            href='/shop/shop-1'
-            className='inline-flex items-center justify-center gap-2 rounded-full bg-slate-100 px-5 py-3 text-sm font-semibold text-slate-800 transition hover:-translate-y-0.5 hover:bg-slate-200'
-          >
-            人気の店舗を見る
           </Link>
         </div>
       </div>

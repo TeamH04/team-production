@@ -20,13 +20,13 @@ describe('Navigation', () => {
     test('ロゴが表示される', () => {
       render(<Navigation />);
 
-      expect(screen.getByText('Shop Discovery')).toBeInTheDocument();
+      expect(screen.getByAltText('Kuguriロゴ')).toBeInTheDocument();
     });
 
     test('ロゴはホームへのリンク', () => {
       render(<Navigation />);
 
-      const logo = screen.getByText('Shop Discovery');
+      const logo = screen.getByAltText('Kuguriロゴ');
       expect(logo.closest('a')).toHaveAttribute('href', '/');
     });
   });

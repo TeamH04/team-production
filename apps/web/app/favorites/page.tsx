@@ -10,7 +10,7 @@ import { EmptyState } from '../../components/EmptyState';
 import { ShopCard } from '../../components/ShopCard';
 import { SortSelector } from '../../components/SortSelector';
 import { useFavoriteShops } from '../../lib/dataSource/hooks';
-import { createNavigateToHomeAction } from '../../lib/styles';
+import { createNavigateToHomeAction } from '../../lib/navigation';
 
 export default function FavoritesPage() {
   const {
@@ -64,7 +64,7 @@ export default function FavoritesPage() {
   return (
     <div className='min-h-screen bg-slate-50'>
       <header className='bg-gradient-to-br from-sky-700 via-sky-600 to-indigo-700 text-white'>
-        <div className='mx-auto max-w-6xl px-6 py-8 lg:px-10'>
+        <div className='mx-auto max-w-6xl px-4 py-6 sm:px-6 sm:py-8 lg:px-10'>
           <p className='text-sm font-semibold uppercase tracking-[0.28em] text-sky-100'>
             Favorites
           </p>
@@ -73,7 +73,7 @@ export default function FavoritesPage() {
         </div>
       </header>
 
-      <main className='mx-auto max-w-6xl px-6 py-12 lg:px-10'>
+      <main className='mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-12 lg:px-10'>
         {favoriteIds.length === 0 ? (
           <EmptyState
             title='お気に入りがありません'
@@ -91,7 +91,7 @@ export default function FavoritesPage() {
                 </div>
                 <input
                   value={searchText}
-                  onChange={e => setSearchText(e.target.value)}
+                  onChange={event => setSearchText(event.target.value)}
                   {...compositionHandlers}
                   placeholder='お気に入りから検索'
                   className='w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-base text-slate-900 shadow-sm outline-none transition focus:border-sky-400 focus:ring-2 focus:ring-sky-100 sm:max-w-xs'

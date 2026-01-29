@@ -1,49 +1,9 @@
 import { afterEach, beforeEach, describe, expect, test } from 'vitest';
 
-import { createNavigateToHomeAction, REVIEW_LIMITS, STYLES } from '../styles';
+import { createNavigateToHomeAction } from '../navigation';
+import { REVIEW_LIMITS } from '../styles';
 
 describe('styles', () => {
-  describe('STYLES', () => {
-    test('PAGE_BACKGROUNDが定義されている', () => {
-      expect(STYLES.PAGE_BACKGROUND).toMatch(/bg-slate/);
-      expect(STYLES.PAGE_BACKGROUND).toMatch(/min-h-screen/);
-    });
-
-    test('CONTAINERが定義されている', () => {
-      expect(STYLES.CONTAINER).toMatch(/mx-auto/);
-      expect(STYLES.CONTAINER).toMatch(/max-w-/);
-      expect(STYLES.CONTAINER).toMatch(/px-/);
-    });
-
-    test('HEADER_GRADIENTが定義されている', () => {
-      expect(STYLES.HEADER_GRADIENT).toContain('bg-gradient-to-br');
-    });
-
-    test('CARDが定義されている', () => {
-      expect(STYLES.CARD).toContain('rounded-3xl');
-      expect(STYLES.CARD).toContain('bg-white');
-    });
-
-    test('SEARCH_INPUTが定義されている', () => {
-      expect(STYLES.SEARCH_INPUT).toContain('rounded-2xl');
-    });
-
-    test('BUTTON_PRIMARYが定義されている', () => {
-      expect(STYLES.BUTTON_PRIMARY).toContain('rounded-full');
-      expect(STYLES.BUTTON_PRIMARY).toContain('bg-slate-900');
-    });
-
-    test('SECTION_LABELが定義されている', () => {
-      expect(STYLES.SECTION_LABEL).toContain('text-sm');
-      expect(STYLES.SECTION_LABEL).toContain('uppercase');
-    });
-
-    test('PAGE_TITLEが定義されている', () => {
-      expect(STYLES.PAGE_TITLE).toContain('text-3xl');
-      expect(STYLES.PAGE_TITLE).toContain('font-bold');
-    });
-  });
-
   describe('REVIEW_LIMITS', () => {
     test('MAX_VISIBLE_REVIEWSが正の整数である', () => {
       expect(Number.isInteger(REVIEW_LIMITS.MAX_VISIBLE_REVIEWS)).toBe(true);

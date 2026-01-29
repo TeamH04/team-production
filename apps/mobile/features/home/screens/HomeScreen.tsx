@@ -2,6 +2,7 @@ import {
   BORDER_RADIUS,
   ERROR_MESSAGES,
   LAYOUT,
+  MOBILE_PAGE_SIZE,
   RATING_CATEGORIES,
   ROUTES,
   TIMING,
@@ -28,7 +29,7 @@ import { useStores } from '@/features/stores/StoresContext';
 import { useShopNavigator } from '@/hooks/useShopNavigator';
 
 // ページネーション設定
-const PAGE_SIZE = 10;
+const PAGE_SIZE = MOBILE_PAGE_SIZE;
 // ブースト対象の店舗数（一覧上部に優先的に表示する店舗数）
 // 現在は上位3店舗をブーストする仕様
 const BOOST_COUNT = 3;

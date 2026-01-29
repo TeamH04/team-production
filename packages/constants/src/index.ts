@@ -3,7 +3,13 @@ import { UI_LABELS } from './ui-labels';
 import type { VisitedFilter } from '@team/types';
 
 export { MOBILE_PAGE_SIZE, WEB_PAGE_SIZE, DEFAULT_PAGE_SIZE } from './pagination';
-export { DEFAULT_API_BASE_URL, AUTH_REQUIRED, SESSION_NOT_FOUND } from './api';
+export {
+  DEFAULT_API_BASE_URL,
+  DEFAULT_API_PORT,
+  DEFAULT_API_PATH,
+  AUTH_REQUIRED,
+  SESSION_NOT_FOUND,
+} from './api';
 export { ROUTES, buildGoogleMapsUrl } from './routes';
 export { formatRating, formatPrice, formatGenderLabel, formatProviderLabel } from './formatting';
 export {

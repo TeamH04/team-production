@@ -48,7 +48,7 @@ export const ShopCard = memo(function ShopCard({
           <button
             type='button'
             onClick={handleFavoriteClick}
-            className='absolute right-4 top-4 rounded-full bg-white/85 p-2 shadow transition hover:bg-white'
+            className='absolute right-4 top-4 rounded-full bg-white/85 p-3 shadow transition hover:bg-white sm:p-2'
             aria-label={isFavorite ? 'お気に入りから削除' : 'お気に入りに追加'}
           >
             <span className={`text-lg ${isFavorite ? 'text-rose-500' : 'text-slate-400'}`}>
@@ -76,7 +76,7 @@ export const ShopCard = memo(function ShopCard({
               key={tag}
               type='button'
               onClick={event => handleTagClick(event, tag)}
-              className='rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700 transition hover:bg-slate-200'
+              className='min-h-[44px] rounded-full bg-slate-100 px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-200 sm:min-h-0 sm:px-2.5 sm:py-1'
             >
               #{tag}
             </button>

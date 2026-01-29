@@ -10,7 +10,7 @@ export default function Error({
   reset: () => void;
 }) {
   useEffect(() => {
-    // エラーをログに記録（本番環境ではエラー追跡サービスに送信可能）
+    // TODO: Sentry等のエラー追跡サービスへの送信を実装する
     console.error('Application error:', error);
   }, [error]);
 

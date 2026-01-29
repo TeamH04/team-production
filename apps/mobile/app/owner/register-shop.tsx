@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { HeaderBackButton, type HeaderBackButtonProps } from '@react-navigation/elements';
 import {
   BORDER_RADIUS,
+  ERROR_MESSAGES,
   LAYOUT,
   ROUTES,
   SHADOW_STYLES,
@@ -271,7 +272,7 @@ export default function RegisterShopScreen() {
       Alert.alert('送信完了', '店舗登録リクエストを受け付けました');
       router.replace(ROUTES.OWNER as Href);
     } catch (err) {
-      const message = extractErrorMessage(err, '送信に失敗しました');
+      const message = extractErrorMessage(err, ERROR_MESSAGES.SUBMIT_FAILED);
       Alert.alert('エラー', message);
     } finally {
       setLoading(false);

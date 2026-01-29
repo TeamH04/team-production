@@ -1,7 +1,17 @@
 /**
+ * デフォルトのAPIポート番号
+ */
+export const DEFAULT_API_PORT = '8080';
+
+/**
+ * デフォルトのAPIパス
+ */
+export const DEFAULT_API_PATH = '/api';
+
+/**
  * デフォルトのAPIベースURL
  */
-export const DEFAULT_API_BASE_URL = 'http://localhost:8080/api';
+export const DEFAULT_API_BASE_URL = `http://localhost:${DEFAULT_API_PORT}${DEFAULT_API_PATH}`;
 
 /**
  * 認証が必要なAPI操作で未認証時にスローされるエラーコード

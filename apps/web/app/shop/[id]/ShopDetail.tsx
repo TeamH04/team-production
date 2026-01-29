@@ -86,7 +86,7 @@ export default function ShopDetail({ shop }: ShopDetailProps) {
     [shop.placeId, shop.name],
   );
 
-  const isFav = isFavorite(shop.id);
+  const isFavorited = isFavorite(shop.id);
 
   const handleShare = useCallback(() => {
     const url = typeof window !== 'undefined' ? window.location.href : '';
@@ -125,7 +125,7 @@ export default function ShopDetail({ shop }: ShopDetailProps) {
               <button
                 type='button'
                 onClick={goToPrevious}
-                className='absolute left-5 top-1/2 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-lg font-semibold text-slate-800 shadow-lg ring-1 ring-white/60 transition hover:-translate-y-[55%] hover:bg-white'
+                className='absolute left-2 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-lg font-semibold text-slate-800 shadow-lg ring-1 ring-white/60 transition hover:-translate-y-[55%] hover:bg-white sm:left-5 sm:h-12 sm:w-12'
                 aria-label='前の画像へ'
               >
                 ←
@@ -133,20 +133,20 @@ export default function ShopDetail({ shop }: ShopDetailProps) {
               <button
                 type='button'
                 onClick={goToNext}
-                className='absolute right-5 top-1/2 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-lg font-semibold text-slate-800 shadow-lg ring-1 ring-white/60 transition hover:-translate-y-[55%] hover:bg-white'
+                className='absolute right-2 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-lg font-semibold text-slate-800 shadow-lg ring-1 ring-white/60 transition hover:-translate-y-[55%] hover:bg-white sm:right-5 sm:h-12 sm:w-12'
                 aria-label='次の画像へ'
               >
                 →
               </button>
 
               <div className='absolute bottom-4 left-0 right-0 flex items-center justify-center gap-2'>
-                {images.map((_, idx) => (
+                {images.map((imageUrl, idx) => (
                   <button
-                    key={idx}
+                    key={`dot-${idx}`}
                     type='button'
                     data-index={idx}
                     onClick={handleDotClick}
-                    className={`h-2 w-10 rounded-full transition ${
+                    className={`h-2 w-6 rounded-full transition sm:w-10 ${
                       idx === currentImage ? 'bg-white' : 'bg-white/40'
                     }`}
                     aria-label={`${idx + 1}番目の画像へ移動`}
@@ -175,27 +175,27 @@ export default function ShopDetail({ shop }: ShopDetailProps) {
               </p>
             </div>
 
-            <div className='flex items-center gap-3'>
+            <div className='flex w-full items-center gap-2 sm:w-auto sm:gap-3'>
               <button
                 type='button'
                 onClick={handleShare}
-                className='rounded-full bg-sky-100 px-4 py-2 text-sm font-semibold text-sky-800 transition hover:bg-sky-200'
+                className='min-h-[44px] flex-1 rounded-full bg-sky-100 px-4 py-2 text-sm font-semibold text-sky-800 transition hover:bg-sky-200 sm:flex-none'
               >
                 共有する
               </button>
               <button
                 type='button'
                 onClick={() => toggleFavorite(shop.id)}
-                aria-pressed={isFav}
-                className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
-                  isFav
+                aria-pressed={isFavorited}
+                className={`min-h-[44px] flex-1 rounded-full px-4 py-2 text-sm font-semibold transition sm:flex-none ${
+                  isFavorited
                     ? 'bg-rose-100 text-rose-700 hover:bg-rose-200'
                     : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                 }`}
               >
                 <span className='inline-flex items-center gap-2'>
-                  <HeartIcon filled={isFav} />
-                  <span>{isFav ? 'お気に入り済み' : 'お気に入りに追加'}</span>
+                  <HeartIcon filled={isFavorited} />
+                  <span>{isFavorited ? 'お気に入り済み' : 'お気に入りに追加'}</span>
                 </span>
               </button>
             </div>
@@ -241,7 +241,7 @@ export default function ShopDetail({ shop }: ShopDetailProps) {
         </div>
       </section>
 
-      <aside className='w-full max-w-xl space-y-4 rounded-3xl bg-white p-6 text-slate-900 shadow-xl ring-1 ring-slate-100 lg:sticky lg:top-10'>
+      <aside className='w-full space-y-4 rounded-3xl bg-white p-4 text-slate-900 shadow-xl ring-1 ring-slate-100 sm:p-6 lg:sticky lg:top-10 lg:max-w-xl'>
         <div className='flex items-start justify-between gap-2'>
           <div>
             <p className='text-xs uppercase tracking-[0.2em] text-slate-500'>Overview</p>

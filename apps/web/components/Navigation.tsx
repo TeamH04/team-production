@@ -3,11 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
-const NAV_ITEMS = [
-  { href: '/', label: 'ホーム' },
-  { href: '/favorites', label: 'お気に入り' },
-  { href: '/mypage', label: 'マイページ' },
-] as const;
+import { NAV_ITEMS } from '../lib/navigation';
 
 export function Navigation() {
   const pathname = usePathname();
@@ -15,10 +11,10 @@ export function Navigation() {
   return (
     <nav className='border-b border-slate-200 bg-white/90 backdrop-blur-sm'>
       <div className='mx-auto flex max-w-6xl items-center justify-between px-6 py-3 lg:px-10'>
-        <Link href='/' className='text-lg font-bold text-slate-900'>
-          Shop Discovery
+        <Link href='/' className='text-slate-900'>
+          <img src='/kaguri.svg' alt='Kuguriロゴ' width={120} height={32} className='h-8' />
         </Link>
-        <div className='flex gap-1'>
+        <div className='hidden gap-1 md:flex'>
           {NAV_ITEMS.map(item => {
             const isActive = pathname === item.href;
             return (
