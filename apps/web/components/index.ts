@@ -1,3 +1,4 @@
+export { BottomNav } from './BottomNav';
 export { Navigation } from './Navigation';
 export { ShopCard } from './ShopCard';
 export { EmptyState } from './EmptyState';
