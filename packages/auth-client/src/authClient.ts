@@ -3,6 +3,7 @@ import {
   type AuthState,
   type OwnerCheck,
   type UserWithMetadata,
+  devWarn,
   hasOwnerRole,
 } from '@team/core-utils';
 
@@ -22,7 +23,8 @@ async function safeAuthCall<R>(
       return null;
     }
     return extract(data);
-  } catch {
+  } catch (err) {
+    devWarn('[authClient] safeAuthCall failed:', err);
     return null;
   }
 }

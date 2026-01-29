@@ -1,8 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
 import { BORDER_RADIUS, FONT_WEIGHT, SPACING } from '@team/constants';
 import { formatDateJa } from '@team/core-utils';
-import { getReviewFileUrl } from '@team/hooks';
 import { palette, type ReviewCardProps } from '@team/mobile-ui';
+import { getReviewFileUrl } from '@team/shop-core';
 import { Image } from 'expo-image';
 import { memo } from 'react';
 import { Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';

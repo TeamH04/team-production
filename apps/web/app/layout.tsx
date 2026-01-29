@@ -2,6 +2,8 @@ import { colors, textOn, withAlpha } from '@team/theme';
 import { Geist, Geist_Mono, Kiwi_Maru } from 'next/font/google';
 import React from 'react';
 
+import { Navigation } from '../components/Navigation';
+
 import type { webFontName } from '@team/theme';
 import type { Metadata } from 'next';
 
@@ -96,6 +98,7 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} ${kiwiMaru.variable} antialiased`}
       >
         <style dangerouslySetInnerHTML={{ __html: colorStyles }} />
+        <Navigation />
         {children}
       </body>
     </html>

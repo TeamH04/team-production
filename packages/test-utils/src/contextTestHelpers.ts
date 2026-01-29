@@ -196,7 +196,7 @@ function createBaseMocks(authState: AuthState): BaseMocks {
  * );
  *
  * // 依存性を注入
- * __setFavoritesDependenciesForTesting({
+ * setFavoritesDependenciesForTesting({
  *   ...setup.baseMocks,
  *   ...setup.mocks,
  * });

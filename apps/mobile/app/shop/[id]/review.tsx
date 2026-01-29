@@ -1,13 +1,13 @@
 import { Ionicons } from '@expo/vector-icons';
 import {
-  AUTH_REQUIRED,
   BORDER_RADIUS,
   getRatingDisplay,
   RATING_CATEGORIES,
   REVIEW_CONFIG,
   UI_LABELS,
 } from '@team/constants';
-import { devWarn } from '@team/core-utils';
+import { devWarn, extractErrorMessage } from '@team/core-utils';
+import { useAuthErrorHandler } from '@team/hooks';
 import { palette } from '@team/mobile-ui';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
@@ -36,6 +36,7 @@ export default function ReviewModalScreen() {
   const navigation = useNavigation();
   const { addReview } = useReviews(); // レビュー追加関数
   const { getStoreById, loading: storesLoading } = useStores();
+  const { isAuthError } = useAuthErrorHandler();
 
   // 店舗情報を取得
   const shop = useMemo(() => (id ? getStoreById(id) : undefined), [getStoreById, id]);
@@ -57,6 +58,7 @@ export default function ReviewModalScreen() {
 
   useEffect(() => {
     if (!id) return;
+    const controller = new AbortController();
     let active = true;
     setMenuLoading(true);
     api
@@ -70,6 +72,7 @@ export default function ReviewModalScreen() {
         setMenuOptions(mapped);
       })
       .catch(err => {
+        if (!active) return;
         devWarn('Failed to fetch menus:', err);
       })
       .finally(() => {
@@ -79,6 +82,7 @@ export default function ReviewModalScreen() {
       });
     return () => {
       active = false;
+      controller.abort();
     };
   }, [id]);
 
@@ -203,8 +207,8 @@ export default function ReviewModalScreen() {
       );
       router.back();
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Unknown error';
-      if (message === AUTH_REQUIRED) {
+      const message = extractErrorMessage(err, 'Unknown error');
+      if (isAuthError(message)) {
         Alert.alert('ログインが必要です', 'レビュー投稿にはログインが必要です。', [
           { text: UI_LABELS.CANCEL, style: 'cancel' },
           { text: UI_LABELS.LOGIN, onPress: () => router.push('/login') },

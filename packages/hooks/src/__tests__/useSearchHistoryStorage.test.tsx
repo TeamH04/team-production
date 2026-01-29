@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
 import { afterEach, beforeEach, describe, mock, test } from 'node:test';
 
-import { act, useEffect, useRef } from 'react';
-import TestRenderer from 'react-test-renderer';
+import { createHookHarness, flushPromises, setupReactActEnvironment } from '@team/test-utils';
+import { act } from 'react';
 
 import {
   useSearchHistoryStorage,
@@ -10,103 +10,12 @@ import {
   type UseSearchHistoryStorageOptions,
 } from '../useSearchHistoryStorage';
 
-import type { ReactElement, ReactNode } from 'react';
-import type { ReactTestRenderer } from 'react-test-renderer';
-
 // =============================================================================
 // Test Setup Utilities
 // =============================================================================
 
 // React act環境を有効化
-const globalForReactAct = globalThis as typeof globalThis & {
-  IS_REACT_ACT_ENVIRONMENT?: boolean;
-};
-globalForReactAct.IS_REACT_ACT_ENVIRONMENT = true;
-
-/**
- * 全ての保留中のPromiseを解決するまで待機する
- */
-const flushPromises = (): Promise<void> =>
-  new Promise(resolve => {
-    if (typeof setImmediate !== 'undefined') {
-      setImmediate(resolve);
-    } else {
-      setTimeout(resolve, 0);
-    }
-  });
-
-// =============================================================================
-// Test Harness
-// =============================================================================
-
-type HookHarness<T> = {
-  getValue: () => T;
-  unmount: () => void;
-};
-
-/**
- * フックテスト用の汎用Harnessを作成
- * Provider不要のフック向け
- */
-const createHookHarness = <T,>(
-  useHook: () => T,
-  wrapper?: (props: { children: ReactNode }) => ReactElement,
-): HookHarness<T> => {
-  let currentValue: T | undefined;
-  let renderer: ReactTestRenderer | undefined;
-
-  const handleValue = (value: T) => {
-    currentValue = value;
-  };
-
-  const Consumer = ({ onValue }: { onValue: (value: T) => void }) => {
-    const value = useHook();
-    const mountedRef = useRef(true);
-
-    useEffect(() => {
-      return () => {
-        mountedRef.current = false;
-      };
-    }, []);
-
-    useEffect(() => {
-      if (mountedRef.current) {
-        onValue(value);
-      }
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [value]);
-
-    return null;
-  };
-
-  const element = wrapper ? (
-    wrapper({ children: <Consumer onValue={handleValue} /> })
-  ) : (
-    <Consumer onValue={handleValue} />
-  );
-
-  act(() => {
-    renderer = TestRenderer.create(element);
-  });
-
-  if (!renderer) {
-    throw new Error('Renderer setup failed');
-  }
-
-  return {
-    getValue: () => {
-      if (currentValue === undefined) {
-        throw new Error('Hook value not available');
-      }
-      return currentValue;
-    },
-    unmount: () => {
-      act(() => {
-        renderer!.unmount();
-      });
-    },
-  };
-};
+setupReactActEnvironment();
 
 // =============================================================================
 // Mock Storage Factory

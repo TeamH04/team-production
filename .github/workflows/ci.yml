@@ -59,7 +59,7 @@ jobs:
   lint:
     name: Lint & Format Check
     needs: changes
-    if: ${{ needs.changes.outputs.root == 'true' || needs.changes.outputs.backend == 'true' || needs.changes.outputs.mobile == 'true' }}
+    if: ${{ needs.changes.outputs.root == 'true' || needs.changes.outputs.backend == 'true' || needs.changes.outputs.mobile == 'true' || needs.changes.outputs.web == 'true' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -273,7 +273,7 @@ jobs:
   security-audit-node:
     name: Security Audit (Node.js)
     needs: changes
-    if: ${{ needs.changes.outputs.mobile == 'true' || needs.changes.outputs.root == 'true' }}
+    if: ${{ needs.changes.outputs.mobile == 'true' || needs.changes.outputs.web == 'true' || needs.changes.outputs.root == 'true' }}
     runs-on: ubuntu-latest
 
     steps:

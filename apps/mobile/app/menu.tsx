@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { BORDER_RADIUS, LAYOUT, SPACING, UI_LABELS } from '@team/constants';
+import { extractErrorMessage } from '@team/core-utils';
 import { palette } from '@team/mobile-ui';
 import { MENU_TAB_MAP, type ShopMenuItem } from '@team/types';
 import { useLocalSearchParams, useNavigation } from 'expo-router';
@@ -117,7 +118,7 @@ export default function ShopMenuScreen() {
           setMenuItems(mapped);
         } catch (err) {
           if (!active) return;
-          const message = err instanceof Error ? err.message : 'メニューの取得に失敗しました';
+          const message = extractErrorMessage(err, 'メニューの取得に失敗しました');
           setError(message);
         } finally {
           if (active) setLoading(false);

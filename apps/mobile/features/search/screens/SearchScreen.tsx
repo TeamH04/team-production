@@ -1,36 +1,30 @@
 /* global __DEV__ */
-import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   BORDER_RADIUS,
+  DEFAULT_SEARCH_SORT_ORDERS,
   ERROR_MESSAGES,
-  FAVORITES_SORT_OPTIONS,
   LAYOUT,
   ROUTES,
+  SEARCH_SORT_OPTIONS,
   SPACING,
   VISITED_FILTER_OPTIONS,
+  type SearchSortType,
+  type SortOrder,
 } from '@team/constants';
+import { getIdNum } from '@team/core-utils';
 import { useSearchHistoryStorage, useShopFilter } from '@team/hooks';
 import { palette, ToggleButton } from '@team/mobile-ui';
 import {
   extractCategories,
   extractTagsByCategory,
   formatShopMeta,
-  type SortType,
+  getSortOrderLabel,
+  sortShops,
 } from '@team/shop-core';
-import { withAlpha } from '@team/theme';
 import { useRouter } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
-import {
-  FlatList,
-  Image,
-  Modal,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { FlatList, Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { SearchBar } from '@/components/SearchBar';
 import { ShopCard } from '@/components/ShopCard';
@@ -49,8 +43,11 @@ export default function SearchScreen() {
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const { stores: shops, loading, error: loadError } = useStores();
   const [filterVisited, setFilterVisited] = useState<VisitedFilter>('all');
-  const [sortType, setSortType] = useState<SortType>('newest');
-  const [showSortModal, setShowSortModal] = useState(false);
+
+  const [sortBy, setSortBy] = useState<SearchSortType>('default');
+  const [sortOrders, setSortOrders] = useState<Record<SearchSortType, SortOrder>>(
+    DEFAULT_SEARCH_SORT_ORDERS,
+  );
 
   // 検索履歴の永続化（@team/hooksから）
   const { searchHistory, addToHistory, removeFromHistory } = useSearchHistoryStorage({
@@ -63,7 +60,7 @@ export default function SearchScreen() {
     searchText: currentSearchText.trim(),
     categories: activeCategories,
     tags: selectedTags,
-    sortType,
+    sortType: 'default',
   });
 
   // カテゴリ・タグ抽出（@team/shop-coreから）
@@ -78,7 +75,7 @@ export default function SearchScreen() {
     setCurrentSearchText('');
     setActiveCategories([]);
     setSelectedTags([]);
-    setSortType('newest');
+    setSortBy('default');
     setFilterVisited('all');
   }, []);
 
@@ -100,10 +97,19 @@ export default function SearchScreen() {
     [userTypedText, addToHistory],
   );
 
-  const handleSortSelect = useCallback((value: SortType) => {
-    setSortType(value);
-    setShowSortModal(false);
-  }, []);
+  const handleSearchSortTypePress = useCallback(
+    (value: SearchSortType) => {
+      if (sortBy !== value) setSortBy(value);
+    },
+    [sortBy],
+  );
+
+  const toggleSortOrder = useCallback(() => {
+    setSortOrders(prev => ({
+      ...prev,
+      [sortBy]: prev[sortBy] === 'desc' ? 'asc' : 'desc',
+    }));
+  }, [sortBy]);
 
   const handleRemoveHistory = useCallback(
     (item: string) => {
@@ -139,10 +145,11 @@ export default function SearchScreen() {
     [router],
   );
 
-  const getCurrentSortLabel = () => {
-    const option = FAVORITES_SORT_OPTIONS.find(opt => opt.value === sortType);
-    return option?.label || '新着順';
-  };
+  // ソートラベル取得（@team/shop-coreから）
+  const sortOrderLabel = useMemo(
+    () => getSortOrderLabel(sortBy, sortOrders[sortBy]),
+    [sortBy, sortOrders],
+  );
 
   const searchResults = useMemo(() => {
     if (!hasSearchCriteria) return [];
@@ -156,8 +163,37 @@ export default function SearchScreen() {
       );
     }
 
+    const currentOrder = sortOrders[sortBy];
+
+    switch (sortBy) {
+      case 'newest': {
+        const sorted = sortShops(filtered, 'newest');
+        filtered = currentOrder === 'asc' ? [...sorted].reverse() : sorted;
+        break;
+      }
+      case 'rating': {
+        const sortType = currentOrder === 'asc' ? 'rating-low' : 'rating-high';
+        filtered = sortShops(filtered, sortType);
+        break;
+      }
+      case 'registered': {
+        const sorted = [...filtered].sort((a, b) => {
+          const leftId = getIdNum(a.id);
+          const rightId = getIdNum(b.id);
+          if (leftId !== 0 || rightId !== 0) {
+            return leftId - rightId;
+          }
+          return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+        });
+        filtered = currentOrder === 'asc' ? sorted : sorted.reverse();
+        break;
+      }
+      default:
+        break;
+    }
+
     return filtered;
-  }, [baseFilteredShops, filterVisited, hasSearchCriteria, isVisited]);
+  }, [baseFilteredShops, filterVisited, hasSearchCriteria, isVisited, sortBy, sortOrders]);
 
   const formatShopMetaCompact = useCallback((shop: Shop) => formatShopMeta(shop, 'compact'), []);
 
@@ -185,71 +221,17 @@ export default function SearchScreen() {
         <Text style={styles.screenTitle}>お店を検索</Text>
       </View>
 
-      {/* 検索・ソート操作パネル */}
-      <View style={styles.controlPanel}>
-        {/* 検索バー */}
+      <View style={styles.searchBarContainer}>
         <SearchBar
           value={userTypedText}
           onChangeText={setUserTypedText}
           onClear={handleClearAll}
+          placeholder='お店名・雰囲気'
           onSubmitEditing={() => handleSearch()}
-          showClearButton={userTypedText.length > 0 || hasSearchCriteria}
+          showClearButton={!!userTypedText || hasSearchCriteria}
           accessibilityLabel='店舗検索'
         />
 
-        {/* ソートボタン */}
-        <Pressable
-          style={styles.sortButton}
-          onPress={() => setShowSortModal(true)}
-          accessibilityLabel='ソートオプション'
-          accessibilityHint={`現在のソート：${getCurrentSortLabel()}`}
-          accessibilityRole='button'
-        >
-          <Ionicons name='funnel' size={18} color={palette.primaryText} />
-          <Text style={styles.sortButtonText}>{getCurrentSortLabel()}</Text>
-        </Pressable>
-      </View>
-
-      {/* ソートモーダル */}
-      <Modal
-        visible={showSortModal}
-        transparent={true}
-        animationType='fade'
-        onRequestClose={() => setShowSortModal(false)}
-      >
-        <Pressable style={styles.modalOverlay} onPress={() => setShowSortModal(false)}>
-          <View style={styles.sortModalContent}>
-            <FlatList
-              data={FAVORITES_SORT_OPTIONS}
-              keyExtractor={item => item.value}
-              scrollEnabled={false}
-              contentContainerStyle={styles.sortOptionsList}
-              style={styles.sortOptionsFlatList}
-              ItemSeparatorComponent={() => <View style={styles.sortOptionSeparator} />}
-              renderItem={({ item: option }) => (
-                <Pressable
-                  style={[styles.sortOption, sortType === option.value && styles.sortOptionActive]}
-                  onPress={() => handleSortSelect(option.value)}
-                >
-                  <Text
-                    style={[
-                      styles.sortOptionText,
-                      sortType === option.value && styles.sortOptionTextActive,
-                    ]}
-                  >
-                    {option.label}
-                  </Text>
-                  {sortType === option.value && (
-                    <Ionicons name='checkmark' size={20} color={palette.primary} />
-                  )}
-                </Pressable>
-              )}
-            />
-          </View>
-        </Pressable>
-      </Modal>
-
-      <View style={styles.searchBarContainer}>
         {currentSearchText.length === 0 && (
           <View style={styles.tagGroupsContainer}>
             <Text style={styles.sectionLabel}>カテゴリから探す（複数選択可）</Text>
@@ -323,6 +305,33 @@ export default function SearchScreen() {
 
           {searchResults.length > 0 ? (
             <View>
+              <View style={styles.sortRow}>
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  style={styles.sortOptionsScroll}
+                  contentContainerStyle={styles.sortOptionsContent}
+                >
+                  {SEARCH_SORT_OPTIONS.map(option => (
+                    <ToggleButton
+                      key={option.value}
+                      label={option.label}
+                      isActive={sortBy === option.value}
+                      onPress={() => handleSearchSortTypePress(option.value)}
+                      size='small'
+                    />
+                  ))}
+                </ScrollView>
+                {sortBy !== 'default' && (
+                  <View style={styles.fixedOrderContainer}>
+                    <View style={styles.verticalDivider} />
+                    <Pressable onPress={toggleSortOrder} style={styles.orderButton}>
+                      <Text style={styles.orderButtonText}>{sortOrderLabel}</Text>
+                    </Pressable>
+                  </View>
+                )}
+              </View>
+
               <View style={styles.categorySection}>
                 {searchResults.map(item => (
                   <ShopCard
@@ -353,7 +362,7 @@ export default function SearchScreen() {
           {searchHistory.length > 0 ? (
             <FlatList
               data={searchHistory}
-              keyExtractor={(item, index) => `${item}-${index}`}
+              keyExtractor={item => item}
               scrollEnabled={false}
               renderItem={renderHistoryItem}
             />
@@ -390,12 +399,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.XL,
     paddingTop: SPACING.XXL,
   },
-  controlPanel: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: 12,
-    marginBottom: 16,
-  },
   divider: {
     backgroundColor: palette.border,
     height: 1,
@@ -426,6 +429,12 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginBottom: SPACING.XXXL,
   },
+  fixedOrderContainer: {
+    alignItems: 'center',
+    backgroundColor: palette.background,
+    flexDirection: 'row',
+    paddingLeft: 4,
+  },
   headerTextBlock: {
     marginBottom: SPACING.XXL,
   },
@@ -454,11 +463,20 @@ const styles = StyleSheet.create({
     fontSize: 20,
     marginBottom: SPACING.LG,
   },
-  modalOverlay: {
+  orderButton: {
     alignItems: 'center',
-    backgroundColor: withAlpha('#000000', 0.5),
-    flex: 1,
-    justifyContent: 'center',
+    backgroundColor: palette.background,
+    borderColor: palette.border,
+    borderRadius: BORDER_RADIUS.MEDIUM,
+    borderWidth: 1,
+    paddingHorizontal: SPACING.MD,
+    paddingVertical: 6,
+  },
+  orderButtonText: {
+    color: palette.secondaryText,
+    fontFamily: fonts.regular,
+    fontSize: 12,
+    textAlign: 'center',
   },
   removeBtn: {
     color: palette.secondaryText,
@@ -486,58 +504,19 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginBottom: SPACING.LG,
   },
-  sortButton: {
+  sortOptionsContent: {
     alignItems: 'center',
-    backgroundColor: palette.surface,
-    borderColor: palette.border,
-    borderRadius: 8,
-    borderWidth: 1,
-    flexDirection: 'row',
-    gap: 6,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
+    gap: SPACING.SM,
+    paddingRight: SPACING.SM,
   },
-  sortButtonText: {
-    color: palette.primaryText,
-    fontFamily: fonts.medium,
-    fontSize: 13,
+  sortOptionsScroll: {
+    flex: 1,
+    marginRight: SPACING.SM,
   },
-  sortModalContent: {
-    backgroundColor: palette.surface,
-    borderRadius: 12,
-    boxShadow: '0px 4px 8px rgba(0, 0, 0, 0.15)',
-    maxHeight: 300,
-    minWidth: 250,
-    overflow: 'hidden',
-    width: 280,
-  },
-  sortOption: {
+  sortRow: {
     alignItems: 'center',
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingVertical: 14,
-  },
-  sortOptionActive: {
-    backgroundColor: palette.highlight,
-  },
-  sortOptionSeparator: {
-    backgroundColor: palette.border,
-    height: 1,
-  },
-  sortOptionText: {
-    color: palette.primaryText,
-    fontFamily: fonts.medium,
-    fontSize: 14,
-  },
-  sortOptionTextActive: {
-    // fontWeight is handled by fontFamily fonts.medium
-  },
-  sortOptionsFlatList: {
-    width: 280,
-  },
-  sortOptionsList: {
-    flexGrow: 0,
+    marginBottom: SPACING.LG,
   },
   subSectionLabel: {
     color: palette.secondaryText,
@@ -563,6 +542,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: SPACING.SM,
+  },
+  verticalDivider: {
+    backgroundColor: palette.border,
+    height: 18,
+    marginRight: SPACING.SM,
+    width: 1,
   },
   visitedFilterRow: {
     flexDirection: 'row',

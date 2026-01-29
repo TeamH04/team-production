@@ -237,6 +237,16 @@ export type Review = {
   files: ReviewFile[];
 };
 
+/**
+ * Web表示用のレビュー型
+ * Review 型を拡張して userName を追加
+ * files フィールドをオプショナルに変更
+ */
+export interface ReviewWithUser extends Omit<Review, 'files'> {
+  userName: string;
+  files?: Review['files'];
+}
+
 export type ReviewAsset = {
   uri: string;
   fileName: string;
@@ -275,3 +285,96 @@ export type OAuthLoadingState = OAuthProvider | 'guest' | null;
  * 訪問済みフィルター
  */
 export type VisitedFilter = 'all' | 'visited' | 'not_visited';
+
+// =============================================================================
+// Component Props Types (Shared between Web and Mobile)
+// =============================================================================
+
+/**
+ * レビューカードで使用できるレビュー型
+ * Review または ReviewWithUser を許容するユニオン型
+ */
+export type ReviewCardReview = Review | ReviewWithUser;
+
+/**
+ * ShopCardのバリアント型（モバイル専用）
+ */
+export type ShopCardVariant = 'large' | 'compact';
+
+/**
+ * ShopCardコンポーネントの共通props
+ * プラットフォーム固有のスタイルプロパティは各アプリで拡張
+ */
+export interface BaseShopCardProps {
+  /** 店舗データ */
+  shop: Shop;
+  /** 優先読み込み（画像の preload） */
+  priority?: boolean;
+}
+
+/**
+ * Web用のShopCardProps
+ */
+export interface WebShopCardProps extends BaseShopCardProps {
+  /** タグクリック時のコールバック */
+  onTagClick?: (tag: string) => void;
+  /** お気に入りボタンを表示するか */
+  showFavoriteButton?: boolean;
+  /** お気に入り状態 */
+  isFavorite?: boolean;
+  /** お気に入りトグル時のコールバック */
+  onFavoriteToggle?: () => void;
+}
+
+/**
+ * Mobile用のShopCardProps基本型
+ * スタイルプロパティはmobile-uiで拡張
+ */
+export interface MobileShopCardPropsBase extends BaseShopCardProps {
+  /** カードクリック時のコールバック */
+  onPress: (shopId: string) => void;
+  /** カードのバリアント */
+  variant?: ShopCardVariant;
+  /** メタ情報のフォーマット関数 */
+  formatMeta?: (shop: Shop) => string;
+  /** ブースト表示（炎アイコン・ボーダー強調） */
+  isBoosted?: boolean;
+  /** おすすめカテゴリ（例：「味」「接客」など）- large variantで表示 */
+  featuredCategory?: string;
+}
+
+/**
+ * ReviewCardコンポーネントの共通props
+ */
+export interface BaseReviewCardProps<T extends ReviewCardReview = Review> {
+  /** レビューデータ */
+  review: T;
+  /** いいねトグル時のコールバック */
+  onLikeToggle?: () => void;
+}
+
+/**
+ * Web用のReviewCardProps
+ */
+export type WebReviewCardProps = BaseReviewCardProps<ReviewWithUser>;
+
+/**
+ * Mobile用のReviewCardProps基本型
+ * スタイルプロパティはmobile-uiで拡張
+ */
+export interface MobileReviewCardPropsBase extends BaseReviewCardProps<Review> {
+  /** 店舗名 */
+  shopName?: string;
+  /** 店舗画像URL */
+  shopImage?: string;
+  /** カード押下時のコールバック */
+  onPress?: () => void;
+  /** いいねボタン押下時のコールバック */
+  onLikePress?: () => void;
+  /** いいね状態（review.likedByMeを上書き） */
+  isLiked?: boolean;
+  /** いいね数（review.likesCountを上書き） */
+  likeCount?: number;
+  /** 店舗情報を表示するか */
+  showShopInfo?: boolean;
+}

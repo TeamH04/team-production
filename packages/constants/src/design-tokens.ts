@@ -128,6 +128,8 @@ export const LAYOUT = {
   BUTTON_HEIGHT_MD: 44,
   /** Large button height */
   BUTTON_HEIGHT_LG: 48,
+  /** Minimum button width */
+  BUTTON_MIN_WIDTH: 160,
   /** Parallax scroll view header height */
   PARALLAX_HEADER_HEIGHT: 250,
 } as const;

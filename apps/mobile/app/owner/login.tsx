@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { ERROR_MESSAGES, isValidEmail, ROUTES, SESSION_NOT_FOUND } from '@team/constants';
+import { extractErrorMessage } from '@team/core-utils';
 import { palette } from '@team/mobile-ui';
 import { BlurView } from 'expo-blur';
 import { type Href, useNavigation, useRouter } from 'expo-router';
@@ -76,7 +77,7 @@ export default function OwnerLoginScreen() {
       try {
         await ensureUserExistsInDB();
       } catch (err) {
-        const raw = err instanceof Error ? err.message : 'ログイン処理に失敗しました';
+        const raw = extractErrorMessage(err, 'ログイン処理に失敗しました');
         const message =
           raw === SESSION_NOT_FOUND
             ? 'セッションを取得できませんでした。もう一度ログインしてください。'

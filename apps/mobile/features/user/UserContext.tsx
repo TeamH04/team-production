@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { createSafeContext } from '@team/core-utils';
+import { createSafeContext, devWarn } from '@team/core-utils';
 import { useUserState } from '@team/hooks';
 import { useMemo } from 'react';
 
@@ -22,9 +22,10 @@ async function fetchUser(): Promise<UserProfile | null> {
   let apiUser;
   try {
     apiUser = await api.fetchAuthMe(token);
-  } catch {
+  } catch (err) {
     // 認証エラーやネットワークエラー時は null を返す
     // エラーは useUserState の catch ブロックでもハンドリングされる
+    devWarn('Failed to fetch user:', err);
     return null;
   }
   if (!apiUser) return null;

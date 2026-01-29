@@ -3,10 +3,12 @@ import {
   type AuthResolver,
   createDependencyInjector,
   createSafeContext,
+  devWarn,
   ensureAuthenticated,
 } from '@team/core-utils';
 import { uploadToSignedUrl } from '@team/file-utils';
-import { mapApiReview, useOptimisticMutation, useSafeState } from '@team/hooks';
+import { useOptimisticMutation, useSafeState } from '@team/hooks';
+import { mapApiReview } from '@team/shop-core';
 import React, { useCallback, useMemo, useRef } from 'react';
 
 import { api, type ReviewSort, type UploadFileInput } from '@/lib/api';
@@ -133,6 +135,8 @@ export function ReviewsProvider({ children }: { children: React.ReactNode }) {
           ...prev,
           [shopId]: reviews.map(mapApiReview),
         }));
+      } catch (err) {
+        devWarn('Failed to load reviews:', err);
       } finally {
         setLoadingByShop(prev => ({ ...prev, [shopId]: false }));
       }

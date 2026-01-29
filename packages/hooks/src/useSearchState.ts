@@ -6,14 +6,11 @@ import {
   type SortOrder,
 } from '@team/constants';
 import { getSortOrderLabel as getSortOrderLabelUtil } from '@team/shop-core';
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 // =============================================================================
 // Types
 // =============================================================================
-
-// Note: SearchSortOrders は @team/constants からre-export
-export type { SearchSortOrders };
 
 /**
  * 検索状態
@@ -159,8 +156,10 @@ export function useSearchState({
   const [sortOrders, setSortOrders] = useState<SearchSortOrders>(initialSortOrders);
 
   // 派生状態
-  const hasSearchCriteria =
-    currentSearchText.length > 0 || selectedTags.length > 0 || activeCategories.length > 0;
+  const hasSearchCriteria = useMemo(
+    () => currentSearchText.length > 0 || selectedTags.length > 0 || activeCategories.length > 0,
+    [currentSearchText, selectedTags, activeCategories],
+  );
 
   const currentSortOrder = sortOrders[sortBy];
 
@@ -244,29 +243,51 @@ export function useSearchState({
     setSortBy('default');
   }, []);
 
-  return {
-    // 検索状態
-    userTypedText,
-    currentSearchText,
-    activeCategories,
-    selectedTags,
-    searchHistory,
-    hasSearchCriteria,
+  return useMemo(
+    () => ({
+      // 検索状態
+      userTypedText,
+      currentSearchText,
+      activeCategories,
+      selectedTags,
+      searchHistory,
+      hasSearchCriteria,
 
-    // ソート状態
-    sortBy,
-    sortOrders,
-    currentSortOrder,
+      // ソート状態
+      sortBy,
+      sortOrders,
+      currentSortOrder,
 
-    // アクション
-    setUserTypedText,
-    handleCategoryPress,
-    handleTagPress,
-    handleSearch,
-    handleRemoveHistory,
-    handleSortTypePress,
-    toggleSortOrder,
-    getSortOrderLabel,
-    handleClearAll,
-  };
+      // アクション
+      setUserTypedText,
+      handleCategoryPress,
+      handleTagPress,
+      handleSearch,
+      handleRemoveHistory,
+      handleSortTypePress,
+      toggleSortOrder,
+      getSortOrderLabel,
+      handleClearAll,
+    }),
+    [
+      userTypedText,
+      currentSearchText,
+      activeCategories,
+      selectedTags,
+      searchHistory,
+      hasSearchCriteria,
+      sortBy,
+      sortOrders,
+      currentSortOrder,
+      setUserTypedText,
+      handleCategoryPress,
+      handleTagPress,
+      handleSearch,
+      handleRemoveHistory,
+      handleSortTypePress,
+      toggleSortOrder,
+      getSortOrderLabel,
+      handleClearAll,
+    ],
+  );
 }

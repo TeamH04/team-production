@@ -2,10 +2,10 @@ import { Ionicons } from '@expo/vector-icons';
 import { ERROR_MESSAGES, FAVORITES_SORT_OPTIONS, LAYOUT } from '@team/constants';
 import { useShopFilter } from '@team/hooks';
 import { palette } from '@team/mobile-ui';
-import { formatShopMeta, type SortType } from '@team/shop-core';
+import { formatShopMeta } from '@team/shop-core';
 import { withAlpha } from '@team/theme';
 import { useFocusEffect } from 'expo-router';
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { Alert, FlatList, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { SearchBar } from '@/components/SearchBar';
@@ -14,6 +14,10 @@ import { fonts } from '@/constants/typography';
 import { useFavorites } from '@/features/favorites/FavoritesContext';
 import { useStores } from '@/features/stores/StoresContext';
 import { useShopNavigator } from '@/hooks/useShopNavigator';
+
+import type { SortType } from '@team/types';
+
+const SortOptionSeparator = () => <View style={styles.sortOptionSeparator} />;
 
 export default function FavoritesScreen() {
   const { navigateToShop } = useShopNavigator();
@@ -32,7 +36,10 @@ export default function FavoritesScreen() {
   );
 
   // お気に入りに登録されている店舗のみをフィルタリング
-  const favoriteShops = stores.filter(shop => favorites.has(shop.id));
+  const favoriteShops = useMemo(
+    () => stores.filter(shop => favorites.has(shop.id)),
+    [stores, favorites],
+  );
 
   // 検索とソートを適用
   const { filteredShops: filteredAndSortedShops } = useShopFilter({
@@ -51,13 +58,12 @@ export default function FavoritesScreen() {
   };
 
   /**
-   * 現在選択されているソート方法のラベルを取得
-   * @returns ソート方法の表示名
+   * 現在選択されているソート方法のラベル
    */
-  const getCurrentSortLabel = () => {
+  const currentSortLabel = useMemo(() => {
     const option = FAVORITES_SORT_OPTIONS.find(opt => opt.value === sortType);
     return option?.label || '新着順';
-  };
+  }, [sortType]);
 
   return (
     <View style={styles.container}>
@@ -73,7 +79,9 @@ export default function FavoritesScreen() {
           value={searchText}
           onChangeText={setSearchText}
           onClear={() => setSearchText('')}
+          placeholder='検索'
           accessibilityLabel='お気に入り検索'
+          accessibilityHint='店舗名、説明、カテゴリーで検索'
         />
 
         {/* ソートボタン */}
@@ -81,11 +89,11 @@ export default function FavoritesScreen() {
           style={styles.sortButton}
           onPress={() => setShowSortModal(true)}
           accessibilityLabel='ソートオプション'
-          accessibilityHint={`現在のソート：${getCurrentSortLabel()}`}
+          accessibilityHint={`現在のソート：${currentSortLabel}`}
           accessibilityRole='button'
         >
           <Ionicons name='funnel' size={18} color={palette.primaryText} />
-          <Text style={styles.sortButtonText}>{getCurrentSortLabel()}</Text>
+          <Text style={styles.sortButtonText}>{currentSortLabel}</Text>
         </Pressable>
       </View>
 
@@ -104,7 +112,7 @@ export default function FavoritesScreen() {
               scrollEnabled={false}
               contentContainerStyle={styles.sortOptionsList}
               style={styles.sortOptionsFlatList}
-              ItemSeparatorComponent={() => <View style={styles.sortOptionSeparator} />}
+              ItemSeparatorComponent={SortOptionSeparator}
               renderItem={({ item: option }) => (
                 <Pressable
                   style={[styles.sortOption, sortType === option.value && styles.sortOptionActive]}
@@ -218,7 +226,7 @@ const styles = StyleSheet.create({
     backgroundColor: palette.surface,
     borderRadius: 12,
     boxShadow: '0px 4px 8px rgba(0, 0, 0, 0.15)',
-    maxHeight: 300,
+    maxHeight: 200,
     minWidth: 250,
     overflow: 'hidden',
     width: 280,

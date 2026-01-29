@@ -3,7 +3,7 @@
  *
  * mobile/web で共有するテスト用モックデータ生成関数
  */
-import type { ApiReview, ApiStore, Shop } from '@team/types';
+import type { ApiReview, ApiStore, RatingDetails, ReviewWithUser, Shop } from '@team/types';
 
 /** テスト用デフォルトトークン */
 export const TEST_DEFAULT_TOKEN = 'test-token';
@@ -111,3 +111,124 @@ export const createMockApiReview = (
   files: [],
   ...overrides,
 });
+
+// =============================================================================
+// Mock Review Templates & Utilities
+// =============================================================================
+
+/**
+ * モックレビューテンプレート
+ * テストやPOC用のダミーレビューデータ生成に使用
+ */
+export const MOCK_REVIEW_TEMPLATES: ReadonlyArray<{
+  comment: string;
+  rating: number;
+  ratingDetails: RatingDetails;
+}> = [
+  {
+    comment: 'とても美味しかったです！雰囲気も良くてまた来たいと思います。',
+    rating: 5,
+    ratingDetails: { taste: 5, atmosphere: 5, service: 4, speed: 4, cleanliness: 5 },
+  },
+  {
+    comment: '料理の味は良かったですが、少し混んでいて待ち時間がありました。',
+    rating: 4,
+    ratingDetails: { taste: 5, atmosphere: 4, service: 4, speed: 3, cleanliness: 4 },
+  },
+  {
+    comment: '落ち着いた雰囲気で作業するのにぴったりでした。Wi-Fiも快適です。',
+    rating: 4,
+    ratingDetails: { taste: 4, atmosphere: 5, service: 4, speed: 4, cleanliness: 5 },
+  },
+  {
+    comment: 'コスパが良くておすすめです。ランチタイムは特にお得！',
+    rating: 4,
+    ratingDetails: { taste: 4, atmosphere: 4, service: 4, speed: 5, cleanliness: 4 },
+  },
+  {
+    comment: '接客がとても丁寧で気持ちよく過ごせました。',
+    rating: 5,
+    ratingDetails: { taste: 4, atmosphere: 4, service: 5, speed: 4, cleanliness: 5 },
+  },
+] as const;
+
+/**
+ * モックユーザー名リスト
+ * テストやPOC用のダミーユーザー名
+ */
+export const MOCK_USER_NAMES: readonly string[] = [
+  '田中さん',
+  '山田さん',
+  '鈴木さん',
+  '佐藤さん',
+  '高橋さん',
+] as const;
+
+/**
+ * ReviewWithUser のモックデータを作成
+ *
+ * @param overrides - デフォルト値を上書きするプロパティ
+ * @returns ReviewWithUser オブジェクト
+ */
+export const createMockReviewWithUser = (
+  overrides: Partial<ReviewWithUser> = {},
+): ReviewWithUser => ({
+  id: 'mock-review-1',
+  shopId: 'shop-1',
+  userId: 'user-1',
+  userName: MOCK_USER_NAMES[0],
+  rating: MOCK_REVIEW_TEMPLATES[0].rating,
+  ratingDetails: MOCK_REVIEW_TEMPLATES[0].ratingDetails,
+  comment: MOCK_REVIEW_TEMPLATES[0].comment,
+  createdAt: TEST_BASE_DATE_ISO,
+  likesCount: 0,
+  likedByMe: false,
+  ...overrides,
+});
+
+export type GenerateMockReviewsOptions = {
+  /** レビュー生成数 */
+  count: number;
+  /** 基準日（デフォルト: TEST_BASE_DATE） */
+  baseDate?: string;
+  /** 日付間隔（日数、デフォルト: 3） */
+  dateIntervalDays?: number;
+};
+
+/**
+ * 店舗IDに基づいてモックレビューを生成
+ *
+ * @param shopId - 店舗ID
+ * @param options - 生成オプション
+ * @returns ReviewWithUser の配列
+ */
+export const generateMockReviews = (
+  shopId: string,
+  options: GenerateMockReviewsOptions,
+): ReviewWithUser[] => {
+  const { count, baseDate = TEST_BASE_DATE, dateIntervalDays = 3 } = options;
+  const reviews: ReviewWithUser[] = [];
+  const baseDateObj = new Date(baseDate);
+
+  for (let i = 0; i < count; i++) {
+    const template = MOCK_REVIEW_TEMPLATES[i % MOCK_REVIEW_TEMPLATES.length];
+    const userName = MOCK_USER_NAMES[i % MOCK_USER_NAMES.length];
+    const reviewDate = new Date(baseDateObj);
+    reviewDate.setDate(reviewDate.getDate() - i * dateIntervalDays);
+
+    reviews.push({
+      id: `mock-review-${shopId}-${i}`,
+      shopId,
+      userId: `mock-user-${i}`,
+      userName,
+      rating: template.rating,
+      ratingDetails: template.ratingDetails,
+      comment: template.comment,
+      createdAt: reviewDate.toISOString(),
+      likesCount: Math.floor(Math.random() * 10),
+      likedByMe: false,
+    });
+  }
+
+  return reviews;
+};

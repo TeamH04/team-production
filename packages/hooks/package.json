@@ -22,6 +22,7 @@
     "@team/types": "workspace:*"
   },
   "devDependencies": {
+    "@team/test-utils": "workspace:*",
     "@types/react-test-renderer": "^19.1.0",
     "react-test-renderer": "19.1.0",
     "tsx": "^4.21.0"

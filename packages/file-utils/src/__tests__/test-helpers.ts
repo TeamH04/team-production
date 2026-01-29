@@ -18,6 +18,8 @@ export interface MockFetchResponse {
  */
 function createMockResponse(response: MockFetchResponse) {
   return {
+    ok: true,
+    status: 200,
     arrayBuffer: async () => response.arrayBuffer ?? new ArrayBuffer(0),
     blob: async () => response.blob ?? new Blob([]),
     json: async () => response.json ?? {},
@@ -144,6 +146,8 @@ export function mockFetchError(error: Error): () => void {
  */
 export function mockFetchWithoutArrayBuffer(blobData: Uint8Array<ArrayBuffer>): () => void {
   const { cleanup } = createMockFetchBase(async () => ({
+    ok: true,
+    status: 200,
     arrayBuffer: undefined,
     blob: async () => new Blob([blobData]),
   }));

@@ -6,7 +6,14 @@
 import { createUseThemeColor } from '@team/hooks';
 
 import { Colors } from '@/constants/Colors';
-import { useColorScheme } from '@/hooks/useColorScheme';
+import { useColorScheme as useColorSchemeRN } from '@/hooks/useColorScheme';
+
+/**
+ * React Native の useColorScheme のラッパー
+ */
+function useColorScheme(): 'light' | 'dark' | null | undefined {
+  return useColorSchemeRN();
+}
 
 /**
  * テーマに応じた色を取得するhook

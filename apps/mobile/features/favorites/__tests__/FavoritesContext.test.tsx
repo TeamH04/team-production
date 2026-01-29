@@ -16,8 +16,8 @@ import {
 } from '@/test-utils';
 
 import {
-  __resetFavoritesDependenciesForTesting,
-  __setFavoritesDependenciesForTesting,
+  resetFavoritesDependenciesForTesting,
+  setFavoritesDependenciesForTesting,
   FavoritesProvider,
   useFavorites,
 } from '../FavoritesContext';
@@ -46,7 +46,7 @@ const setupRemoteDependencies = () => {
   const removeFavoriteApi = createMockApiCall<void, [string, string]>();
   const getSupabase = createMockGetSupabase();
 
-  __setFavoritesDependenciesForTesting({
+  setFavoritesDependenciesForTesting({
     resolveAuth,
     fetchUserFavorites,
     addFavoriteApi,
@@ -76,7 +76,7 @@ const setupUnauthenticatedDependencies = () => {
   const removeFavoriteApi = createMockApiCall<void, [string, string]>();
   const getSupabase = createMockGetSupabase();
 
-  __setFavoritesDependenciesForTesting({
+  setFavoritesDependenciesForTesting({
     resolveAuth,
     fetchUserFavorites,
     addFavoriteApi,
@@ -105,7 +105,7 @@ const setupLocalDependencies = () => {
   const removeFavoriteApi = createMockApiCall<void, [string, string]>();
   const getSupabase = createMockGetSupabase();
 
-  __setFavoritesDependenciesForTesting({
+  setFavoritesDependenciesForTesting({
     resolveAuth,
     fetchUserFavorites,
     addFavoriteApi,
@@ -122,7 +122,7 @@ const setupLocalDependencies = () => {
 };
 
 afterEach(() => {
-  __resetFavoritesDependenciesForTesting();
+  resetFavoritesDependenciesForTesting();
   mock.restoreAll();
 });
 
@@ -171,7 +171,7 @@ describe('FavoritesContext', () => {
         const removeFavoriteApi = createMockApiCall<void, [string, string]>();
         const getSupabase = createMockGetSupabase();
 
-        __setFavoritesDependenciesForTesting({
+        setFavoritesDependenciesForTesting({
           resolveAuth,
           fetchUserFavorites,
           addFavoriteApi,

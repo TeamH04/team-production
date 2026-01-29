@@ -2,6 +2,8 @@
  * OAuth認証ユーティリティ
  */
 
+import { IS_DEV } from '@team/constants';
+
 import { extractErrorMessage } from './extractErrorMessage';
 
 export interface OAuthTokens {
@@ -30,7 +32,10 @@ export function parseOAuthTokensFromUrl(url: string): OAuthTokens {
     const error = searchParams.get('error') || hashParams.get('error') || undefined;
 
     return { accessToken, refreshToken, code, error };
-  } catch {
+  } catch (err) {
+    if (IS_DEV) {
+      console.warn('[oauth] Failed to parse OAuth URL:', err);
+    }
     return {};
   }
 }

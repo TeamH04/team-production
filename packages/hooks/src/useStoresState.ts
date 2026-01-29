@@ -84,7 +84,8 @@ export function useStoresState<TRaw, TStore extends { id: string }>({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const getStoreById = useCallback((id: string) => stores.find(store => store.id === id), [stores]);
+  const storeMap = useMemo(() => new Map(stores.map(s => [s.id, s])), [stores]);
+  const getStoreById = useCallback((id: string) => storeMap.get(id), [storeMap]);
 
   return useMemo(
     () => ({

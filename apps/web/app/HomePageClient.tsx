@@ -1,12 +1,25 @@
 'use client';
 
-import { formatRating, TIMING, UI_LABELS, WEB_PAGE_SIZE } from '@team/constants';
+import { TIMING, UI_LABELS, WEB_PAGE_SIZE } from '@team/constants';
 import { useCompositionInput, usePagination, useShopFilter } from '@team/hooks';
-import { BUDGET_LABEL, CATEGORIES, SHOPS, type Shop, type ShopCategory } from '@team/shop-core';
+import { CATEGORIES, type ShopCategory } from '@team/shop-core';
 import Image from 'next/image';
-import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+
+import { EmptyState, LoadMoreButton, PageError, PageLoading } from '../components';
+import { ShopCard } from '../components/ShopCard';
+import { SortSelector } from '../components/SortSelector';
+import { useShops } from '../lib/dataSource/hooks';
+
+import type { SortType } from '@team/types';
+
+const SORT_OPTIONS = [
+  { label: 'おすすめ', value: 'default' as const },
+  { label: '新着順', value: 'newest' as const },
+  { label: '評価が高い順', value: 'rating-high' as const },
+  { label: '評価が低い順', value: 'rating-low' as const },
+] satisfies { label: string; value: SortType }[];
 
 type CategoryFilter = ShopCategory | typeof CATEGORY_ALL;
 
@@ -18,6 +31,8 @@ export default function HomePageClient() {
   const router = useRouter();
   const pathname = usePathname();
 
+  const { shops, loading, error, reload } = useShops();
+
   const {
     value: searchText,
     setValue: setSearchText,
@@ -27,13 +42,15 @@ export default function HomePageClient() {
     initialValue: searchParams.get('q') ?? '',
   });
   const [selectedCategory, setSelectedCategory] = useState<CategoryFilter>(CATEGORY_ALL);
+  const [sortType, setSortType] = useState<SortType>('default');
 
   const normalizedQuery = searchText.trim();
 
   const { filteredShops } = useShopFilter({
-    shops: SHOPS,
+    shops,
     searchText: normalizedQuery,
     categories: selectedCategory === CATEGORY_ALL ? [] : [selectedCategory],
+    sortType,
   });
 
   const {
@@ -55,15 +72,29 @@ export default function HomePageClient() {
     return () => clearTimeout(handle);
   }, [isComposing, pathname, router, searchText, resetPagination]);
 
-  const handleCategoryClick = (category: CategoryFilter) => {
-    setSelectedCategory(current => (current === category ? CATEGORY_ALL : category));
-    resetPagination();
-  };
+  const handleCategoryClick = useCallback(
+    (category: CategoryFilter) => {
+      setSelectedCategory(current => (current === category ? CATEGORY_ALL : category));
+      resetPagination();
+    },
+    [resetPagination],
+  );
 
-  const handleTagClick = (tag: string) => {
-    setSelectedCategory(CATEGORY_ALL);
-    setSearchText(tag);
-  };
+  const handleTagClick = useCallback(
+    (tag: string) => {
+      setSelectedCategory(CATEGORY_ALL);
+      setSearchText(tag);
+    },
+    [setSearchText],
+  );
+
+  if (loading) {
+    return <PageLoading />;
+  }
+
+  if (error) {
+    return <PageError onRetry={reload} />;
+  }
 
   return (
     <div className='min-h-screen bg-slate-50'>
@@ -82,26 +113,30 @@ export default function HomePageClient() {
               カフェからレストラン、バーまで、カテゴリとキーワードで探せます。気になるお店をクリックすると詳細ページへ移動します。
             </p>
             <div className='flex flex-wrap gap-3 text-sm font-semibold'>
-              <span className='rounded-full bg-white/15 px-4 py-2'>全 {SHOPS.length} 件</span>
+              <span className='rounded-full bg-white/15 px-4 py-2'>全 {shops.length} 件</span>
               <span className='rounded-full bg-white/15 px-4 py-2'>レビュー近日公開</span>
             </div>
           </div>
           <div className='flex flex-1 justify-end'>
             <div className='relative h-60 w-full max-w-md overflow-hidden rounded-3xl border border-white/15 bg-white/10 p-4 shadow-2xl ring-1 ring-white/20 backdrop-blur'>
               <div className='relative h-full w-full overflow-hidden rounded-2xl bg-white/5'>
-                <Image
-                  src={SHOPS[0].imageUrl}
-                  alt={`${SHOPS[0].name}の写真`}
-                  fill
-                  className='object-cover'
-                  sizes='(min-width: 1024px) 360px, 100vw'
-                  priority
-                />
-                <div className='absolute inset-0 bg-gradient-to-t from-black/40 via-transparent' />
-                <div className='absolute bottom-4 left-4 right-4 flex items-center justify-between text-sm font-semibold text-white'>
-                  <span>{SHOPS[0].name}</span>
-                  <span>徒歩{SHOPS[0].distanceMinutes}分</span>
-                </div>
+                {shops[0] && (
+                  <>
+                    <Image
+                      src={shops[0].imageUrl}
+                      alt={`${shops[0].name}の写真`}
+                      fill
+                      className='object-cover'
+                      sizes='(min-width: 1024px) 360px, 100vw'
+                      priority
+                    />
+                    <div className='absolute inset-0 bg-gradient-to-t from-black/40 via-transparent' />
+                    <div className='absolute bottom-4 left-4 right-4 flex items-center justify-between text-sm font-semibold text-white'>
+                      <span>{shops[0].name}</span>
+                      <span>徒歩{shops[0].distanceMinutes}分</span>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
           </div>
@@ -165,101 +200,38 @@ export default function HomePageClient() {
           </div>
         </div>
 
-        <div className='mb-4 flex items-center justify-between'>
+        <div className='mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
           <div className='text-sm font-semibold text-slate-700'>
             検索結果 {filteredShops.length} 件
             {normalizedQuery && (
               <span className='text-slate-400'>（キーワード: {searchText}）</span>
             )}
           </div>
-          <p className='text-xs text-slate-500'>カードをクリックすると詳細ページへ遷移します。</p>
+          <SortSelector options={SORT_OPTIONS} value={sortType} onChange={setSortType} />
         </div>
 
         {filteredShops.length === 0 ? (
-          <div className='rounded-3xl bg-white p-10 text-center shadow-lg ring-1 ring-slate-100'>
-            <h3 className='text-xl font-semibold text-slate-900'>条件に合うお店が見つかりません</h3>
-            <p className='mt-2 text-sm text-slate-600'>
-              キーワードを変えるか、カテゴリを切り替えて別の候補を探してみてください。
-            </p>
-          </div>
+          <EmptyState
+            title='条件に合うお店が見つかりません'
+            description='キーワードを変えるか、カテゴリを切り替えて別の候補を探してみてください。'
+          />
         ) : (
           <>
             <div className='grid gap-6 sm:grid-cols-2 lg:grid-cols-3'>
-              {visibleShops.map(shop => (
-                <ShopCard key={shop.id} shop={shop} onTagClick={handleTagClick} />
+              {visibleShops.map((shop, index) => (
+                <ShopCard
+                  key={shop.id}
+                  shop={shop}
+                  onTagClick={handleTagClick}
+                  priority={index === 0}
+                />
               ))}
             </div>
 
-            {hasMore && (
-              <div className='mt-8 flex justify-center'>
-                <button
-                  type='button'
-                  onClick={handleLoadMore}
-                  className='rounded-full bg-slate-900 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-slate-900/20 transition hover:-translate-y-0.5 hover:bg-slate-800'
-                >
-                  もっと見る
-                </button>
-              </div>
-            )}
+            <LoadMoreButton onClick={handleLoadMore} visible={hasMore} />
           </>
         )}
       </main>
     </div>
-  );
-}
-
-function ShopCard({ shop, onTagClick }: { shop: Shop; onTagClick: (tag: string) => void }) {
-  return (
-    <Link
-      href={`/shop/${shop.id}`}
-      className='group relative overflow-hidden rounded-3xl bg-white shadow-lg ring-1 ring-slate-100 transition hover:-translate-y-1 hover:shadow-xl'
-    >
-      <div className='relative aspect-[4/3] overflow-hidden'>
-        <Image
-          src={shop.imageUrl}
-          alt={`${shop.name}の写真`}
-          fill
-          className='object-cover transition duration-700 group-hover:scale-105'
-          sizes='(min-width: 1024px) 320px, 100vw'
-          priority={shop.id === SHOPS[0].id}
-        />
-        <div className='absolute inset-0 bg-gradient-to-t from-black/40 via-transparent' />
-        <div className='absolute left-4 top-4 rounded-full bg-white/85 px-3 py-1 text-xs font-semibold text-slate-800 shadow'>
-          {shop.category}
-        </div>
-        <div className='absolute bottom-3 left-3 right-3 flex items-center justify-between text-xs font-semibold text-white'>
-          <span>徒歩{shop.distanceMinutes}分</span>
-          <span>{BUDGET_LABEL[shop.budget]}</span>
-        </div>
-      </div>
-
-      <div className='space-y-3 p-4'>
-        <div className='flex items-start justify-between gap-3'>
-          <h3 className='text-lg font-semibold text-slate-900'>{shop.name}</h3>
-          <span className='rounded-full bg-amber-100 px-2.5 py-1 text-xs font-semibold text-amber-700'>
-            ★ {formatRating(shop.rating)}
-          </span>
-        </div>
-        <p className='line-clamp-2 text-sm text-slate-600'>{shop.description}</p>
-        <div className='flex flex-wrap gap-2'>
-          {shop.tags.slice(0, 3).map(tag => (
-            <button
-              key={tag}
-              type='button'
-              onClick={event => {
-                event.preventDefault();
-                onTagClick(tag);
-              }}
-              className='rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700 transition hover:bg-slate-200'
-            >
-              #{tag}
-            </button>
-          ))}
-          {shop.tags.length > 3 && (
-            <span className='text-xs font-semibold text-slate-400'>+{shop.tags.length - 3}</span>
-          )}
-        </div>
-      </div>
-    </Link>
   );
 }

@@ -9,7 +9,19 @@
  * @returns 新しい配列
  */
 export function toggleArrayItem<T>(arr: readonly T[], item: T): T[] {
-  return arr.includes(item) ? arr.filter(existing => existing !== item) : [...arr, item];
+  const result: T[] = [];
+  let found = false;
+  for (const existing of arr) {
+    if (existing === item) {
+      found = true;
+    } else {
+      result.push(existing);
+    }
+  }
+  if (!found) {
+    result.push(item);
+  }
+  return result;
 }
 
 /**

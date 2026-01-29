@@ -66,14 +66,12 @@ export { useReviewsState } from './useReviewsState';
 export type {
   ReviewInput,
   CreateReviewInput,
-  ReviewSortType,
   ReviewsApiDependencies,
   ReviewsAuthDependencies,
   UseReviewsStateOptions,
   ReviewsByShopState,
   UseReviewsStateResult,
 } from './useReviewsState';
-export { mapApiReview, mapApiReviewFile, getReviewFileUrl } from './reviewMapping';
 export { getThemeColor, createUseThemeColor } from './useThemeColor';
 export type { GetThemeColorOptions, UseThemeColorOptions } from './useThemeColor';
 export { useHydrationState } from './useHydrationState';
@@ -86,7 +84,6 @@ export type {
 } from './createNavigateAfterLogin';
 export { useSearchState } from './useSearchState';
 export type {
-  SearchSortOrders,
   SearchState,
   SearchStateDependencies,
   UseSearchStateOptions,

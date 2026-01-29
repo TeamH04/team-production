@@ -3,4 +3,4 @@
  *
  * 共有パッケージ @team/test-utils から re-export
  */
-export { createMockApiStore, createMockShop } from '@team/test-utils';
+export { createMockApiReview, createMockApiStore, createMockShop } from '@team/test-utils';

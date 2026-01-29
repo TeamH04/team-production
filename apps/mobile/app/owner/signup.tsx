@@ -11,6 +11,8 @@ import {
   UI_LABELS,
   VALIDATION_MESSAGES,
 } from '@team/constants';
+import { extractErrorMessage } from '@team/core-utils';
+import { useAuthErrorHandler } from '@team/hooks';
 import { palette } from '@team/mobile-ui';
 import { useNavigation, useRouter } from 'expo-router';
 import { useEffect, useLayoutEffect, useMemo, useState } from 'react';
@@ -33,6 +35,7 @@ import { getAccessToken, getSupabase, isSupabaseConfigured } from '@/lib/auth';
 export default function OwnerSignupScreen() {
   const router = useRouter();
   const navigation = useNavigation();
+  const { isAuthError } = useAuthErrorHandler();
   const [storeName, setStoreName] = useState('');
   const [contactName, setContactName] = useState('');
   const [email, setEmail] = useState('');
@@ -127,8 +130,12 @@ export default function OwnerSignupScreen() {
       setStep('otp');
       Alert.alert('送信完了', 'ワンタイムパスコードをメールで送信しました');
     } catch (e: unknown) {
-      const message = e instanceof Error ? e.message : '送信に失敗しました';
-      Alert.alert('送信失敗', message);
+      const message = extractErrorMessage(e, '送信に失敗しました');
+      if (isAuthError(message)) {
+        Alert.alert('認証エラー', 'ログインが必要です。');
+      } else {
+        Alert.alert('送信失敗', message);
+      }
     } finally {
       setOtpSending(false);
     }
@@ -183,19 +190,34 @@ export default function OwnerSignupScreen() {
       Alert.alert('作成完了', 'オーナー用アカウントを作成しました。');
       router.replace(ROUTES.OWNER);
     } catch (e: unknown) {
-      const message = e instanceof Error ? e.message : '送信に失敗しました';
-      Alert.alert('作成失敗', message, [
-        { text: '再試行' },
-        {
-          text: '入力内容を修正する',
-          style: 'cancel',
-          onPress: () => {
-            setStep('form');
-            setOtpCode('');
-            setLastOtpSentAt(null);
+      const message = extractErrorMessage(e, '送信に失敗しました');
+      if (isAuthError(message)) {
+        Alert.alert('認証エラー', 'ログインが必要です。', [
+          { text: '再試行' },
+          {
+            text: '入力内容を修正する',
+            style: 'cancel',
+            onPress: () => {
+              setStep('form');
+              setOtpCode('');
+              setLastOtpSentAt(null);
+            },
           },
-        },
-      ]);
+        ]);
+      } else {
+        Alert.alert('作成失敗', message, [
+          { text: '再試行' },
+          {
+            text: '入力内容を修正する',
+            style: 'cancel',
+            onPress: () => {
+              setStep('form');
+              setOtpCode('');
+              setLastOtpSentAt(null);
+            },
+          },
+        ]);
+      }
     } finally {
       setOtpVerifying(false);
     }
@@ -215,8 +237,12 @@ export default function OwnerSignupScreen() {
       setLastOtpSentAt(Date.now());
       Alert.alert('再送完了', 'ワンタイムパスコードを再送しました');
     } catch (e: unknown) {
-      const message = e instanceof Error ? e.message : '再送に失敗しました';
-      Alert.alert('再送失敗', message);
+      const message = extractErrorMessage(e, '再送に失敗しました');
+      if (isAuthError(message)) {
+        Alert.alert('認証エラー', 'ログインが必要です。');
+      } else {
+        Alert.alert('再送失敗', message);
+      }
     } finally {
       setOtpSending(false);
     }

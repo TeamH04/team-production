@@ -7,7 +7,7 @@ import {
   RATING_CATEGORIES,
   UI_LABELS,
 } from '@team/constants';
-import { devWarn } from '@team/core-utils';
+import { devWarn, extractErrorMessage } from '@team/core-utils';
 import { palette } from '@team/mobile-ui';
 import { BUDGET_LABEL } from '@team/shop-core';
 import { Image } from 'expo-image';
@@ -253,7 +253,7 @@ export default function ShopDetailScreen() {
       try {
         await toggleLike(shop.id, reviewId);
       } catch (err) {
-        const message = err instanceof Error ? err.message : 'Unknown error';
+        const message = extractErrorMessage(err, 'Unknown error');
         if (message === AUTH_REQUIRED) {
           Alert.alert('ログインが必要です', 'いいねにはログインが必要です。', [
             { text: UI_LABELS.CANCEL, style: 'cancel' },
@@ -272,7 +272,7 @@ export default function ShopDetailScreen() {
     try {
       await toggleFavorite(shop.id);
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Unknown error';
+      const message = extractErrorMessage(err, 'Unknown error');
       if (message === AUTH_REQUIRED) {
         Alert.alert('ログインが必要です', 'お気に入りにはログインが必要です。', [
           { text: UI_LABELS.CANCEL, style: 'cancel' },

@@ -67,6 +67,17 @@ export interface UploadConfig {
 export async function uploadToSignedUrl(config: UploadConfig): Promise<void> {
   const { path, token, asset, bucket, upsert = true } = config;
 
+  // 必須パラメータのバリデーション
+  if (!path?.trim()) {
+    throw new Error('Upload path is required');
+  }
+  if (!token?.trim()) {
+    throw new Error('Upload token is required');
+  }
+  if (!asset?.uri?.trim()) {
+    throw new Error('Asset URI is required');
+  }
+
   const bytes = await fetchAssetAsBytes(asset);
 
   const { error } = await bucket.uploadToSignedUrl(path, token, bytes, {

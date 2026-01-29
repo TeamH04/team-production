@@ -1,3 +1,4 @@
+import { devWarn } from '@team/core-utils';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import type { UserProfile } from '@team/types';
@@ -41,8 +42,8 @@ export function useUserState(config?: UserStateConfig): UserState {
         if (mountedRef.current && restored) {
           setUserState(restored);
         }
-      } catch {
-        // 復元失敗時は何もしない
+      } catch (err) {
+        devWarn('Failed to restore user state:', err);
       } finally {
         if (mountedRef.current) {
           setIsRestoring(false);
@@ -61,7 +62,7 @@ export function useUserState(config?: UserStateConfig): UserState {
     setUserState(null);
   }, []);
 
-  const isProfileComplete = useMemo(() => !!user && user.isProfileRegistered, [user]);
+  const isProfileComplete = useMemo(() => !!user && !!user.isProfileRegistered, [user]);
 
   return useMemo(
     () => ({ user, isProfileComplete, isRestoring, setUser, clearUser }),

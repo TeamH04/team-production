@@ -1,3 +1,4 @@
+import { IS_DEV } from '@team/constants';
 import { useCallback, useEffect, useState } from 'react';
 
 /**
@@ -29,7 +30,10 @@ export function useLocalStorage<T>(
     try {
       const item = window.localStorage.getItem(key);
       return item !== null ? (JSON.parse(item) as T) : initialValue;
-    } catch {
+    } catch (err) {
+      if (IS_DEV) {
+        console.warn(`[useLocalStorage] Failed to read key "${key}":`, err);
+      }
       return initialValue;
     }
   });
@@ -40,8 +44,10 @@ export function useLocalStorage<T>(
 
     try {
       window.localStorage.setItem(key, JSON.stringify(storedValue));
-    } catch {
-      // ストレージ容量超過などのエラーは無視
+    } catch (err) {
+      if (IS_DEV) {
+        console.warn(`[useLocalStorage] Failed to save key "${key}":`, err);
+      }
     }
   }, [key, storedValue]);
 

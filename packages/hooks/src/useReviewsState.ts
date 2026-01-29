@@ -33,12 +33,6 @@ export type CreateReviewInput = {
 };
 
 /**
- * ソート種別
- * @deprecated Use ReviewSort from @team/types instead
- */
-export type ReviewSortType = ReviewSort;
-
-/**
  * useReviewsState の API 依存関係
  */
 export type ReviewsApiDependencies<TToken = string> = {
@@ -93,13 +87,46 @@ export type ReviewsByShopState = Record<string, Review[]>;
 
 /**
  * ReviewsByShopStateからレビューIDで検索
+ *
+ * Note: This is O(n) - consider passing shopId for O(1) lookup when available.
+ *
  * @param reviewsByShop 店舗ごとのレビュー状態
  * @param reviewId 検索するレビューID
  * @returns 見つかったレビュー、またはundefined
  */
 function findReviewById(reviewsByShop: ReviewsByShopState, reviewId: string): Review | undefined {
-  const all = Object.values(reviewsByShop).flat();
-  return all.find(item => item.id === reviewId);
+  for (const reviews of Object.values(reviewsByShop)) {
+    const found = reviews.find(item => item.id === reviewId);
+    if (found) return found;
+  }
+  return undefined;
+}
+
+/**
+ * レビューのいいね状態を更新するヘルパー関数
+ * optimisticUpdate と rollback の両方で使用
+ *
+ * @param state 現在の店舗ごとのレビュー状態
+ * @param shopId 対象の店舗ID
+ * @param reviewId 対象のレビューID
+ * @param newLikedState 新しいいいね状態
+ */
+function updateReviewLikeState(
+  state: ReviewsByShopState,
+  shopId: string,
+  reviewId: string,
+  newLikedState: boolean,
+): ReviewsByShopState {
+  const current = state[shopId] ?? [];
+  const next = current.map(review => {
+    if (review.id !== reviewId) return review;
+    return {
+      ...review,
+      likedByMe: newLikedState,
+      likesCount: review.likesCount + (newLikedState ? 1 : -1),
+    };
+  });
+  return { ...state, [shopId]: next };
 }
 
 /**
@@ -242,7 +269,7 @@ export function useReviewsState<TToken = string>(
         throw new Error(authRequiredMessage);
       }
 
-      let fileIDs: string[] = [];
+      let fileIds: string[] = [];
       if (assets.length > 0) {
         const uploadInputs: UploadFileInput[] = assets.map(asset => ({
           file_name: asset.fileName,
@@ -259,7 +286,7 @@ export function useReviewsState<TToken = string>(
             api.uploadToStorage(upload.path, upload.token, assets[index]),
           ),
         );
-        fileIDs = uploads.map(upload => upload.file_id);
+        fileIds = uploads.map(upload => upload.file_id);
       }
 
       await api.createReview(
@@ -267,7 +294,7 @@ export function useReviewsState<TToken = string>(
         {
           rating: input.rating,
           content: input.comment ?? null,
-          file_ids: fileIDs,
+          file_ids: fileIds,
           menu_ids: input.menuItemIds ?? [],
         },
         token,
@@ -287,18 +314,7 @@ export function useReviewsState<TToken = string>(
 
       await executeLikeMutation({
         key: reviewId,
-        optimisticUpdate: prev => {
-          const current = prev[shopId] ?? [];
-          const next = current.map(review => {
-            if (review.id !== reviewId) return review;
-            return {
-              ...review,
-              likedByMe: !review.likedByMe,
-              likesCount: review.likesCount + (review.likedByMe ? -1 : 1),
-            };
-          });
-          return { ...prev, [shopId]: next };
-        },
+        optimisticUpdate: prev => updateReviewLikeState(prev, shopId, reviewId, !wasLiked),
         apiCall: async token => {
           if (wasLiked) {
             await api.unlikeReview(reviewId, token);
@@ -306,18 +322,7 @@ export function useReviewsState<TToken = string>(
             await api.likeReview(reviewId, token);
           }
         },
-        rollback: prev => {
-          const current = prev[shopId] ?? [];
-          const next = current.map(review => {
-            if (review.id !== reviewId) return review;
-            return {
-              ...review,
-              likedByMe: wasLiked,
-              likesCount: review.likesCount + (wasLiked ? 1 : -1),
-            };
-          });
-          return { ...prev, [shopId]: next };
-        },
+        rollback: prev => updateReviewLikeState(prev, shopId, reviewId, wasLiked),
       });
     },
     [api, executeLikeMutation],
