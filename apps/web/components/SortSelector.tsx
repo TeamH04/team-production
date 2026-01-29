@@ -22,7 +22,7 @@ export function SortSelector<T extends string>({ options, value, onChange }: Sor
             type='button'
             onClick={() => onChange(option.value)}
             aria-pressed={isSelected}
-            className={`rounded-full px-3 py-1.5 text-xs font-semibold transition ${
+            className={`min-h-[44px] rounded-full px-4 py-2 text-xs font-semibold transition sm:min-h-0 sm:px-3 sm:py-1.5 ${
               isSelected
                 ? 'bg-slate-900 text-white shadow-lg shadow-slate-900/20'
                 : 'bg-slate-100 text-slate-700 hover:bg-slate-200'

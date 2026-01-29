@@ -13,6 +13,31 @@ interface ReviewFormProps {
   onCancel: () => void;
 }
 
+const StarRating = ({
+  value,
+  onChange,
+  size = 'normal',
+}: {
+  value: number;
+  onChange: (v: number) => void;
+  size?: 'normal' | 'large';
+}) => (
+  <div className='flex gap-1'>
+    {[1, 2, 3, 4, 5].map(star => (
+      <button
+        key={star}
+        type='button'
+        onClick={() => onChange(star)}
+        className={`transition hover:scale-110 ${
+          star <= value ? 'text-amber-400' : 'text-slate-300'
+        } ${size === 'large' ? 'text-3xl' : 'text-xl'}`}
+      >
+        ★
+      </button>
+    ))}
+  </div>
+);
+
 export function ReviewForm({ shopId, onSubmit, onCancel }: ReviewFormProps) {
   const [overallRating, setOverallRating] = useState(0);
   const [ratingDetails, setRatingDetails] = useState<Record<string, number>>({});
@@ -41,31 +66,6 @@ export function ReviewForm({ shopId, onSubmit, onCancel }: ReviewFormProps) {
       setIsSubmitting(false);
     }
   };
-
-  const StarRating = ({
-    value,
-    onChange,
-    size = 'normal',
-  }: {
-    value: number;
-    onChange: (v: number) => void;
-    size?: 'normal' | 'large';
-  }) => (
-    <div className='flex gap-1'>
-      {[1, 2, 3, 4, 5].map(star => (
-        <button
-          key={star}
-          type='button'
-          onClick={() => onChange(star)}
-          className={`transition hover:scale-110 ${
-            star <= value ? 'text-amber-400' : 'text-slate-300'
-          } ${size === 'large' ? 'text-3xl' : 'text-xl'}`}
-        >
-          ★
-        </button>
-      ))}
-    </div>
-  );
 
   return (
     <form onSubmit={handleSubmit} className='space-y-6'>

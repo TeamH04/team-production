@@ -13,6 +13,7 @@ import { SortSelector } from '../components/SortSelector';
 import { useShops } from '../lib/dataSource/hooks';
 
 import type { SortType } from '@team/types';
+import type React from 'react';
 
 const SORT_OPTIONS = [
   { label: 'おすすめ', value: 'default' as const },
@@ -88,6 +89,13 @@ export default function HomePageClient() {
     [setSearchText],
   );
 
+  const handleSearchChange = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      setSearchText(event.target.value);
+    },
+    [setSearchText],
+  );
+
   if (loading) {
     return <PageLoading />;
   }
@@ -101,12 +109,12 @@ export default function HomePageClient() {
       <header className='relative overflow-hidden bg-gradient-to-br from-sky-700 via-sky-600 to-indigo-700 text-white'>
         <div className='absolute -left-10 top-0 h-64 w-64 rounded-full bg-white/10 blur-3xl' />
         <div className='absolute -right-10 bottom-0 h-72 w-72 rounded-full bg-indigo-400/20 blur-3xl' />
-        <div className='mx-auto flex max-w-6xl flex-col gap-6 px-6 py-8 lg:flex-row lg:items-center lg:px-10'>
+        <div className='mx-auto flex max-w-6xl flex-col gap-4 px-4 py-6 sm:gap-6 sm:px-6 sm:py-8 lg:flex-row lg:items-center lg:px-10'>
           <div className='flex-1 space-y-4'>
-            <h1 className='text-4xl font-bold leading-tight tracking-tight lg:text-5xl'>
+            <h1 className='text-2xl font-bold leading-tight tracking-tight sm:text-4xl lg:text-5xl'>
               次に通いたくなるお店を見つけよう
             </h1>
-            <p className='text-lg text-sky-100'>
+            <p className='text-base text-sky-100 sm:text-lg'>
               カフェからレストラン、バーまで、カテゴリとキーワードで探せます。気になるお店をクリックすると詳細ページへ移動します。
             </p>
             <div className='flex flex-wrap gap-3 text-sm font-semibold'>
@@ -140,7 +148,7 @@ export default function HomePageClient() {
         </div>
       </header>
 
-      <main className='mx-auto max-w-6xl px-6 py-12 lg:px-10'>
+      <main className='mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-12 lg:px-10'>
         <div className='mb-8 rounded-3xl bg-white p-6 shadow-lg ring-1 ring-slate-100'>
           <div className='flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
             <div>
@@ -158,7 +166,7 @@ export default function HomePageClient() {
             <label className='relative block'>
               <input
                 value={searchText}
-                onChange={event => setSearchText(event.target.value)}
+                onChange={handleSearchChange}
                 {...compositionHandlers}
                 placeholder='お店名・雰囲気・タグで検索'
                 className='w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-base text-slate-900 shadow-sm outline-none transition focus:border-sky-400 focus:ring-2 focus:ring-sky-100'
@@ -174,7 +182,7 @@ export default function HomePageClient() {
               )}
             </label>
 
-            <div className='flex flex-wrap gap-2'>
+            <div className='-mx-4 flex gap-2 overflow-x-auto px-4 pb-2 sm:mx-0 sm:flex-wrap sm:overflow-x-visible sm:px-0 sm:pb-0'>
               {CATEGORY_OPTIONS.map(category => {
                 const isSelected = category === selectedCategory;
                 return (
@@ -183,7 +191,7 @@ export default function HomePageClient() {
                     type='button'
                     onClick={() => handleCategoryClick(category)}
                     aria-pressed={isSelected}
-                    className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
+                    className={`min-h-[44px] shrink-0 rounded-full px-4 py-2 text-sm font-semibold transition ${
                       isSelected
                         ? 'bg-slate-900 text-white shadow-lg shadow-slate-900/20'
                         : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
