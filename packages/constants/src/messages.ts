@@ -6,6 +6,7 @@ export const ERROR_MESSAGES = {
     'Supabaseの環境変数が未設定です。EXPO_PUBLIC_SUPABASE_URL と EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY を設定してください。',
   SUPABASE_NOT_CONFIGURED_EN:
     'Supabase is not configured. Please set EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY.',
+  SUBMIT_FAILED: '送信に失敗しました',
 } as const;
 
 export const VALIDATION_MESSAGES = {

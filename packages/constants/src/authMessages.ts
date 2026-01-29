@@ -4,6 +4,8 @@ import { ERROR_MESSAGES } from './messages';
  * 認証エラーに関するメッセージ定数
  */
 export const AUTH_ERROR_MESSAGES = {
+  /** 認証エラーダイアログのタイトル */
+  AUTH_ERROR_TITLE: '認証エラー',
   /** ログインが必要なアクションのダイアログタイトル */
   LOGIN_REQUIRED_TITLE: ERROR_MESSAGES.AUTH_REQUIRED,
   /** いいね操作時の認証エラーメッセージ */

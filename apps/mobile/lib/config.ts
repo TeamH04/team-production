@@ -4,7 +4,7 @@
  * 環境変数設定を集約するモジュール
  * 各モジュールはここから環境変数を取得する
  */
-import { createEnvConfig } from '@team/constants';
+import { createEnvConfig, DEFAULT_API_PATH, DEFAULT_API_PORT } from '@team/constants';
 
 import type Constants from 'expo-constants';
 import type * as Device from 'expo-device';
@@ -30,8 +30,7 @@ const loadPlatform = (): PlatformModule => {
   return module.Platform;
 };
 
-const DEFAULT_API_PORT = '8080';
-const DEFAULT_API_PATH = '/api';
+// API port and path constants are imported from @team/constants
 
 /**
  * 開発環境でのAPIベースURLを自動判定する

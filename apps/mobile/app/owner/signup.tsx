@@ -1,4 +1,5 @@
 import {
+  AUTH_ERROR_MESSAGES,
   BORDER_RADIUS,
   ERROR_MESSAGES,
   formatDateInput,
@@ -130,9 +131,9 @@ export default function OwnerSignupScreen() {
       setStep('otp');
       Alert.alert('送信完了', 'ワンタイムパスコードをメールで送信しました');
     } catch (e: unknown) {
-      const message = extractErrorMessage(e, '送信に失敗しました');
+      const message = extractErrorMessage(e, ERROR_MESSAGES.SUBMIT_FAILED);
       if (isAuthError(message)) {
-        Alert.alert('認証エラー', 'ログインが必要です。');
+        Alert.alert(AUTH_ERROR_MESSAGES.AUTH_ERROR_TITLE, AUTH_ERROR_MESSAGES.GENERIC);
       } else {
         Alert.alert('送信失敗', message);
       }
@@ -190,9 +191,9 @@ export default function OwnerSignupScreen() {
       Alert.alert('作成完了', 'オーナー用アカウントを作成しました。');
       router.replace(ROUTES.OWNER);
     } catch (e: unknown) {
-      const message = extractErrorMessage(e, '送信に失敗しました');
+      const message = extractErrorMessage(e, ERROR_MESSAGES.SUBMIT_FAILED);
       if (isAuthError(message)) {
-        Alert.alert('認証エラー', 'ログインが必要です。', [
+        Alert.alert(AUTH_ERROR_MESSAGES.AUTH_ERROR_TITLE, AUTH_ERROR_MESSAGES.GENERIC, [
           { text: '再試行' },
           {
             text: '入力内容を修正する',
@@ -239,7 +240,7 @@ export default function OwnerSignupScreen() {
     } catch (e: unknown) {
       const message = extractErrorMessage(e, '再送に失敗しました');
       if (isAuthError(message)) {
-        Alert.alert('認証エラー', 'ログインが必要です。');
+        Alert.alert(AUTH_ERROR_MESSAGES.AUTH_ERROR_TITLE, AUTH_ERROR_MESSAGES.GENERIC);
       } else {
         Alert.alert('再送失敗', message);
       }
