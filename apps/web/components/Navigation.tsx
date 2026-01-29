@@ -15,8 +15,8 @@ export function Navigation() {
   return (
     <nav className='border-b border-slate-200 bg-white/90 backdrop-blur-sm'>
       <div className='mx-auto flex max-w-6xl items-center justify-between px-6 py-3 lg:px-10'>
-        <Link href='/' className='text-lg font-bold text-slate-900'>
-          Shop Discovery
+        <Link href='/' className='text-slate-900'>
+          <img src='/kaguri.svg' alt='Kuguriロゴ' width={120} height={32} className='h-8' />
         </Link>
         <div className='flex gap-1'>
           {NAV_ITEMS.map(item => {

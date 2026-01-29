@@ -1,3 +1,5 @@
+# [ここからweb版をお試しいただけます](https://kuguri.vercel.app/)
+
 # team-production
 
 モバイル・Web・バックエンドのモノレポ
@@ -101,13 +103,13 @@ docs/            # ドキュメント
 
 ## 起動後のポート
 
-| サービス      | ポート | URL                   |
-| ------------- | ------ | --------------------- |
-| Backend API   | 8080   | http://localhost:8080 |
-| PostgreSQL    | 5432   | -                     |
-| pgAdmin       | 5050   | http://localhost:5050 |
-| Expo (Metro)  | 8081   | -                     |
-| Web (Next.js) | 3000   | http://localhost:3000 |
+| サービス      | ポート | URL                     |
+| ------------- | ------ | ----------------------- |
+| Backend API   | 8080   | <http://localhost:8080> |
+| PostgreSQL    | 5432   | -                       |
+| pgAdmin       | 5050   | <http://localhost:5050> |
+| Expo (Metro)  | 8081   | -                       |
+| Web (Next.js) | 3000   | <http://localhost:3000> |
 
 ## ドキュメント
 

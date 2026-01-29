@@ -103,9 +103,6 @@ export default function HomePageClient() {
         <div className='absolute -right-10 bottom-0 h-72 w-72 rounded-full bg-indigo-400/20 blur-3xl' />
         <div className='mx-auto flex max-w-6xl flex-col gap-6 px-6 py-8 lg:flex-row lg:items-center lg:px-10'>
           <div className='flex-1 space-y-4'>
-            <p className='text-sm font-semibold uppercase tracking-[0.28em] text-sky-100'>
-              Shop Discovery
-            </p>
             <h1 className='text-4xl font-bold leading-tight tracking-tight lg:text-5xl'>
               次に通いたくなるお店を見つけよう
             </h1>
